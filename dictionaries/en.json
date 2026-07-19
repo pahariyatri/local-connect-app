@@ -4,7 +4,7 @@
       "hero": {
         "title": "Travel <br /> like a Local",
         "subtitle": "Discover the high mountains through the eyes of legends who call them home.",
-        "cta_primary": "Start Planning — Free",
+        "cta_primary": "Start Planning for Free",
         "cta_secondary": "See Sample Trip"
       },
       "steps": {
@@ -340,8 +340,16 @@
       },
       "next_stop": {
         "title": "Where do you want to <span class=\"text-emerald-500\">stop</span>?",
-        "subtitle": "Pick the towns on your route worth exploring — built live from what's actually there.",
+        "subtitle": "Pick the towns on your route worth exploring, built live from what's actually there.",
         "route_label": "Your Route",
+        "order_title": "Arrange your stops",
+        "order_subtitle": "Drag to set the order, or use the arrows. The top stop comes first on your trip.",
+        "start_label": "Start",
+        "end_label": "Final",
+        "stop_word": "stop",
+        "move_up": "Move up",
+        "move_down": "Move down",
+        "remove": "Remove stop",
         "stops_title": "Places on your route",
         "stops_subtitle": "Tap the towns you'd like to stop at and explore.",
         "selected": "selected",
@@ -350,8 +358,8 @@
         "services": "services",
         "available_here": "here",
         "empty_title": "No stops found on this route yet.",
-        "empty_sub": "You can continue — we'll build your plan from your destinations.",
-        "skip_hint": "Optional — skip anytime and go straight to building your plan."
+        "empty_sub": "You can continue and we'll build your plan from your destinations.",
+        "skip_hint": "Optional. Skip anytime and go straight to building your plan."
       },
       "interests": {
         "title": "What are you <span class=\"text-rose-500\">craving</span>?",

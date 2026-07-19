@@ -9,8 +9,6 @@ import LocalImage from "./components/atoms/Image";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import Loading from "../loading";
 
-import { useCart } from "@/contexts/CartContext";
-import { useNotification } from "@/contexts/NotificationContext";
 import { useTripPlanner } from "@/contexts/TripPlannerContext";
 
 type HomeProps = {
@@ -18,8 +16,6 @@ type HomeProps = {
 };
 
 export default function Home({ params }: HomeProps) {
-  const { addToCart } = useCart();
-  const { showNotification } = useNotification();
   const { dict, lang, loading } = useLocalizationContext();
   useTripPlanner();
   
@@ -144,7 +140,7 @@ export default function Home({ params }: HomeProps) {
               <div 
                 key={i} 
                 className="group relative h-[400px] sm:h-[600px] overflow-hidden rounded-[2.5rem] sm:rounded-[3.5rem] cursor-pointer shadow-xl shadow-slate-200/50"
-                onClick={() => router.push(`/search?destination=${encodeURIComponent(dest.name)}`)}
+                onClick={() => router.push(`/${lang}/discover?destination=${encodeURIComponent(dest.name)}`)}
               >
                 <LocalImage src={dest.image} alt={dest.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[3000ms]" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-80" />
@@ -225,14 +221,13 @@ export default function Home({ params }: HomeProps) {
                       <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">From</p>
                       <p className="text-2xl font-black text-slate-900 tracking-tighter italic">₹{service.price.toLocaleString()}</p>
                     </div>
-                    <button 
-                      onClick={() => {
-                        addToCart(service);
-                        showNotification(`${service.name} reserved!`, "success");
-                      }}
-                      className="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center hover:bg-emerald-500 hover:shadow-xl hover:shadow-emerald-200 transition-all active:scale-90 group-hover:rotate-6"
+                    <button
+                      onClick={() => router.push(`/${lang}/builder`)}
+                      aria-label={`Add ${service.name} to your trip plan`}
+                      className="h-14 px-5 rounded-2xl bg-slate-900 text-white flex items-center gap-2 font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 hover:shadow-xl hover:shadow-emerald-200 transition-all active:scale-95"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5v14"/></svg>
+                      Add to Plan
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                     </button>
                   </div>
                 </div>
@@ -256,7 +251,7 @@ export default function Home({ params }: HomeProps) {
               {home.ai_cta.subtitle}
             </p>
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-              <Button onClick={()=> router.push("/bot")} className="w-full sm:w-auto h-20 px-12 rounded-[2rem] bg-white text-slate-900 hover:bg-emerald-50 font-black text-xl shadow-2xl active:scale-95 transition-all uppercase tracking-widest">
+              <Button onClick={()=> router.push(`/${lang}/builder`)} className="w-full sm:w-auto h-20 px-12 rounded-[2rem] bg-white text-slate-900 hover:bg-emerald-50 font-black text-xl shadow-2xl active:scale-95 transition-all uppercase tracking-widest">
                 {home.ai_cta.cta}
               </Button>
               <Button 

@@ -15,10 +15,20 @@ export default function LoginPage() {
     const searchParams = useSearchParams();
     const redirectTo = searchParams.get("redirectTo");
     const [phone, setPhone] = useState("");
+    const [touched, setTouched] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
+    const phoneValid = isValidPhone(phone);
+    // Only nudge the user once they've started typing and moved on, never while empty.
+    const showInvalid = touched && phone.length > 0 && !phoneValid;
+
     const handleContinue = async () => {
-        if (!isValidPhone(phone)) return;
+        if (!phoneValid) {
+            setTouched(true);
+            return;
+        }
+        setError(null);
         setLoading(true);
         try {
             const { accountStatus, sendOtp } = await import("@/services/authService");
@@ -41,7 +51,7 @@ export default function LoginPage() {
 
         } catch (err) {
             console.error("Failed to continue login", err);
-        } finally {
+            setError("Something went wrong. Please check your connection and try again.");
             setLoading(false);
         }
     };
@@ -86,30 +96,53 @@ export default function LoginPage() {
 
                     <div className="space-y-6">
                         <div className="relative group">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] pl-2 mb-3 block group-focus-within:text-slate-900 transition-colors italic">Mobile Number</label>
-                            <div className="flex gap-2">
-                                <div className="h-14 px-4 bg-slate-50 border-2 border-slate-100 rounded-2xl flex items-center font-black text-slate-400 text-sm">
+                            <label htmlFor="phone" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] pl-2 mb-3 block group-focus-within:text-slate-900 transition-colors italic">Mobile Number</label>
+                            <div className={`flex gap-2 rounded-2xl transition-all ${
+                                showInvalid
+                                    ? "ring-2 ring-red-400/60 ring-offset-2"
+                                    : "focus-within:ring-2 focus-within:ring-slate-900/70 focus-within:ring-offset-2"
+                            }`}>
+                                <div className="h-14 px-4 bg-slate-50 border-2 border-slate-100 rounded-2xl flex items-center font-black text-slate-400 text-sm select-none">
                                     +91
                                 </div>
                                 <Input
                                     name="phone"
                                     autoFocus
-                                    className="h-14 rounded-2xl text-lg font-black tracking-[0.1em] placeholder:text-slate-200"
+                                    className={`h-14 rounded-2xl text-lg font-black tracking-[0.1em] placeholder:text-slate-200 ${showInvalid ? "border-red-300 bg-red-50/40" : ""}`}
                                     placeholder="00000 00000"
                                     type="tel"
                                     inputMode="numeric"
+                                    autoComplete="tel-national"
+                                    aria-invalid={showInvalid}
+                                    aria-describedby={showInvalid ? "phone-error" : "phone-hint"}
                                     maxLength={PHONE_LENGTH}
                                     value={phone}
-                                    onChange={(e) => setPhone(sanitizePhone(e.target.value))}
-                                    onKeyDown={(e) => { if (e.key === "Enter" && isValidPhone(phone) && !loading) handleContinue(); }}
+                                    onChange={(e) => { setPhone(sanitizePhone(e.target.value)); if (error) setError(null); }}
+                                    onBlur={() => setTouched(true)}
+                                    onKeyDown={(e) => { if (e.key === "Enter" && phoneValid && !loading) handleContinue(); }}
                                 />
                             </div>
+                            {showInvalid ? (
+                                <p id="phone-error" role="alert" className="text-[11px] font-bold text-red-500 pl-2 mt-2">
+                                    Enter a valid {PHONE_LENGTH}-digit mobile number.
+                                </p>
+                            ) : (
+                                <p id="phone-hint" className="text-[11px] font-medium text-slate-300 pl-2 mt-2">
+                                    We will text you a one-time code to verify.
+                                </p>
+                            )}
                         </div>
 
                         <div className="space-y-4">
+                            {error && (
+                                <p role="alert" className="text-[11px] font-bold text-red-500 text-center bg-red-50 border border-red-100 rounded-xl py-2.5 px-4">
+                                    {error}
+                                </p>
+                            )}
                             <Button
                                 onClick={handleContinue}
-                                disabled={!isValidPhone(phone) || loading}
+                                disabled={!phoneValid || loading}
+                                aria-busy={loading}
                                 className={`w-full h-16 rounded-2xl text-base font-black tracking-widest transition-all uppercase italic shadow-xl ${
                                     loading ? "bg-slate-200 text-slate-400" : "bg-slate-900 hover:bg-black text-white shadow-slate-200 active:scale-95"
                                 }`}

@@ -50,7 +50,7 @@ export default function SendOtpPage({ params }: { params: Promise<{ lang: string
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-2 sm:p-4">
       <main className="max-w-4xl w-full bg-white rounded-[2rem] sm:rounded-[3rem] shadow-2xl overflow-hidden grid lg:grid-cols-2">
 
-        {/* Left panel — hidden on mobile */}
+        {/* Left panel, hidden on mobile */}
         <div className="hidden lg:flex relative p-12 bg-slate-900 text-white flex-col justify-between overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px]" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-500/5 rounded-full blur-[60px]" />
@@ -79,7 +79,7 @@ export default function SendOtpPage({ params }: { params: Promise<{ lang: string
           </div>
         </div>
 
-        {/* Right panel — main form */}
+        {/* Right panel, main form */}
         <div className="p-6 sm:p-12 md:p-16 flex flex-col justify-center relative bg-white">
           <button
             onClick={() => router.back()}
@@ -175,7 +175,7 @@ export default function SendOtpPage({ params }: { params: Promise<{ lang: string
           </form>
 
           <footer className="mt-12 text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 text-center lg:text-left">
-            &copy; 2026 PahariYatri — Secured by LC Auth
+            &copy; 2026 PahariYatri, Secured by LC Auth
           </footer>
         </div>
       </main>

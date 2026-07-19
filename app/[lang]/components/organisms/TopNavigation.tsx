@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { Locale } from "@/i18n-config";
@@ -26,7 +25,6 @@ export default function TopNavigation({
     const params = useParams();
     const lang = params.lang || "en";
 
-    const { totalCount } = useCart();
     const { user } = useAuth();
     const { dict } = useLocalizationContext();
 
@@ -94,19 +92,6 @@ export default function TopNavigation({
                     </div>
 
                     <div className="flex items-center gap-2 sm:gap-3">
-                        {/* 🎒 Journey / Cart Button */}
-                        <Link 
-                            href={`/${lang}/journey`}
-                            className="relative w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl sm:rounded-2xl hover:bg-slate-900/5 transition-all group active:scale-90"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={`${(transparent && !scrolled) ? "text-white" : "text-slate-400"} group-hover:text-slate-900 transition-colors pointer-events-none sm:w-[22px] sm:h-[22px]`}><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                            {totalCount > 0 && (
-                                <span className="absolute -top-1 -right-1 flex h-4 w-4 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-emerald-500 text-[8px] sm:text-[10px] font-black text-white shadow-xl ring-4 ring-white transition-transform group-hover:scale-110">
-                                    {totalCount}
-                                </span>
-                            )}
-                        </Link>
-
                         {/* 🌐 Language Selector Dropdown */}
                         {onToggleLanguage && (
                             <div className="relative">

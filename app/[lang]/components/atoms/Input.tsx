@@ -1,3 +1,5 @@
+import React from "react";
+
 type InputProps = {
   label?: string;
   name: string;
@@ -10,7 +12,10 @@ type InputProps = {
   maxLength?: number;
   inputMode?: "text" | "numeric" | "tel" | "decimal" | "email" | "search" | "url" | "none";
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-};
+} & Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "name" | "type" | "value" | "onChange" | "className" | "inputMode"
+>;
 
 export default function Input({
   label,
@@ -24,6 +29,7 @@ export default function Input({
   maxLength,
   inputMode,
   onKeyDown,
+  ...rest
 }: InputProps) {
   return (
     <div className="w-full">
@@ -47,6 +53,7 @@ export default function Input({
         maxLength={maxLength}
         inputMode={inputMode}
         className={`w-full border-2 border-slate-100/50 rounded-2xl px-5 py-4 text-slate-900 bg-slate-50/50 focus:outline-none focus:bg-white focus:border-slate-900 transition-all placeholder-slate-300 font-medium ${className}`}
+        {...rest}
       />
     </div>
   );

@@ -64,10 +64,38 @@ export default function NextStopSelector({
   const b = dict?.page?.builder?.next_stop || {};
   const [places, setPlaces] = useState<StopPlace[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+
+  // Reordering the chosen stops is how the traveller sets the day-wise position of
+  // each stop along the corridor: index 0 is the first stop after the start, and so on.
+  const moveStop = (from: number, to: number) => {
+    if (to < 0 || to >= routeStops.length || from === to) return;
+    const next = [...routeStops];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    onRouteStopsChange(next);
+  };
+
+  const removeStop = (index: number) => {
+    onRouteStopsChange(routeStops.filter((_, i) => i !== index));
+  };
+
+  const handleDrop = (target: number) => {
+    if (dragIndex !== null) moveStop(dragIndex, target);
+    setDragIndex(null);
+    setOverIndex(null);
+  };
+
+  const ordinal = (n: number) => {
+    const s = ["th", "st", "nd", "rd"];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  };
 
   // Pull the live regional catalogue and group services by the town they sit in.
   // We intentionally don't constrain by destination/category here so that the
-  // *intermediate* towns on the corridor surface — then we drop the origin and the
+  // *intermediate* towns on the corridor surface, then we drop the origin and the
   // final destinations, leaving the genuine "where do you want to stop" options.
   useEffect(() => {
     let cancelled = false;
@@ -151,6 +179,88 @@ export default function NextStopSelector({
         </div>
       </div>
 
+      {/* Day-wise order editor: drag on desktop, arrows on mobile */}
+      {selectedCount > 0 && (
+        <div className="rounded-[1.75rem] border-2 border-slate-100 bg-white p-4 sm:p-5">
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div>
+              <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">{b.order_title || "Arrange your stops"}</h3>
+              <p className="text-xs text-slate-400 font-medium mt-0.5">{b.order_subtitle || "Drag to set the order, or use the arrows. The top stop comes first on your trip."}</p>
+            </div>
+          </div>
+
+          <ol className="space-y-2">
+            {/* Fixed start */}
+            <li className="flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-slate-50">
+              <span className="w-7 h-7 flex-shrink-0 rounded-full bg-slate-900 text-white text-[10px] font-black flex items-center justify-center">A</span>
+              <span className="font-black text-slate-900 text-sm truncate">{origin || "Start"}</span>
+              <span className="ml-auto text-[9px] font-black uppercase tracking-widest text-slate-300">{b.start_label || "Start"}</span>
+            </li>
+
+            {routeStops.map((stop, i) => (
+              <li
+                key={stop}
+                draggable
+                onDragStart={() => setDragIndex(i)}
+                onDragEnter={() => setOverIndex(i)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => handleDrop(i)}
+                onDragEnd={() => { setDragIndex(null); setOverIndex(null); }}
+                className={`flex items-center gap-2 sm:gap-3 px-3 py-2.5 rounded-2xl border-2 transition-all ${
+                  dragIndex === i
+                    ? "border-emerald-500 bg-emerald-50 opacity-60"
+                    : overIndex === i && dragIndex !== null
+                    ? "border-emerald-300 bg-emerald-50/50"
+                    : "border-slate-100 bg-white hover:border-slate-200"
+                }`}
+              >
+                <span className="text-slate-300 cursor-grab active:cursor-grabbing select-none touch-none px-0.5" aria-hidden="true">⠿</span>
+                <span className="w-7 h-7 flex-shrink-0 rounded-full bg-emerald-500 text-white text-[11px] font-black flex items-center justify-center">{i + 1}</span>
+                <div className="min-w-0">
+                  <p className="font-black text-slate-900 text-sm truncate">{stop}</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">{ordinal(i + 1)} {b.stop_word || "stop"}</p>
+                </div>
+                <div className="ml-auto flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => moveStop(i, i - 1)}
+                    disabled={i === 0}
+                    aria-label={b.move_up || "Move up"}
+                    className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-25 disabled:hover:bg-transparent transition-all"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6" /></svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveStop(i, i + 1)}
+                    disabled={i === routeStops.length - 1}
+                    aria-label={b.move_down || "Move down"}
+                    className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-25 disabled:hover:bg-transparent transition-all"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeStop(i)}
+                    aria-label={b.remove || "Remove stop"}
+                    className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-300 hover:bg-red-50 hover:text-red-500 transition-all"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                  </button>
+                </div>
+              </li>
+            ))}
+
+            {/* Fixed destination */}
+            <li className="flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-slate-50">
+              <span className="w-7 h-7 flex-shrink-0 rounded-full bg-slate-900 text-white text-[10px] font-black flex items-center justify-center">B</span>
+              <span className="font-black text-slate-900 text-sm truncate">{destinationLabels.join(", ") || "Destination"}</span>
+              <span className="ml-auto text-[9px] font-black uppercase tracking-widest text-slate-300">{b.end_label || "Final"}</span>
+            </li>
+          </ol>
+        </div>
+      )}
+
       {/* Section heading + live counter */}
       <div className="flex items-end justify-between gap-3">
         <div>
@@ -178,7 +288,7 @@ export default function NextStopSelector({
         <div className="text-center py-12 rounded-[1.75rem] border-2 border-dashed border-slate-200 bg-slate-50/50">
           <div className="text-3xl mb-2">🗺️</div>
           <p className="text-slate-500 font-bold text-sm">{b.empty_title || "No stops found on this route yet."}</p>
-          <p className="text-slate-400 text-xs mt-1">{b.empty_sub || "You can continue — we'll build your plan from your destinations."}</p>
+          <p className="text-slate-400 text-xs mt-1">{b.empty_sub || "You can continue and we'll build your plan from your destinations."}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -240,7 +350,7 @@ export default function NextStopSelector({
       {/* Skip hint */}
       {!loading && (
         <p className="text-center text-[11px] font-medium text-slate-400">
-          {b.skip_hint || "Optional — you can skip and go straight to building your plan."}
+          {b.skip_hint || "Optional. You can skip and go straight to building your plan."}
         </p>
       )}
     </div>

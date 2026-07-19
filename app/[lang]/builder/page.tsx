@@ -105,7 +105,7 @@ export default function TripBuilderPage() {
       case 2: return !!localStartDate && !!localEndDate;
       case 3: return localGuestCount > 0;
       case 4: return localServicePreferences.length > 0;
-      case 5: return true; // route stops are optional — this step is about discovery
+      case 5: return true; // route stops are optional; this step is about discovery
       case 6: return true;
       default: return false;
     }
@@ -196,7 +196,7 @@ export default function TripBuilderPage() {
              <header className="mb-4 sm:mb-8">
                 <Typography variant="h1" className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight"
                    dangerouslySetInnerHTML={{ __html: builder.next_stop?.title ?? "Where do you want to <span class=\"text-emerald-500\">stop</span>?" }} />
-                <p className="text-slate-400 font-medium mt-1 text-xs sm:text-sm">{builder.next_stop?.subtitle ?? "We cover the whole route — choose stops along the way and explore services there, not just at the destination."}</p>
+                <p className="text-slate-400 font-medium mt-1 text-xs sm:text-sm">{builder.next_stop?.subtitle ?? "We cover the whole route. Choose stops along the way and explore services there, not just at the destination."}</p>
              </header>
              <NextStopSelector
                origin={localOrigin}

@@ -333,7 +333,7 @@ export default function VerifyOtpPage() {
           </Form>
 
           <footer className="mt-12 lg:mt-24 text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 text-center lg:text-left">
-            &copy; 2024 Local Connect Portal — Secured by LC Auth
+            &copy; 2024 Local Connect Portal, Secured by LC Auth
           </footer>
         </div>
       </main>

@@ -94,7 +94,7 @@ export default function PackageBuilderStep({
     }
   }, [startDate, endDate]);
 
-  // Discover across the WHOLE route — destinations plus every chosen stop — so
+  // Discover across the WHOLE route: destinations plus every chosen stop, so
   // travellers see services along the corridor, not only at the final cities.
   const discoveryDestinations = useMemo(() => {
     const seen = new Set<string>();
