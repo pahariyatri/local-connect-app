@@ -1,646 +1,749 @@
 {
-    "page": {
-        "home": {
-            "hero": {
-                "title": "Reisen <br /> wie ein Einheimischer",
-                "subtitle": "Entdecken Sie die hohen Berge durch die Augen der Legenden, die sie ihr Zuhause nennen.",
-                "cta_primary": "Planung starten, kostenlos",
-                "cta_secondary": "Beispielreise ansehen"
-            },
-            "steps": {
-                "title": "Ihr Weg zu den Gipfeln",
-                "items": [
-                    {
-                        "step": "01",
-                        "title": "Ziele eingeben",
-                        "desc": "Sagen Sie uns, wohin Ihr Herz Sie zieht."
-                    },
-                    {
-                        "step": "02",
-                        "title": "Sofortigen Plan erhalten",
-                        "desc": "Echtzeit-Preise von verifizierten lokalen Legenden."
-                    },
-                    {
-                        "step": "03",
-                        "title": "Direkt buchen",
-                        "desc": "Sicher transaktionsfähig mit Experten vor Ort."
-                    }
-                ]
-            },
-            "trust": {
-                "title": "Auf Vertrauen gebaut.",
-                "subtitle": "Warum Reisende Local Connect für ihre Bergseelen wählen.",
-                "verified": "Verifizierte lokale Legenden",
-                "verified_sub": "Persönlich geprüfte Guides und Gastgeber.",
-                "verified_vendors": "Verifizierte lokale Anbieter",
-                "escrow": "Treuhandschutz",
-                "escrow_sub": "Ihr Geld ist sicher, bis Sie vor Ort sind.",
-                "direct": "Direktbuchung",
-                "direct_sub": "Keine Zwischenhändler. Nur Sie und die Legende."
-            },
-            "sponsored": {
-                "title": "Unterstützt von lokalen Allianzen",
-                "subtitle": "Unsere Mission wird von den Hütern des Himalayas unterstützt.",
-                "vendors": ["Pahariyatri", "Gayatri Lodge", "Himalayan Trails", "Peak Guides"]
-            },
-            "destinations": {
-                "title": "Die hohen Pfade",
-                "subtitle": "Entdecken Sie unsere handverlesenen Basislager."
-            },
-            "ai_cta": {
-                "badge": "Null Planung erforderlich.",
-                "title": "Dein Weg <br /> Definiert",
-                "subtitle": "Lassen Sie unseren Intelligenten Planer in weniger als 60 Sekunden eine auf Ihre spezifische Reise-DNA zugeschnittene Reise erstellen.",
-                "cta": "Kostenlos starten",
-                "partner": "Partner-Login"
-            }
+  "page": {
+    "home": {
+      "badge": "Local Connect Netzwerk",
+      "hero": {
+        "title": "Triff die <span class=\"text-emerald-600\">echten Locals</span><br />des Himalaya",
+        "subtitle": "Verbinde dich direkt mit geprüften Guides, Gastgebern und Anbietern. Keine Pauschalreisen. Keine Agenturen. Nur echter lokaler Service.",
+        "cta_plan": "Reise planen",
+        "cta_explore": "Locals entdecken",
+        "vendor_link": "Bist du ein Local? Biete deinen Service an",
+        "social_proof": "Locals bereit zum Verbinden"
+      },
+      "stats": {
+        "providers": "Lokale Anbieter",
+        "travellers": "Zufriedene Reisende",
+        "districts": "Himalaya-Regionen",
+        "rating": "Ø Bewertung"
+      },
+      "builder": {
+        "eyebrow": "Für Reisende",
+        "title": "Plane deine Reise in <span class=\"text-emerald-600\">6 Schritten</span>",
+        "subtitle": "Sag uns deine Route, Daten und Interessen — wir bringen dich entlang der gesamten Strecke mit geprüften Locals zusammen und machen daraus ein buchbares Paket.",
+        "steps": [
+          {
+            "label": "Route",
+            "desc": "Start & Ziele"
+          },
+          {
+            "label": "Daten",
+            "desc": "Wann du reist"
+          },
+          {
+            "label": "Gruppe",
+            "desc": "Wer mitkommt"
+          },
+          {
+            "label": "Interessen",
+            "desc": "Was du magst"
+          },
+          {
+            "label": "Stopps",
+            "desc": "Unterwegs"
+          },
+          {
+            "label": "Paket",
+            "desc": "Bereit zum Buchen"
+          }
+        ],
+        "cta": "Kostenlos starten",
+        "note": "Keine Anmeldung nötig · ca. 2 Min."
+      },
+      "categories": {
+        "title": "Nach Kategorie stöbern",
+        "items": {
+          "guides": "Guides",
+          "homestays": "Unterkünfte",
+          "transport": "Transport",
+          "food": "Food-Touren",
+          "camping": "Camping",
+          "wellness": "Wellness",
+          "photography": "Fotografie",
+          "adventures": "Abenteuer"
+        }
+      },
+      "providers": {
+        "eyebrow": "Geprüfte Locals",
+        "title": "Menschen, keine Pakete",
+        "view_all": "Alle ansehen",
+        "connect": "Verbinden"
+      },
+      "how": {
+        "eyebrow": "Einfacher Ablauf",
+        "title": "So funktioniert Local Connect",
+        "steps": [
+          {
+            "title": "Locals durchsuchen",
+            "desc": "Finde geprüfte Guides, Gastgeber und Anbieter in der Nähe deines Ziels."
+          },
+          {
+            "title": "Direkt chatten",
+            "desc": "Schreibe Anbietern in Echtzeit — keine Zwischenhändler, keine Callcenter."
+          },
+          {
+            "title": "Buchen & los",
+            "desc": "Zahle sicher per Treuhand. Dein Geld wird erst nach dem Service freigegeben."
+          }
+        ],
+        "step_label": "Schritt"
+      },
+      "join": {
+        "badge": "Bist du ein Local?",
+        "title": "Steigere dein Einkommen.<br /><span class=\"text-emerald-50\">Werde Teil des Netzwerks.</span>",
+        "subtitle": "Biete deinen Service an — kostenlos. Werde von Tausenden Reisenden entdeckt, die echte, lokale Erlebnisse suchen.",
+        "cta_join": "Kostenlos beitreten",
+        "cta_learn": "Mehr erfahren",
+        "note": "Kostenloses Inserat · Keine Provision auf die ersten 3 Buchungen · Jederzeit kündbar"
+      },
+      "trust": {
+        "verified": "Geprüfte Anbieter",
+        "escrow": "Treuhand-Zahlungen",
+        "messaging": "Direkte Nachrichten",
+        "reviews": "Bewertete Rezensionen"
+      }
+    },
+    "discover": {
+      "title": "Entdecken",
+      "header": {
+        "title": "Lokale <span class=\"text-emerald-500\">Legenden</span>.",
+        "subtitle": "Verifizierte Experten des Himachal-Geländes."
+      },
+      "categories": {
+        "all": "Alle",
+        "stay": "Unterkunft",
+        "taxi": "Taxi",
+        "adventure": "Abenteuer",
+        "meals": "Mahlzeiten"
+      },
+      "vendor_card": {
+        "rating": "Bewertung",
+        "reviews": "Bewertungen",
+        "starts_from": "Ab",
+        "verified": "🛡️ Verifiziert"
+      },
+      "partner_cta": {
+        "title": "Sind Sie ein lokaler Experte?",
+        "subtitle": "Schließen Sie sich über 500 Legenden an und erweitern Sie Ihr Geschäft",
+        "cta": "Jetzt anmelden"
+      }
+    },
+    "onboarding": {
+      "title": "Profil einrichten",
+      "role": {
+        "title": "Willkommen in der Gemeinschaft",
+        "subtitle": "Wie wirst du heute die Berge erkunden?",
+        "traveler": "Reisender",
+        "traveler_sub": "Entdecke & buche einzigartige Erlebnisse.",
+        "vendor": "Lokale Legende",
+        "vendor_sub": "Verkaufe deine Aufenthalte, Touren oder Dienstleistungen.",
+        "broker": "Reisevermittler",
+        "broker_sub": "Kuratiere Reisen für andere & verdiene Geld."
+      },
+      "details": {
+        "title": "Profildetails",
+        "subtitle": "Nur noch wenige Schritte, um deine Identität zu verifizieren.",
+        "business": "Firmenname / Handle",
+        "id_proof": "Identitätsnachweis (Personalausweis)",
+        "id_sub": "Lade einen klaren Scan zur Verifizierung hoch",
+        "bank_name": "Bankname",
+        "account_number": "Kontonummer",
+        "ifsc": "IFSC / IBAN-Code",
+        "upi": "UPI-ID (Optional)",
+        "payment_title": "Zahlungsabwicklung",
+        "payment_sub": "Wohind sollen wir deine Einnahmen senden?"
+      }
+    },
+    "vendor_onboarding": {
+      "prep": {
+        "title": "Werde eine <br /> <span class=\"text-slate-500 font-medium not-italic capitalize tracking-normal text-2xl\">Lokale Legende</span>",
+        "subtitle": "Deine Reise zur globalen Meisterschaft in der Gastfreundschaft beginnt hier. Erstelle dein Profil in 3 einfachen Phasen.",
+        "steps": [
+          {
+            "label": "Business Bio",
+            "desc": "Kategorie & Spezialisierung",
+            "icon": "🏢"
+          },
+          {
+            "label": "Verifizierung",
+            "desc": "Identität & Geschäftsnachweise",
+            "icon": "🛡️"
+          },
+          {
+            "label": "Betrieb",
+            "desc": "Auszahlungen & Logistik",
+            "icon": "⚙️"
+          }
+        ],
+        "cta": "Setup starten",
+        "back": "← Zum Hub zurückkehren"
+      },
+      "business": {
+        "title": "Unternehmensprofil",
+        "subtitle": "Initialisieren Sie Ihre Geschäftseinheit in unserem lokalen Ökosystem.",
+        "fields": {
+          "name": "Handelsname",
+          "category": "Hauptvertikale",
+          "subcategory": "Spezialisierung",
+          "ownership": "Rechtliche Eigentumsform"
         },
-        "discover": {
-            "title": "Entdecken",
-            "header": {
-                "title": "Lokale <span class=\"text-emerald-500\">Legenden</span>.",
-                "subtitle": "Verifizierte Experten des Himachal-Geländes."
-            },
-            "categories": {
-                "all": "Alle",
-                "stay": "Unterkunft",
-                "taxi": "Taxi",
-                "adventure": "Abenteuer",
-                "meals": "Mahlzeiten"
-            },
-            "vendor_card": {
-                "rating": "Bewertung",
-                "reviews": "Bewertungen",
-                "starts_from": "Ab",
-                "verified": "🛡️ Verifiziert"
-            },
-            "partner_cta": {
-                "title": "Sind Sie ein lokaler Experte?",
-                "subtitle": "Schließen Sie sich über 500 Legenden an und erweitern Sie Ihr Geschäft",
-                "cta": "Jetzt anmelden"
-            }
+        "cta": "Weiter zur Logistik"
+      },
+      "address": {
+        "title": "Basisstandort",
+        "subtitle": "Wo befindet sich Ihr Hauptsitz?",
+        "fields": {
+          "address": "Betriebsadresse",
+          "city": "Stadt",
+          "state": "Bundesland/Region",
+          "pincode": "Postleitzahl"
         },
-        "onboarding": {
-            "title": "Profil einrichten",
-            "role": {
-                "title": "Willkommen in der Gemeinschaft",
-                "subtitle": "Wie wirst du heute die Berge erkunden?",
-                "traveler": "Reisender",
-                "traveler_sub": "Entdecke & buche einzigartige Erlebnisse.",
-                "vendor": "Lokale Legende",
-                "vendor_sub": "Verkaufe deine Aufenthalte, Touren oder Dienstleistungen.",
-                "broker": "Reisevermittler",
-                "broker_sub": "Kuratiere Reisen für andere & verdiene Geld."
-            },
-            "details": {
-                "title": "Profildetails",
-                "subtitle": "Nur noch wenige Schritte, um deine Identität zu verifizieren.",
-                "business": "Firmenname / Handle",
-                "id_proof": "Identitätsnachweis (Personalausweis)",
-                "id_sub": "Lade einen klaren Scan zur Verifizierung hoch",
-                "bank_name": "Bankname",
-                "account_number": "Kontonummer",
-                "ifsc": "IFSC / IBAN-Code",
-                "upi": "UPI-ID (Optional)",
-                "payment_title": "Zahlungsabwicklung",
-                "payment_sub": "Wohind sollen wir deine Einnahmen senden?"
-            }
+        "placeholders": {
+          "address": "Hausnummer, Straße, Wahrzeichen",
+          "city": "z.B. Manali",
+          "state": "HP",
+          "pincode": "175131"
         },
-        "vendor_onboarding": {
-            "prep": {
-                "title": "Werde eine <br /> <span class=\"text-slate-500 font-medium not-italic capitalize tracking-normal text-2xl\">Lokale Legende</span>",
-                "subtitle": "Deine Reise zur globalen Meisterschaft in der Gastfreundschaft beginnt hier. Erstelle dein Profil in 3 einfachen Phasen.",
-                "steps": [
-                    { "label": "Business Bio", "desc": "Kategorie & Spezialisierung", "icon": "🏢" },
-                    { "label": "Verifizierung", "desc": "Identität & Geschäftsnachweise", "icon": "🛡️" },
-                    { "label": "Betrieb", "desc": "Auszahlungen & Logistik", "icon": "⚙️" }
-                ],
-                "cta": "Setup starten",
-                "back": "← Zum Hub zurückkehren"
-            },
-            "business": {
-                "title": "Unternehmensprofil",
-                "subtitle": "Initialisieren Sie Ihre Geschäftseinheit in unserem lokalen Ökosystem.",
-                "fields": {
-                    "name": "Handelsname",
-                    "category": "Hauptvertikale",
-                    "subcategory": "Spezialisierung",
-                    "ownership": "Rechtliche Eigentumsform"
-                },
-                "cta": "Weiter zur Logistik"
-            },
-            "address": {
-                "title": "Basisstandort",
-                "subtitle": "Wo befindet sich Ihr Hauptsitz?",
-                "fields": {
-                    "address": "Betriebsadresse",
-                    "city": "Stadt",
-                    "state": "Bundesland/Region",
-                    "pincode": "Postleitzahl"
-                },
-                "placeholders": {
-                    "address": "Hausnummer, Straße, Wahrzeichen",
-                    "city": "z.B. Manali",
-                    "state": "HP",
-                    "pincode": "175131"
-                },
-                "cta": "Verifizieren & Weiter"
-            },
-            "verification": {
-                "title": "Verifizierungs-Hub",
-                "subtitle": "Laden Sie Ihre offiziellen Dokumente hoch.",
-                "steps": {
-                    "identity": { "title": "Ausweisnachweis", "sub": "Aadhar / Reisepass" },
-                    "ownership": { "title": "Eigentum", "sub": "Mietvertrag / Urkunde" }
-                },
-                "trust": {
-                    "title": "Vertrauensverifizierung",
-                    "subtitle": "24-48 Stunden Überprüfungsmatrix"
-                },
-                "cta": "Hochladen & Abschließen"
-            },
-            "services_list": {
-                "title": "Service-Portfolio",
-                "subtitle": "Verifizierte Bergerlebnisse & lokale Legenden",
-                "add_button": "NEUEN SERVICE LISTEN",
-                "trust_engine": {
-                    "title": "Vertrauens-Engine aktiv",
-                    "desc": "Manuelle Verifizierung für alle neuen Listungen erforderlich, um Elite-Qualität zu gewährleisten."
-                },
-                "filters": {
-                    "all": "Alle Services",
-                    "stays": "Aufenthalte",
-                    "navigation": "Navigation",
-                    "adventure": "Abenteuer",
-                    "dining": "Gastronomie"
-                },
-                "card": {
-                    "verified": "Verifiziert",
-                    "pending": "Ausstehend",
-                    "market_price": "Marktpreis",
-                    "net_payout": "Netto-Auszahlung",
-                    "preview": "VORSCHAU",
-                    "edit": "BEARBEITEN"
-                },
-                "empty_state": {
-                    "title": "Keine Services gefunden",
-                    "desc": "Starten Sie Ihr Berggeschäft, indem Sie oben Ihren ersten Service hinzufügen."
-                }
-            },
-            "guest_assists": {
-                "title": "Gäste-Assists",
-                "subtitle": "Koordinieren Sie Ihre bevorstehenden legendären Bergerlebnisse.",
-                "stats": {
-                    "total_rev": "Gesamtumsatz",
-                    "active": "Aktiv"
-                },
-                "card": {
-                    "id": "ID",
-                    "guest": "Gast",
-                    "date": "Datum",
-                    "earnings": "Verdienst",
-                    "accept": "AKZEPTIEREN",
-                    "decline": "ABLEHNEN",
-                    "details": "DETAILS ANSEHEN"
-                }
-            },
-            "confirmation": {
-                "title": "Protokoll initialisiert",
-                "subtitle": "Ihre Anbieteranfrage ist in den Verifizierungsstream eingetreten.",
-                "pipeline": {
-                    "step1": { "title": "Einreichung erhalten", "sub": "Warten auf ersten Handshake." },
-                    "step2": { "title": "Compliance-Scan", "sub": "Validierung der rechtlichen Dokumentation." },
-                    "step3": { "title": "Dashboard-Zugriff", "sub": "Vollständige Terminal-Aktivierung." }
-                },
-                "cta": "Command Center betreten",
-                "support": "Benötigen Sie Hilfe?",
-                "contact": "Support kontaktieren"
-            },
-            "layout": {
-                "back": "Zurück zum Vorherigen",
-                "steps": {
-                    "business": "Geschäft",
-                    "address": "Adresse",
-                    "docs": "Dokumente",
-                    "review": "Überprüfung"
-                }
-            }
+        "cta": "Verifizieren & Weiter"
+      },
+      "verification": {
+        "title": "Verifizierungs-Hub",
+        "subtitle": "Laden Sie Ihre offiziellen Dokumente hoch.",
+        "steps": {
+          "identity": {
+            "title": "Ausweisnachweis",
+            "sub": "Aadhar / Reisepass"
+          },
+          "ownership": {
+            "title": "Eigentum",
+            "sub": "Mietvertrag / Urkunde"
+          }
         },
-        "results": {
-            "title": "Dein Legenden-Pfad",
-            "access_badge": "GEHEIMGRUPPEN-ZUGANG 🤫",
-            "subtitle": "Erstellt für deine {duration}-tägige Seelenreise. Mit handverlesenen lokalen Legenden.",
-            "guest_count": "Anzahl der Personen",
-            "guest_count_placeholder": "Wie viele Reisende?",
-            "sharing": {
-                "button": "REISE TEILEN",
-                "success": "Link kopiert! Teile die Magie.",
-                "title": "Mein Himachal Roadtrip",
-                "text": "Schau dir diese tolle Reise an, die ich auf Local Connect geplant habe!"
-            },
-            "itinerary": {
-                "day": "Tag {day}",
-                "add_stop": "+ Schneller Stopp",
-                "explore_more": "Erkunde Anbieter &quot;auf dem Weg&quot;...",
-                "near_origin": "Lade mehr Dhabas & Abenteuerspots in der Nähe von {origin}"
-            },
-            "footer": {
-                "total": "Geschätzter Gesamtpreis",
-                "escrow": "TREUHANDGESCHÜTZT",
-                "book_now": "JETZT BUCHEN"
-            }
+        "trust": {
+          "title": "Vertrauensverifizierung",
+          "subtitle": "24-48 Stunden Überprüfungsmatrix"
         },
-        "about": {
-            "title": "Über uns",
-            "hero": {
-                "title": "Lokale <span class=\"text-emerald-400\">Legenden</span>.",
-                "subtitle": "Wir stärken die Menschen, die dafür sorgen, dass sich die Berge wie ein Zuhause anfühlen."
-            },
-            "mission": {
-                "title": "Unsere Mission",
-                "text": "Local Connect wurde im Herzen des Himalayas geboren. Wir sahen eine Lücke zwischen der unermesslichen Schönheit unserer Kultur und den digitalen Tools, die den Menschen zur Verfügung stehen, die sie bewahren.<br /><br />Unsere Plattform ist nicht nur eine Buchungsmaschine; sie ist eine Brücke. Wir vertreten die Homestay-Besitzer, die Bergführer und die Abenteuerspezialisten, die die wahren Kuratoren des Bergerlebnisses sind."
-            },
-            "markets": {
-                "title": "Wichtigste internationale Quellmärkte",
-                "groups": [
-                    {
-                        "flags": "🇺🇸 🇬🇧 🇩🇪",
-                        "name": "USA, UK & Deutschland",
-                        "text": "Diese Regionen repräsentieren traditionell die größten Segmente der ausländischen Ankünfte."
-                    },
-                    {
-                        "flags": "🇮🇱",
-                        "name": "Israel",
-                        "text": "Historisch gesehen besucht eine sehr hohe Zahl israelischer Touristen Regionen wie Kasol und Dharamshala."
-                    }
-                ]
-            },
-            "features": {
-                "local": "Von Einheimischen verfasst",
-                "local_sub": "Jede Route ist menschlich verifiziert",
-                "trust": "Vertrauen als Kern",
-                "trust_sub": "Direkt-zu-Anbieter Treuhandsystem"
-            },
-            "cta": {
-                "title": "Mach mit",
-                "subtitle": "Egal, ob du ein Reisender oder eine Legende bist, hier ist ein Platz für dich.",
-                "build": "REISE ERSTELLEN",
-                "vendor": "ANBIETER WERDEN"
-            }
+        "cta": "Hochladen & Abschließen"
+      },
+      "services_list": {
+        "title": "Service-Portfolio",
+        "subtitle": "Verifizierte Bergerlebnisse & lokale Legenden",
+        "add_button": "NEUEN SERVICE LISTEN",
+        "trust_engine": {
+          "title": "Vertrauens-Engine aktiv",
+          "desc": "Manuelle Verifizierung für alle neuen Listungen erforderlich, um Elite-Qualität zu gewährleisten."
         },
-        "builder": {
-            "title": "Legenden-Planer",
-            "loading_title": "Pfad wird kartiert",
-            "step1": {
-                "title": "Wohin führt deine <span class=\"text-indigo-600\">Geschichte</span>?",
-                "subtitle": "Beginne mit einem Startpunkt und wähle deine Traumstopps.",
-                "route_title": "Startpunkt",
-                "origin_placeholder": "Wo beginnen Sie? (z.B. Delhi)",
-                "explore_title": "Ziele zum Erkunden",
-                "explore_subtitle": "Wähle bis zu {max} Stopps auf deinem Weg"
-            },
-            "step2": {
-                "title": "Wann <span class=\"text-amber-500\">brechen</span> wir auf?",
-                "subtitle": "Echtzeit-Verfügbarkeit wird für Sie geprüft."
-            },
-            "step5": {
-                "title": "Baue dein <span class=\"text-emerald-600\">Paket</span>",
-                "subtitle": "Wähle Anbieter für jeden Tag. Teilen oder buchen, wenn fertig."
-            },
-            "interests": {
-                "title": "Wonach <span class=\"text-rose-500\">sehnst</span> du dich?",
-                "subtitle": "Wähle die Erlebnisse aus, die du einbeziehen möchtest.",
-                "stay": "Einzigartige Aufenthalte",
-                "activity": "Abenteuer",
-                "travel": "Lokaler Transport",
-                "food": "Kulinarik"
-            },
-            "traveling_party": {
-                "title": "Die <span class=\"text-emerald-500\">Reisegesellschaft</span>.",
-                "subtitle": "Wie viele Seelen schließen sich dieser Reise an?",
-                "pax": "Reisende",
-                "pax_sub": "Dies hilft uns bei der Berechnung von Zimmern und Fahrzeugen.",
-                "stay_label": "Art der Unterkunft",
-                "transport_label": "Transport",
-                "room": "Zimmer",
-                "rooms": "Zimmer",
-                "single": "Einzelbelegung",
-                "twin": "Doppelzimmer-Basis",
-                "stays": {
-                    "tier1": "Boutique-Aufenthalt",
-                    "sub1": "Gemütlich & Lokal",
-                    "tier2": "Premium-Zimmer",
-                    "sub2": "Zufluchtsort für Paare",
-                    "tier3": "Private Villa",
-                    "sub3": "Exklusiver Gruppenflügel",
-                    "tier4": "Grand Resort",
-                    "sub4": "Sammlung von Meister-Aufenthalten"
-                },
-                "vehicles": {
-                    "bike": "Adventure-Bike",
-                    "bike_sub": "Solo-Reise",
-                    "sedan": "Premium-Limousine",
-                    "sedan_sub": "Komfort für Paare",
-                    "suv": "Premium-SUV",
-                    "suv_sub": "Gruppennutzen",
-                    "tempo": "Tempo-Traveler",
-                    "tempo_sub": "Executive-Transit",
-                    "fullbus": "Reisebus",
-                    "fullbus_sub": "Elite-Gruppenreise"
-                }
-            },
-            "buttons": {
-                "back": "Zurück",
-                "continue": "WEITER",
-                "seePlan": "MEINEN PLAN ANSEHEN",
-                "createPackage": "Mein Paket erstellen",
-                "building": "BAUE REISE..."
-            },
-            "loading": {
-                "title": "Fast da...",
-                "step1": "Route verifiziert",
-                "step1_sub": "Optimaler Pfad gewählt",
-                "step2": "Anbieter geprüft",
-                "step2_sub": "Verfügbarkeit bestätigt"
-            },
-            "promise": {
-                "title": "Unser Versprechen",
-                "subtitle": "Von Einheimischen gebaut, von dir vertraut.",
-                "verified": "100% verifizierte Anbieter",
-                "support": "24/7 Reise-Support",
-                "price": "Bestpreis-Garantie"
-            }
+        "filters": {
+          "all": "Alle Services",
+          "stays": "Aufenthalte",
+          "navigation": "Navigation",
+          "adventure": "Abenteuer",
+          "dining": "Gastronomie"
         },
-        "common": {
-            "actions": {
-                "login": "Anmelden",
-                "register": "Hub beitreten",
-                "search_placeholder": "Gipfel suchen...",
-                "back_to_hub": "← Zum Hub zurückkehren",
-                "explore": "Entdecken",
-                "wishlist": "Wunschliste",
-                "ai_guide": "KI-Guide",
-                "bookings": "Buchungen",
-                "profile": "Profil",
-                "settings": "Einstellungen",
-                "broker_hub": "Makler-Hub",
-                "assisted": "Unterstützt",
-                "earnings": "Provisionen",
-                "admin_hub": "Admin-Bereich",
-                "queue": "Warteschlange",
-                "disputes": "Konflikte",
-                "stats": "Statistiken"
-            },
-            "date_picker": {
-                "quick_select": "Schnellauswahl",
-                "today": "Heute",
-                "this_weekend": "Dieses Wochenende",
-                "next_weekend": "Nächstes Wochenende",
-                "fri_sun": "Fr - So",
-                "custom": "ODER DATUM WÄHLEN",
-                "check_in": "Check-in",
-                "check_out": "Check-out",
-                "nights": "Nächte",
-                "manual_selection": "Manuelle Auswahl",
-                "trip_timeline": "Zeitplan der Reise",
-                "arriving": "Ankunft",
-                "leaving": "Abreise"
-            },
-            "notifications": {
-                "added": "{category} zu Tag {day} hinzugefügt",
-                "removed": "{category} entfernt. Entdecke bessere Alternativen...",
-                "exploring": "Entdecke weitere {category}-Optionen...",
-                "booking_request": "Exklusive Secret Group Raten für {name} anfragen...",
-                "booking_success": "Buchung bestätigt! Überprüfen Sie den Tab 'Reise' für Details."
-            },
-            "errors": {
-                "title": "Etwas ist schief gelaufen!",
-                "subtitle": "Hoppla, bei der Bearbeitung Ihrer Anfrage ist ein Fehler aufgetreten. Bitte versuchen Sie es später noch einmal.",
-                "details": "Fehlerdetails:",
-                "retry": "Nochmal versuchen"
-            }
+        "card": {
+          "verified": "Verifiziert",
+          "pending": "Ausstehend",
+          "market_price": "Marktpreis",
+          "net_payout": "Netto-Auszahlung",
+          "preview": "VORSCHAU",
+          "edit": "BEARBEITEN"
+        },
+        "empty_state": {
+          "title": "Keine Services gefunden",
+          "desc": "Starten Sie Ihr Berggeschäft, indem Sie oben Ihren ersten Service hinzufügen."
+        }
+      },
+      "guest_assists": {
+        "title": "Gäste-Assists",
+        "subtitle": "Koordinieren Sie Ihre bevorstehenden legendären Bergerlebnisse.",
+        "stats": {
+          "total_rev": "Gesamtumsatz",
+          "active": "Aktiv"
+        },
+        "card": {
+          "id": "ID",
+          "guest": "Gast",
+          "date": "Datum",
+          "earnings": "Verdienst",
+          "accept": "AKZEPTIEREN",
+          "decline": "ABLEHNEN",
+          "details": "DETAILS ANSEHEN"
+        }
+      },
+      "confirmation": {
+        "title": "Protokoll initialisiert",
+        "subtitle": "Ihre Anbieteranfrage ist in den Verifizierungsstream eingetreten.",
+        "pipeline": {
+          "step1": {
+            "title": "Einreichung erhalten",
+            "sub": "Warten auf ersten Handshake."
+          },
+          "step2": {
+            "title": "Compliance-Scan",
+            "sub": "Validierung der rechtlichen Dokumentation."
+          },
+          "step3": {
+            "title": "Dashboard-Zugriff",
+            "sub": "Vollständige Terminal-Aktivierung."
+          }
+        },
+        "cta": "Command Center betreten",
+        "support": "Benötigen Sie Hilfe?",
+        "contact": "Support kontaktieren"
+      },
+      "layout": {
+        "back": "Zurück zum Vorherigen",
+        "steps": {
+          "business": "Geschäft",
+          "address": "Adresse",
+          "docs": "Dokumente",
+          "review": "Überprüfung"
+        }
+      }
+    },
+    "results": {
+      "title": "Dein Legenden-Pfad",
+      "access_badge": "GEHEIMGRUPPEN-ZUGANG 🤫",
+      "subtitle": "Erstellt für deine {duration}-tägige Seelenreise. Mit handverlesenen lokalen Legenden.",
+      "guest_count": "Anzahl der Personen",
+      "guest_count_placeholder": "Wie viele Reisende?",
+      "sharing": {
+        "button": "REISE TEILEN",
+        "success": "Link kopiert! Teile die Magie.",
+        "title": "Mein Himachal Roadtrip",
+        "text": "Schau dir diese tolle Reise an, die ich auf Local Connect geplant habe!"
+      },
+      "itinerary": {
+        "day": "Tag {day}",
+        "add_stop": "+ Schneller Stopp",
+        "explore_more": "Erkunde Anbieter &quot;auf dem Weg&quot;...",
+        "near_origin": "Lade mehr Dhabas & Abenteuerspots in der Nähe von {origin}"
+      },
+      "footer": {
+        "total": "Geschätzter Gesamtpreis",
+        "escrow": "TREUHANDGESCHÜTZT",
+        "book_now": "JETZT BUCHEN"
+      }
+    },
+    "about": {
+      "title": "Über uns",
+      "hero": {
+        "title": "Lokale <span class=\"text-emerald-400\">Legenden</span>.",
+        "subtitle": "Wir stärken die Menschen, die dafür sorgen, dass sich die Berge wie ein Zuhause anfühlen."
+      },
+      "mission": {
+        "title": "Unsere Mission",
+        "text": "Local Connect wurde im Herzen des Himalayas geboren. Wir sahen eine Lücke zwischen der unermesslichen Schönheit unserer Kultur und den digitalen Tools, die den Menschen zur Verfügung stehen, die sie bewahren.<br /><br />Unsere Plattform ist nicht nur eine Buchungsmaschine; sie ist eine Brücke. Wir vertreten die Homestay-Besitzer, die Bergführer und die Abenteuerspezialisten, die die wahren Kuratoren des Bergerlebnisses sind."
+      },
+      "markets": {
+        "title": "Wichtigste internationale Quellmärkte",
+        "groups": [
+          {
+            "flags": "🇺🇸 🇬🇧 🇩🇪",
+            "name": "USA, UK & Deutschland",
+            "text": "Diese Regionen repräsentieren traditionell die größten Segmente der ausländischen Ankünfte."
+          },
+          {
+            "flags": "🇮🇱",
+            "name": "Israel",
+            "text": "Historisch gesehen besucht eine sehr hohe Zahl israelischer Touristen Regionen wie Kasol und Dharamshala."
+          }
+        ]
+      },
+      "features": {
+        "local": "Von Einheimischen verfasst",
+        "local_sub": "Jede Route ist menschlich verifiziert",
+        "trust": "Vertrauen als Kern",
+        "trust_sub": "Direkt-zu-Anbieter Treuhandsystem"
+      },
+      "cta": {
+        "title": "Mach mit",
+        "subtitle": "Egal, ob du ein Reisender oder eine Legende bist, hier ist ein Platz für dich.",
+        "build": "REISE ERSTELLEN",
+        "vendor": "ANBIETER WERDEN"
+      }
+    },
+    "builder": {
+      "title": "Legenden-Planer",
+      "loading_title": "Pfad wird kartiert",
+      "step1": {
+        "title": "Wohin führt deine <span class=\"text-indigo-600\">Geschichte</span>?",
+        "subtitle": "Beginne mit einem Startpunkt und wähle deine Traumstopps.",
+        "route_title": "Startpunkt",
+        "origin_placeholder": "Wo beginnen Sie? (z.B. Delhi)",
+        "explore_title": "Ziele zum Erkunden",
+        "explore_subtitle": "Wähle bis zu {max} Stopps auf deinem Weg"
+      },
+      "step2": {
+        "title": "Wann <span class=\"text-amber-500\">brechen</span> wir auf?",
+        "subtitle": "Echtzeit-Verfügbarkeit wird für Sie geprüft."
+      },
+      "step5": {
+        "title": "Baue dein <span class=\"text-emerald-600\">Paket</span>",
+        "subtitle": "Wähle Anbieter für jeden Tag. Teilen oder buchen, wenn fertig."
+      },
+      "interests": {
+        "title": "Wonach <span class=\"text-rose-500\">sehnst</span> du dich?",
+        "subtitle": "Wähle die Erlebnisse aus, die du einbeziehen möchtest.",
+        "stay": "Einzigartige Aufenthalte",
+        "activity": "Abenteuer",
+        "travel": "Lokaler Transport",
+        "food": "Kulinarik"
+      },
+      "traveling_party": {
+        "title": "Die <span class=\"text-emerald-500\">Reisegesellschaft</span>.",
+        "subtitle": "Wie viele Seelen schließen sich dieser Reise an?",
+        "pax": "Reisende",
+        "pax_sub": "Dies hilft uns bei der Berechnung von Zimmern und Fahrzeugen.",
+        "stay_label": "Art der Unterkunft",
+        "transport_label": "Transport",
+        "room": "Zimmer",
+        "rooms": "Zimmer",
+        "single": "Einzelbelegung",
+        "twin": "Doppelzimmer-Basis",
+        "stays": {
+          "tier1": "Boutique-Aufenthalt",
+          "sub1": "Gemütlich & Lokal",
+          "tier2": "Premium-Zimmer",
+          "sub2": "Zufluchtsort für Paare",
+          "tier3": "Private Villa",
+          "sub3": "Exklusiver Gruppenflügel",
+          "tier4": "Grand Resort",
+          "sub4": "Sammlung von Meister-Aufenthalten"
+        },
+        "vehicles": {
+          "bike": "Adventure-Bike",
+          "bike_sub": "Solo-Reise",
+          "sedan": "Premium-Limousine",
+          "sedan_sub": "Komfort für Paare",
+          "suv": "Premium-SUV",
+          "suv_sub": "Gruppennutzen",
+          "tempo": "Tempo-Traveler",
+          "tempo_sub": "Executive-Transit",
+          "fullbus": "Reisebus",
+          "fullbus_sub": "Elite-Gruppenreise"
+        }
+      },
+      "buttons": {
+        "back": "Zurück",
+        "continue": "WEITER",
+        "seePlan": "MEINEN PLAN ANSEHEN",
+        "createPackage": "Mein Paket erstellen",
+        "building": "BAUE REISE..."
+      },
+      "loading": {
+        "title": "Fast da...",
+        "step1": "Route verifiziert",
+        "step1_sub": "Optimaler Pfad gewählt",
+        "step2": "Anbieter geprüft",
+        "step2_sub": "Verfügbarkeit bestätigt"
+      },
+      "promise": {
+        "title": "Unser Versprechen",
+        "subtitle": "Von Einheimischen gebaut, von dir vertraut.",
+        "verified": "100% verifizierte Anbieter",
+        "support": "24/7 Reise-Support",
+        "price": "Bestpreis-Garantie"
+      }
+    },
+    "common": {
+      "actions": {
+        "login": "Anmelden",
+        "register": "Hub beitreten",
+        "search_placeholder": "Gipfel suchen...",
+        "back_to_hub": "← Zum Hub zurückkehren",
+        "explore": "Entdecken",
+        "wishlist": "Wunschliste",
+        "ai_guide": "KI-Guide",
+        "bookings": "Buchungen",
+        "profile": "Profil",
+        "settings": "Einstellungen",
+        "broker_hub": "Makler-Hub",
+        "assisted": "Unterstützt",
+        "earnings": "Provisionen",
+        "admin_hub": "Admin-Bereich",
+        "queue": "Warteschlange",
+        "disputes": "Konflikte",
+        "stats": "Statistiken"
+      },
+      "date_picker": {
+        "quick_select": "Schnellauswahl",
+        "today": "Heute",
+        "this_weekend": "Dieses Wochenende",
+        "next_weekend": "Nächstes Wochenende",
+        "fri_sun": "Fr - So",
+        "custom": "ODER DATUM WÄHLEN",
+        "check_in": "Check-in",
+        "check_out": "Check-out",
+        "nights": "Nächte",
+        "manual_selection": "Manuelle Auswahl",
+        "trip_timeline": "Zeitplan der Reise",
+        "arriving": "Ankunft",
+        "leaving": "Abreise"
+      },
+      "notifications": {
+        "added": "{category} zu Tag {day} hinzugefügt",
+        "removed": "{category} entfernt. Entdecke bessere Alternativen...",
+        "exploring": "Entdecke weitere {category}-Optionen...",
+        "booking_request": "Exklusive Secret Group Raten für {name} anfragen...",
+        "booking_success": "Buchung bestätigt! Überprüfen Sie den Tab 'Reise' für Details."
+      },
+      "errors": {
+        "title": "Etwas ist schief gelaufen!",
+        "subtitle": "Hoppla, bei der Bearbeitung Ihrer Anfrage ist ein Fehler aufgetreten. Bitte versuchen Sie es später noch einmal.",
+        "details": "Fehlerdetails:",
+        "retry": "Nochmal versuchen"
+      }
+    },
+    "bookings": {
+      "title": "Deine Buchungen",
+      "subtitle": "{count} epische Erlebnisse werden verfolgt",
+      "booking_id": "Buchungs-ID",
+      "dates_label": "Reisedaten",
+      "paid_label": "Gesamt bezahlt",
+      "cta_title": "Bereit für mehr?",
+      "cta_subtitle": "Erstelle einen neuen benutzerdefinierten Pfad durch die Berge",
+      "cta_button": "NEUEN BUILD STARTEN 🏔️",
+      "status": {
+        "confirmed": "Bestätigt",
+        "pending": "Ausstehend",
+        "completed": "Abgeschlossen"
+      }
+    },
+    "journey": {
+      "title": "Reisearchitekt",
+      "badge": "Roadtrip",
+      "shared_title": "Community-Reise",
+      "crafted_by": "Erstellt von",
+      "remix": "Diese Reise für mich remixen",
+      "add_day": "+ Tag hinzufügen",
+      "ai_insight": "Yatri AI Einblick",
+      "ai_tip": "Viel Verkehr erwartet. 45 Min. früher starten!",
+      "day_label": "Tag {day}",
+      "schedule": "Zeitplan für Tag {day}",
+      "quick_add": "+ Schneller Stopp",
+      "empty": "Nichts für heute geplant",
+      "empty_sub": "Fügen Sie einen Dhaba-Besuch oder einen lokalen Aufenthalt hinzu",
+      "add_first": "Ersten Stopp hinzufügen",
+      "book_expert": "Lokalen Experten buchen →",
+      "broker_rec": "Vom Broker empfohlen",
+      "hire": "Mieten",
+      "total_trip": "Gesamtreise",
+      "request_booking": "Buchung anfragen",
+      "requesting": "Anfrage läuft...",
+      "published": "Reise veröffentlicht!",
+      "published_sub": "Ihre Reise wurde gespeichert und geteilt.",
+      "view_trips": "Meine Reisen ansehen",
+      "copy_link": "Share-Link kopieren 🔗",
+      "add_stop_modal": {
+        "title": "Stopp zu Tag {day} hinzufügen",
+        "name_label": "Aktion/Ortsname",
+        "name_placeholder": "z.B. Mittagessen im besten Dhaba",
+        "time_label": "Geplante Zeit",
+        "category_label": "Kategorie",
+        "submit": "Zur Timeline hinzufügen"
+      }
+    },
+    "privacy": {
+      "title": "Datenschutzverpflichtung",
+      "subtitle": "Sicher • Geschützt • Transparent",
+      "oath_title": "Unser Schwur",
+      "oath_text": "Deine Bergerkundungen gehören dir allein. Wir verfolgen nur das Nötigste, um deine Reise legendär zu machen.",
+      "sections": [
+        {
+          "title": "01. Informationen, die wir sammeln",
+          "items": [
+            "Basisidentität für die Buchung.",
+            "Standort für routenbasierte Entdeckung.",
+            "Zahlungsinfos (vollständig verschlüsselt)."
+          ]
+        },
+        {
+          "title": "02. Datennutzung",
+          "text": "Wir geben Daten nur an die Anbieter weiter, bei denen Sie buchen. Ihre Daten werden niemals an Drittanbieter verkauft. Das ist ein Bergversprechen."
+        },
+        {
+          "title": "03. Ihre Rechte",
+          "text": "Sie können jederzeit die Löschung Ihrer Daten beantragen. Wir glauben an Ihr Recht, vergessen zu werden, nachdem Ihre Reise beendet ist."
+        }
+      ],
+      "footer_q": "Fragen?",
+      "email": "privacy@localconnect.com"
+    },
+    "terms": {
+      "title": "Allgemeine Geschäftsbedingungen",
+      "subtitle": "Zuletzt aktualisiert: Februar 2026",
+      "sections": [
+        {
+          "title": "01. Akzeptanz",
+          "text": "Durch den Zugriff auf Local Connect erklären Sie sich mit diesen Bedingungen einverstanden. Unsere Plattform ist eine Brücke zwischen Bergreisenden und lokalen Legenden."
+        },
+        {
+          "title": "02. Anbieterrollen",
+          "text": "Anbieter und Agenturen (Broker) sind unabhängige Einheiten. Local Connect stellt die Technologie zur Verfügung, um diese Partnerschaften und Buchungen zu verwalten."
+        },
+        {
+          "title": "03. Buchung & Zahlungen",
+          "text": "Alle Buchungen unterliegen der Verfügbarkeit des Anbieters. Die Preissynchronisierung erfolgt in Echtzeit."
+        },
+        {
+          "title": "04. Sicherheit & Verhalten",
+          "text": "Wir fördern verantwortungsbewusstes Bergreisen. Respektieren Sie lokale Kulturen und halten Sie die Pfade sauber."
+        }
+      ],
+      "footer": "Local Connect Tech (P) Ltd."
+    },
+    "vendor_dashboard": {
+      "welcome": "Willkommen zurück, {name}! 👋",
+      "subtitle": "Verwalten Sie Ihre Services, verfolgen Sie Buchungen und lassen Sie Ihr Geschäft wachsen",
+      "tabs": {
+        "overview": "Übersicht",
+        "services": "Meine Services",
+        "bookings": "Buchungen",
+        "analytics": "Analysen"
+      },
+      "stats": {
+        "services": "Services",
+        "active_listings": "Aktive Listungen",
+        "bookings": "Buchungen",
+        "this_month": "Diesen Monat",
+        "revenue": "Umsatz",
+        "rating": "Bewertung",
+        "average_score": "Durchschnittswert"
+      },
+      "recent_bookings": {
+        "title": "Aktuelle Buchungen",
+        "status": {
+          "confirmed": "Bestätigt",
+          "pending": "Ausstehend",
+          "completed": "Abgeschlossen"
+        }
+      },
+      "quick_actions": {
+        "title": "Schnellaktionen",
+        "add_service": {
+          "title": "Service hinzufügen",
+          "desc": "Neue Listung erstellen"
+        },
+        "view_reports": {
+          "title": "Berichte ansehen",
+          "desc": "Geschäftseinblicke"
+        },
+        "messages": {
+          "title": "Nachrichten",
+          "desc": "Kundenanfragen"
+        },
+        "settings": {
+          "title": "Einstellungen",
+          "desc": "Kontoeinstellungen"
+        }
+      },
+      "performance": {
+        "title": "Performance-Übersicht",
+        "completed": "Abgeschlossene Buchungen",
+        "pending": "Ausstehende Bestätigungen",
+        "satisfaction": "Kundenzufriedenheit"
+      },
+      "services": {
+        "title": "Meine Services",
+        "subtitle": "Verwalten Sie Ihre Service-Listungen",
+        "add_button": "+ Neuen Service hinzufügen",
+        "add_first": "+ Fügen Sie Ihren ersten Service hinzu",
+        "not_found": "Keine Services gefunden",
+        "empty_state": "Starten Sie, indem Sie Ihren ersten Service hinzufügen",
+        "empty_filter": "Keine {filter} Services gefunden",
+        "filters": {
+          "all": "Alle Services",
+          "active": "Aktiv",
+          "inactive": "Inaktiv",
+          "drafts": "Entwürfe"
+        },
+        "card": {
+          "category": "Kategorie",
+          "price": "Preis",
+          "bookings": "Buchungen",
+          "rating": "Bewertung",
+          "no_ratings": "Keine Bewertungen"
+        },
+        "actions": {
+          "edit": "Bearbeiten",
+          "activate": "Aktivieren",
+          "deactivate": "Deaktivieren",
+          "delete": "Löschen"
+        }
+      },
+      "bookings": {
+        "title": "Buchungsmanagement",
+        "subtitle": "Verfolgen und verwalten Sie Kundenbuchungen",
+        "not_found": "Keine Buchungen gefunden",
+        "empty_state": "Noch keine Buchungen",
+        "empty_filter": "Keine {filter} Buchungen gefunden",
+        "filters": {
+          "all": "Alle Buchungen",
+          "pending": "Ausstehend",
+          "confirmed": "Bestätigt",
+          "completed": "Abgeschlossen",
+          "cancelled": "Storniert"
+        },
+        "card": {
+          "guests": "für {count} Gast/Gäste",
+          "service": "Service",
+          "booking_date": "Buchungsdatum",
+          "travel_date": "Reisedatum"
+        },
+        "actions": {
+          "confirm": "Bestätigen",
+          "cancel": "Stornieren",
+          "mark_complete": "Als abgeschlossen markieren",
+          "view_details": "Details ansehen",
+          "contact": "Kunden kontaktieren"
+        }
+      },
+      "analytics": {
+        "revenue": {
+          "title": "Umsatzübersicht",
+          "total": "Gesamtumsatz",
+          "vs_last": "vs. letzter Monat"
         },
         "bookings": {
-            "title": "Deine Buchungen",
-            "subtitle": "{count} epische Erlebnisse werden verfolgt",
-            "booking_id": "Buchungs-ID",
-            "dates_label": "Reisedaten",
-            "paid_label": "Gesamt bezahlt",
-            "cta_title": "Bereit für mehr?",
-            "cta_subtitle": "Erstelle einen neuen benutzerdefinierten Pfad durch die Berge",
-            "cta_button": "NEUEN BUILD STARTEN 🏔️",
-            "status": {
-                "confirmed": "Bestätigt",
-                "pending": "Ausstehend",
-                "completed": "Abgeschlossen"
-            }
+          "title": "Buchungstrends",
+          "total": "Gesamtbuchungen",
+          "conversion": "Konversionsrate"
         },
-        "journey": {
-            "title": "Reisearchitekt",
-            "badge": "Roadtrip",
-            "shared_title": "Community-Reise",
-            "crafted_by": "Erstellt von",
-            "remix": "Diese Reise für mich remixen",
-            "add_day": "+ Tag hinzufügen",
-            "ai_insight": "Yatri AI Einblick",
-            "ai_tip": "Viel Verkehr erwartet. 45 Min. früher starten!",
-            "day_label": "Tag {day}",
-            "schedule": "Zeitplan für Tag {day}",
-            "quick_add": "+ Schneller Stopp",
-            "empty": "Nichts für heute geplant",
-            "empty_sub": "Fügen Sie einen Dhaba-Besuch oder einen lokalen Aufenthalt hinzu",
-            "add_first": "Ersten Stopp hinzufügen",
-            "book_expert": "Lokalen Experten buchen →",
-            "broker_rec": "Vom Broker empfohlen",
-            "hire": "Mieten",
-            "total_trip": "Gesamtreise",
-            "request_booking": "Buchung anfragen",
-            "requesting": "Anfrage läuft...",
-            "published": "Reise veröffentlicht!",
-            "published_sub": "Ihre Reise wurde gespeichert und geteilt.",
-            "view_trips": "Meine Reisen ansehen",
-            "copy_link": "Share-Link kopieren 🔗",
-            "add_stop_modal": {
-                "title": "Stopp zu Tag {day} hinzufügen",
-                "name_label": "Aktion/Ortsname",
-                "name_placeholder": "z.B. Mittagessen im besten Dhaba",
-                "time_label": "Geplante Zeit",
-                "category_label": "Kategorie",
-                "submit": "Zur Timeline hinzufügen"
-            }
+        "customers": {
+          "title": "Kundeneinblicke",
+          "total": "Gesamtkunden",
+          "new": "Neukunden",
+          "returning": "Wiederkehrend",
+          "locations": "Top-Standorte",
+          "bookings_suffix": "Buchungen"
         },
-        "privacy": {
-            "title": "Datenschutzverpflichtung",
-            "subtitle": "Sicher • Geschützt • Transparent",
-            "oath_title": "Unser Schwur",
-            "oath_text": "Deine Bergerkundungen gehören dir allein. Wir verfolgen nur das Nötigste, um deine Reise legendär zu machen.",
-            "sections": [
-                {
-                    "title": "01. Informationen, die wir sammeln",
-                    "items": ["Basisidentität für die Buchung.", "Standort für routenbasierte Entdeckung.", "Zahlungsinfos (vollständig verschlüsselt)."]
-                },
-                {
-                    "title": "02. Datennutzung",
-                    "text": "Wir geben Daten nur an die Anbieter weiter, bei denen Sie buchen. Ihre Daten werden niemals an Drittanbieter verkauft. Das ist ein Bergversprechen."
-                },
-                {
-                    "title": "03. Ihre Rechte",
-                    "text": "Sie können jederzeit die Löschung Ihrer Daten beantragen. Wir glauben an Ihr Recht, vergessen zu werden, nachdem Ihre Reise beendet ist."
-                }
-            ],
-            "footer_q": "Fragen?",
-            "email": "privacy@localconnect.com"
+        "services": {
+          "title": "Top-Performer Services",
+          "bookings_suffix": "Buchungen"
         },
-        "terms": {
-            "title": "Allgemeine Geschäftsbedingungen",
-            "subtitle": "Zuletzt aktualisiert: Februar 2026",
-            "sections": [
-                {
-                    "title": "01. Akzeptanz",
-                    "text": "Durch den Zugriff auf Local Connect erklären Sie sich mit diesen Bedingungen einverstanden. Unsere Plattform ist eine Brücke zwischen Bergreisenden und lokalen Legenden."
-                },
-                {
-                    "title": "02. Anbieterrollen",
-                    "text": "Anbieter und Agenturen (Broker) sind unabhängige Einheiten. Local Connect stellt die Technologie zur Verfügung, um diese Partnerschaften und Buchungen zu verwalten."
-                },
-                {
-                    "title": "03. Buchung & Zahlungen",
-                    "text": "Alle Buchungen unterliegen der Verfügbarkeit des Anbieters. Die Preissynchronisierung erfolgt in Echtzeit."
-                },
-                {
-                    "title": "04. Sicherheit & Verhalten",
-                    "text": "Wir fördern verantwortungsbewusstes Bergreisen. Respektieren Sie lokale Kulturen und halten Sie die Pfade sauber."
-                }
-            ],
-            "footer": "Local Connect Tech (P) Ltd."
+        "metrics": {
+          "title": "Wichtige Leistungskennzahlen",
+          "rating": "Durchschnittsbewertung",
+          "response": "Mittlere Antwortzeit",
+          "completion": "Abschlussquote",
+          "avg_value": "Mittlerer Buchungswert",
+          "hrs": "Std."
         },
-        "vendor_dashboard": {
-            "welcome": "Willkommen zurück, {name}! 👋",
-            "subtitle": "Verwalten Sie Ihre Services, verfolgen Sie Buchungen und lassen Sie Ihr Geschäft wachsen",
-            "tabs": {
-                "overview": "Übersicht",
-                "services": "Meine Services",
-                "bookings": "Buchungen",
-                "analytics": "Analysen"
-            },
-            "stats": {
-                "services": "Services",
-                "active_listings": "Aktive Listungen",
-                "bookings": "Buchungen",
-                "this_month": "Diesen Monat",
-                "revenue": "Umsatz",
-                "rating": "Bewertung",
-                "average_score": "Durchschnittswert"
-            },
-            "recent_bookings": {
-                "title": "Aktuelle Buchungen",
-                "status": {
-                    "confirmed": "Bestätigt",
-                    "pending": "Ausstehend",
-                    "completed": "Abgeschlossen"
-                }
-            },
-            "quick_actions": {
-                "title": "Schnellaktionen",
-                "add_service": { "title": "Service hinzufügen", "desc": "Neue Listung erstellen" },
-                "view_reports": { "title": "Berichte ansehen", "desc": "Geschäftseinblicke" },
-                "messages": { "title": "Nachrichten", "desc": "Kundenanfragen" },
-                "settings": { "title": "Einstellungen", "desc": "Kontoeinstellungen" }
-            },
-            "performance": {
-                "title": "Performance-Übersicht",
-                "completed": "Abgeschlossene Buchungen",
-                "pending": "Ausstehende Bestätigungen",
-                "satisfaction": "Kundenzufriedenheit"
-            },
-            "services": {
-                "title": "Meine Services",
-                "subtitle": "Verwalten Sie Ihre Service-Listungen",
-                "add_button": "+ Neuen Service hinzufügen",
-                "add_first": "+ Fügen Sie Ihren ersten Service hinzu",
-                "not_found": "Keine Services gefunden",
-                "empty_state": "Starten Sie, indem Sie Ihren ersten Service hinzufügen",
-                "empty_filter": "Keine {filter} Services gefunden",
-                "filters": {
-                    "all": "Alle Services",
-                    "active": "Aktiv",
-                    "inactive": "Inaktiv",
-                    "drafts": "Entwürfe"
-                },
-                "card": {
-                    "category": "Kategorie",
-                    "price": "Preis",
-                    "bookings": "Buchungen",
-                    "rating": "Bewertung",
-                    "no_ratings": "Keine Bewertungen"
-                },
-                "actions": {
-                    "edit": "Bearbeiten",
-                    "activate": "Aktivieren",
-                    "deactivate": "Deaktivieren",
-                    "delete": "Löschen"
-                }
-            },
-            "bookings": {
-                "title": "Buchungsmanagement",
-                "subtitle": "Verfolgen und verwalten Sie Kundenbuchungen",
-                "not_found": "Keine Buchungen gefunden",
-                "empty_state": "Noch keine Buchungen",
-                "empty_filter": "Keine {filter} Buchungen gefunden",
-                "filters": {
-                    "all": "Alle Buchungen",
-                    "pending": "Ausstehend",
-                    "confirmed": "Bestätigt",
-                    "completed": "Abgeschlossen",
-                    "cancelled": "Storniert"
-                },
-                "card": {
-                    "guests": "für {count} Gast/Gäste",
-                    "service": "Service",
-                    "booking_date": "Buchungsdatum",
-                    "travel_date": "Reisedatum"
-                },
-                "actions": {
-                    "confirm": "Bestätigen",
-                    "cancel": "Stornieren",
-                    "mark_complete": "Als abgeschlossen markieren",
-                    "view_details": "Details ansehen",
-                    "contact": "Kunden kontaktieren"
-                }
-            },
-            "analytics": {
-                "revenue": {
-                    "title": "Umsatzübersicht",
-                    "total": "Gesamtumsatz",
-                    "vs_last": "vs. letzter Monat"
-                },
-                "bookings": {
-                    "title": "Buchungstrends",
-                    "total": "Gesamtbuchungen",
-                    "conversion": "Konversionsrate"
-                },
-                "customers": {
-                    "title": "Kundeneinblicke",
-                    "total": "Gesamtkunden",
-                    "new": "Neukunden",
-                    "returning": "Wiederkehrend",
-                    "locations": "Top-Standorte",
-                    "bookings_suffix": "Buchungen"
-                },
-                "services": {
-                    "title": "Top-Performer Services",
-                    "bookings_suffix": "Buchungen"
-                },
-                "metrics": {
-                    "title": "Wichtige Leistungskennzahlen",
-                    "rating": "Durchschnittsbewertung",
-                    "response": "Mittlere Antwortzeit",
-                    "completion": "Abschlussquote",
-                    "avg_value": "Mittlerer Buchungswert",
-                    "hrs": "Std."
-                },
-                "months": ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"]
-            }
-        }
+        "months": [
+          "Jan",
+          "Feb",
+          "Mär",
+          "Apr",
+          "Mai",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Okt",
+          "Nov",
+          "Dez"
+        ]
+      }
     }
+  }
 }

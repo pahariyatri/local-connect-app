@@ -63,130 +63,48 @@ function Icon({ name, className = "", filled = false }: { name: IconName; classN
   );
 }
 
-// ─── Static data ────────────────────────────────────────────────────────────
+// ─── Static data ─────────────────────────────────────────────────────────────
+// Copy lives in the dictionaries (dict.page.home); presentation-only bits
+// (icons, sample provider records, category routing keys, counts) live here.
 
 const LOCAL_PROVIDERS = [
-  {
-    id: "p1",
-    name: "Tenzing Sherpa",
-    role: "Mountain Guide",
-    location: "Manali, HP",
-    rating: 4.9,
-    reviews: 142,
-    tags: ["Trek", "Camping", "Rescue"],
-    image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=400",
-    badge: "Elite",
-  },
-  {
-    id: "p2",
-    name: "Priya Homestay",
-    role: "Host · 4 Rooms",
-    location: "Old Manali",
-    rating: 4.8,
-    reviews: 89,
-    tags: ["Rooms", "Meals", "Wi-Fi"],
-    image: "https://images.unsplash.com/photo-1651319485646-f0f30e46b761?q=80&w=400",
-    badge: "Verified",
-  },
-  {
-    id: "p3",
-    name: "Arjun Thakur",
-    role: "Local Food Guide",
-    location: "Shimla, HP",
-    rating: 4.7,
-    reviews: 63,
-    tags: ["Food", "Culture", "History"],
-    image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=400",
-    badge: "Verified",
-  },
-  {
-    id: "p4",
-    name: "Sonam Wangchuk",
-    role: "Transport Operator",
-    location: "Leh, Ladakh",
-    rating: 4.9,
-    reviews: 211,
-    tags: ["4x4", "Permits", "Ladakh"],
-    image: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=400",
-    badge: "Elite",
-  },
-  {
-    id: "p5",
-    name: "Kavya Nair",
-    role: "Yoga & Wellness",
-    location: "Rishikesh, UK",
-    rating: 5.0,
-    reviews: 47,
-    tags: ["Yoga", "Meditation", "Detox"],
-    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=400",
-    badge: "New",
-  },
-  {
-    id: "p6",
-    name: "Rajan Chauhan",
-    role: "River Rafting Pro",
-    location: "Kullu, HP",
-    rating: 4.8,
-    reviews: 178,
-    tags: ["Rafting", "Kayak", "Safety"],
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400",
-    badge: "Verified",
-  },
+  { id: "p1", name: "Tenzing Sherpa", role: "Mountain Guide", location: "Manali, HP", rating: 4.9, reviews: 142, tags: ["Trek", "Camping", "Rescue"], image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=400", badge: "Elite" },
+  { id: "p2", name: "Priya Homestay", role: "Host · 4 Rooms", location: "Old Manali", rating: 4.8, reviews: 89, tags: ["Rooms", "Meals", "Wi-Fi"], image: "https://images.unsplash.com/photo-1651319485646-f0f30e46b761?q=80&w=400", badge: "Verified" },
+  { id: "p3", name: "Arjun Thakur", role: "Local Food Guide", location: "Shimla, HP", rating: 4.7, reviews: 63, tags: ["Food", "Culture", "History"], image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=400", badge: "Verified" },
+  { id: "p4", name: "Sonam Wangchuk", role: "Transport Operator", location: "Leh, Ladakh", rating: 4.9, reviews: 211, tags: ["4x4", "Permits", "Ladakh"], image: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=400", badge: "Elite" },
+  { id: "p5", name: "Kavya Nair", role: "Yoga & Wellness", location: "Rishikesh, UK", rating: 5.0, reviews: 47, tags: ["Yoga", "Meditation", "Detox"], image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=400", badge: "New" },
+  { id: "p6", name: "Rajan Chauhan", role: "River Rafting Pro", location: "Kullu, HP", rating: 4.8, reviews: 178, tags: ["Rafting", "Kayak", "Safety"], image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400", badge: "Verified" },
 ];
 
-const STATS = [
-  { value: "2,400+", label: "Local Providers" },
-  { value: "18,000+", label: "Happy Travellers" },
-  { value: "32", label: "Himalayan Districts" },
-  { value: "4.9", label: "Avg. Rating", star: true },
+const STAT_META: { value: string; key: string; star?: boolean }[] = [
+  { value: "2,400+", key: "providers" },
+  { value: "18,000+", key: "travellers" },
+  { value: "32", key: "districts" },
+  { value: "4.9", key: "rating", star: true },
 ];
 
-const HOW_IT_WORKS: { step: string; icon: IconName; title: string; desc: string }[] = [
-  {
-    step: "01",
-    icon: "search",
-    title: "Browse Locals",
-    desc: "Search verified guides, hosts, and operators near your destination.",
-  },
-  {
-    step: "02",
-    icon: "message",
-    title: "Chat Direct",
-    desc: "Message providers in real-time — no middlemen, no call centres.",
-  },
-  {
-    step: "03",
-    icon: "shield-check",
-    title: "Book & Go",
-    desc: "Pay securely via escrow. Your money releases only after service.",
-  },
+const HOW_ICONS: IconName[] = ["search", "message", "shield-check"];
+const BUILDER_ICONS: IconName[] = ["map-pin", "calendar", "users", "target", "compass", "sparkles"];
+
+// `cat` is the canonical (English) value used for /discover filtering — kept
+// language-independent so filters work regardless of UI locale. `key` maps to
+// the localized label in dict.page.home.categories.items.
+const CATEGORY_META: { icon: IconName; key: string; cat: string; count: string }[] = [
+  { icon: "compass", key: "guides", cat: "Guides", count: "480+" },
+  { icon: "home", key: "homestays", cat: "Homestays", count: "620+" },
+  { icon: "car", key: "transport", cat: "Transport", count: "310+" },
+  { icon: "utensils", key: "food", cat: "Food", count: "190+" },
+  { icon: "tent", key: "camping", cat: "Camping", count: "250+" },
+  { icon: "heart", key: "wellness", cat: "Wellness", count: "140+" },
+  { icon: "camera", key: "photography", cat: "Photography", count: "95+" },
+  { icon: "mountain", key: "adventures", cat: "Adventures", count: "370+" },
 ];
 
-const BUILDER_STEPS: { n: string; icon: IconName; label: string; desc: string }[] = [
-  { n: "01", icon: "map-pin", label: "Route", desc: "Origin & destinations" },
-  { n: "02", icon: "calendar", label: "Dates", desc: "When you travel" },
-  { n: "03", icon: "users", label: "Party", desc: "Who's coming" },
-  { n: "04", icon: "target", label: "Interests", desc: "What you love" },
-  { n: "05", icon: "compass", label: "Stops", desc: "Along the way" },
-  { n: "06", icon: "sparkles", label: "Package", desc: "Ready to book" },
-];
-
-const CATEGORIES: { icon: IconName; label: string; count: string }[] = [
-  { icon: "compass", label: "Guides", count: "480+" },
-  { icon: "home", label: "Homestays", count: "620+" },
-  { icon: "car", label: "Transport", count: "310+" },
-  { icon: "utensils", label: "Food Tours", count: "190+" },
-  { icon: "tent", label: "Camping", count: "250+" },
-  { icon: "heart", label: "Wellness", count: "140+" },
-  { icon: "camera", label: "Photography", count: "95+" },
-  { icon: "mountain", label: "Adventures", count: "370+" },
-];
-
-const TRUST: { icon: IconName; label: string }[] = [
-  { icon: "shield", label: "Verified Providers" },
-  { icon: "lock", label: "Escrow Payments" },
-  { icon: "message", label: "Direct Messaging" },
-  { icon: "star", label: "Rated Reviews" },
+const TRUST_META: { icon: IconName; key: string }[] = [
+  { icon: "shield", key: "verified" },
+  { icon: "lock", key: "escrow" },
+  { icon: "message", key: "messaging" },
+  { icon: "star", key: "reviews" },
 ];
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -198,6 +116,17 @@ export default function Home({ params }: HomeProps) {
   const router = useRouter();
 
   if (!dict) return <Loading />;
+
+  // All landing copy — guarded so a missing key never crashes the page.
+  const h = dict.page?.home ?? {};
+  const hero = h.hero ?? {};
+  const stats = h.stats ?? {};
+  const builder = h.builder ?? {};
+  const cats = h.categories ?? {};
+  const providers = h.providers ?? {};
+  const how = h.how ?? {};
+  const join = h.join ?? {};
+  const trust = h.trust ?? {};
 
   return (
     <>
@@ -219,20 +148,17 @@ export default function Home({ params }: HomeProps) {
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 mb-8">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-emerald-700 text-[10px] font-bold uppercase tracking-[0.25em]">
-              Local Connect Network
+              {h.badge}
             </span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-slate-900 leading-[1.05] tracking-tight mb-6">
-            Meet the{" "}
-            <span className="text-emerald-600">Real Locals</span>
-            <br />
-            of the Himalayas
-          </h1>
+          <h1
+            className="text-4xl sm:text-6xl md:text-7xl font-black text-slate-900 leading-[1.05] tracking-tight mb-6"
+            dangerouslySetInnerHTML={{ __html: hero.title ?? "" }}
+          />
 
           <p className="text-slate-600 text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-10">
-            Connect directly with verified guides, hosts &amp; operators.
-            No packages. No agencies. Just authentic local service.
+            {hero.subtitle}
           </p>
 
           {/* CTA buttons — traveler-first hierarchy */}
@@ -240,17 +166,17 @@ export default function Home({ params }: HomeProps) {
             <button
               id="hero-plan-trip-btn"
               onClick={() => router.push(`/${lang}/builder`)}
-              className="group w-full sm:w-auto h-12 px-8 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm uppercase tracking-wider transition-all active:scale-95 shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2"
+              className="group w-full sm:w-auto min-h-12 h-12 px-8 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm uppercase tracking-wider transition-all active:scale-95 shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 touch-manipulation"
             >
-              Plan My Trip
-              <Icon name="arrow-right" className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+              {hero.cta_plan}
+              <Icon name="arrow-right" className="w-4 h-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" />
             </button>
             <button
               id="hero-explore-btn"
               onClick={() => router.push(`/${lang}/discover`)}
-              className="w-full sm:w-auto h-12 px-8 rounded-xl border border-slate-300 bg-white text-slate-900 font-bold text-sm uppercase tracking-wider hover:bg-slate-100 hover:border-slate-400 transition-all active:scale-95"
+              className="w-full sm:w-auto min-h-12 h-12 px-8 rounded-xl border border-slate-300 bg-white text-slate-900 font-bold text-sm uppercase tracking-wider hover:bg-slate-100 hover:border-slate-400 transition-all active:scale-95 touch-manipulation"
             >
-              Explore Locals
+              {hero.cta_explore}
             </button>
           </div>
 
@@ -258,16 +184,16 @@ export default function Home({ params }: HomeProps) {
           <button
             id="hero-list-btn"
             onClick={() => router.push(`/${lang}/vendor/onboarding`)}
-            className="mt-5 text-slate-500 hover:text-emerald-600 text-xs font-medium uppercase tracking-wider transition-colors inline-flex items-center gap-1.5"
+            className="mt-5 text-slate-500 hover:text-emerald-600 text-xs font-medium uppercase tracking-wider transition-colors inline-flex items-center gap-1.5 touch-manipulation"
           >
-            Are you a local? List your service
-            <Icon name="arrow-right" className="w-3 h-3" />
+            {hero.vendor_link}
+            <Icon name="arrow-right" className="w-3 h-3 rtl:rotate-180" />
           </button>
 
           {/* Social proof strip */}
           <div className="mt-10 flex items-center justify-center gap-3 flex-wrap">
             <div className="flex -space-x-2">
-              {["photo-1544620347-c4fd4a3d5957","photo-1582719478250-c89cae4dc85b","photo-1573496359142-b8d87734a5a2"].map((id, i) => (
+              {["photo-1544620347-c4fd4a3d5957", "photo-1582719478250-c89cae4dc85b", "photo-1573496359142-b8d87734a5a2"].map((id, i) => (
                 <div key={i} className="w-8 h-8 rounded-full border-2 border-white shadow-sm overflow-hidden">
                   <LocalImage
                     src={`https://images.unsplash.com/${id}?q=80&w=80`}
@@ -278,7 +204,7 @@ export default function Home({ params }: HomeProps) {
               ))}
             </div>
             <span className="text-slate-600 text-xs">
-              <strong className="text-slate-900">2,400+</strong> locals ready to connect
+              <strong className="text-slate-900">2,400+</strong> {hero.social_proof}
             </span>
           </div>
         </div>
@@ -286,14 +212,14 @@ export default function Home({ params }: HomeProps) {
 
       {/* ── STATS BAR ──────────────────────────────────────────────── */}
       <section className="bg-white border-y border-slate-200 py-8 px-4">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-0 sm:divide-x sm:divide-slate-200">
-          {STATS.map((s) => (
-            <div key={s.label} className="text-center px-4">
+        <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-0 sm:divide-x sm:divide-slate-200 rtl:sm:divide-x-reverse">
+          {STAT_META.map((s) => (
+            <div key={s.key} className="text-center px-4">
               <p className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight inline-flex items-center justify-center gap-1">
                 {s.value}
                 {s.star && <Icon name="star" filled className="w-5 h-5 text-amber-400" />}
               </p>
-              <p className="text-slate-500 text-xs mt-1 uppercase tracking-wider font-medium">{s.label}</p>
+              <p className="text-slate-500 text-xs mt-1 uppercase tracking-wider font-medium">{stats[s.key]}</p>
             </div>
           ))}
         </div>
@@ -302,36 +228,39 @@ export default function Home({ params }: HomeProps) {
       {/* ── PLAN YOUR TRIP (BUILDER PREVIEW) ────────────────────────── */}
       <section className="py-16 sm:py-24 px-4 bg-slate-50">
         <div className="max-w-5xl mx-auto">
-          <div className="rounded-3xl bg-gradient-to-br from-emerald-50 via-white to-white border border-emerald-100 p-8 sm:p-12 relative overflow-hidden shadow-sm">
+          <div className="rounded-3xl bg-gradient-to-br from-emerald-50 via-white to-white border border-emerald-100 p-6 sm:p-12 relative overflow-hidden shadow-sm">
             <div className="absolute -top-24 -right-24 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
             <div className="relative z-10">
               {/* Header */}
               <div className="text-center mb-10">
                 <span className="text-emerald-600 text-[10px] font-bold uppercase tracking-[0.2em] block mb-3">
-                  For Travellers
+                  {builder.eyebrow}
                 </span>
-                <h2 className="text-slate-900 text-2xl sm:text-4xl font-black tracking-tight leading-tight mb-3">
-                  Build Your Trip in <span className="text-emerald-600">6 Steps</span>
-                </h2>
+                <h2
+                  className="text-slate-900 text-2xl sm:text-4xl font-black tracking-tight leading-tight mb-3"
+                  dangerouslySetInnerHTML={{ __html: builder.title ?? "" }}
+                />
                 <p className="text-slate-600 text-sm sm:text-base max-w-lg mx-auto leading-relaxed">
-                  Tell us your route, dates &amp; interests — we&apos;ll match you with verified
-                  locals along the whole way and turn it into one bookable package.
+                  {builder.subtitle}
                 </p>
               </div>
 
               {/* Step chips */}
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 sm:gap-3 mb-10">
-                {BUILDER_STEPS.map((s) => (
-                  <div
-                    key={s.n}
-                    className="flex flex-col items-center text-center gap-1.5 p-3 sm:p-4 rounded-2xl bg-white border border-slate-200 shadow-sm"
-                  >
-                    <Icon name={s.icon} className="w-6 h-6 text-emerald-500" />
-                    <span className="text-emerald-600 text-[8px] font-black tracking-widest">{s.n}</span>
-                    <span className="text-slate-900 text-[10px] sm:text-xs font-bold leading-tight">{s.label}</span>
-                    <span className="text-slate-500 text-[8px] sm:text-[9px] leading-tight hidden sm:block">{s.desc}</span>
-                  </div>
-                ))}
+                {BUILDER_ICONS.map((icon, i) => {
+                  const step = builder.steps?.[i] ?? {};
+                  return (
+                    <div
+                      key={i}
+                      className="flex flex-col items-center text-center gap-1.5 p-3 sm:p-4 rounded-2xl bg-white border border-slate-200 shadow-sm"
+                    >
+                      <Icon name={icon} className="w-6 h-6 text-emerald-500" />
+                      <span className="text-emerald-600 text-[8px] font-black tracking-widest">{String(i + 1).padStart(2, "0")}</span>
+                      <span className="text-slate-900 text-[10px] sm:text-xs font-bold leading-tight">{step.label}</span>
+                      <span className="text-slate-500 text-[8px] sm:text-[9px] leading-tight hidden sm:block">{step.desc}</span>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* CTA */}
@@ -339,13 +268,13 @@ export default function Home({ params }: HomeProps) {
                 <button
                   id="builder-preview-cta"
                   onClick={() => router.push(`/${lang}/builder`)}
-                  className="group w-full sm:w-auto h-12 px-8 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm uppercase tracking-wider transition-all active:scale-95 shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2"
+                  className="group w-full sm:w-auto min-h-12 h-12 px-8 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm uppercase tracking-wider transition-all active:scale-95 shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 touch-manipulation"
                 >
-                  Start Building — Free
-                  <Icon name="arrow-right" className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                  {builder.cta}
+                  <Icon name="arrow-right" className="w-4 h-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" />
                 </button>
-                <span className="text-slate-500 text-[10px] uppercase tracking-wider">
-                  No sign-up needed · Takes ~2 min
+                <span className="text-slate-500 text-[10px] uppercase tracking-wider text-center">
+                  {builder.note}
                 </span>
               </div>
             </div>
@@ -357,18 +286,18 @@ export default function Home({ params }: HomeProps) {
       <section className="py-16 px-4 bg-white">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-slate-900 font-black text-lg sm:text-xl mb-6 tracking-tight">
-            Browse by Category
+            {cats.title}
           </h2>
-          <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
-            {CATEGORIES.map((cat) => (
+          <div className="grid grid-cols-4 sm:grid-cols-8 gap-2.5 sm:gap-3">
+            {CATEGORY_META.map((cat) => (
               <button
-                key={cat.label}
-                id={`cat-${cat.label.toLowerCase()}`}
-                onClick={() => router.push(`/${lang}/discover?category=${cat.label}`)}
-                className="flex flex-col items-center gap-2 p-3 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50 transition-all group active:scale-95"
+                key={cat.key}
+                id={`cat-${cat.key}`}
+                onClick={() => router.push(`/${lang}/discover?category=${cat.cat}`)}
+                className="flex flex-col items-center justify-center gap-2 min-h-[92px] p-3 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50 transition-all group active:scale-95 touch-manipulation"
               >
                 <Icon name={cat.icon} className="w-6 h-6 text-slate-700 group-hover:text-emerald-600 transition-colors" />
-                <span className="text-slate-900 text-[9px] sm:text-[10px] font-bold uppercase tracking-wide leading-tight text-center">{cat.label}</span>
+                <span className="text-slate-900 text-[9px] sm:text-[10px] font-bold uppercase tracking-wide leading-tight text-center">{cats.items?.[cat.key]}</span>
                 <span className="text-emerald-600 text-[8px] sm:text-[9px] font-bold">{cat.count}</span>
               </button>
             ))}
@@ -383,18 +312,18 @@ export default function Home({ params }: HomeProps) {
           <div className="flex items-end justify-between mb-10 gap-4">
             <div>
               <span className="text-emerald-600 text-[10px] font-bold uppercase tracking-[0.2em] block mb-2">
-                Verified Locals
+                {providers.eyebrow}
               </span>
               <h2 className="text-slate-900 text-2xl sm:text-4xl font-black tracking-tight leading-tight">
-                People, Not Packages
+                {providers.title}
               </h2>
             </div>
             <button
               id="view-all-locals-btn"
               onClick={() => router.push(`/${lang}/discover`)}
-              className="shrink-0 text-[10px] font-bold uppercase tracking-widest text-emerald-600 border-b border-emerald-500/40 pb-0.5 hover:text-emerald-700 transition-colors"
+              className="shrink-0 text-[10px] font-bold uppercase tracking-widest text-emerald-600 border-b border-emerald-500/40 pb-0.5 hover:text-emerald-700 transition-colors touch-manipulation"
             >
-              View All
+              {providers.view_all}
             </button>
           </div>
 
@@ -403,8 +332,11 @@ export default function Home({ params }: HomeProps) {
             {LOCAL_PROVIDERS.map((p) => (
               <div
                 key={p.id}
-                className="group bg-white border border-slate-200 rounded-2xl overflow-hidden hover:border-emerald-200 hover:shadow-xl hover:shadow-slate-200/60 transition-all duration-300 cursor-pointer"
+                role="button"
+                tabIndex={0}
                 onClick={() => router.push(`/${lang}/discover`)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); router.push(`/${lang}/discover`); } }}
+                className="group bg-white border border-slate-200 rounded-2xl overflow-hidden hover:border-emerald-200 hover:shadow-xl hover:shadow-slate-200/60 transition-all duration-300 cursor-pointer active:scale-[0.99] touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
               >
                 {/* Top — avatar + badge */}
                 <div className="flex items-start gap-4 p-5 pb-4">
@@ -426,10 +358,10 @@ export default function Home({ params }: HomeProps) {
                         {p.badge}
                       </span>
                     </div>
-                    <p className="text-slate-500 text-xs">{p.role}</p>
-                    <p className="text-slate-400 text-[10px] mt-0.5 flex items-center gap-1">
-                      <Icon name="map-pin" className="w-2.5 h-2.5" />
-                      {p.location}
+                    <p className="text-slate-500 text-xs truncate">{p.role}</p>
+                    <p className="text-slate-400 text-[10px] mt-0.5 flex items-center gap-1 min-w-0">
+                      <Icon name="map-pin" className="w-2.5 h-2.5 shrink-0" />
+                      <span className="truncate">{p.location}</span>
                     </p>
                   </div>
                 </div>
@@ -453,9 +385,9 @@ export default function Home({ params }: HomeProps) {
                     <span className="text-slate-900 text-xs font-bold">{p.rating}</span>
                     <span className="text-slate-400 text-[10px]">({p.reviews})</span>
                   </div>
-                  <button className="h-8 px-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold uppercase tracking-wider hover:bg-emerald-500 hover:text-white hover:border-emerald-500 transition-all active:scale-95">
-                    Connect
-                  </button>
+                  <span className="h-8 px-4 inline-flex items-center rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold uppercase tracking-wider group-hover:bg-emerald-500 group-hover:text-white group-hover:border-emerald-500 transition-all">
+                    {providers.connect}
+                  </span>
                 </div>
               </div>
             ))}
@@ -468,30 +400,33 @@ export default function Home({ params }: HomeProps) {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <span className="text-emerald-600 text-[10px] font-bold uppercase tracking-[0.2em] block mb-3">
-              Simple Process
+              {how.eyebrow}
             </span>
             <h2 className="text-slate-900 text-2xl sm:text-4xl font-black tracking-tight">
-              How Local Connect Works
+              {how.title}
             </h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
-            {HOW_IT_WORKS.map((step, i) => (
-              <div key={step.step} className="relative flex flex-col items-center text-center p-6 rounded-2xl bg-slate-50 border border-slate-200">
-                {/* Connector line on desktop */}
-                {i < HOW_IT_WORKS.length - 1 && (
-                  <div className="hidden sm:block absolute top-1/2 -right-4 w-8 h-px bg-slate-200 z-10" />
-                )}
-                <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center mb-4 shadow-sm">
-                  <Icon name={step.icon} className="w-6 h-6 text-emerald-600" />
+            {HOW_ICONS.map((icon, i) => {
+              const step = how.steps?.[i] ?? {};
+              return (
+                <div key={i} className="relative flex flex-col items-center text-center p-6 rounded-2xl bg-slate-50 border border-slate-200">
+                  {/* Connector line on desktop */}
+                  {i < HOW_ICONS.length - 1 && (
+                    <div className="hidden sm:block absolute top-1/2 -right-4 rtl:-left-4 rtl:right-auto w-8 h-px bg-slate-200 z-10" />
+                  )}
+                  <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center mb-4 shadow-sm">
+                    <Icon name={icon} className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <span className="text-emerald-600 text-[9px] font-black uppercase tracking-widest mb-2">
+                    {`${(how.step_label ?? "Step")} ${String(i + 1).padStart(2, "0")}`}
+                  </span>
+                  <h3 className="text-slate-900 font-bold text-sm mb-2">{step.title}</h3>
+                  <p className="text-slate-500 text-xs leading-relaxed">{step.desc}</p>
                 </div>
-                <span className="text-emerald-600 text-[9px] font-black uppercase tracking-widest mb-2">
-                  Step {step.step}
-                </span>
-                <h3 className="text-slate-900 font-bold text-sm mb-2">{step.title}</h3>
-                <p className="text-slate-500 text-xs leading-relaxed">{step.desc}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -505,16 +440,16 @@ export default function Home({ params }: HomeProps) {
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 border border-white/30 mb-6">
                 <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                 <span className="text-white text-[10px] font-bold uppercase tracking-[0.2em]">
-                  Are you a local?
+                  {join.badge}
                 </span>
               </div>
 
-              <h2 className="text-white text-2xl sm:text-4xl font-black tracking-tight mb-4 leading-tight">
-                Grow Your Income.<br />
-                <span className="text-emerald-50">Join the Network.</span>
-              </h2>
+              <h2
+                className="text-white text-2xl sm:text-4xl font-black tracking-tight mb-4 leading-tight"
+                dangerouslySetInnerHTML={{ __html: join.title ?? "" }}
+              />
               <p className="text-emerald-50/90 text-sm sm:text-base max-w-md mx-auto mb-8 leading-relaxed">
-                List your service — free to join. Get discovered by thousands of travellers looking for real, local experiences.
+                {join.subtitle}
               </p>
 
               {/* Two short CTA buttons side by side */}
@@ -522,21 +457,21 @@ export default function Home({ params }: HomeProps) {
                 <button
                   id="cta-list-service-btn"
                   onClick={() => router.push(`/${lang}/vendor/onboarding`)}
-                  className="w-full sm:w-auto h-11 px-7 rounded-xl bg-white text-emerald-700 font-bold text-sm uppercase tracking-wider transition-all active:scale-95 shadow-lg hover:bg-emerald-50"
+                  className="w-full sm:w-auto min-h-11 h-11 px-7 rounded-xl bg-white text-emerald-700 font-bold text-sm uppercase tracking-wider transition-all active:scale-95 shadow-lg hover:bg-emerald-50 touch-manipulation"
                 >
-                  Join Free
+                  {join.cta_join}
                 </button>
                 <button
                   id="cta-learn-more-btn"
                   onClick={() => router.push(`/${lang}/about`)}
-                  className="w-full sm:w-auto h-11 px-7 rounded-xl border border-white/40 text-white font-bold text-sm uppercase tracking-wider hover:bg-white/10 transition-all active:scale-95"
+                  className="w-full sm:w-auto min-h-11 h-11 px-7 rounded-xl border border-white/40 text-white font-bold text-sm uppercase tracking-wider hover:bg-white/10 transition-all active:scale-95 touch-manipulation"
                 >
-                  Learn More
+                  {join.cta_learn}
                 </button>
               </div>
 
               <p className="text-emerald-50/80 text-[10px] mt-5 uppercase tracking-wider">
-                Free listing · No commission on first 3 bookings · Cancel anytime
+                {join.note}
               </p>
             </div>
           </div>
@@ -546,10 +481,10 @@ export default function Home({ params }: HomeProps) {
       {/* ── TRUST FOOTER STRIP ─────────────────────────────────────── */}
       <section className="py-10 px-4 bg-white border-t border-slate-200">
         <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-6 sm:gap-12">
-          {TRUST.map((t) => (
-            <div key={t.label} className="flex items-center gap-2.5 text-slate-600">
+          {TRUST_META.map((t) => (
+            <div key={t.key} className="flex items-center gap-2.5 text-slate-600">
               <Icon name={t.icon} filled={t.icon === "star"} className="w-4 h-4 text-emerald-500" />
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-700">{t.label}</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-700">{trust[t.key]}</span>
             </div>
           ))}
         </div>
