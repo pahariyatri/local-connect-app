@@ -1,8 +1,15 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# =============================================================================
+# PahariYatri — Local Connect Network App
+# .gitignore — Next.js / TypeScript / Node project
+# Reference: https://help.github.com/articles/ignoring-files/
+# =============================================================================
 
-# dependencies
-/node_modules
-/.pnp
+
+# -----------------------------------------------------------------------------
+# Dependencies
+# -----------------------------------------------------------------------------
+node_modules/
+.pnp
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -10,32 +17,117 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
 
-# next.js
+# -----------------------------------------------------------------------------
+# Next.js build outputs
+# -----------------------------------------------------------------------------
 /.next/
 /out/
+/build/
+.next/
 
-# production
-/build
 
-# misc
-.DS_Store
-*.pem
+# -----------------------------------------------------------------------------
+# TypeScript
+# -----------------------------------------------------------------------------
+*.tsbuildinfo
+next-env.d.ts
 
-# debug
+
+# -----------------------------------------------------------------------------
+# Environment & secrets  ⚠️  NEVER commit real credentials
+# -----------------------------------------------------------------------------
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.production
+# Keep the example file — it documents required variables
+!.env.example
+
+
+# -----------------------------------------------------------------------------
+# Testing & coverage
+# -----------------------------------------------------------------------------
+/coverage/
+/.nyc_output/
+/test-results/
+/playwright-report/
+/playwright/.cache/
+
+
+# -----------------------------------------------------------------------------
+# Debug / logs
+# -----------------------------------------------------------------------------
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+*.log
+logs/
+lerna-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
-!.env.example
 
-# vercel
-.vercel
+# -----------------------------------------------------------------------------
+# OS & editor artefacts
+# -----------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# JetBrains IDEs (WebStorm, IntelliJ)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# VS Code (keep shared settings if desired — remove the ! lines to also ignore)
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+
+# Vim / Emacs swap files
+*.swp
+*.swo
+*~
+
+
+# -----------------------------------------------------------------------------
+# Vercel
+# -----------------------------------------------------------------------------
+.vercel/
+
+
+# -----------------------------------------------------------------------------
+# Docker
+# -----------------------------------------------------------------------------
+# Ignore local override compose files but keep the base docker-compose.yml
+docker-compose.override.yml
+docker-compose.local.yml
+
+
+# -----------------------------------------------------------------------------
+# Miscellaneous
+# -----------------------------------------------------------------------------
+# SSL / TLS private keys
+*.pem
+*.key
+*.crt
+*.p12
+
+# Storybook static build
+storybook-static/
+
+# Turbo / monorepo cache
+.turbo/
+
+# Bundle analyser output
+.analyze/
+bundle-analyzer-report.html
