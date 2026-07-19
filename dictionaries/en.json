@@ -458,7 +458,8 @@
         "admin_hub": "Admin Pan",
         "queue": "Queue",
         "disputes": "Disputes",
-        "stats": "Stats"
+        "stats": "Stats",
+        "community": "Community"
       },
       "notifications": {
         "added": "{category} added to Day {day}",
@@ -724,6 +725,29 @@
           "Dec"
         ]
       }
+    },
+    "community": {
+      "badge": "Travellers + Local Hosts",
+      "title": "The Community",
+      "subtitle": "Travellers and verified local hosts, sharing the road.",
+      "all": "Everyone",
+      "travelers": "Travellers",
+      "vendors": "Hosts",
+      "placeholder": "Share a thought, a tip, or a moment from the mountains...",
+      "post": "Post",
+      "posting": "Posting...",
+      "like": "Like",
+      "no_comments": "No replies yet. Be the first to say something.",
+      "comment_placeholder": "Write a reply...",
+      "send": "Send",
+      "sign_in_to_comment": "Sign in to join the conversation.",
+      "empty": "Nothing here yet. Start the conversation.",
+      "join_title": "Join the community",
+      "join_sub": "Sign in to share your journey and reply to others.",
+      "join_cta": "Sign in",
+      "role_traveler": "Traveller",
+      "role_vendor": "Host",
+      "role_verified": "Verified Host"
     }
   }
 }
