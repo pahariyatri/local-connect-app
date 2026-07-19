@@ -57,25 +57,31 @@ flowchart LR
 
 > Payment is always verified server-side; the client never trusts the redirect alone.
 
-## Community (travellers + vendors)
+## Community — two separate spaces
 
-One shared feed. Travellers share tips and moments; verified hosts answer and post
-updates. Role is derived from the signed-in user; posts and comments carry a role chip.
+Two isolated feeds, one shared engine. Travellers never see the host space and vice versa.
 
 ```mermaid
 flowchart TD
-    C["/community"] --> F{"Signed in?"}
-    F -->|"no"| J["Sign-in prompt<br/>(read freely, post after login)"]
-    F -->|"yes"| COMP["Composer — share a thought"]
-    C --> TABS["Filter: Everyone · Travellers · Hosts"]
-    COMP --> POST["createPost → prepend to feed"]
-    C --> CARD["PostCard"]
-    CARD --> LIKE["Like (optimistic toggle)"]
-    CARD --> CMT["Expand → CommentThread → addComment"]
+    subgraph Public["Website (public)"]
+        TC["/community — Traveller space"]
+        TC --> TP{"Signed in?"}
+        TP -->|"no"| TJ["Sign-in prompt (read freely)"]
+        TP -->|"traveller"| TW["Compose + reply"]
+        TP -->|"vendor"| TR["Read-only, pointed to host space"]
+    end
+    subgraph Dash["Vendor dashboard (private)"]
+        VC["/vendor/community — Host space"]
+        VC --> VG{"Vendor?"}
+        VG -->|"yes"| VW["Compose + reply"]
+        VG -->|"no"| VR["Hosts-only screen → traveller community"]
+    end
 ```
 
-- Data: `services/communityService.ts` (in-memory store now; maps to `/community/*`).
-- Reached from the bottom nav — Community tab for both travellers and vendors.
+- One reusable `CommunityFeed` renders both; the `space` prop (`traveler` | `vendor`) scopes the data.
+- Data: `services/communityService.ts` — separate stores per space (in-memory now; maps to `/community/{space}/*`).
+- Entry points: bottom-nav Community tab (travellers → `/community`, vendors → `/vendor/community`)
+  plus a Community card in the vendor dashboard hub.
 
 ## Vendor onboarding
 

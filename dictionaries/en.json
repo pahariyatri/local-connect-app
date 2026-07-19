@@ -580,7 +580,8 @@
         "overview": "Overview",
         "services": "My Services",
         "bookings": "Bookings",
-        "analytics": "Analytics"
+        "analytics": "Analytics",
+        "community": "Community"
       },
       "stats": {
         "services": "Services",
@@ -747,7 +748,20 @@
       "join_cta": "Sign in",
       "role_traveler": "Traveller",
       "role_vendor": "Host",
-      "role_verified": "Verified Host"
+      "role_verified": "Verified Host",
+      "traveler_badge": "Traveller Community",
+      "traveler_title": "On the Road",
+      "traveler_subtitle": "Trips, tips, and moments from fellow travellers across the mountains.",
+      "host_notice": "This is the traveller community. Your host community lives in your dashboard.",
+      "host_cta": "Host space",
+      "host_badge": "Host Community · Private",
+      "host_title": "The Host Circle",
+      "host_subtitle": "A private space for verified hosts to share tips, updates, and grow together.",
+      "host_placeholder": "Share an update, an operations tip, or ask fellow hosts...",
+      "host_empty": "No posts yet. Share the first update with fellow hosts.",
+      "host_only_title": "Hosts only",
+      "host_only_sub": "This community is for verified hosts. Travellers can head to the traveller community.",
+      "host_only_cta": "Go to traveller community"
     }
   }
 }

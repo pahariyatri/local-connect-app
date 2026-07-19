@@ -30,11 +30,8 @@ export const loginWithPin = async (phoneNumber: string, pin: string) => {
   const result = await api.post('/auth/login-pin', { phoneNumber, pin }, { skipAuth: true });
   const data = result?.data || result;
 
+  // Tokens are set by the backend as HttpOnly cookies — never persist them in JS-accessible storage.
   if (data?.accessToken) {
-    localStorage.setItem('accessToken', data.accessToken);
-    document.cookie = `accessToken=${data.accessToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
-    if (data.userId) localStorage.setItem('userId', data.userId);
-    if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
     sessionTracker.track('login_completed', { metadata: { method: 'pin' } });
     if (data.userId) sessionTracker.linkUser(data.userId);
   }
@@ -46,14 +43,8 @@ export const verifyOtp = async (phoneNumber: string, otp: string) => {
   const result = await api.post('/auth/verify-otp', { phoneNumber, otp }, { skipAuth: true });
   const data = result?.data || result;
 
-  // Store token & link session
+  // Tokens are set by the backend as HttpOnly cookies — link the session only.
   if (data?.accessToken) {
-    localStorage.setItem('accessToken', data.accessToken);
-    document.cookie = `accessToken=${data.accessToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
-    if (data.userId) localStorage.setItem('userId', data.userId);
-    if (data.refreshToken) {
-      localStorage.setItem('refreshToken', data.refreshToken);
-    }
     sessionTracker.track('login_completed', { metadata: { method: 'otp' } });
     if (data.userId) sessionTracker.linkUser(data.userId);
   }
@@ -65,8 +56,7 @@ export const verifyOtp = async (phoneNumber: string, otp: string) => {
 export const loginAsGuest = async () => {
   const result = await api.post('/auth/login-as-guest', undefined, { skipAuth: true });
   if (result?.data?.accessToken) {
-    localStorage.setItem('accessToken', result.data.accessToken);
-    document.cookie = `accessToken=${result.data.accessToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
+    // Guest token is set by the backend as an HttpOnly cookie.
     sessionTracker.track('login_completed', { metadata: { method: 'guest' } });
     sessionTracker.linkUser(result.data.userId);
   }
@@ -78,9 +68,7 @@ export const verifyGoogleToken = async (idToken: string) => {
   const data = result?.data || result;
 
   if (data?.accessToken) {
-    localStorage.setItem('accessToken', data.accessToken);
-    document.cookie = `accessToken=${data.accessToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
-    if (data.userId) localStorage.setItem('userId', data.userId);
+    // Tokens are set by the backend as HttpOnly cookies.
     sessionTracker.track('login_completed', { metadata: { method: 'google' } });
     if (data.userId) sessionTracker.linkUser(data.userId);
   }
@@ -92,9 +80,12 @@ export const getMe = async () => {
   return api.get('/auth/me');
 };
 
-export const logout = () => {
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
-  document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+export const logout = async () => {
+  try {
+    // Clears the HttpOnly auth cookies server-side.
+    await api.post('/auth/logout', undefined, { skipAuth: true });
+  } catch {
+    /* best-effort — still clear local cache below */
+  }
   api.clearAllCache();
 };

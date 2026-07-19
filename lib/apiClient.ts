@@ -32,11 +32,6 @@ class ApiClient {
     this.baseUrl = baseUrl;
   }
 
-  private getAuthToken(): string | null {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('accessToken');
-  }
-
   private getCacheKey(endpoint: string): string {
     return `api_cache_${endpoint}`;
   }
@@ -80,14 +75,8 @@ class ApiClient {
       ...(fetchOptions.headers as Record<string, string>),
     };
 
-    // Inject auth token
-    if (!skipAuth) {
-      const token = this.getAuthToken();
-      // Only set Authorization header if we have a real token
-      if (token && token !== 'null' && token !== 'undefined') {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-    }
+    // Auth is carried by the HttpOnly `accessToken` cookie sent via `credentials: 'include'`.
+    // The backend JWT strategy reads that cookie first, so no JS-side token injection is needed.
 
     let lastError: Error | null = null;
 

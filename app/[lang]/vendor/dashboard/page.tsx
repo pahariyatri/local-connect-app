@@ -19,6 +19,7 @@ export default function VendorDashboardPage() {
     { name: "Payouts", icon: "💰", route: `/${lang}/vendor/payouts`, color: "bg-slate-100 text-slate-900", desc: "Earnings & transfers" },
     { name: "Contracts", icon: "📄", route: `/${lang}/vendor/contracts`, color: "bg-rose-50 text-rose-600", desc: "Legal agreements" },
     { name: "Partners", icon: "🤝", route: `/${lang}/vendor/partnerships`, color: "bg-blue-50 text-blue-600", desc: "Network growth" },
+    { name: res.tabs?.community || "Community", icon: "💬", route: `/${lang}/vendor/community`, color: "bg-indigo-50 text-indigo-600", desc: "Host circle" },
   ];
 
   return (

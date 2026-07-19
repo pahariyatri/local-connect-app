@@ -71,8 +71,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user_meta');
-    localStorage.removeItem('accessToken');
-    document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    // Clear the HttpOnly auth cookies server-side (best effort).
+    fetch(`${API_BASE_URL}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+    }).catch(() => { /* ignore network errors on logout */ });
   };
 
   return (
