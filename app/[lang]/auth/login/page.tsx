@@ -1,0 +1,141 @@
+"use client";
+
+import React, { useState } from "react";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import Typography from "../../components/atoms/Typography";
+import Button from "../../components/atoms/Button";
+import Input from "../../components/atoms/Input";
+import TopNavigation from "../../components/organisms/TopNavigation";
+import { sanitizePhone, isValidPhone, PHONE_LENGTH } from "@/utils/validation";
+
+export default function LoginPage() {
+    const router = useRouter();
+    const { lang } = useParams();
+    const searchParams = useSearchParams();
+    const redirectTo = searchParams.get("redirectTo");
+    const [phone, setPhone] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const handleContinue = async () => {
+        if (!isValidPhone(phone)) return;
+        setLoading(true);
+        try {
+            const { accountStatus, sendOtp } = await import("@/services/authService");
+            const redirectSuffix = redirectTo ? `&redirectTo=${encodeURIComponent(redirectTo)}` : "";
+
+            // Returning user with a PIN → skip OTP, go straight to PIN login.
+            const status = await accountStatus(phone);
+            if (status.hasPin) {
+                router.push(`/${lang}/auth/pin?mode=login&phone=${phone}${redirectSuffix}`);
+                return;
+            }
+
+            // New/unverified number → send OTP to verify, then they'll create a PIN.
+            const response = await sendOtp(phone);
+            const data = response?.data || response;
+            if (data?.otp) {
+                alert(`[TEST MODE] OTP: ${data.otp}\n(Visible because OTP_BYPASS_ENABLED=true)`);
+            }
+            router.push(`/${lang}/auth/verify-otp?phone=${phone}${redirectSuffix}`);
+
+        } catch (err) {
+            console.error("Failed to continue login", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
+    return (
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+            
+            <main className="max-w-4xl w-full bg-white rounded-[3rem] shadow-2xl overflow-hidden grid lg:grid-cols-2">
+                <div className="hidden lg:block relative p-12 bg-slate-900 text-white flex flex-col justify-between overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px]" />
+                    <div className="relative z-10">
+                        <Link href={`/${lang}`} className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center font-black text-white text-xl mb-12 hover:bg-white/20 transition-all">
+                            LC
+                        </Link>
+                        <h2 className="text-4xl font-black leading-[0.9] uppercase italic tracking-tighter mb-6">
+                            The Legend <br /> Network.
+                        </h2>
+                        <p className="text-slate-400 font-medium leading-relaxed max-w-xs">Join the most exclusive community of mountain explorers and local experts.</p>
+                    </div>
+                    
+                    <div className="relative z-10 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">
+                        © 2026 Local Connect Portal
+                    </div>
+                </div>
+
+                <div className="p-8 sm:p-12 md:p-16 flex flex-col justify-center relative">
+                    {/* Floating Back Button for Mobile */}
+                    <button 
+                        onClick={() => router.back()}
+                        className="absolute top-8 left-8 w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 lg:hidden"
+                    >
+                        ←
+                    </button>
+
+                    <header className="mb-10 text-center lg:text-left">
+                        <Typography variant="h1" className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter leading-[0.85] uppercase italic">
+                            Welcome <br /> Back, Yatri.
+                        </Typography>
+                        <p className="mt-4 text-slate-400 font-medium text-sm">Securely access your path.</p>
+                    </header>
+
+                    <div className="space-y-6">
+                        <div className="relative group">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] pl-2 mb-3 block group-focus-within:text-slate-900 transition-colors italic">Mobile Number</label>
+                            <div className="flex gap-2">
+                                <div className="h-14 px-4 bg-slate-50 border-2 border-slate-100 rounded-2xl flex items-center font-black text-slate-400 text-sm">
+                                    +91
+                                </div>
+                                <Input
+                                    name="phone"
+                                    autoFocus
+                                    className="h-14 rounded-2xl text-lg font-black tracking-[0.1em] placeholder:text-slate-200"
+                                    placeholder="00000 00000"
+                                    type="tel"
+                                    inputMode="numeric"
+                                    maxLength={PHONE_LENGTH}
+                                    value={phone}
+                                    onChange={(e) => setPhone(sanitizePhone(e.target.value))}
+                                    onKeyDown={(e) => { if (e.key === "Enter" && isValidPhone(phone) && !loading) handleContinue(); }}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <Button
+                                onClick={handleContinue}
+                                disabled={!isValidPhone(phone) || loading}
+                                className={`w-full h-16 rounded-2xl text-base font-black tracking-widest transition-all uppercase italic shadow-xl ${
+                                    loading ? "bg-slate-200 text-slate-400" : "bg-slate-900 hover:bg-black text-white shadow-slate-200 active:scale-95"
+                                }`}
+                            >
+                                {loading ? "Please wait..." : "Continue"}
+                            </Button>
+                            
+                            <div className="relative py-2 text-center">
+                                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
+                                <span className="relative px-2 bg-white text-[9px] font-black text-slate-300 uppercase tracking-widest">Other Options</span>
+                            </div>
+
+                            <button className="w-full h-14 rounded-2xl border-2 border-slate-100 font-black text-[10px] uppercase tracking-widest text-slate-500 hover:bg-emerald-50 hover:border-emerald-100 hover:text-emerald-600 transition-all flex items-center justify-center gap-3">
+                                💬 WhatsApp Login
+                            </button>
+                        </div>
+
+                        <div className="text-center mt-10">
+                            <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest leading-relaxed">
+                                By entering, you agree to our <br />
+                                <Link href={`/${lang}/terms-conditions`} className="text-emerald-500/60 font-bold underline px-1">Code</Link> & <Link href={`/${lang}/privacy-policy`} className="text-emerald-500/60 font-bold underline px-1">Privacy</Link>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    );
+}

@@ -1,0 +1,721 @@
+{
+  "page": {
+    "home": {
+      "hero": {
+        "title": "Travel <br /> like a Local",
+        "subtitle": "Discover the high mountains through the eyes of legends who call them home.",
+        "cta_primary": "Start Planning — Free",
+        "cta_secondary": "See Sample Trip"
+      },
+      "steps": {
+        "title": "Your path to the peaks",
+        "items": [
+          {
+            "step": "01",
+            "title": "Enter Destinations",
+            "desc": "Tell us where your heart is pulling you."
+          },
+          {
+            "step": "02",
+            "title": "Get Instant Plan",
+            "desc": "Real-time pricing from verified local legends."
+          },
+          {
+            "step": "03",
+            "title": "Book Direct",
+            "desc": "Transact safely with on-ground experts."
+          }
+        ]
+      },
+      "trust": {
+        "title": "Built on Trust.",
+        "subtitle": "Why travelers choose Local Connect for their mountain souls.",
+        "verified": "Verified Local Legends",
+        "verified_sub": "Personally vetted guides and hosts.",
+        "escrow": "Escrow Protection",
+        "escrow_sub": "Your money is safe until you're on-the-ground.",
+        "direct": "Direct Booking",
+        "direct_sub": "No middlemen. Just you and the legend."
+      },
+      "sponsored": {
+        "title": "Powered by Local Alliances",
+        "subtitle": "Our mission is supported by the stewards of the Himalayas.",
+        "vendors": [
+          "Pahariyatri",
+          "Gayatri Lodge",
+          "Himalayan Trails",
+          "Peak Guides"
+        ]
+      },
+      "destinations": {
+        "title": "The High Trails",
+        "subtitle": "Explore our hand-picked basecamps."
+      },
+      "ai_cta": {
+        "badge": "Zero planning required.",
+        "title": "Your Path <br /> Defined",
+        "subtitle": "Let our Intelligent Planner craft a journey tailored to your specific travel DNA in under 60 seconds.",
+        "cta": "Start For Free",
+        "partner": "Partner Login"
+      }
+    },
+    "discover": {
+      "title": "Discover",
+      "header": {
+        "title": "Local <span class=\"text-emerald-500\">Legends</span>.",
+        "subtitle": "Verified experts of the Himachal terrain."
+      },
+      "categories": {
+        "all": "All",
+        "stay": "Stay",
+        "taxi": "Taxi",
+        "adventure": "Adventure",
+        "meals": "Meals"
+      },
+      "vendor_card": {
+        "rating": "Review",
+        "reviews": "Reviews",
+        "starts_from": "Starts from",
+        "verified": "🛡️ Verified"
+      },
+      "partner_cta": {
+        "title": "Are you a Local Expert?",
+        "subtitle": "Join 500+ legends and grow your business",
+        "cta": "Enroll Now"
+      }
+    },
+    "onboarding": {
+      "title": "Setup Profile",
+      "role": {
+        "title": "Welcome to the Community",
+        "subtitle": "How will you explore the mountains today?",
+        "traveler": "Traveler",
+        "traveler_sub": "Discover & book unique experiences.",
+        "vendor": "Local Legend",
+        "vendor_sub": "Sell your stays, tours, or services.",
+        "broker": "Travel Broker",
+        "broker_sub": "Curate trips for others & earn."
+      },
+      "details": {
+        "title": "Profile Details",
+        "subtitle": "Just a few more steps to verify your identity.",
+        "business": "Business Name / Handle",
+        "id_proof": "Identity Proof (Aadhar/Voter ID)",
+        "id_sub": "Upload a clear scan for verification",
+        "bank_name": "Bank Name",
+        "account_number": "Account Number",
+        "ifsc": "IFSC / IBAN Code",
+        "upi": "UPI ID (Optional)",
+        "payment_title": "Payment Settlement",
+        "payment_sub": "Where should we send your earnings?"
+      }
+    },
+    "vendor_onboarding": {
+      "prep": {
+        "title": "Become a <br /> <span class=\"text-slate-500 font-medium not-italic capitalize tracking-normal text-2xl\">Local Legend</span>",
+        "subtitle": "Your journey to global hospitality mastery starts here. Build your profile in 3 simple phases.",
+        "steps": [
+          {
+            "label": "Business Bio",
+            "desc": "Category & Specialization",
+            "icon": "🏢"
+          },
+          {
+            "label": "Verification",
+            "desc": "Identity & Business Proofs",
+            "icon": "🛡️"
+          },
+          {
+            "label": "Operations",
+            "desc": "Payouts & Logistics",
+            "icon": "⚙️"
+          }
+        ],
+        "cta": "Launch Setup",
+        "back": "← Return to Hub"
+      },
+      "business": {
+        "title": "Venture Profile",
+        "subtitle": "Initialize your commercial entity in our local ecosystem.",
+        "fields": {
+          "name": "Commercial Name",
+          "category": "Main Vertical",
+          "subcategory": "Specialization",
+          "ownership": "Legal Ownership Type"
+        },
+        "cta": "Proceed to Logistics"
+      },
+      "address": {
+        "title": "Base Location",
+        "subtitle": "Where is your HQ located?",
+        "fields": {
+          "address": "Operating Address",
+          "city": "City",
+          "state": "State",
+          "pincode": "Pin Code"
+        },
+        "placeholders": {
+          "address": "House no, Street, Landmark",
+          "city": "e.g. Manali",
+          "state": "HP",
+          "pincode": "175131"
+        },
+        "cta": "Verify & Next"
+      },
+      "verification": {
+        "title": "Verification Hub",
+        "subtitle": "Upload your official documents.",
+        "steps": {
+          "identity": {
+            "title": "ID Proof",
+            "sub": "Aadhar / Passport"
+          },
+          "ownership": {
+            "title": "Ownership",
+            "sub": "Lease / Deed"
+          }
+        },
+        "trust": {
+          "title": "Trust Verification",
+          "subtitle": "24-48 Hour Review Matrix"
+        },
+        "cta": "Upload & Finalize"
+      },
+      "services_list": {
+        "title": "Service Portfolio",
+        "subtitle": "Verified mountain experiences & local legends",
+        "add_button": "LIST NEW SERVICE",
+        "trust_engine": {
+          "title": "Trust Engine Active",
+          "desc": "Manual verification required for all new listings to ensure elite quality."
+        },
+        "filters": {
+          "all": "All Services",
+          "stays": "Stays",
+          "navigation": "Navigation",
+          "adventure": "Adventure",
+          "dining": "Dining"
+        },
+        "card": {
+          "verified": "Verified",
+          "pending": "Pending",
+          "market_price": "Market Price",
+          "net_payout": "Net Payout",
+          "preview": "PREVIEW",
+          "edit": "EDIT"
+        },
+        "empty_state": {
+          "title": "No Services Found",
+          "desc": "Start your mountain business by adding your first service above."
+        }
+      },
+      "guest_assists": {
+        "title": "Guest Assists",
+        "subtitle": "Coordinate your upcoming mountain legendary experiences.",
+        "stats": {
+          "total_rev": "Total Rev.",
+          "active": "Active"
+        },
+        "card": {
+          "id": "ID",
+          "guest": "Guest",
+          "date": "Date",
+          "earnings": "Earnings",
+          "accept": "ACCEPT",
+          "decline": "DECLINE",
+          "details": "VIEW DETAILS"
+        }
+      },
+      "confirmation": {
+        "title": "Protocol Initialized",
+        "subtitle": "Your vendor request has entered the verification stream.",
+        "pipeline": {
+          "step1": {
+            "title": "Submission Received",
+            "sub": "Awaiting initial handshake."
+          },
+          "step2": {
+            "title": "Compliance Scan",
+            "sub": "Validating legal documentation."
+          },
+          "step3": {
+            "title": "Dashboard Access",
+            "sub": "Full terminal activation."
+          }
+        },
+        "cta": "Enter Command Center",
+        "support": "Requires Assistance?",
+        "contact": "Contact Support"
+      },
+      "layout": {
+        "back": "Back to Previous",
+        "steps": {
+          "business": "Business",
+          "address": "Address",
+          "docs": "Docs",
+          "review": "Review"
+        }
+      }
+    },
+    "results": {
+      "title": "Your Legend Path",
+      "access_badge": "SECRET GROUP ACCESS 🤫",
+      "subtitle": "Crafted for your {duration}-day soul journey. Featuring hand-picked Local Legends.",
+      "guest_count": "Number of People",
+      "guest_count_placeholder": "How many travelers?",
+      "sharing": {
+        "button": "SHARE JOURNEY",
+        "success": "Link copied! Share the magic.",
+        "title": "My Himachal Road Trip",
+        "text": "Check out this amazing journey I planned on Local Connect!"
+      },
+      "itinerary": {
+        "day": "Day {day}",
+        "add_stop": "+ Quick Add Stop",
+        "explore_more": "Exploring &quot;On-the-way&quot; vendors...",
+        "near_origin": "Loading more dhabas & adventure spots near {origin}"
+      },
+      "footer": {
+        "total": "Estimated Total",
+        "escrow": "ESCROW PROTECTED",
+        "book_now": "BOOK NOW"
+      }
+    },
+    "about": {
+      "title": "About Us",
+      "hero": {
+        "title": "Local <span class=\"text-emerald-400\">Legends</span>.",
+        "subtitle": "Empowering the people who make the mountains feel like home."
+      },
+      "mission": {
+        "title": "Our Mission",
+        "text": "Local Connect was born in the heart of the Himalayas. We saw a gap between the immense beauty of our culture and the digital tools available to the people who preserve it.<br /><br />Our platform isn't just a booking engine; it's a bridge. We represent the homestay owners, the mountain guides, and the adventure specialists who are the true curators of the mountain experience."
+      },
+      "markets": {
+        "title": "Top International Source Markets",
+        "groups": [
+          {
+            "flags": "🇺🇸 🇬🇧 🇩🇪",
+            "name": "USA, UK, & Germany",
+            "text": "These regions traditionally represent the largest segments of foreign arrivals."
+          },
+          {
+            "flags": "🇮🇱",
+            "name": "Israel",
+            "text": "Historically, a very high number of Israeli tourists visit regions like Kasol and Dharamshala."
+          }
+        ]
+      },
+      "features": {
+        "local": "Authored by Locals",
+        "local_sub": "Every route is human-verified",
+        "trust": "Trust as Core",
+        "trust_sub": "Direct-to-vendor escrow system"
+      },
+      "cta": {
+        "title": "Join the Movement",
+        "subtitle": "Whether you're a traveler or a legend, there's a place for you here.",
+        "build": "BUILD A JOURNEY",
+        "vendor": "BECOME A VENDOR"
+      }
+    },
+    "builder": {
+      "title": "Legend Planner",
+      "loading_title": "Mapping your Path",
+      "step1": {
+        "title": "Where is your <span class=\"text-indigo-600\">story</span> going?",
+        "subtitle": "Start with an origin and pick your dream stops.",
+        "route_title": "Starting Point",
+        "origin_placeholder": "Where are you starting? (e.g. Delhi)",
+        "explore_title": "Destinations to Explore",
+        "explore_subtitle": "Pick up to {max} stops on your way"
+      },
+      "step2": {
+        "title": "When are we <span class=\"text-amber-500\">departing</span>?",
+        "subtitle": "Checking real-time availability for you."
+      },
+      "step5": {
+        "title": "Build your <span class=\"text-emerald-600\">package</span>",
+        "subtitle": "Choose vendors for each day. Share or book when done."
+      },
+      "next_stop": {
+        "title": "Where do you want to <span class=\"text-emerald-500\">stop</span>?",
+        "subtitle": "Pick the towns on your route worth exploring — built live from what's actually there.",
+        "route_label": "Your Route",
+        "stops_title": "Places on your route",
+        "stops_subtitle": "Tap the towns you'd like to stop at and explore.",
+        "selected": "selected",
+        "clear": "Clear",
+        "service": "service",
+        "services": "services",
+        "available_here": "here",
+        "empty_title": "No stops found on this route yet.",
+        "empty_sub": "You can continue — we'll build your plan from your destinations.",
+        "skip_hint": "Optional — skip anytime and go straight to building your plan."
+      },
+      "interests": {
+        "title": "What are you <span class=\"text-rose-500\">craving</span>?",
+        "subtitle": "Select the experiences you want to include.",
+        "stay": "Unique Stays",
+        "activity": "Adventures",
+        "travel": "Local Transport",
+        "food": "Culinary"
+      },
+      "traveling_party": {
+        "title": "The <span class=\"text-emerald-500\">Traveling</span> Party.",
+        "subtitle": "How many souls are joining this journey?",
+        "pax": "Travelers",
+        "pax_sub": "This helps us calculate rooms and vehicles.",
+        "stay_label": "Stay Type",
+        "transport_label": "Transport",
+        "room": "Room",
+        "rooms": "Rooms",
+        "single": "Single occupancy",
+        "twin": "Twin-sharing basis",
+        "stays": {
+          "tier1": "Boutique Stay",
+          "sub1": "Cozy & Local",
+          "tier2": "Premium Room",
+          "sub2": "Couples sanctuary",
+          "tier3": "Private Villa",
+          "sub3": "Exclusive group wing",
+          "tier4": "Grand Resort",
+          "sub4": "Master collection stay"
+        },
+        "vehicles": {
+          "bike": "Adventure Bike",
+          "bike_sub": "Solo journey",
+          "sedan": "Premium Sedan",
+          "sedan_sub": "Couples comfort",
+          "suv": "Premium SUV",
+          "suv_sub": "Group utility",
+          "tempo": "Tempo Traveler",
+          "tempo_sub": "Executive transit",
+          "fullbus": "Grand Coach",
+          "fullbus_sub": "Elite group travel"
+        }
+      },
+      "buttons": {
+        "back": "Back",
+        "continue": "CONTINUE",
+        "seePlan": "SEE MY PLAN",
+        "createPackage": "Create my package",
+        "building": "BUILDING TRIP..."
+      },
+      "loading": {
+        "title": "Almost there...",
+        "step1": "Route verified",
+        "step1_sub": "Optimum path selected",
+        "step2": "Vendors checked",
+        "step2_sub": "Availability confirmed"
+      },
+      "promise": {
+        "title": "Our Promise",
+        "subtitle": "Built by locals, trusted by you.",
+        "verified": "100% Verified Vendors",
+        "support": "24/7 On-Trip Support",
+        "price": "Best Price Guarantee"
+      }
+    },
+    "common": {
+      "date_picker": {
+        "this_weekend": "This Weekend",
+        "next_weekend": "Next Weekend",
+        "fri_sun": "Fri - Sun",
+        "manual_selection": "Manual Selection",
+        "trip_timeline": "Trip Timeline",
+        "arriving": "Arriving",
+        "leaving": "Leaving",
+        "nights": "Nights",
+        "quick_select": "Quick Select",
+        "today": "Today",
+        "custom": "OR CHOOSE DATES",
+        "check_in": "Check-in",
+        "check_out": "Check-out"
+      },
+      "actions": {
+        "login": "Login",
+        "register": "Join Hub",
+        "search_placeholder": "Search peaks...",
+        "back_to_hub": "← Return to Hub",
+        "explore": "Explore",
+        "wishlist": "Wishlist",
+        "ai_guide": "AI Guide",
+        "bookings": "Bookings",
+        "profile": "Profile",
+        "settings": "Settings",
+        "broker_hub": "Broker Hub",
+        "assisted": "Assisted",
+        "earnings": "Comms",
+        "admin_hub": "Admin Pan",
+        "queue": "Queue",
+        "disputes": "Disputes",
+        "stats": "Stats"
+      },
+      "notifications": {
+        "added": "{category} added to Day {day}",
+        "removed": "{category} removed. Discovering better alternatives...",
+        "exploring": "Exploring more {category} options...",
+        "booking_request": "Requesting exclusive Secret Group rates for {name}...",
+        "booking_success": "Booking Confirmed! Check your 'Journey' tab for details."
+      },
+      "errors": {
+        "title": "Something went wrong!",
+        "subtitle": "Oops, something went wrong while processing your request. Please try again later.",
+        "details": "Error Details:",
+        "retry": "Try Again"
+      }
+    },
+    "bookings": {
+      "title": "Your Bookings",
+      "subtitle": "Tracking {count} epic experiences",
+      "booking_id": "Booking ID",
+      "dates_label": "Journey Dates",
+      "paid_label": "Total Paid",
+      "cta_title": "Ready for more?",
+      "cta_subtitle": "Build a new custom path through the mountains",
+      "cta_button": "START NEW BUILD 🏔️",
+      "status": {
+        "confirmed": "Confirmed",
+        "pending": "Pending",
+        "completed": "Completed"
+      }
+    },
+    "journey": {
+      "title": "Trip Architect",
+      "badge": "Road Trip",
+      "shared_title": "Community Trip",
+      "crafted_by": "Crafted by",
+      "remix": "Remix This Trip for Myself",
+      "add_day": "+ Add Day",
+      "ai_insight": "Yatri AI Insight",
+      "ai_tip": "Heavy traffic expected. Start 45 mins earlier!",
+      "day_label": "Day {day}",
+      "schedule": "Schedule for Day {day}",
+      "quick_add": "+ Quick Add Stop",
+      "empty": "Nothing planned for today",
+      "empty_sub": "Add a dhaba visit or local stay",
+      "add_first": "Add First Stop",
+      "book_expert": "Book Local Expert →",
+      "broker_rec": "Broker Recommended",
+      "hire": "Hire",
+      "total_trip": "Total Trip",
+      "request_booking": "Request Booking",
+      "requesting": "Requesting...",
+      "published": "Journey Published!",
+      "published_sub": "Your trip has been saved and shared.",
+      "view_trips": "View My Trips",
+      "copy_link": "Copy Share Link 🔗",
+      "add_stop_modal": {
+        "title": "Add Stop to Day {day}",
+        "name_label": "Action/Place Name",
+        "name_placeholder": "e.g. Lunch at Best Dhaba",
+        "time_label": "Planned Time",
+        "category_label": "Category",
+        "submit": "Add to Timeline"
+      }
+    },
+    "privacy": {
+      "title": "Privacy Commitment",
+      "subtitle": "Safe • Secure • Transparent",
+      "oath_title": "Our Oath",
+      "oath_text": "Your mountains explorations are yours alone. We only track what's necessary to make your journey legendary.",
+      "sections": [
+        {
+          "title": "01. Information We Collect",
+          "items": [
+            "Basic identity for booking.",
+            "Location for route-based discovery.",
+            "Payment info (fully encrypted)."
+          ]
+        },
+        {
+          "title": "02. Data Usage",
+          "text": "We share data only with the vendors you book with. Your data will never be sold to 3rd party advertisters. That's a mountain promise."
+        },
+        {
+          "title": "03. Your Rights",
+          "text": "You can request data deletion at any time. We believe in your right to be forgotten after your journey is done."
+        }
+      ],
+      "footer_q": "Questions?",
+      "email": "privacy@localconnect.com"
+    },
+    "terms": {
+      "title": "Terms & Conditions",
+      "subtitle": "Last Updated: February 2026",
+      "sections": [
+        {
+          "title": "01. Acceptance",
+          "text": "By accessing Local Connect, you agree to be bound by these terms. Our platform is a bridge between mountain travelers and local legends."
+        },
+        {
+          "title": "02. Vendor Roles",
+          "text": "Vendors and Agencies (Brokers) are independent entities. Local Connect provides the technology to manage these partnerships and bookings."
+        },
+        {
+          "title": "03. Booking & Payments",
+          "text": "All bookings are subject to vendor availability. Price synchronization happens in real-time."
+        },
+        {
+          "title": "04. Safety & Conduct",
+          "text": "We promote responsible mountain travel. Respect local cultures and keep the trails clean."
+        }
+      ],
+      "footer": "Local Connect Tech (P) Ltd."
+    },
+    "vendor_dashboard": {
+      "welcome": "Welcome back, {name}! 👋",
+      "subtitle": "Manage your services, track bookings, and grow your business",
+      "tabs": {
+        "overview": "Overview",
+        "services": "My Services",
+        "bookings": "Bookings",
+        "analytics": "Analytics"
+      },
+      "stats": {
+        "services": "Services",
+        "active_listings": "Active listings",
+        "bookings": "Bookings",
+        "this_month": "This month",
+        "revenue": "Revenue",
+        "rating": "Rating",
+        "average_score": "Average score"
+      },
+      "recent_bookings": {
+        "title": "Recent Bookings",
+        "status": {
+          "confirmed": "Confirmed",
+          "pending": "Pending",
+          "completed": "Completed"
+        }
+      },
+      "quick_actions": {
+        "title": "Quick Actions",
+        "add_service": {
+          "title": "Add Service",
+          "desc": "Create new listing"
+        },
+        "view_reports": {
+          "title": "View Reports",
+          "desc": "Business insights"
+        },
+        "messages": {
+          "title": "Messages",
+          "desc": "Customer inquiries"
+        },
+        "settings": {
+          "title": "Settings",
+          "desc": "Account preferences"
+        }
+      },
+      "performance": {
+        "title": "Performance Overview",
+        "completed": "Completed Bookings",
+        "pending": "Pending Confirmations",
+        "satisfaction": "Customer Satisfaction"
+      },
+      "services": {
+        "title": "My Services",
+        "subtitle": "Manage your service listings",
+        "add_button": "+ Add New Service",
+        "add_first": "+ Add Your First Service",
+        "not_found": "No services found",
+        "empty_state": "Start by adding your first service",
+        "empty_filter": "No {filter} services found",
+        "filters": {
+          "all": "All Services",
+          "active": "Active",
+          "inactive": "Inactive",
+          "drafts": "Drafts"
+        },
+        "card": {
+          "category": "Category",
+          "price": "Price",
+          "bookings": "Bookings",
+          "rating": "Rating",
+          "no_ratings": "No ratings"
+        },
+        "actions": {
+          "edit": "Edit",
+          "activate": "Activate",
+          "deactivate": "Deactivate",
+          "delete": "Delete"
+        }
+      },
+      "bookings": {
+        "title": "Bookings Management",
+        "subtitle": "Track and manage customer bookings",
+        "not_found": "No bookings found",
+        "empty_state": "No bookings yet",
+        "empty_filter": "No {filter} bookings found",
+        "filters": {
+          "all": "All Bookings",
+          "pending": "Pending",
+          "confirmed": "Confirmed",
+          "completed": "Completed",
+          "cancelled": "Cancelled"
+        },
+        "card": {
+          "guests": "for {count} guest{s}",
+          "service": "Service",
+          "booking_date": "Booking Date",
+          "travel_date": "Travel Date"
+        },
+        "actions": {
+          "confirm": "Confirm",
+          "cancel": "Cancel",
+          "mark_complete": "Mark Complete",
+          "view_details": "View Details",
+          "contact": "Contact Customer"
+        }
+      },
+      "analytics": {
+        "revenue": {
+          "title": "Revenue Overview",
+          "total": "Total Revenue",
+          "vs_last": "vs last month"
+        },
+        "bookings": {
+          "title": "Booking Trends",
+          "total": "Total Bookings",
+          "conversion": "conversion rate"
+        },
+        "customers": {
+          "title": "Customer Insights",
+          "total": "Total Customers",
+          "new": "New Customers",
+          "returning": "Returning",
+          "locations": "Top Locations",
+          "bookings_suffix": "bookings"
+        },
+        "services": {
+          "title": "Top Performing Services",
+          "bookings_suffix": "bookings"
+        },
+        "metrics": {
+          "title": "Key Performance Metrics",
+          "rating": "Average Rating",
+          "response": "Avg. Response Time",
+          "completion": "Completion Rate",
+          "avg_value": "Avg. Booking Value",
+          "hrs": "hrs"
+        },
+        "months": [
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec"
+        ]
+      }
+    }
+  }
+}
