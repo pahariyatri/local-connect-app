@@ -3,24 +3,26 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import Input from "@/app/[lang]/components/atoms/Input";
 import Button from "@/app/[lang]/components/atoms/Button";
 import ProgressBar from "@/app/[lang]/components/organisms/ProgressBar";
 import Typography from "@/app/[lang]/components/atoms/Typography";
 import Form from "@/app/[lang]/components/molecules/Form";
+import ImageUploader from "@/app/[lang]/components/molecules/ImageUploader";
+import MultiImageUploader from "@/app/[lang]/components/molecules/MultiImageUploader";
+
+interface MarketingAssetsForm {
+    logo: string;
+    images: string[];
+    promotionalMaterial: string;
+}
 
 export default function MarketingAssets() {
     const router = useRouter();
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<MarketingAssetsForm>({
         logo: "",
-        images: "",
+        images: [],
         promotionalMaterial: "",
     });
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
-    };
 
     const handleNext = (e: React.FormEvent) => {
         e.preventDefault();
@@ -30,35 +32,46 @@ export default function MarketingAssets() {
 
     return (
         <div className="max-w-2xl mx-auto mt-8 space-y-6 px-4 sm:px-8">
-            <Typography variant="h1" className="text-gray-600">
+            <Typography variant="h1" className="text-slate-700">
                 Marketing Assets
             </Typography>
             <ProgressBar step={8} totalSteps={10} />
             <Form onSubmit={handleNext}>
-                <Input
-                    label="Logo"
-                    name="logo"
-                    type="file"
-                    value={formData.logo}
-                    onChange={handleChange}
-                    placeholder="Upload your business logo"
-                />
-                <Input
-                    label="Images"
-                    name="images"
-                    type="file"
+                {/* Logo — single image */}
+                <div>
+                    <p className="text-sm font-medium text-slate-700 mb-2">Business Logo</p>
+                    <ImageUploader
+                        value={formData.logo}
+                        onChange={(url) => setFormData((prev) => ({ ...prev, logo: url }))}
+                        folder="vendor/logos"
+                        shape="square"
+                        sizeClassName="h-28 w-28"
+                        label="Upload your business logo"
+                    />
+                </div>
+
+                {/* Business images — multiple */}
+                <MultiImageUploader
                     value={formData.images}
-                    onChange={handleChange}
-                    placeholder="Upload your business images"
+                    onChange={(urls) => setFormData((prev) => ({ ...prev, images: urls }))}
+                    folder="vendor/gallery"
+                    max={8}
+                    label="Business Images (up to 8)"
                 />
-                <Input
-                    label="Promotional Material"
-                    name="promotionalMaterial"
-                    type="file"
-                    value={formData.promotionalMaterial}
-                    onChange={handleChange}
-                    placeholder="Upload promotional materials"
-                />
+
+                {/* Promotional material — single image */}
+                <div>
+                    <p className="text-sm font-medium text-slate-700 mb-2">Promotional Material</p>
+                    <ImageUploader
+                        value={formData.promotionalMaterial}
+                        onChange={(url) => setFormData((prev) => ({ ...prev, promotionalMaterial: url }))}
+                        folder="vendor/promos"
+                        shape="square"
+                        sizeClassName="h-28 w-28"
+                        label="Upload promotional material"
+                    />
+                </div>
+
                 <Button type="submit" variant="primary">
                     Next
                 </Button>
