@@ -4,6 +4,7 @@
  * non-expiring URL safe to persist and use directly in <img src>.
  */
 import { API_BASE_URL } from '@/utils/constants';
+import { processImageBeforeUpload } from '@/utils/imageProcessor';
 
 export interface UploadedMedia {
   key: string;
@@ -24,9 +25,23 @@ export function validateImage(file: File): string | null {
   return null;
 }
 
+/** Helper to extract S3/R2 key from a public stable media URL */
+export function getMediaKeyFromUrl(url: string): string | null {
+  if (!url) return null;
+  const marker = '/media/file/';
+  const index = url.indexOf(marker);
+  if (index !== -1) {
+    return url.substring(index + marker.length);
+  }
+  return null;
+}
+
 export async function uploadMedia(file: File, folder = 'general'): Promise<UploadedMedia> {
+  // Compress and resize the image before uploading to optimize storage, bandwidth and quality
+  const processedFile = await processImageBeforeUpload(file);
+
   const form = new FormData();
-  form.append('file', file);
+  form.append('file', processedFile);
   form.append('folder', folder);
 
   // NB: do NOT set Content-Type — the browser sets the multipart boundary.
@@ -57,3 +72,4 @@ export async function deleteMedia(key: string): Promise<void> {
     throw new Error(`Delete failed (${res.status})`);
   }
 }
+

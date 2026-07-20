@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { uploadMedia, validateImage } from "@/services/mediaService";
+import { uploadMedia, validateImage, deleteMedia, getMediaKeyFromUrl } from "@/services/mediaService";
 
 interface MultiImageUploaderProps {
   /** Current image URLs. */
@@ -66,9 +66,17 @@ export default function MultiImageUploader({
   latestRef.current = value;
 
   const removeAt = (idx: number) => {
+    const urlToRemove = value[idx];
+    const keyToRemove = getMediaKeyFromUrl(urlToRemove);
+    if (keyToRemove) {
+      deleteMedia(keyToRemove).catch((err) =>
+        console.error("Failed to delete media from S3:", err)
+      );
+    }
     const next = value.filter((_, i) => i !== idx);
     onChange(next);
   };
+
 
   return (
     <div className={className}>

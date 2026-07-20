@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import { uploadMedia, validateImage } from "@/services/mediaService";
+import { uploadMedia, validateImage, deleteMedia, getMediaKeyFromUrl } from "@/services/mediaService";
 
 interface ImageUploaderProps {
   /** Current image URL (stable backend/media URL). */
@@ -70,10 +70,19 @@ export default function ImageUploader({
     setPreview(localUrl);
     setUploading(true);
 
+    const oldKey = value ? getMediaKeyFromUrl(value) : null;
+
     try {
       const { url, key } = await uploadMedia(file, folder);
       onChange(url, key);
       setPreview(url); // swap blob → stable URL
+
+      // Delete the old file from S3 if replacement was successful and key changed
+      if (oldKey && oldKey !== key) {
+        deleteMedia(oldKey).catch((err) =>
+          console.error("Failed to delete old image from S3:", err)
+        );
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
       setPreview(value); // revert to previous
@@ -85,6 +94,7 @@ export default function ImageUploader({
       }
     }
   };
+
 
   return (
     <div className={`inline-flex flex-col items-center gap-2 ${className}`}>
