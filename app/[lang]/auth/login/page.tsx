@@ -97,18 +97,19 @@ export default function LoginPage() {
                     <div className="space-y-6">
                         <div className="relative group">
                             <label htmlFor="phone" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] pl-2 mb-3 block group-focus-within:text-slate-900 transition-colors italic">Mobile Number</label>
-                            <div className={`flex gap-2 rounded-2xl transition-all ${
+                            <div className={`w-full h-14 rounded-2xl border-2 flex items-center transition-all duration-200 ${
                                 showInvalid
-                                    ? "ring-2 ring-red-400/60 ring-offset-2"
-                                    : "focus-within:ring-2 focus-within:ring-slate-900/70 focus-within:ring-offset-2"
+                                    ? "bg-red-50/10 border-red-400 ring-4 ring-red-400/10"
+                                    : "bg-slate-50/50 border-slate-100 hover:border-slate-200/80 focus-within:bg-white focus-within:border-slate-900 focus-within:ring-4 focus-within:ring-slate-900/5"
                             }`}>
-                                <div className="h-14 px-4 bg-slate-50 border-2 border-slate-100 rounded-2xl flex items-center font-black text-slate-400 text-sm select-none">
+                                <span className="px-5 font-black text-slate-400 text-sm select-none border-r border-slate-200/80 h-7 flex items-center">
                                     +91
-                                </div>
-                                <Input
+                                </span>
+                                <input
+                                    id="phone"
                                     name="phone"
                                     autoFocus
-                                    className={`h-14 rounded-2xl text-lg font-black tracking-[0.1em] placeholder:text-slate-200 ${showInvalid ? "border-red-300 bg-red-50/40" : ""}`}
+                                    className="flex-1 h-full px-5 text-lg font-black tracking-[0.1em] placeholder:text-slate-200 bg-transparent text-slate-900 border-0 outline-none focus:outline-none focus:ring-0"
                                     placeholder="00000 00000"
                                     type="tel"
                                     inputMode="numeric"

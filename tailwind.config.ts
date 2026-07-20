@@ -7,6 +7,10 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["var(--font-geist-sans)", "system-ui", "-apple-system", "sans-serif"],
+        mono: ["var(--font-geist-mono)", "monospace"],
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
@@ -19,8 +23,6 @@ export default {
         slate: {
           50: "#f8fafc",
           100: "#f1f5f9",
-          // Add others if needed, but Tailwind 3.4.1 has them by default usually.
-          // However, the existing config overwrote gray, so I'll fix that.
         }
       },
     },
