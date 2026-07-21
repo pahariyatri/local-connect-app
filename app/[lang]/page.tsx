@@ -7,6 +7,7 @@ import LocalImage from "./components/atoms/Image";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import Loading from "../loading";
 import { useTripPlanner } from "@/contexts/TripPlannerContext";
+import api from "@/lib/apiClient";
 
 type HomeProps = {
   params: Promise<{ lang: Locale }>;
@@ -107,6 +108,200 @@ const TRUST_META: { icon: IconName; key: string }[] = [
   { icon: "star", key: "reviews" },
 ];
 
+const mapHomeVendor = (v: any) => {
+    const type = v.types?.[0] || "hotel";
+    const roleMap: Record<string, string> = {
+        "hotel": "Host · 4 Rooms",
+        "adventure": "Adventure Specialist",
+        "transport": "Transport Operator",
+        "restaurant": "Culinary Host",
+        "guide": "Local Guide",
+        "wellness": "Yoga & Wellness Expert"
+    };
+
+    let location = "Manali, HP";
+    const lowerName = v.businessName.toLowerCase();
+    if (lowerName.includes("dharamshala")) location = "Dharamshala, HP";
+    else if (lowerName.includes("tirthan")) location = "Tirthan, HP";
+    else if (lowerName.includes("spiti")) location = "Spiti, HP";
+    else if (lowerName.includes("goa")) location = "Goa";
+    else if (lowerName.includes("leh")) location = "Leh, Ladakh";
+    else if (lowerName.includes("rishikesh")) location = "Rishikesh, UK";
+    else if (lowerName.includes("shimla")) location = "Shimla, HP";
+
+    const categoryMap: Record<string, string> = {
+        "hotel": "Homestays",
+        "adventure": "Adventures",
+        "transport": "Transport",
+        "restaurant": "Food",
+        "guide": "Guides",
+        "wellness": "Wellness"
+    };
+    const category = categoryMap[type.toLowerCase()] || "Guides";
+    const categoryImages: Record<string, string> = {
+        "Homestays": "https://images.unsplash.com/photo-1651319485646-f0f30e46b761?q=80&w=400",
+        "Adventures": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400",
+        "Transport": "https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=400",
+        "Food": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=400",
+        "Guides": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=400",
+        "Wellness": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=400"
+    };
+
+    let cleanName = v.businessName.replace(/\s*\(.*?\)\s*/g, "").trim();
+
+    return {
+        id: v.id,
+        name: cleanName,
+        role: roleMap[type.toLowerCase()] || "Local Expert",
+        location,
+        rating: v.trustScore || 4.8,
+        reviews: v.reviews || Math.floor((v.trustScore || 4.8) * 20) + (parseInt(v.id.slice(0, 2), 16) % 50 || 20),
+        tags: v.services?.map((s: any) => s.name).slice(0, 3) || ["Verified", "Local"],
+        image: categoryImages[category] || categoryImages["Guides"],
+        badge: v.isVerified ? "Elite" : "Verified"
+    };
+};
+
+const renderRouteMapSvg = (route: string) => {
+  const paths: Record<string, { path: string; startLabel: string; stopLabel: string; endLabel: string; startCoord: [number, number]; stopCoord: [number, number]; endCoord: [number, number] }> = {
+    manali: {
+      path: "M 20,80 C 80,20 160,140 240,50 C 290,10 340,90 380,60",
+      startLabel: "Delhi",
+      stopLabel: "Kullu Valley",
+      endLabel: "Manali Orchard",
+      startCoord: [20, 80],
+      stopCoord: [240, 50],
+      endCoord: [380, 60]
+    },
+    leh: {
+      path: "M 20,120 L 110,80 L 200,30 L 290,90 L 380,40",
+      startLabel: "Manali",
+      stopLabel: "Baralacha Pass",
+      endLabel: "Leh Palace",
+      startCoord: [20, 120],
+      stopCoord: [200, 30],
+      endCoord: [380, 40]
+    },
+    rishikesh: {
+      path: "M 20,40 Q 110,120 200,40 T 380,80",
+      startLabel: "Haridwar",
+      stopLabel: "Rishikesh",
+      endLabel: "Devprayag",
+      startCoord: [20, 40],
+      stopCoord: [200, 40],
+      endCoord: [380, 80]
+    }
+  };
+
+  const active = paths[route] || paths.manali;
+
+  return (
+    <div className="relative w-full aspect-[2.5/1] bg-slate-900/90 rounded-2xl border border-slate-800/80 p-4 overflow-hidden shadow-inner my-4">
+      {/* Background Grid */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:14px_14px] opacity-25 pointer-events-none" />
+
+      {/* SVG Map Container */}
+      <svg className="w-full h-full overflow-visible z-10 relative" viewBox="0 0 400 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* Dynamic Background Map Elements */}
+        {route === "manali" && (
+          <>
+            {/* Pine Trees */}
+            <g opacity="0.35" fill="#10b981">
+              {/* Tree 1 */}
+              <path d="M 60,60 L 65,50 L 63,50 L 67,42 L 65,42 L 69,34 L 73,42 L 71,42 L 75,50 L 73,50 Z" />
+              <rect x="68" y="60" width="2" height="6" fill="#78350f" />
+              {/* Tree 2 */}
+              <path d="M 170,120 L 175,110 L 173,110 L 177,102 L 175,102 L 179,94 L 183,102 L 181,102 L 185,110 L 183,110 Z" />
+              <rect x="178" y="120" width="2" height="6" fill="#78350f" />
+              {/* Tree 3 */}
+              <path d="M 310,130 L 315,120 L 313,120 L 317,112 L 315,112 L 319,104 L 323,112 L 321,112 L 325,120 L 323,120 Z" />
+              <rect x="318" y="130" width="2" height="6" fill="#78350f" />
+            </g>
+            {/* Apples / Orchard marker */}
+            <text x="340" y="110" fontSize="14" opacity="0.3">🍎</text>
+            <text x="360" y="120" fontSize="14" opacity="0.3">🏡</text>
+          </>
+        )}
+
+        {route === "leh" && (
+          <>
+            {/* Snow Peak Outlines */}
+            <g fill="none" stroke="#475569" strokeWidth="1.5" opacity="0.4">
+              <path d="M 80,100 L 120,40 L 160,100" />
+              <path d="M 107,60 L 115,62 L 120,40 L 125,62 L 133,60" fill="#f8fafc" />
+              
+              <path d="M 230,120 L 270,50 L 310,120" />
+              <path d="M 258,72 L 265,74 L 270,50 L 275,74 L 282,72" fill="#f8fafc" />
+            </g>
+            <text x="140" y="40" fontSize="14" opacity="0.3">🏔️</text>
+            <text x="350" y="90" fontSize="14" opacity="0.3">🦅</text>
+          </>
+        )}
+
+        {route === "rishikesh" && (
+          <>
+            {/* River Ganga winding path underneath */}
+            <path d="M 10,80 Q 110,160 200,80 T 390,120" stroke="#0ea5e9" strokeWidth="6" fill="none" opacity="0.2" strokeLinecap="round" />
+            <path d="M 10,80 Q 110,160 200,80 T 390,120" stroke="#38bdf8" strokeWidth="2" fill="none" opacity="0.3" strokeLinecap="round" />
+            {/* Temple domes */}
+            <g fill="#f43f5e" opacity="0.3">
+              <path d="M 150,110 C 150,100 155,95 160,95 C 165,95 170,100 170,110 Z" />
+              <rect x="158" y="90" width="4" height="6" />
+              <circle cx="160" cy="88" r="2" />
+            </g>
+            <text x="280" y="110" fontSize="14" opacity="0.3">🧘</text>
+            <text x="330" y="120" fontSize="14" opacity="0.3">🌸</text>
+          </>
+        )}
+
+        {/* The Base Route Track (Dotted background road) */}
+        <path id="route-path-visual" d={active.path} stroke="rgba(255,255,255,0.12)" strokeWidth="4" strokeLinecap="round" strokeDasharray="6 6" />
+
+        {/* Glowing Active Route Progress */}
+        <path d={active.path} stroke="#10b981" strokeWidth="3.5" strokeLinecap="round" strokeDasharray="400" strokeDashoffset="400" className="animate-dash" style={{ filter: "drop-shadow(0 0 6px #10b981)" }} />
+
+        {/* Nodes for Start, Stops, End */}
+        <g>
+          {/* Start node */}
+          <circle cx={active.startCoord[0]} cy={active.startCoord[1]} r="7" fill="#1e293b" stroke="#10b981" strokeWidth="2.5" />
+          <circle cx={active.startCoord[0]} cy={active.startCoord[1]} r="3" fill="#10b981" />
+          <text x={active.startCoord[0]} y={active.startCoord[1] - 12} fill="#94a3b8" fontSize="8" fontWeight="bold" textAnchor="middle" className="uppercase tracking-widest">{active.startLabel}</text>
+        </g>
+
+        <g>
+          {/* Mid node */}
+          <circle cx={active.stopCoord[0]} cy={active.stopCoord[1]} r="7" fill="#1e293b" stroke="#3b82f6" strokeWidth="2.5" />
+          <circle cx={active.stopCoord[0]} cy={active.stopCoord[1]} r="3" fill="#3b82f6" />
+          <text x={active.stopCoord[0]} y={active.stopCoord[1] - 12} fill="#94a3b8" fontSize="8" fontWeight="bold" textAnchor="middle" className="uppercase tracking-widest">{active.stopLabel}</text>
+        </g>
+
+        <g>
+          {/* End node */}
+          <circle cx={active.endCoord[0]} cy={active.endCoord[1]} r="7" fill="#1e293b" stroke="#f59e0b" strokeWidth="2.5" />
+          <circle cx={active.endCoord[0]} cy={active.endCoord[1]} r="3" fill="#f59e0b" />
+          <text x={active.endCoord[0]} y={active.endCoord[1] - 12} fill="#94a3b8" fontSize="8" fontWeight="bold" textAnchor="middle" className="uppercase tracking-widest">{active.endLabel}</text>
+        </g>
+
+        {/* Animated Jeep/Car following route path */}
+        <g>
+          <text fontSize="14" dy="5" dx="-7">🚗</text>
+          <animateMotion dur="6s" repeatCount="indefinite" rotate="auto">
+            <mpath href="#route-path-visual" />
+          </animateMotion>
+        </g>
+
+        {/* Animated Hiker/Trekker following route path */}
+        <g>
+          <text fontSize="11" dy="4" dx="-5">🚶</text>
+          <animateMotion dur="10s" repeatCount="indefinite" rotate="auto">
+            <mpath href="#route-path-visual" />
+          </animateMotion>
+        </g>
+      </svg>
+    </div>
+  );
+};
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function Home({ params }: HomeProps) {
@@ -123,6 +318,29 @@ export default function Home({ params }: HomeProps) {
   const [activeStep, setActiveStep] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const [providersList, setProvidersList] = useState<any[]>([]);
+  const [isProvidersLoading, setIsProvidersLoading] = useState(true);
+
+  useEffect(() => {
+    if (!dict) return;
+    const fetchProviders = async () => {
+      try {
+        const response = await api.get('/vendors');
+        if (response && Array.isArray(response)) {
+          setProvidersList(response.slice(0, 6).map(mapHomeVendor));
+        } else {
+          setProvidersList(LOCAL_PROVIDERS);
+        }
+      } catch (err) {
+        console.error("Error fetching homepage vendors:", err);
+        setProvidersList(LOCAL_PROVIDERS);
+      } finally {
+        setIsProvidersLoading(false);
+      }
+    };
+    fetchProviders();
+  }, [dict]);
 
   useEffect(() => {
     if (isHovered) return;
@@ -171,86 +389,152 @@ export default function Home({ params }: HomeProps) {
 
   return (
     <>
-      {/* ── HERO ─────────────────────────────────────────────────── */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center bg-slate-50 overflow-hidden px-4">
+      {/* ── HERO / INTERACTIVE ROUTE SANDBOX ─────────────────────── */}
+      <section className="relative min-h-screen flex flex-col items-center justify-center bg-slate-950 overflow-hidden px-4 pt-32 pb-20 border-b border-slate-900">
         {/* Grid and Blur backgrounds */}
-        <div className="absolute inset-0 z-0 bg-grid-pattern opacity-100" />
-        <div className="absolute top-[10%] left-[5%] w-96 h-96 bg-emerald-300/15 rounded-full blur-3xl pointer-events-none animate-pulse" />
-        <div className="absolute bottom-[20%] right-[5%] w-96 h-96 bg-indigo-300/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute inset-0 z-0 bg-grid-pattern opacity-30 pointer-events-none" />
+        <div className="absolute top-[10%] left-[5%] w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none animate-pulse" />
+        <div className="absolute bottom-[20%] right-[5%] w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Background image overlay */}
-        <div className="absolute inset-0 z-0 opacity-[0.08] pointer-events-none">
-          <LocalImage
-            src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=2000"
-            alt="Himalayan mountain range"
-            className="w-full h-full object-cover scale-105 object-center"
-          />
-        </div>
-
-        {/* Hero content */}
-        <div className="relative z-10 text-center max-w-4xl mx-auto pt-32 pb-20">
-          {/* Network badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50/80 backdrop-blur-sm border border-emerald-100 mb-8 shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-emerald-700 text-[10px] font-black uppercase tracking-[0.25em]">
-              {h.badge}
-            </span>
-          </div>
-
-          <h1
-            className="text-4xl sm:text-6xl md:text-7xl font-black text-slate-950 leading-[1.05] tracking-tight mb-6 uppercase italic"
-            dangerouslySetInnerHTML={{ __html: hero.title ?? "" }}
-          />
-
-          <p className="text-slate-600 text-sm sm:text-base font-semibold max-w-xl mx-auto leading-relaxed mb-10">
-            {hero.subtitle}
-          </p>
-
-          {/* CTA buttons — traveler-first hierarchy */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 max-w-md mx-auto">
-            <button
-              id="hero-plan-trip-btn"
-              onClick={() => router.push(`/${lang}/builder`)}
-              className="group w-full sm:w-auto min-h-12 h-12 px-8 rounded-xl bg-slate-900 hover:bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 shadow-xl shadow-slate-900/10 flex items-center justify-center gap-2.5 touch-manipulation duration-300"
-            >
-              {hero.cta_plan}
-              <Icon name="arrow-right" className="w-4 h-4 transition-transform group-hover:translate-x-1.5 rtl:rotate-180" />
-            </button>
-            <button
-              id="hero-explore-btn"
-              onClick={() => router.push(`/${lang}/discover`)}
-              className="w-full sm:w-auto min-h-12 h-12 px-8 rounded-xl border border-slate-200/80 bg-white/80 backdrop-blur-sm text-slate-900 font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 hover:border-slate-350 transition-all active:scale-95 touch-manipulation duration-300 shadow-sm"
-            >
-              {hero.cta_explore}
-            </button>
-          </div>
-
-          {/* Vendor entry — demoted to text link */}
-          <button
-            id="hero-list-btn"
-            onClick={() => router.push(`/${lang}/vendor/onboarding`)}
-            className="mt-8 text-slate-400 hover:text-emerald-600 text-[10px] font-bold uppercase tracking-wider transition-colors inline-flex items-center gap-1.5 touch-manipulation"
-          >
-            {hero.vendor_link}
-            <Icon name="arrow-right" className="w-3 h-3 rtl:rotate-180" />
-          </button>
-
-          {/* Social proof strip */}
-          <div className="mt-12 flex items-center justify-center gap-3.5 flex-wrap">
-            <div className="flex -space-x-2.5">
-              {["photo-1544620347-c4fd4a3d5957", "photo-1582719478250-c89cae4dc85b", "photo-1573496359142-b8d87734a5a2"].map((id, i) => (
-                <div key={i} className="w-9 h-9 rounded-full border-2 border-white shadow-md overflow-hidden bg-slate-100">
-                  <LocalImage
-                    src={`https://images.unsplash.com/${id}?q=80&w=80`}
-                    alt="Local provider portrait"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ))}
+        <div className="relative z-10 w-full max-w-5xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-10 max-w-2xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 backdrop-blur-sm border border-emerald-500/25 mb-5 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <span className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.25em]">
+                Live Sandbox Estimator
+              </span>
             </div>
-            <span className="text-slate-500 text-xs font-semibold">
-              <strong className="text-slate-900 font-extrabold">2,400+</strong> {hero.social_proof}
-            </span>
+            <h1 className="text-white text-3xl sm:text-5xl lg:text-6xl font-black uppercase italic tracking-tight leading-[1.05] mb-4">
+              Build Your Trip in <span className="text-emerald-400">Real-Time</span>
+            </h1>
+            <p className="text-slate-450 text-xs sm:text-sm font-semibold max-w-xl mx-auto leading-relaxed">
+              Select your route, customize premium local services, and see the interactive map update instantly with live cost estimates.
+            </p>
+          </div>
+
+          {/* Sandbox Configurator Panel */}
+          <div className="rounded-[3rem] bg-slate-900/60 border border-slate-800/80 p-6 sm:p-10 relative overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.5)] backdrop-blur-md">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+              {/* Configurator */}
+              <div className="lg:col-span-6 flex flex-col gap-6 justify-between">
+                <div>
+                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2.5">1. Select a Route</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { key: "manali", label: "Manali Loop" },
+                      { key: "leh", label: "Leh Expedition" },
+                      { key: "rishikesh", label: "Rishikesh Flow" }
+                    ].map((routeOpt) => (
+                      <button
+                        key={routeOpt.key}
+                        onClick={() => setSandboxRoute(routeOpt.key)}
+                        className={`p-3.5 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all text-center ${sandboxRoute === routeOpt.key
+                            ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/25"
+                            : "bg-slate-900/60 border-slate-800/80 text-slate-400 hover:bg-slate-800 hover:text-white"
+                          }`}
+                      >
+                        {routeOpt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2.5">2. Toggle Local Services</p>
+                  <div className="space-y-2">
+                    {[
+                      { id: "guide", label: "🏔️ Elite Mountain Guide", desc: "Safety first, trail secrets", price: 3000, state: addGuide, setState: setAddGuide },
+                      { id: "homestay", label: "🏡 Apple Orchard Homestay", desc: "Organic meals included", price: 2200, state: addHomestay, setState: setAddHomestay },
+                      { id: "transport", label: "🚗 Private 4x4 Jeep Cab", desc: "Experienced pass navigator", price: 3500, state: addTransport, setState: setAddTransport },
+                    ].map((serviceOpt) => (
+                      <button
+                        key={serviceOpt.id}
+                        onClick={() => serviceOpt.setState(!serviceOpt.state)}
+                        className={`w-full p-4 rounded-xl border text-left flex items-center justify-between transition-all group ${serviceOpt.state
+                            ? "border-emerald-500 bg-emerald-500/10 text-white"
+                            : "border-slate-800 bg-slate-900/40 hover:bg-slate-800/60 text-slate-350"
+                          }`}
+                      >
+                        <div>
+                          <p className={`text-[10px] font-black uppercase tracking-wide ${serviceOpt.state ? "text-emerald-400" : "text-slate-300"}`}>
+                            {serviceOpt.label}
+                          </p>
+                          <p className="text-[8px] text-slate-500 font-semibold uppercase mt-0.5">{serviceOpt.desc}</p>
+                        </div>
+                        <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-md ${serviceOpt.state ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "bg-slate-800 text-slate-400 group-hover:bg-slate-700"}`}>
+                          +₹{serviceOpt.price}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Visualizer Display Card */}
+              <div className="lg:col-span-6 bg-slate-950 rounded-2xl p-6 text-white flex flex-col justify-between relative overflow-hidden border border-slate-850 shadow-2xl">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[40px] pointer-events-none" />
+
+                <div>
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <p className="text-[8px] font-black uppercase tracking-widest text-emerald-400">Route Package Preview</p>
+                      <h4 className="text-lg font-black uppercase italic tracking-wide mt-1">
+                        {sandboxRoute === "manali" ? "Manali Orchard Loop" : sandboxRoute === "leh" ? "Leh Valley Expedition" : "Rishikesh Wellness Flow"}
+                      </h4>
+                    </div>
+                    <span className="text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded bg-white/10 text-slate-300">
+                      Live Cost
+                    </span>
+                  </div>
+
+                  {/* Dynamic Cool SVG Map Visualizer */}
+                  {renderRouteMapSvg(sandboxRoute)}
+
+                  {/* Selected Items details */}
+                  <div className="space-y-1.5 mt-4 border-t border-white/5 pt-3">
+                    <div className="flex justify-between text-[9px] font-bold text-slate-400 uppercase">
+                      <span>Base Route Rate</span>
+                      <span>₹{sandboxRoute === "manali" ? 4000 : sandboxRoute === "leh" ? 8500 : 3000}</span>
+                    </div>
+                    {addGuide && (
+                      <div className="flex justify-between text-[9px] font-bold text-emerald-400 uppercase">
+                        <span>+ Elite Mountain Guide</span>
+                        <span>₹3,000</span>
+                      </div>
+                    )}
+                    {addHomestay && (
+                      <div className="flex justify-between text-[9px] font-bold text-emerald-400 uppercase">
+                        <span>+ Orchard Homestay</span>
+                        <span>₹2,200</span>
+                      </div>
+                    )}
+                    {addTransport && (
+                      <div className="flex justify-between text-[9px] font-bold text-emerald-400 uppercase">
+                        <span>+ Private 4x4 Jeep</span>
+                        <span>₹3,500</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-8 border-t border-white/10 pt-4 flex flex-col gap-4">
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-450">Total Price Estimate</span>
+                    <span className="text-3xl font-black italic text-emerald-400">
+                      ₹{(sandboxRoute === "manali" ? 4000 : sandboxRoute === "leh" ? 8500 : 3000) + (addGuide ? 3000 : 0) + (addHomestay ? 2200 : 0) + (addTransport ? 3500 : 0)}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => router.push(`/${lang}/builder?route=${sandboxRoute}&guide=${addGuide}&stay=${addHomestay}&ride=${addTransport}`)}
+                    className="w-full h-12 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/20"
+                  >
+                    {builder.cta || "Instant Match & Book"}
+                    <Icon name="arrow-right" className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -502,182 +786,7 @@ export default function Home({ params }: HomeProps) {
         </div>
       </section>
 
-      {/* ── INTERACTIVE ROUTE SANDBOX ────────────────── */}
-      <section className="py-20 sm:py-28 px-4 bg-slate-950 text-white relative border-t border-slate-900">
-        <div className="max-w-5xl mx-auto">
-          <div className="rounded-[3rem] bg-slate-900/50 border border-slate-800/80 p-6 sm:p-14 relative overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.4)] backdrop-blur-md">
-            <div className="absolute -top-24 -right-24 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-            <div className="relative z-10">
-              <h3 className="text-white text-[10px] font-black uppercase tracking-widest mb-6 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                Live Route Estimator & Sandbox Simulator
-              </h3>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-                {/* Configurator */}
-                <div className="lg:col-span-6 flex flex-col gap-6 justify-between">
-                  <div>
-                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2.5">1. Select a Route</p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { key: "manali", label: "Manali Loop" },
-                        { key: "leh", label: "Leh Expedition" },
-                        { key: "rishikesh", label: "Rishikesh Flow" }
-                      ].map((routeOpt) => (
-                        <button
-                          key={routeOpt.key}
-                          onClick={() => setSandboxRoute(routeOpt.key)}
-                          className={`p-3.5 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all text-center ${sandboxRoute === routeOpt.key
-                              ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/25"
-                              : "bg-slate-900/60 border-slate-800/80 text-slate-400 hover:bg-slate-800 hover:text-white"
-                            }`}
-                        >
-                          {routeOpt.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2.5">2. Toggle Local Services</p>
-                    <div className="space-y-2">
-                      {[
-                        { id: "guide", label: "🏔️ Elite Mountain Guide", desc: "Safety first, trail secrets", price: 3000, state: addGuide, setState: setAddGuide },
-                        { id: "homestay", label: "🏡 Apple Orchard Homestay", desc: "Organic meals included", price: 2200, state: addHomestay, setState: setAddHomestay },
-                        { id: "transport", label: "🚗 Private 4x4 Jeep Cab", desc: "Experienced pass navigator", price: 3500, state: addTransport, setState: setAddTransport },
-                      ].map((serviceOpt) => (
-                        <button
-                          key={serviceOpt.id}
-                          onClick={() => serviceOpt.setState(!serviceOpt.state)}
-                          className={`w-full p-4 rounded-xl border text-left flex items-center justify-between transition-all group ${serviceOpt.state
-                              ? "border-emerald-500 bg-emerald-500/10 text-white"
-                              : "border-slate-800 bg-slate-900/40 hover:bg-slate-800/60 text-slate-350"
-                            }`}
-                        >
-                          <div>
-                            <p className={`text-[10px] font-black uppercase tracking-wide ${serviceOpt.state ? "text-emerald-400" : "text-slate-300"}`}>
-                              {serviceOpt.label}
-                            </p>
-                            <p className="text-[8px] text-slate-500 font-semibold uppercase mt-0.5">{serviceOpt.desc}</p>
-                          </div>
-                          <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-md ${serviceOpt.state ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "bg-slate-800 text-slate-400 group-hover:bg-slate-700"}`}>
-                            +₹{serviceOpt.price}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Visualizer Display Card */}
-                <div className="lg:col-span-6 bg-slate-950 rounded-2xl p-6 text-white flex flex-col justify-between relative overflow-hidden border border-slate-850 shadow-2xl">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[40px] pointer-events-none" />
-
-                  <div>
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <p className="text-[8px] font-black uppercase tracking-widest text-emerald-400">Route Package Preview</p>
-                        <h4 className="text-lg font-black uppercase italic tracking-wide mt-1">
-                          {sandboxRoute === "manali" ? "Manali Orchard Loop" : sandboxRoute === "leh" ? "Leh Valley Expedition" : "Rishikesh Wellness Flow"}
-                        </h4>
-                      </div>
-                      <span className="text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded bg-white/10 text-slate-300">
-                        Live Cost
-                      </span>
-                    </div>
-
-                    {/* Animated Route Line */}
-                    <div className="my-6 p-4 bg-white/5 rounded-xl border border-white/5 flex flex-col gap-2">
-                      <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-slate-500">
-                        <span>Start</span>
-                        <span>Stops</span>
-                        <span>End</span>
-                      </div>
-
-                      <div className="relative py-2">
-                        <svg className="w-full h-8 text-emerald-400 overflow-visible" viewBox="0 0 100 20" fill="none">
-                          <path id="route-path" d="M 5,10 Q 50,18 95,10" stroke="rgba(255,255,255,0.08)" strokeWidth="2" strokeDasharray="3 3" />
-                          <path d="M 5,10 Q 50,18 95,10" stroke="currentColor" strokeWidth="2" strokeDasharray="100" strokeDashoffset="100" className="animate-dash" />
-
-                          <circle cx="5" cy="10" r="3" fill="#10b981" />
-                          <circle cx="50" cy="14" r="3" fill="#3b82f6" />
-                          <circle cx="95" cy="10" r="3" fill="#f59e0b" />
-
-                          {/* Animated Jeep/Car following route path */}
-                          <g>
-                            <text fontSize="5.5" dy="1.8" dx="-2.8">🚗</text>
-                            <animateMotion dur="5.5s" repeatCount="indefinite">
-                              <mpath href="#route-path" />
-                            </animateMotion>
-                          </g>
-
-                          {/* Animated Hiker/Trekker following route path */}
-                          <g>
-                            <text fontSize="4.8" dy="1.6" dx="-2.4">🚶</text>
-                            <animateMotion dur="9.5s" repeatCount="indefinite">
-                              <mpath href="#route-path" />
-                            </animateMotion>
-                          </g>
-                        </svg>
-                      </div>
-
-                      <div className="flex justify-between text-[9px] font-bold text-white uppercase tracking-tight">
-                        <span>{sandboxRoute === "manali" ? "Delhi" : sandboxRoute === "leh" ? "Manali" : "Haridwar"}</span>
-                        <span className="text-blue-400">{sandboxRoute === "manali" ? "Kullu" : sandboxRoute === "leh" ? "Jispa" : "Rishikesh"}</span>
-                        <span className="text-amber-400">{sandboxRoute === "manali" ? "Manali" : sandboxRoute === "leh" ? "Leh" : "Devprayag"}</span>
-                      </div>
-                    </div>
-
-                    {/* Selected Items details */}
-                    <div className="space-y-1.5 mt-4 border-t border-white/5 pt-3">
-                      <div className="flex justify-between text-[9px] font-bold text-slate-400 uppercase">
-                        <span>Base Route Rate</span>
-                        <span>₹{sandboxRoute === "manali" ? 4000 : sandboxRoute === "leh" ? 8500 : 3000}</span>
-                      </div>
-                      {addGuide && (
-                        <div className="flex justify-between text-[9px] font-bold text-emerald-400 uppercase">
-                          <span>+ Elite Mountain Guide</span>
-                          <span>₹3,000</span>
-                        </div>
-                      )}
-                      {addHomestay && (
-                        <div className="flex justify-between text-[9px] font-bold text-emerald-400 uppercase">
-                          <span>+ Orchard Homestay</span>
-                          <span>₹2,200</span>
-                        </div>
-                      )}
-                      {addTransport && (
-                        <div className="flex justify-between text-[9px] font-bold text-emerald-400 uppercase">
-                          <span>+ Private 4x4 Jeep</span>
-                          <span>₹3,500</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mt-8 border-t border-white/10 pt-4 flex flex-col gap-4">
-                    <div className="flex justify-between items-baseline">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Price Estimate</span>
-                      <span className="text-3xl font-black italic text-emerald-400">
-                        ₹{(sandboxRoute === "manali" ? 4000 : sandboxRoute === "leh" ? 8500 : 3000) + (addGuide ? 3000 : 0) + (addHomestay ? 2200 : 0) + (addTransport ? 3500 : 0)}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => router.push(`/${lang}/builder?route=${sandboxRoute}&guide=${addGuide}&stay=${addHomestay}&ride=${addTransport}`)}
-                      className="w-full h-12 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/20"
-                    >
-                      {builder.cta}
-                      <Icon name="arrow-right" className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ── LOCAL PROVIDERS GRID ───────────────────────────────────── */}
       <section className="py-20 sm:py-28 px-4 bg-slate-50">
@@ -703,102 +812,121 @@ export default function Home({ params }: HomeProps) {
 
           {/* Provider cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {LOCAL_PROVIDERS.map((p) => (
-              <div
-                key={p.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => router.push(`/${lang}/vendor/${p.id}`)}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); router.push(`/${lang}/vendor/${p.id}`); } }}
-                className="group bg-white border border-slate-100 rounded-[2rem] overflow-hidden hover:border-emerald-100 hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-1.5 transition-all duration-500 cursor-pointer active:scale-[0.99] touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
-              >
-                {/* Top — avatar + badge */}
-                <div className="flex items-start gap-4 p-6 pb-4">
-                  <div className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 border border-slate-100 group-hover:border-emerald-400 transition-colors">
-                    <LocalImage src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 mb-1">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <h3 className="text-slate-900 font-bold text-sm truncate">{p.name}</h3>
-                        <span
-                          className={`shrink-0 text-[7px] font-black uppercase px-1.5 py-0.5 rounded-md tracking-wider ${p.badge === "Elite"
-                            ? "bg-amber-50 text-amber-600 border border-amber-200"
-                            : p.badge === "New"
-                              ? "bg-blue-50 text-blue-600 border border-blue-200"
-                              : "bg-emerald-50 text-emerald-600 border border-emerald-200"
-                            }`}
-                        >
-                          {p.badge}
-                        </span>
-                      </div>
-
-                      {/* Copy Shareable Portfolio Link button */}
-                      <div className="relative">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigator.clipboard.writeText(`${window.location.origin}/${lang}/vendor/${p.id}`);
-                            setCopiedId(p.id);
-                            setTimeout(() => setCopiedId(null), 2000);
-                          }}
-                          className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center border transition-all shadow-sm active:scale-95 ${copiedId === p.id
-                              ? "bg-emerald-500 border-emerald-500 text-white shadow-emerald-500/20"
-                              : "bg-slate-50 border-slate-100 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-100"
-                            }`}
-                          title="Copy Public Portfolio Link"
-                        >
-                          {copiedId === p.id ? (
-                            <svg className="w-3.5 h-3.5 animate-scaleIn" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          ) : (
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 10.742l5.028-2.514m0 0a3 3 0 10-2.514-5.028 3 3 0 002.514 5.028zm0 5.028l-5.028-2.514m0 0a3 3 0 102.514 5.028 3 3 0 00-2.514-5.028zm0 0a3 3 0 11-5.028 2.514 3 3 0 015.028-2.514z" />
-                            </svg>
-                          )}
-                        </button>
-
-                        {copiedId === p.id && (
-                          <span className="absolute bottom-full right-0 mb-2 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider bg-emerald-500 text-white rounded-md shadow-md animate-fadeIn whitespace-nowrap z-20">
-                            Copied!
-                          </span>
-                        )}
-                      </div>
+            {isProvidersLoading ? (
+              Array.from({ length: 3 }).map((_, idx) => (
+                <div key={idx} className="bg-white border border-slate-100 rounded-[2rem] overflow-hidden animate-pulse p-6 space-y-4">
+                  <div className="flex gap-4">
+                    <div className="w-16 h-16 rounded-2xl bg-slate-200" />
+                    <div className="flex-1 space-y-2 py-1">
+                      <div className="h-4 bg-slate-200 rounded w-2/3" />
+                      <div className="h-3 bg-slate-200 rounded w-1/2" />
                     </div>
-                    <p className="text-slate-500 text-xs font-semibold uppercase tracking-wide text-[9px]">{p.role}</p>
-                    <p className="text-slate-400 text-[10px] mt-1 flex items-center gap-1 font-medium min-w-0">
-                      <Icon name="map-pin" className="w-3 h-3 text-slate-400 shrink-0" />
-                      <span className="truncate">{p.location}</span>
-                    </p>
+                  </div>
+                  <div className="h-3 bg-slate-200 rounded w-1/4" />
+                  <div className="flex gap-2">
+                    <div className="h-6 bg-slate-250 rounded w-12" />
+                    <div className="h-6 bg-slate-250 rounded w-12" />
                   </div>
                 </div>
+              ))
+            ) : (
+              providersList.map((p) => (
+                <div
+                  key={p.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => router.push(`/${lang}/vendor/${p.id}`)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); router.push(`/${lang}/vendor/${p.id}`); } }}
+                  className="group bg-white border border-slate-100 rounded-[2rem] overflow-hidden hover:border-emerald-100 hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-1.5 transition-all duration-500 cursor-pointer active:scale-[0.99] touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                >
+                  {/* Top — avatar + badge */}
+                  <div className="flex items-start gap-4 p-6 pb-4">
+                    <div className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 border border-slate-100 group-hover:border-emerald-400 transition-colors">
+                      <LocalImage src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <h3 className="text-slate-900 font-bold text-sm truncate">{p.name}</h3>
+                          <span
+                            className={`shrink-0 text-[7px] font-black uppercase px-1.5 py-0.5 rounded-md tracking-wider ${p.badge === "Elite"
+                              ? "bg-amber-50 text-amber-600 border border-amber-200"
+                              : p.badge === "New"
+                                ? "bg-blue-50 text-blue-600 border border-blue-200"
+                                : "bg-emerald-50 text-emerald-600 border border-emerald-200"
+                              }`}
+                          >
+                            {p.badge}
+                          </span>
+                        </div>
 
-                {/* Tags */}
-                <div className="flex gap-1.5 px-6 pb-5 flex-wrap">
-                  {p.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="text-[8px] font-black uppercase tracking-wider text-slate-500 bg-slate-50 border border-slate-100 rounded-lg px-2.5 py-0.5"
-                    >
-                      {tag}
+                        {/* Copy Shareable Portfolio Link button */}
+                        <div className="relative">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigator.clipboard.writeText(`${window.location.origin}/${lang}/vendor/${p.id}`);
+                              setCopiedId(p.id);
+                              setTimeout(() => setCopiedId(null), 2000);
+                            }}
+                            className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center border transition-all shadow-sm active:scale-95 ${copiedId === p.id
+                                ? "bg-emerald-500 border-emerald-500 text-white shadow-emerald-500/20"
+                                : "bg-slate-50 border-slate-100 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-100"
+                              }`}
+                            title="Copy Public Portfolio Link"
+                          >
+                            {copiedId === p.id ? (
+                              <svg className="w-3.5 h-3.5 animate-scaleIn" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : (
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 10.742l5.028-2.514m0 0a3 3 0 10-2.514-5.028 3 3 0 002.514 5.028zm0 5.028l-5.028-2.514m0 0a3 3 0 102.514 5.028 3 3 0 00-2.514-5.028zm0 0a3 3 0 11-5.028 2.514 3 3 0 015.028-2.514z" />
+                              </svg>
+                            )}
+                          </button>
+
+                          {copiedId === p.id && (
+                            <span className="absolute bottom-full right-0 mb-2 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider bg-emerald-500 text-white rounded-md shadow-md animate-fadeIn whitespace-nowrap z-20">
+                              Copied!
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-slate-500 text-xs font-semibold uppercase tracking-wide text-[9px]">{p.role}</p>
+                      <p className="text-slate-400 text-[10px] mt-1 flex items-center gap-1 font-medium min-w-0">
+                        <Icon name="map-pin" className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span className="truncate">{p.location}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Tags */}
+                  <div className="flex gap-1.5 px-6 pb-5 flex-wrap">
+                    {p.tags.map((tag: string) => (
+                      <span
+                        key={tag}
+                        className="text-[8px] font-black uppercase tracking-wider text-slate-500 bg-slate-50 border border-slate-100 rounded-lg px-2.5 py-0.5"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Bottom — rating + CTA */}
+                  <div className="flex items-center justify-between px-6 py-4 border-t border-slate-50 bg-slate-50/30">
+                    <div className="flex items-center gap-1.5">
+                      <Icon name="star" filled className="w-3.5 h-3.5 text-amber-400" />
+                      <span className="text-slate-900 text-xs font-bold">{p.rating}</span>
+                      <span className="text-slate-400 text-[10px] font-semibold">({p.reviews} reviews)</span>
+                    </div>
+                    <span className="h-8 px-4 inline-flex items-center rounded-xl bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest group-hover:bg-emerald-500 transition-colors duration-300 shadow-sm shadow-slate-900/10">
+                      View Profile
                     </span>
-                  ))}
-                </div>
-
-                {/* Bottom — rating + CTA */}
-                <div className="flex items-center justify-between px-6 py-4 border-t border-slate-50 bg-slate-50/30">
-                  <div className="flex items-center gap-1.5">
-                    <Icon name="star" filled className="w-3.5 h-3.5 text-amber-400" />
-                    <span className="text-slate-900 text-xs font-bold">{p.rating}</span>
-                    <span className="text-slate-400 text-[10px] font-semibold">({p.reviews} reviews)</span>
                   </div>
-                  <span className="h-8 px-4 inline-flex items-center rounded-xl bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest group-hover:bg-emerald-500 transition-colors duration-300 shadow-sm shadow-slate-900/10">
-                    View Profile
-                  </span>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </section>

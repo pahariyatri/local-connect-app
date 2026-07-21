@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import NextImage from "next/image";
 import Typography from "../../components/atoms/Typography";
@@ -8,6 +8,7 @@ import Button from "../../components/atoms/Button";
 import { useNotification } from "@/contexts/NotificationContext";
 import TopNavigation from "../../components/organisms/TopNavigation";
 import VendorQRCode from "../../components/molecules/VendorQRCode";
+import api from "@/lib/apiClient";
 
 // Rich, structured mock data representing various Himalayan locals and guides
 const VENDOR_PROFILES: Record<string, {
@@ -202,17 +203,135 @@ const DEFAULT_PROFILE = {
     ]
 };
 
+const mapSingleVendor = (v: any) => {
+    const type = v.types?.[0] || "Guides";
+    const categoryMap: Record<string, string> = {
+        "hotel": "Homestays",
+        "adventure": "Adventures",
+        "transport": "Transport",
+        "restaurant": "Food",
+        "guide": "Guides",
+        "wellness": "Wellness"
+    };
+    const category = categoryMap[type.toLowerCase()] || "Guides";
+
+    const categoryImages: Record<string, string> = {
+        "Homestays": "https://images.unsplash.com/photo-1651319485646-f0f30e46b761?q=80&w=800",
+        "Adventures": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=800",
+        "Transport": "https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=800",
+        "Food": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=800",
+        "Guides": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=800",
+        "Wellness": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=800"
+    };
+
+    let location = "Manali";
+    const lowerName = v.businessName.toLowerCase();
+    if (lowerName.includes("dharamshala")) location = "Dharamshala";
+    else if (lowerName.includes("tirthan")) location = "Tirthan";
+    else if (lowerName.includes("spiti")) location = "Spiti";
+    else if (lowerName.includes("goa")) location = "Goa";
+    else if (lowerName.includes("leh")) location = "Leh";
+    else if (lowerName.includes("rishikesh")) location = "Rishikesh";
+    else if (lowerName.includes("shimla")) location = "Shimla";
+
+    let cleanName = v.businessName.replace(/\s*\(.*?\)\s*/g, "").trim();
+
+    const mappedServices = v.services && v.services.length > 0
+        ? v.services.map((s: any, idx: number) => ({
+            id: s.id || `s-${idx}`,
+            name: s.name,
+            price: s.price,
+            unit: s.unit || "day",
+            description: s.description || "Premium local service."
+          }))
+        : [
+            { id: "s1", name: "Standard Guided Tour", price: 2500, unit: "day", description: "All-inclusive guided tour showcasing the best local secrets." }
+          ];
+
+    return {
+        id: v.id,
+        name: cleanName,
+        rating: v.trustScore || 4.8,
+        reviews: v.reviews || Math.floor((v.trustScore || 4.8) * 20) + 40,
+        priceRange: v.isInstantBooking ? "₹₹" : "₹₹₹",
+        category,
+        isSecretGroupMember: lowerName.includes("legend") || v.isVerified,
+        description: v.description || "Authentic local connect partner.",
+        features: [
+            "Verified Credentials",
+            v.isInstantBooking ? "Instant Booking Enabled" : "Quick Response Time",
+            "Local Culture Specialist",
+            "100% Safe & Audited"
+        ],
+        services: mappedServices,
+        languages: ["English", "Hindi"],
+        experienceYears: 5,
+        hometown: location,
+        story: v.description,
+        faq: [
+            { q: "Is the price inclusive of local taxes?", a: "Yes, all listed prices are inclusive of taxes and guide service fees." },
+            { q: "What is the cancellation policy?", a: "Cancel up to 24 hours in advance for a full refund." }
+        ]
+    };
+};
+
 export default function VendorProfilePage() {
     const params = useParams();
     const id = params.id as string;
     const router = useRouter();
     const { showNotification } = useNotification();
     const [selectedService, setSelectedService] = useState<string | null>(null);
+    const [profile, setProfile] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Retrieve specific profile, fallback to default if not found
-    const profile = VENDOR_PROFILES[id] || DEFAULT_PROFILE;
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                if (id && id.startsWith("p") && id.length <= 3) {
+                    setProfile(VENDOR_PROFILES[id] || DEFAULT_PROFILE);
+                } else {
+                    const response = await api.get(`/vendors/${id}`);
+                    if (response && response.id) {
+                        setProfile(mapSingleVendor(response));
+                    } else {
+                        setProfile(VENDOR_PROFILES[id] || DEFAULT_PROFILE);
+                    }
+                }
+            } catch (err) {
+                console.error("Error fetching vendor profile:", err);
+                setProfile(VENDOR_PROFILES[id] || DEFAULT_PROFILE);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchProfile();
+    }, [id]);
 
-    const currentSelected = profile.services.find(s => s.id === selectedService);
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-slate-50 pb-32 animate-pulse">
+                <TopNavigation title="Loading Profile..." />
+                <div className="h-96 w-full bg-slate-200" />
+                <main className="max-w-xl mx-auto px-4 -mt-12 relative z-10">
+                    <div className="bg-white rounded-[2.5rem] p-6 sm:p-10 shadow-2xl border border-slate-100/50 space-y-6">
+                        <div className="h-8 bg-slate-200 rounded-lg w-2/3" />
+                        <div className="h-4 bg-slate-200 rounded-lg w-1/3" />
+                        <div className="grid grid-cols-3 gap-3">
+                            <div className="h-16 bg-slate-100 rounded-2xl" />
+                            <div className="h-16 bg-slate-100 rounded-2xl" />
+                            <div className="h-16 bg-slate-100 rounded-2xl" />
+                        </div>
+                        <div className="h-20 bg-slate-100 rounded-2xl" />
+                        <div className="h-32 bg-slate-150 rounded-2xl" />
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
+    if (!profile) return null;
+
+    const currentSelected = profile.services.find((s: any) => s.id === selectedService);
 
     const handleAddToPackage = () => {
         if (!selectedService || !currentSelected) {

@@ -8,6 +8,7 @@ import Button from "../components/atoms/Button";
 import LocalImage from "../components/atoms/Image";
 import { useParams, useRouter } from "next/navigation";
 import Loading from "@/app/loading";
+import api from "@/lib/apiClient";
 
 // Mock Data for Discover matching details page profiles
 const VENDORS = [
@@ -79,6 +80,52 @@ const VENDORS = [
     }
 ];
 
+const mapBackendVendor = (v: any) => {
+    const type = v.types?.[0] || "Guides";
+    const categoryMap: Record<string, string> = {
+        "hotel": "Homestays",
+        "adventure": "Adventures",
+        "transport": "Transport",
+        "restaurant": "Food",
+        "guide": "Guides",
+        "wellness": "Wellness"
+    };
+    const category = categoryMap[type.toLowerCase()] || "Guides";
+
+    const categoryImages: Record<string, string> = {
+        "Homestays": "https://images.unsplash.com/photo-1651319485646-f0f30e46b761?q=80&w=800",
+        "Adventures": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=800",
+        "Transport": "https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=800",
+        "Food": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=800",
+        "Guides": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=800",
+        "Wellness": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=800"
+    };
+
+    let location = "Manali";
+    const lowerName = v.businessName.toLowerCase();
+    if (lowerName.includes("dharamshala")) location = "Dharamshala";
+    else if (lowerName.includes("tirthan")) location = "Tirthan";
+    else if (lowerName.includes("spiti")) location = "Spiti";
+    else if (lowerName.includes("goa")) location = "Goa";
+    else if (lowerName.includes("leh")) location = "Leh";
+    else if (lowerName.includes("rishikesh")) location = "Rishikesh";
+    else if (lowerName.includes("shimla")) location = "Shimla";
+
+    let cleanName = v.businessName.replace(/\s*\(.*?\)\s*/g, "").trim();
+
+    return {
+        id: v.id,
+        name: cleanName,
+        category,
+        location,
+        rating: v.trustScore || 4.8,
+        reviews: v.reviews || Math.floor((v.trustScore || 4.8) * 20) + (parseInt(v.id.slice(0, 2), 16) % 50 || 20),
+        priceRange: v.services?.[0] ? `₹${v.services[0].price}/${v.services[0].unit || "day"}` : "₹2,500/day",
+        image: categoryImages[category] || categoryImages["Guides"],
+        tags: v.services?.map((s: any) => s.name).slice(0, 3) || ["Verified Local", "Premium Partner"]
+    };
+};
+
 export default function DiscoverPage() {
     const { lang } = useParams();
     const router = useRouter();
@@ -86,6 +133,8 @@ export default function DiscoverPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedLocation, setSelectedLocation] = useState("All");
     const [dict, setDict] = useState<any>(null);
+    const [vendors, setVendors] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     const categories = ["All", "Guides", "Homestays", "Transport", "Food", "Wellness", "Adventures"];
 
@@ -96,6 +145,26 @@ export default function DiscoverPage() {
         };
         loadDict();
     }, [lang]);
+
+    useEffect(() => {
+        if (!dict) return;
+        const fetchVendors = async () => {
+            try {
+                const response = await api.get('/vendors');
+                if (response && Array.isArray(response)) {
+                    setVendors(response.map(mapBackendVendor));
+                } else {
+                    setVendors(VENDORS);
+                }
+            } catch (err) {
+                console.error("Error fetching vendors:", err);
+                setVendors(VENDORS);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchVendors();
+    }, [dict]);
 
     useEffect(() => {
         if (typeof window !== "undefined" && dict) {
@@ -125,7 +194,7 @@ export default function DiscoverPage() {
         "Adventures": "Adventures"
     };
 
-    const filteredVendors = VENDORS.filter(v => {
+    const filteredVendors = vendors.filter(v => {
         const q = searchQuery.toLowerCase();
         return !q || 
             v.name.toLowerCase().includes(q) || 
@@ -161,7 +230,18 @@ export default function DiscoverPage() {
 
                 {/* 📋 Vendor Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredVendors.length === 0 ? (
+                    {isLoading ? (
+                        Array.from({ length: 6 }).map((_, idx) => (
+                            <div key={idx} className="bg-slate-50 rounded-3xl border border-slate-200/40 overflow-hidden animate-pulse">
+                                <div className="h-48 bg-slate-200" />
+                                <div className="p-6 space-y-4">
+                                    <div className="h-4 bg-slate-200 rounded w-2/3" />
+                                    <div className="h-3 bg-slate-200 rounded w-1/2" />
+                                    <div className="h-3 bg-slate-200 rounded w-1/3" />
+                                </div>
+                            </div>
+                        ))
+                    ) : filteredVendors.length === 0 ? (
                         <div className="col-span-full text-center py-12 text-slate-400 text-xs font-semibold uppercase tracking-wider">
                             No verified vendors found matching filters.
                         </div>
