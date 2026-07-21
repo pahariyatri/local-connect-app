@@ -18,24 +18,40 @@ export default function PaymentPage() {
     const { lang, id } = useParams();
     const router = useRouter();
     const [isProcessing, setIsProcessing] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState<"upi" | "card">("upi");
     const [orderData, setOrderData] = useState<any>(null);
+    const [loadError, setLoadError] = useState<string | null>(null);
+    const [payError, setPayError] = useState<string | null>(null);
 
-    // Mock UI State
-    const [cardNumber, setCardNumber] = useState("");
-    const [cardExpiry, setCardExpiry] = useState("");
-    const [cardCVC, setCardCVC] = useState("");
-    const [cardName, setCardName] = useState("");
-    const upiDeepLink = "upi://pay?pa=merchant@upi&pn=LocalConnect&am=19500&cu=INR";
+    // Razorpay returns paise; every amount shown to the user derives from this
+    // single source so the displayed total can never drift from the charged one.
+    const amountPaise: number | null = orderData?.amount ?? null;
+    const amountInr = amountPaise != null ? amountPaise / 100 : null;
+    const formattedAmount =
+        amountInr != null
+            ? new Intl.NumberFormat("en-IN", {
+                style: "currency",
+                currency: orderData?.currency || "INR",
+                maximumFractionDigits: 0,
+            }).format(amountInr)
+            : null;
 
     // Load order data on mount
     useEffect(() => {
         const fetchOrder = async () => {
             try {
+                setLoadError(null);
                 const order = await createRazorpayOrder(id as string);
-                setOrderData(order);
+                // Unwrap the API envelope: { success, data } or a plain order.
+                const unwrapped = (order as any)?.data ?? order;
+                if (unwrapped?.amount == null) {
+                    throw new Error("Order is missing an amount");
+                }
+                setOrderData(unwrapped);
             } catch (error) {
                 console.error("Failed to load order", error);
+                setLoadError(
+                    "We couldn't load your payment details. Please go back and try again.",
+                );
             }
         };
         if (id) fetchOrder();
@@ -45,6 +61,7 @@ export default function PaymentPage() {
         if (!orderData) return;
 
         setIsProcessing(true);
+        setPayError(null);
         let keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
 
         if (!keyId) {
@@ -58,17 +75,18 @@ export default function PaymentPage() {
         }
 
         if (!keyId) {
-            alert("Payment configuration error. Authentication key missing.");
+            setPayError("Payment is temporarily unavailable. Please try again shortly.");
             setIsProcessing(false);
             return;
         }
 
         const options = {
             key: keyId,
+            // Sent verbatim from the backend order — never a client-side figure.
             amount: orderData.amount,
             currency: orderData.currency,
-            name: "PahariYatri",
-            description: "Trip Booking Payment",
+            name: "Local Connect",
+            description: `Booking #${id}`,
             order_id: orderData.id,
             handler: async (response: any) => {
                 try {
@@ -81,18 +99,22 @@ export default function PaymentPage() {
                     if (verification) {
                         router.push(`/${lang}/bookings/${id}/success`);
                     } else {
-                        alert("Payment verification failed");
+                        setPayError(
+                            "We couldn't verify your payment. If you were charged, it will be reconciled automatically — please contact support before retrying.",
+                        );
                     }
                 } catch (error) {
                     console.error("Verification error", error);
+                    setPayError(
+                        "We couldn't confirm your payment. Please check your bookings before retrying.",
+                    );
                 } finally {
                     setIsProcessing(false);
                 }
             },
-            prefill: {
-                name: "Traveller Name",
-                email: "traveller@example.com",
-                contact: "9999999999",
+            modal: {
+                // Without this the button stays stuck in "processing" after a dismiss.
+                ondismiss: () => setIsProcessing(false),
             },
             theme: {
                 color: "#10b981",
@@ -100,12 +122,21 @@ export default function PaymentPage() {
         };
 
         const rzp = new window.Razorpay(options);
+        rzp.on("payment.failed", (resp: any) => {
+            setPayError(resp?.error?.description || "Payment failed. Please try again.");
+            setIsProcessing(false);
+        });
         rzp.open();
     };
 
     return (
         <div className="min-h-screen bg-slate-50 pb-32">
-            <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
+            {/* next/script dedupes and guarantees load ordering; the previous raw
+                <script async> tag raced with handlePayment reading window.Razorpay. */}
+            <Script
+                src="https://checkout.razorpay.com/v1/checkout.js"
+                strategy="afterInteractive"
+            />
             <TopNavigation title="Secure Payment" />
 
             <main className="max-w-md mx-auto px-6 pt-24">
@@ -113,155 +144,61 @@ export default function PaymentPage() {
                 {/* Amount Header */}
                 <div className="text-center mb-10 animate-fade-in">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Total Payable Amount</p>
-                    <Typography variant="h1" className="text-5xl font-black text-slate-900 tracking-tighter">
-                        ₹19,500
-                    </Typography>
+                    {formattedAmount ? (
+                        <Typography variant="h1" className="text-5xl font-black text-slate-900 tracking-tighter">
+                            {formattedAmount}
+                        </Typography>
+                    ) : (
+                        // Skeleton, not a placeholder figure — showing a number we
+                        // haven't confirmed risks displaying one we won't charge.
+                        <div
+                            className="h-12 w-44 mx-auto rounded-xl bg-slate-200 animate-pulse"
+                            role="status"
+                            aria-label="Loading total amount"
+                        />
+                    )}
                 </div>
 
-                {/* Method Selection */}
-                <div className="space-y-4 mb-10">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-4">Choose Payment Method</p>
-
-                    {/* UPI Option */}
-                    <div className={`rounded-[1.5rem] border-2 transition-all overflow-hidden ${paymentMethod === "upi" ? "bg-white border-emerald-500 shadow-xl shadow-emerald-500/10" : "bg-white border-transparent shadow-sm opacity-60 hover:opacity-100"
-                        }`}>
-                        <button
-                            onClick={() => setPaymentMethod("upi")}
-                            className="w-full p-4 flex items-center justify-between"
-                        >
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-xl">
-                                    ⚡
-                                </div>
-                                <div className="text-left">
-                                    <p className="text-sm font-black text-slate-900 uppercase">UPI / GPay</p>
-                                    <p className="text-[10px] font-bold text-slate-400">Instant Verification</p>
-                                </div>
-                            </div>
-                            {paymentMethod === "upi" && (
-                                <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="text-white"><polyline points="20 6 9 17 4 12" /></svg>
-                                </div>
-                            )}
-                        </button>
-
-                        {/* Expanded UPI Content */}
-                        {paymentMethod === "upi" && (
-                            <div className="px-4 pb-6 pt-2 animate-fade-in">
-                                <p className="text-xs text-slate-500 mb-4 px-2">Tap below to open your preferred UPI app directly.</p>
-                                <a
-                                    href={upiDeepLink}
-                                    className="flex items-center justify-center gap-2 w-full h-12 rounded-xl bg-slate-900 text-white font-bold text-sm uppercase tracking-wide hover:bg-black transition-colors"
-                                >
-                                    <span>Open UPI App</span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
-                                </a>
-                                <div className="flex justify-center mt-4 gap-4 opacity-50 grayscale hover:grayscale-0 transition-all">
-                                    {/* Mock Icons for GPay, PhonePe, Paytm */}
-                                    <div className="w-8 h-8 rounded-full bg-slate-200"></div>
-                                    <div className="w-8 h-8 rounded-full bg-slate-200"></div>
-                                    <div className="w-8 h-8 rounded-full bg-slate-200"></div>
-                                </div>
-                            </div>
-                        )}
+                {loadError && (
+                    <div
+                        role="alert"
+                        className="mb-8 rounded-2xl border border-red-200 bg-red-50 p-4 text-center"
+                    >
+                        <p className="text-sm font-bold text-red-900">{loadError}</p>
                     </div>
+                )}
 
-                    {/* Card Option */}
-                    <div className={`rounded-[1.5rem] border-2 transition-all overflow-hidden ${paymentMethod === "card" ? "bg-white border-emerald-500 shadow-xl shadow-emerald-500/10" : "bg-white border-transparent shadow-sm opacity-60 hover:opacity-100"
-                        }`}>
-                        <button
-                            onClick={() => setPaymentMethod("card")}
-                            className="w-full p-4 flex items-center justify-between"
-                        >
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-xl">
-                                    💳
-                                </div>
-                                <div className="text-left">
-                                    <p className="text-sm font-black text-slate-900 uppercase">Card</p>
-                                    <p className="text-[10px] font-bold text-slate-400">Credit or Debit</p>
-                                </div>
-                            </div>
-                            {paymentMethod === "card" && (
-                                <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="text-white"><polyline points="20 6 9 17 4 12" /></svg>
-                                </div>
-                            )}
-                        </button>
-
-                        {/* Expanded Card Form */}
-                        {paymentMethod === "card" && (
-                            <div className="px-4 pb-6 pt-2 space-y-3 animate-fade-in">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Card Number</label>
-                                    <input
-                                        type="text"
-                                        placeholder="0000 0000 0000 0000"
-                                        value={cardNumber}
-                                        onChange={(e) => setCardNumber(e.target.value)}
-                                        className="w-full h-12 px-4 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-emerald-500 font-bold text-slate-900 placeholder:text-slate-300 transition-colors"
-                                    />
-                                </div>
-                                <div className="flex gap-3">
-                                    <div className="space-y-1 flex-1">
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Expiry</label>
-                                        <input
-                                            type="text"
-                                            placeholder="MM/YY"
-                                            value={cardExpiry}
-                                            onChange={(e) => setCardExpiry(e.target.value)}
-                                            className="w-full h-12 px-4 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-emerald-500 font-bold text-slate-900 placeholder:text-slate-300 transition-colors"
-                                        />
-                                    </div>
-                                    <div className="space-y-1 flex-1">
-                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">CVC</label>
-                                        <input
-                                            type="text"
-                                            placeholder="123"
-                                            value={cardCVC}
-                                            onChange={(e) => setCardCVC(e.target.value)}
-                                            className="w-full h-12 px-4 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-emerald-500 font-bold text-slate-900 placeholder:text-slate-300 transition-colors"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Cardholder Name</label>
-                                    <input
-                                        type="text"
-                                        placeholder="JOHN DOE"
-                                        value={cardName}
-                                        onChange={(e) => setCardName(e.target.value)}
-                                        className="w-full h-12 px-4 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:border-emerald-500 font-bold text-slate-900 placeholder:text-slate-300 transition-colors uppercase"
-                                    />
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                {/* Payment method is chosen inside Razorpay's own secure window.
+                    The previous in-page card form collected raw PAN/CVC into our
+                    DOM (a PCI-DSS violation) and the UPI deep link pointed at a
+                    non-existent merchant VPA with a hardcoded amount. Both removed. */}
+                <div className="mb-10 rounded-[1.5rem] bg-white border border-slate-200 p-5">
+                    <p className="text-sm font-bold text-slate-900 mb-1">Pay securely via Razorpay</p>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                        You&apos;ll choose UPI, card, or net banking in Razorpay&apos;s secure
+                        window. Local Connect never sees or stores your card details.
+                    </p>
                 </div>
 
-                {/* Trust Signals */}
-                <div className="grid grid-cols-2 gap-4 mb-24">
-                    <div className="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100 text-center">
-                        <div className="w-8 h-8 mx-auto mb-2 text-emerald-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
-                        </div>
-                        <p className="text-[9px] font-black text-slate-900 uppercase">256-bit Secure</p>
+                {payError && (
+                    <div
+                        role="alert"
+                        aria-live="assertive"
+                        className="mb-8 rounded-2xl border border-red-200 bg-red-50 p-4"
+                    >
+                        <p className="text-sm font-bold text-red-900">{payError}</p>
                     </div>
-                    <div className="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100 text-center">
-                        <div className="w-8 h-8 mx-auto mb-2 text-emerald-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg>
-                        </div>
-                        <p className="text-[9px] font-black text-emerald-900 uppercase">Money Back Guarantee</p>
-                    </div>
-                </div>
+                )}
 
                 {/* Pay Button */}
                 <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-xl border-t border-slate-100 z-50">
                     <div className="max-w-md mx-auto">
                         <Button
                             onClick={handlePayment}
-                            disabled={isProcessing}
-                            className={`w-full h-16 rounded-[1.5rem] font-black text-lg tracking-widest shadow-2xl transition-all ${isProcessing ? "bg-slate-800 text-white/50" : "bg-emerald-500 text-white shadow-emerald-500/30 hover:scale-[1.02] active:scale-[0.98]"
+                            // Disabled until a backend order exists, so the button can
+                            // no longer silently no-op when the order fetch fails.
+                            disabled={isProcessing || !orderData}
+                            className={`w-full h-16 rounded-[1.5rem] font-black text-lg tracking-widest shadow-2xl transition-all ${isProcessing || !orderData ? "bg-slate-800 text-white/50" : "bg-emerald-500 text-white shadow-emerald-500/30 hover:scale-[1.02] active:scale-[0.98]"
                                 }`}
                         >
                             {isProcessing ? (
@@ -269,7 +206,7 @@ export default function PaymentPage() {
                                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                     PROCESSING...
                                 </span>
-                            ) : `PAY ₹19,500`}
+                            ) : formattedAmount ? `PAY ${formattedAmount}` : "LOADING…"}
                         </Button>
                     </div>
                 </div>

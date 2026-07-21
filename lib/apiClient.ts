@@ -15,6 +15,18 @@ const CACHE_TTL = 30 * 60 * 1000; // 30 minutes for static categories
 
 interface ApiOptions extends RequestInit {
   skipAuth?: boolean;
+  /**
+   * Opt IN to sessionStorage caching. Only for non-personal, slow-changing data
+   * (categories, destinations).
+   *
+   * Caching was previously on by default for every GET, which persisted bookings
+   * and profile data on shared devices and served stale booking/payment status.
+   *
+   * Named `sessionCache` rather than `cache` because RequestInit.cache is the
+   * native fetch RequestCache mode and must stay passthrough.
+   */
+  sessionCache?: boolean;
+  /** @deprecated No longer needed — caching is off unless `cache: true`. */
   skipCache?: boolean;
   retries?: number;
 }
@@ -61,11 +73,14 @@ class ApiClient {
   }
 
   async request<T = any>(endpoint: string, options: ApiOptions = {}): Promise<T> {
-    const { skipAuth = false, skipCache = false, retries = 1, ...fetchOptions } = options;
+    const { skipAuth = false, sessionCache = false, skipCache = false, retries = 1, ...fetchOptions } = options;
+
+    // Opt-in only, and `skipCache: true` still wins for existing call sites.
+    const isGet = !fetchOptions.method || fetchOptions.method === 'GET';
+    const useCache = isGet && sessionCache && !skipCache;
 
     // Fast-path: return cached GET data
-    const isGet = !fetchOptions.method || fetchOptions.method === 'GET';
-    if (isGet && !skipCache) {
+    if (useCache) {
       const cached = this.getCached(endpoint);
       if (cached) return cached as T;
     }
@@ -105,7 +120,7 @@ class ApiClient {
         const data = await response.json();
 
         // Cache GET responses
-        if (isGet && !skipCache) {
+        if (useCache) {
           this.setCache(endpoint, data);
         }
 
