@@ -77,6 +77,57 @@ const LOCAL_PROVIDERS = [
   { id: "p6", name: "Rajan Chauhan", role: "River Rafting Pro", location: "Kullu, HP", rating: 4.8, reviews: 178, tags: ["Rafting", "Kayak", "Safety"], image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400", badge: "Verified" },
 ];
 
+const RECENT_BOOKINGS = [
+  {
+    name: "Rohit Sharma",
+    city: "Bangalore",
+    route: "manali",
+    routeName: "Manali Orchard Loop",
+    timeAgo: "Just now",
+    guide: true,
+    homestay: true,
+    transport: false,
+    price: 9200,
+    avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=120"
+  },
+  {
+    name: "Sarah Jenkins",
+    city: "Munich",
+    route: "leh",
+    routeName: "Leh Valley Expedition",
+    timeAgo: "3 mins ago",
+    guide: true,
+    homestay: false,
+    transport: true,
+    price: 15000,
+    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=120"
+  },
+  {
+    name: "Aarav Mehta",
+    city: "Mumbai",
+    route: "rishikesh",
+    routeName: "Rishikesh Wellness Flow",
+    timeAgo: "8 mins ago",
+    guide: false,
+    homestay: true,
+    transport: true,
+    price: 8700,
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=120"
+  },
+  {
+    name: "Elena Rostova",
+    city: "Prague",
+    route: "leh",
+    routeName: "Leh Valley Expedition",
+    timeAgo: "15 mins ago",
+    guide: true,
+    homestay: true,
+    transport: true,
+    price: 17200,
+    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=120"
+  }
+];
+
 const STAT_META: { value: string; key: string; star?: boolean }[] = [
   { value: "2,400+", key: "providers" },
   { value: "18,000+", key: "travellers" },
@@ -310,10 +361,22 @@ export default function Home({ params }: HomeProps) {
 
   const router = useRouter();
 
-  const [sandboxRoute, setSandboxRoute] = useState("manali");
-  const [addGuide, setAddGuide] = useState(true);
-  const [addHomestay, setAddHomestay] = useState(true);
-  const [addTransport, setAddTransport] = useState(false);
+  const [activeBookingIndex, setActiveBookingIndex] = useState(0);
+  const [isSandboxHovered, setIsSandboxHovered] = useState(false);
+
+  useEffect(() => {
+    if (isSandboxHovered) return;
+    const interval = setInterval(() => {
+      setActiveBookingIndex((prev) => (prev + 1) % RECENT_BOOKINGS.length);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [isSandboxHovered]);
+
+  const activeBooking = RECENT_BOOKINGS[activeBookingIndex];
+  const sandboxRoute = activeBooking.route;
+  const addGuide = activeBooking.guide;
+  const addHomestay = activeBooking.homestay;
+  const addTransport = activeBooking.transport;
 
   const [activeStep, setActiveStep] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
@@ -387,6 +450,22 @@ export default function Home({ params }: HomeProps) {
   const join = h.join ?? {};
   const trust = h.trust ?? {};
 
+  const getMatchedHosts = (route: string) => {
+    const list = providersList && providersList.length > 0 ? providersList : LOCAL_PROVIDERS;
+    if (route === "manali") {
+      return list.filter((p: any) => p.location?.toLowerCase().includes("manali") || p.location?.toLowerCase().includes("kullu") || p.location?.toLowerCase().includes("hp")).slice(0, 3);
+    }
+    if (route === "leh") {
+      return list.filter((p: any) => p.location?.toLowerCase().includes("leh") || p.location?.toLowerCase().includes("ladakh")).slice(0, 3);
+    }
+    if (route === "rishikesh") {
+      return list.filter((p: any) => p.location?.toLowerCase().includes("rishikesh") || p.location?.toLowerCase().includes("haridwar") || p.location?.toLowerCase().includes("uk")).slice(0, 3);
+    }
+    return list.slice(0, 3);
+  };
+
+  const matchedHosts = getMatchedHosts(sandboxRoute);
+
   return (
     <>
       {/* ── HERO / INTERACTIVE ROUTE SANDBOX ─────────────────────── */}
@@ -396,140 +475,145 @@ export default function Home({ params }: HomeProps) {
         <div className="absolute top-[10%] left-[5%] w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none animate-pulse" />
         <div className="absolute bottom-[20%] right-[5%] w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 w-full max-w-5xl mx-auto">
+        <div className="relative z-10 w-full max-w-6xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-10 max-w-2xl mx-auto">
+          <div className="text-center mb-10 max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 backdrop-blur-sm border border-emerald-500/25 mb-5 shadow-sm">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
               <span className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.25em]">
                 Live Sandbox Estimator
               </span>
             </div>
-            <h1 className="text-white text-3xl sm:text-5xl lg:text-6xl font-black uppercase italic tracking-tight leading-[1.05] mb-4">
-              Build Your Trip in <span className="text-emerald-400">Real-Time</span>
+            <h1 className="text-white text-4xl sm:text-6xl lg:text-7xl font-black uppercase italic tracking-tight leading-[0.95] mb-6">
+              Build Your Trip in <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-350">Real-Time</span>
             </h1>
-            <p className="text-slate-450 text-xs sm:text-sm font-semibold max-w-xl mx-auto leading-relaxed">
+            <p className="text-slate-400 text-sm sm:text-base font-semibold max-w-2xl mx-auto leading-relaxed">
               Select your route, customize premium local services, and see the interactive map update instantly with live cost estimates.
             </p>
           </div>
 
-          {/* Sandbox Configurator Panel */}
-          <div className="rounded-[3rem] bg-slate-900/60 border border-slate-800/80 p-6 sm:p-10 relative overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.5)] backdrop-blur-md">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-              {/* Configurator */}
-              <div className="lg:col-span-6 flex flex-col gap-6 justify-between">
-                <div>
-                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2.5">1. Select a Route</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { key: "manali", label: "Manali Loop" },
-                      { key: "leh", label: "Leh Expedition" },
-                      { key: "rishikesh", label: "Rishikesh Flow" }
-                    ].map((routeOpt) => (
-                      <button
-                        key={routeOpt.key}
-                        onClick={() => setSandboxRoute(routeOpt.key)}
-                        className={`p-3.5 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all text-center ${sandboxRoute === routeOpt.key
-                            ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/25"
-                            : "bg-slate-900/60 border-slate-800/80 text-slate-400 hover:bg-slate-800 hover:text-white"
-                          }`}
-                      >
-                        {routeOpt.label}
-                      </button>
-                    ))}
+          {/* Subtle Dynamic Booking Ticker */}
+          <div className="flex justify-center mb-8">
+            <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-slate-900/80 border border-slate-800 backdrop-blur-md shadow-sm">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-450 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Live Activity:</span>
+              <p className="text-[10px] font-bold text-slate-350 uppercase tracking-wide flex items-center gap-1.5">
+                <span className="text-white font-black">{activeBooking.name}</span>
+                <span className="text-slate-500 font-semibold lowercase">from</span>
+                <span className="text-emerald-400">{activeBooking.city}</span>
+                <span className="text-slate-500 font-semibold">booked</span>
+                <span className="text-white italic">{activeBooking.routeName}</span>
+                <span className="text-slate-500 font-semibold">for</span>
+                <span className="text-emerald-400">₹{activeBooking.price}</span>
+              </p>
+              <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest bg-slate-950 px-2 py-0.5 rounded border border-slate-850">
+                {activeBooking.timeAgo}
+              </span>
+            </div>
+          </div>
+
+          {/* Centered Visualizer Display Card */}
+          <div className="max-w-2xl mx-auto w-full">
+            <div className="bg-slate-900/60 rounded-[3rem] border border-slate-800/80 p-6 sm:p-12 relative overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.5)] backdrop-blur-md">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[40px] pointer-events-none" />
+
+              <div>
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <p className="text-[8px] font-black uppercase tracking-widest text-emerald-400">Route Package Preview</p>
+                    <h4 className="text-lg font-black uppercase italic tracking-wide mt-1">
+                      {activeBooking.routeName}
+                    </h4>
+                  </div>
+                  <span className="text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded bg-white/10 text-slate-300">
+                    Live Cost
+                  </span>
+                </div>
+
+                {/* Dynamic Cool SVG Map Visualizer */}
+                {renderRouteMapSvg(sandboxRoute)}
+
+                {/* Dynamic Matched Hosts Section */}
+                <div className="mt-4 border-t border-white/5 pt-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[8px] font-black uppercase tracking-widest text-slate-450">Matched Local Experts</span>
+                    <button
+                      onClick={() => router.push(`/${lang}/discover?search=${sandboxRoute === "manali" ? "manali" : sandboxRoute === "leh" ? "leh" : "rishikesh"}`)}
+                      className="text-[8.5px] font-black text-emerald-400 hover:text-emerald-300 uppercase tracking-wider transition-colors"
+                    >
+                      Explore All ({providersList.length > 0 ? providersList.length : LOCAL_PROVIDERS.length}+) →
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex -space-x-2.5">
+                      {matchedHosts.map((host: any, idx: number) => (
+                        <div
+                          key={host.id || idx}
+                          onClick={() => router.push(`/${lang}/vendor/${host.id}`)}
+                          className="w-8 h-8 rounded-full border border-slate-950 overflow-hidden bg-slate-800 shadow-sm relative group cursor-pointer hover:border-emerald-500 transition-all hover:scale-105"
+                          title={`View profile of ${host.name}`}
+                        >
+                          <LocalImage src={host.image} alt={host.name} className="w-full h-full object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight">
+                      {matchedHosts.length > 0
+                        ? `${matchedHosts.map((h: any) => h.name.split(' ')[0]).join(', ')} & others nearby`
+                        : "Connecting verified local hosts..."}
+                    </p>
                   </div>
                 </div>
 
-                <div>
-                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2.5">2. Toggle Local Services</p>
-                  <div className="space-y-2">
-                    {[
-                      { id: "guide", label: "🏔️ Elite Mountain Guide", desc: "Safety first, trail secrets", price: 3000, state: addGuide, setState: setAddGuide },
-                      { id: "homestay", label: "🏡 Apple Orchard Homestay", desc: "Organic meals included", price: 2200, state: addHomestay, setState: setAddHomestay },
-                      { id: "transport", label: "🚗 Private 4x4 Jeep Cab", desc: "Experienced pass navigator", price: 3500, state: addTransport, setState: setAddTransport },
-                    ].map((serviceOpt) => (
-                      <button
-                        key={serviceOpt.id}
-                        onClick={() => serviceOpt.setState(!serviceOpt.state)}
-                        className={`w-full p-4 rounded-xl border text-left flex items-center justify-between transition-all group ${serviceOpt.state
-                            ? "border-emerald-500 bg-emerald-500/10 text-white"
-                            : "border-slate-800 bg-slate-900/40 hover:bg-slate-800/60 text-slate-350"
-                          }`}
-                      >
-                        <div>
-                          <p className={`text-[10px] font-black uppercase tracking-wide ${serviceOpt.state ? "text-emerald-400" : "text-slate-300"}`}>
-                            {serviceOpt.label}
-                          </p>
-                          <p className="text-[8px] text-slate-500 font-semibold uppercase mt-0.5">{serviceOpt.desc}</p>
-                        </div>
-                        <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-md ${serviceOpt.state ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "bg-slate-800 text-slate-400 group-hover:bg-slate-700"}`}>
-                          +₹{serviceOpt.price}
-                        </span>
-                      </button>
-                    ))}
+                {/* Selected Items details */}
+                <div className="space-y-1.5 mt-4 border-t border-white/5 pt-3">
+                  <div className="flex justify-between text-[9px] font-bold text-slate-400 uppercase">
+                    <span>Base Route Rate</span>
+                    <span>₹{activeBooking.basePrice || (sandboxRoute === "manali" ? 4000 : sandboxRoute === "leh" ? 8500 : 3000)}</span>
                   </div>
+                  {addGuide && (
+                    <div className="flex justify-between text-[9px] font-bold text-emerald-400 uppercase">
+                      <span>+ Elite Mountain Guide</span>
+                      <span>₹3,000</span>
+                    </div>
+                  )}
+                  {addHomestay && (
+                    <div className="flex justify-between text-[9px] font-bold text-emerald-400 uppercase">
+                      <span>+ Orchard Homestay</span>
+                      <span>₹2,200</span>
+                    </div>
+                  )}
+                  {addTransport && (
+                    <div className="flex justify-between text-[9px] font-bold text-emerald-400 uppercase">
+                      <span>+ Private 4x4 Jeep</span>
+                      <span>₹3,500</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Visualizer Display Card */}
-              <div className="lg:col-span-6 bg-slate-950 rounded-2xl p-6 text-white flex flex-col justify-between relative overflow-hidden border border-slate-850 shadow-2xl">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[40px] pointer-events-none" />
-
-                <div>
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <p className="text-[8px] font-black uppercase tracking-widest text-emerald-400">Route Package Preview</p>
-                      <h4 className="text-lg font-black uppercase italic tracking-wide mt-1">
-                        {sandboxRoute === "manali" ? "Manali Orchard Loop" : sandboxRoute === "leh" ? "Leh Valley Expedition" : "Rishikesh Wellness Flow"}
-                      </h4>
-                    </div>
-                    <span className="text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded bg-white/10 text-slate-300">
-                      Live Cost
-                    </span>
-                  </div>
-
-                  {/* Dynamic Cool SVG Map Visualizer */}
-                  {renderRouteMapSvg(sandboxRoute)}
-
-                  {/* Selected Items details */}
-                  <div className="space-y-1.5 mt-4 border-t border-white/5 pt-3">
-                    <div className="flex justify-between text-[9px] font-bold text-slate-400 uppercase">
-                      <span>Base Route Rate</span>
-                      <span>₹{sandboxRoute === "manali" ? 4000 : sandboxRoute === "leh" ? 8500 : 3000}</span>
-                    </div>
-                    {addGuide && (
-                      <div className="flex justify-between text-[9px] font-bold text-emerald-400 uppercase">
-                        <span>+ Elite Mountain Guide</span>
-                        <span>₹3,000</span>
-                      </div>
-                    )}
-                    {addHomestay && (
-                      <div className="flex justify-between text-[9px] font-bold text-emerald-400 uppercase">
-                        <span>+ Orchard Homestay</span>
-                        <span>₹2,200</span>
-                      </div>
-                    )}
-                    {addTransport && (
-                      <div className="flex justify-between text-[9px] font-bold text-emerald-400 uppercase">
-                        <span>+ Private 4x4 Jeep</span>
-                        <span>₹3,500</span>
-                      </div>
-                    )}
-                  </div>
+              <div className="mt-8 border-t border-white/10 pt-4 flex flex-col gap-4">
+                <div className="flex justify-between items-baseline">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-450">Total Price Estimate</span>
+                  <span className="text-3xl font-black italic text-emerald-400">
+                    ₹{activeBooking.price}
+                  </span>
                 </div>
-
-                <div className="mt-8 border-t border-white/10 pt-4 flex flex-col gap-4">
-                  <div className="flex justify-between items-baseline">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-450">Total Price Estimate</span>
-                    <span className="text-3xl font-black italic text-emerald-400">
-                      ₹{(sandboxRoute === "manali" ? 4000 : sandboxRoute === "leh" ? 8500 : 3000) + (addGuide ? 3000 : 0) + (addHomestay ? 2200 : 0) + (addTransport ? 3500 : 0)}
-                    </span>
-                  </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => router.push(`/${lang}/discover?search=${sandboxRoute === "manali" ? "manali" : sandboxRoute === "leh" ? "leh" : "rishikesh"}`)}
+                    className="px-5 h-12 rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-slate-800 hover:text-white text-slate-300 font-black text-[9px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-1.5 duration-200"
+                  >
+                    Explore Hosts
+                  </button>
                   <button
                     onClick={() => router.push(`/${lang}/builder?route=${sandboxRoute}&guide=${addGuide}&stay=${addHomestay}&ride=${addTransport}`)}
-                    className="w-full h-12 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/20"
+                    className="flex-1 h-12 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[9px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/20 duration-200"
                   >
-                    {builder.cta || "Instant Match & Book"}
+                    Customize & Book This Trip
                     <Icon name="arrow-right" className="w-3.5 h-3.5" />
                   </button>
                 </div>
