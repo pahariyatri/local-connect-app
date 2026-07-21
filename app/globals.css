@@ -37,6 +37,11 @@ body {
 }
 
 @layer components {
+  .bg-grid-pattern {
+    background-image: radial-gradient(rgba(16, 185, 129, 0.07) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
   .premium-card {
     @apply bg-white rounded-[2rem] border border-slate-100/50 transition-all duration-500;
     box-shadow:
@@ -113,4 +118,42 @@ body {
 
 .animate-in {
   animation: slideInFromTop 0.2s ease-out forwards;
+}
+
+@keyframes dash {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-dash {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: dash 3s linear infinite;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

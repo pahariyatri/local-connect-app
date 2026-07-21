@@ -26,10 +26,21 @@ export function middleware(request: NextRequest) {
     const locale = getLocale(request);
 
     // Define protected routes that require authentication
-    const protectedRoutes = [`/${locale}/profile`, `/${locale}/dashboard`, `/${locale}/vendor`];
+    const reservedVendorSubroutes = [
+        'bookings', 'calendar', 'community', 'contracts', 'dashboard', 'onboarding', 'partnerships', 'payouts', 'services'
+    ];
+    
+    const isProtectedVendorRoute = pathname.startsWith(`/${locale}/vendor`) && (
+        pathname === `/${locale}/vendor` ||
+        reservedVendorSubroutes.some(sub => pathname.startsWith(`/${locale}/vendor/${sub}`))
+    );
+
+    const isProtected = pathname.startsWith(`/${locale}/profile`) || 
+                        pathname.startsWith(`/${locale}/dashboard`) || 
+                        isProtectedVendorRoute;
 
     // Check if the user is trying to access a protected route
-    if (protectedRoutes.some(route => pathname.startsWith(route))) {
+    if (isProtected) {
         const token = request.cookies.get('accessToken'); // Check for the access token
         console.log("Middleware Token:", token);
 
