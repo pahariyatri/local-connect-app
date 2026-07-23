@@ -15,6 +15,7 @@ import ServiceInterestSelector from "./components/ServiceInterestSelector";
 import TravelingPartySelector from "./components/TravelingPartySelector";
 import NextStopSelector from "./components/NextStopSelector";
 import PackageBuilderStep from "./components/PackageBuilderStep";
+import { TripStop, createTripStop } from "@/types/tripBuilder";
 
 export default function TripBuilderPage() {
   const { lang } = useParams();
@@ -33,7 +34,9 @@ export default function TripBuilderPage() {
   const [localEndDate, setLocalEndDate] = useState<string | null>(endDate || null);
   const [localServicePreferences, setLocalServicePreferences] = useState<ServiceType[]>(servicePreferences);
   const [localGuestCount, setLocalGuestCount] = useState(guestCount || 2);
-  const [localRouteStops, setLocalRouteStops] = useState<string[]>(routeStops || []);
+  const [localTripStops, setLocalTripStops] = useState<TripStop[]>(() => (routeStops || []).map((n) => createTripStop(n)));
+  // Names derived from structured stops keep the existing package/discovery pipeline working.
+  const localRouteStops = localTripStops.map((s) => s.name);
   const [localStopServices, setLocalStopServices] = useState<Record<number, string[]>>(stopServicesByDay || {});
   const [isGenerating, setIsGenerating] = useState(false);
   const [step5Footer, setStep5Footer] = useState<{ totalPrice: number; onCreatePackage: () => Promise<void> } | null>(null);
@@ -46,7 +49,6 @@ export default function TripBuilderPage() {
     if (endDate) setLocalEndDate(endDate);
     if (servicePreferences.length) setLocalServicePreferences(servicePreferences);
     if (guestCount) setLocalGuestCount(guestCount);
-    if (routeStops && routeStops.length) setLocalRouteStops(routeStops);
     if (stopServicesByDay && Object.keys(stopServicesByDay).length) setLocalStopServices(stopServicesByDay);
   }, [origin, destinations, startDate, endDate, servicePreferences, guestCount, routeStops, stopServicesByDay]);
 
@@ -201,8 +203,8 @@ export default function TripBuilderPage() {
              <NextStopSelector
                origin={localOrigin}
                destinations={localDestinations}
-               routeStops={localRouteStops}
-               onRouteStopsChange={setLocalRouteStops}
+               stops={localTripStops}
+               onStopsChange={setLocalTripStops}
                startDate={localStartDate}
                endDate={localEndDate}
                guestCount={localGuestCount}
@@ -220,6 +222,7 @@ export default function TripBuilderPage() {
             guestCount={localGuestCount}
             servicePreferences={localServicePreferences}
             routeStops={localRouteStops}
+            tripStops={localTripStops}
             stopServicesByDay={localStopServices}
             lang={String(lang)}
             dict={dict}

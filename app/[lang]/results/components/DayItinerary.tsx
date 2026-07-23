@@ -16,6 +16,7 @@ interface DayItineraryProps {
   onVendorChange: (category: string, vendorId: string) => void;
   onRemove: (category: string) => void;
   onAdd: (category: string) => void;
+  onViewAll?: (category: string) => void;
   readOnly?: boolean;
 }
 
@@ -26,6 +27,7 @@ export default function DayItinerary({
   onVendorChange,
   onRemove,
   onAdd,
+  onViewAll,
   readOnly = false,
 }: DayItineraryProps) {
   return (
@@ -76,22 +78,36 @@ export default function DayItinerary({
               )}
 
               {/* Alternatives — hidden in readOnly */}
-              {!readOnly && (
-              <div className="grid grid-cols-2 gap-3 opacity-60 hover:opacity-100 transition-opacity">
-                {selection.options
-                  .filter(v => v.id !== selection.selectedVendorId)
-                  .slice(0, 2)
-                  .map(vendor => (
-                    <VendorSelectionCard
-                      key={vendor.id}
-                      vendor={vendor}
-                      isSelected={false}
-                      onSelect={(id) => onVendorChange(selection.category, id)}
-                      isAlternative={true}
-                    />
-                  ))}
-              </div>
-              )}
+              {!readOnly && (() => {
+                const alternatives = selection.options.filter(v => v.id !== selection.selectedVendorId);
+                return (
+                  <>
+                    <div className="grid grid-cols-2 gap-3 opacity-60 hover:opacity-100 transition-opacity">
+                      {alternatives.slice(0, 2).map(vendor => (
+                        <VendorSelectionCard
+                          key={vendor.id}
+                          vendor={vendor}
+                          isSelected={false}
+                          onSelect={(id) => onVendorChange(selection.category, id)}
+                          isAlternative={true}
+                        />
+                      ))}
+                    </div>
+
+                    {/* View-all opens the full list for this category across the whole route */}
+                    {onViewAll && selection.options.length > 3 && (
+                      <button
+                        type="button"
+                        onClick={() => onViewAll(selection.category)}
+                        className="w-full mt-1 py-3 rounded-2xl border-2 border-dashed border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:border-emerald-300 hover:text-emerald-600 hover:bg-emerald-50/40 transition-all flex items-center justify-center gap-2"
+                      >
+                        View all {selection.options.length} {selection.category} options
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                      </button>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           );
         })}

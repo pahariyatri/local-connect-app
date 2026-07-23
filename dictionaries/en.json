@@ -402,7 +402,13 @@
         "available_here": "here",
         "empty_title": "No stops found on this route yet.",
         "empty_sub": "You can continue and we'll build your plan from your destinations.",
-        "skip_hint": "Optional. Skip anytime and go straight to building your plan."
+        "skip_hint": "Optional. Skip anytime and go straight to building your plan.",
+        "preview_title": "Your day-by-day plan",
+        "preview_subtitle": "A quick preview of how your days map to the route. Adjust stops above to reshape it.",
+        "day_word": "day",
+        "days_word": "days",
+        "day_abbr": "Day",
+        "depart_from": "Depart"
       },
       "interests": {
         "title": "What are you <span class=\"text-rose-500\">craving</span>?",
