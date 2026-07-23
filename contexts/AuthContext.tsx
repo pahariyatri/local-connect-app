@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { API_BASE_URL } from '@/utils/constants';
+import { getMe, logout as logoutApi } from '@/services/authService';
 
 interface User {
   id: string;
@@ -29,33 +29,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // 1. If we have meta locally, use it immediately for speed (UI "feel" as logged in)
       if (storedUser) {
-        setUser(JSON.parse(storedUser));
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch { localStorage.removeItem('user_meta'); }
       }
 
-      // 2. Always verify session with backend (Verifies HttpOnly cookies)
+      // 2. Always verify the session with the backend (HttpOnly cookies).
+      //    Goes through the central api client: typed errors + bounded
+      //    silent-refresh on 401 — no bespoke fetch, no second client.
       try {
-        const response = await fetch(`${API_BASE_URL}/auth/me`, {
-          credentials: 'include'
-        });
-
-        if (response.ok) {
-          const userProfile = await response.json();
-          const mappedUser = {
-            id: userProfile.id,
-            name: userProfile.name || `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim() || 'User',
-            email: userProfile.email || '',
-            phone: userProfile.phone || '',
-            role: userProfile.role || 'Guest'
-          };
-          setUser(mappedUser);
-          localStorage.setItem('user_meta', JSON.stringify(mappedUser));
-        } else {
-          // Token expired or invalid
+        const result = await getMe();
+        const userProfile = result?.data ?? result;
+        const mappedUser = {
+          id: userProfile.id,
+          name: userProfile.name || `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim() || 'User',
+          email: userProfile.email || '',
+          phone: userProfile.phone || '',
+          role: userProfile.role || 'Guest',
+        };
+        setUser(mappedUser);
+        localStorage.setItem('user_meta', JSON.stringify(mappedUser));
+      } catch (e: any) {
+        if (e?.statusCode === 401) {
+          // Session genuinely gone (refresh already attempted by the client).
           logout();
         }
-      } catch (e) {
-        console.warn("Auth check failed.", e);
-        // If API fails (network error), keep the local meta if it exists
+        // Network errors: keep the local meta — do not log the user out offline.
       } finally {
         setIsLoading(false);
       }
@@ -71,11 +70,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user_meta');
-    // Clear the HttpOnly auth cookies server-side (best effort).
-    fetch(`${API_BASE_URL}/auth/logout`, {
-      method: 'POST',
-      credentials: 'include',
-    }).catch(() => { /* ignore network errors on logout */ });
+    // Single logout path: revokes the server session + clears cookies + cache.
+    void logoutApi();
   };
 
   return (

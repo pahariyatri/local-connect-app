@@ -25,3 +25,18 @@ export function sanitizePin(value: string): string {
 export function isValidPin(value: string): boolean {
   return new RegExp(`^\\d{${PIN_LENGTH}}$`).test(value || "");
 }
+
+/**
+ * UX-only weak-PIN pre-check mirroring the backend policy's obvious cases
+ * (repeats, straight sequences, top common PINs). The backend PinPolicyService
+ * is authoritative — this only saves the user a round-trip.
+ */
+export function isWeakPin(pin: string): boolean {
+  if (!isValidPin(pin)) return true;
+  if (/^(\d)\1+$/.test(pin)) return true;                 // 0000, 1111, …
+  if (/^(\d{1,2})\1+$/.test(pin)) return true;            // 1212, 4545, …
+  const asc = "0123456789";
+  const desc = "9876543210";
+  if (asc.includes(pin) || desc.includes(pin)) return true; // 1234, 4321, …
+  return ["1122", "2580", "0852", "6969", "1010", "2020"].includes(pin);
+}

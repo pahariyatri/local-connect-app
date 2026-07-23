@@ -22,6 +22,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
+  // Absolute base for OG/Twitter/canonical URL resolution (production frontend).
+  metadataBase: new URL('https://app.pahariyatri.com'),
   title: 'Local Connect Portal - Authentic Travel Experiences',
   description: 'Connect with local vendors for authentic travel experiences. Book trips, stays, and adventures directly with locals.',
   openGraph: {

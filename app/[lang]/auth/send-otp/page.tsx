@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { sendOtp } from '@/services/authService';
+import { requestOtp } from '@/services/authService';
+import { toAuthUiError } from '@/utils/authErrors';
 import Typography from '../../components/atoms/Typography';
 import Button from '../../components/atoms/Button';
 import Input from '../../components/atoms/Input';
@@ -28,19 +29,15 @@ export default function SendOtpPage({ params }: { params: Promise<{ lang: string
     setLoading(true);
 
     try {
-      const response = await sendOtp(phone);
-      const data = response?.data || response;
-
-      if (data?.otp) {
-        console.log('%c [AUTH] Testing OTP: ' + data.otp, 'background:#064e3b;color:#fff;padding:4px 8px;border-radius:4px;font-weight:bold;');
-      }
+      // The OTP is delivered out-of-band only — never echoed, never logged.
+      const challenge = await requestOtp(phone);
 
       const redirectTo = searchParams.get('redirectTo');
-      let verifyUrl = `/${locale}/auth/verify-otp?phone=${encodeURIComponent(phone)}`;
+      let verifyUrl = `/${locale}/auth/verify-otp?phone=${encodeURIComponent(phone)}&challengeId=${encodeURIComponent(challenge.challengeId)}&resendAfter=${challenge.resendAfterSeconds}`;
       if (redirectTo) verifyUrl += `&redirectTo=${encodeURIComponent(redirectTo)}`;
       router.push(verifyUrl);
-    } catch {
-      setError('Failed to send OTP. Please try again.');
+    } catch (err) {
+      setError(toAuthUiError(err).message);
     } finally {
       setLoading(false);
     }

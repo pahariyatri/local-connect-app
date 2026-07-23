@@ -23,7 +23,18 @@ export default function LoginPage() {
     // Only nudge the user once they've started typing and moved on, never while empty.
     const showInvalid = touched && phone.length > 0 && !phoneValid;
 
-    const handleContinue = async () => {
+    // Enumeration-safe flow: the user chooses PIN or OTP — the app never asks
+    // the backend whether this number has an account before verification.
+    const handlePinLogin = () => {
+        if (!phoneValid) {
+            setTouched(true);
+            return;
+        }
+        const redirectSuffix = redirectTo ? `&redirectTo=${encodeURIComponent(redirectTo)}` : "";
+        router.push(`/${lang}/auth/pin?mode=login&phone=${phone}${redirectSuffix}`);
+    };
+
+    const handleOtpFlow = async () => {
         if (!phoneValid) {
             setTouched(true);
             return;
@@ -31,26 +42,19 @@ export default function LoginPage() {
         setError(null);
         setLoading(true);
         try {
-            const { accountStatus, sendOtp } = await import("@/services/authService");
+            const { requestOtp } = await import("@/services/authService");
+            const { toAuthUiError } = await import("@/utils/authErrors");
             const redirectSuffix = redirectTo ? `&redirectTo=${encodeURIComponent(redirectTo)}` : "";
-
-            // Returning user with a PIN → skip OTP, go straight to PIN login.
-            const status = await accountStatus(phone);
-            if (status.hasPin) {
-                router.push(`/${lang}/auth/pin?mode=login&phone=${phone}${redirectSuffix}`);
-                return;
+            try {
+                const challenge = await requestOtp(phone);
+                router.push(
+                    `/${lang}/auth/verify-otp?phone=${phone}&challengeId=${encodeURIComponent(challenge.challengeId)}&resendAfter=${challenge.resendAfterSeconds}${redirectSuffix}`,
+                );
+            } catch (err) {
+                setError(toAuthUiError(err).message);
+                setLoading(false);
             }
-
-            // New/unverified number → send OTP to verify, then they'll create a PIN.
-            const response = await sendOtp(phone);
-            const data = response?.data || response;
-            if (data?.otp) {
-                alert(`[TEST MODE] OTP: ${data.otp}\n(Visible because OTP_BYPASS_ENABLED=true)`);
-            }
-            router.push(`/${lang}/auth/verify-otp?phone=${phone}${redirectSuffix}`);
-
-        } catch (err) {
-            console.error("Failed to continue login", err);
+        } catch {
             setError("Something went wrong. Please check your connection and try again.");
             setLoading(false);
         }
@@ -120,7 +124,7 @@ export default function LoginPage() {
                                     value={phone}
                                     onChange={(e) => { setPhone(sanitizePhone(e.target.value)); if (error) setError(null); }}
                                     onBlur={() => setTouched(true)}
-                                    onKeyDown={(e) => { if (e.key === "Enter" && phoneValid && !loading) handleContinue(); }}
+                                    onKeyDown={(e) => { if (e.key === "Enter" && phoneValid && !loading) handlePinLogin(); }}
                                 />
                             </div>
                             {showInvalid ? (
@@ -141,23 +145,28 @@ export default function LoginPage() {
                                 </p>
                             )}
                             <Button
-                                onClick={handleContinue}
+                                onClick={handlePinLogin}
                                 disabled={!phoneValid || loading}
                                 aria-busy={loading}
                                 className={`w-full h-16 rounded-2xl text-base font-black tracking-widest transition-all uppercase italic shadow-xl ${
                                     loading ? "bg-slate-200 text-slate-400" : "bg-slate-900 hover:bg-black text-white shadow-slate-200 active:scale-95"
                                 }`}
                             >
-                                {loading ? "Please wait..." : "Continue"}
+                                Continue with PIN
                             </Button>
-                            
+
                             <div className="relative py-2 text-center">
                                 <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
-                                <span className="relative px-2 bg-white text-[9px] font-black text-slate-300 uppercase tracking-widest">Other Options</span>
+                                <span className="relative px-2 bg-white text-[9px] font-black text-slate-300 uppercase tracking-widest">New Here?</span>
                             </div>
 
-                            <button className="w-full h-14 rounded-2xl border-2 border-slate-100 font-black text-[10px] uppercase tracking-widest text-slate-500 hover:bg-emerald-50 hover:border-emerald-100 hover:text-emerald-600 transition-all flex items-center justify-center gap-3">
-                                💬 WhatsApp Login
+                            <button
+                                onClick={handleOtpFlow}
+                                disabled={!phoneValid || loading}
+                                aria-busy={loading}
+                                className="w-full h-14 rounded-2xl border-2 border-slate-100 font-black text-[10px] uppercase tracking-widest text-slate-500 hover:bg-emerald-50 hover:border-emerald-100 hover:text-emerald-600 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                            >
+                                {loading ? "Sending code..." : "Verify with OTP (New / Recover)"}
                             </button>
                         </div>
 

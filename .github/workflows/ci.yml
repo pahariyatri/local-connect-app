@@ -24,11 +24,29 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
+      - name: Lint (non-blocking — pre-existing errors outside auth scope)
+        # eslint.config.mjs was repaired (was legacy JSON in a .mjs — lint never
+        # ran). 17 pre-existing errors remain in legacy components; make this
+        # blocking once they are burned down.
+        continue-on-error: true
+        run: npx eslint app/ lib/ services/ utils/ contexts/ middleware.ts
+
+      - name: Typecheck (non-blocking — next.config sets ignoreBuildErrors)
+        continue-on-error: true
+        run: npx tsc --noEmit
+
       - name: Build
         run: npm run build
         env:
           NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
           NEXT_TELEMETRY_DISABLED: "1"
+
+      # Contract drift: the auth API surface the frontend uses must exist in the
+      # backend's generated OpenAPI document. Cross-repo: the backend CI uploads
+      # `openapi` as an artifact; until artifact sharing between the two repos is
+      # wired (needs a PAT or repository_dispatch), run locally with:
+      #   (backend)  npm run openapi:generate
+      #   (frontend) npm run check:contract
 
   docker:
     name: Docker build
