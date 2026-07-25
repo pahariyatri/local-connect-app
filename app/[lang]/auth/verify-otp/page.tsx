@@ -2,45 +2,51 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
-import { verifyOtp, resendOtp } from '@/services/authService';
+import { verifyOtp, forgotPinVerify, requestOtp, forgotPinRequest } from '@/services/authService';
+import { toAuthUiError } from '@/utils/authErrors';
 import Form from '../../components/molecules/Form';
 import Button from '../../components/atoms/Button';
 import Typography from '../../components/atoms/Typography';
-import { fetchCurrentUser } from '@/services/userService';
-import { useAuth } from '@/contexts/AuthContext';
 
-const RESEND_COOLDOWN = 60; // 60 seconds
+const OTP_LENGTH = 6;
+const DEFAULT_RESEND_COOLDOWN = 45; // backend-enforced; the visible timer is UX only
+
+/** Mask all but the last 4 digits for display: 99999 12345 → •••••12345 */
+const maskPhone = (p: string) => (p.length > 4 ? '•'.repeat(p.length - 4) + p.slice(-4) : p);
 
 export default function VerifyOtpPage() {
-  const { login } = useAuth();
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const router = useRouter();
+  const { lang } = useParams() as { lang: string };
+  const searchParams = useSearchParams();
+
+  const phone = searchParams.get('phone') || '';
+  const purpose = searchParams.get('purpose') === 'forgot' ? 'forgot' : 'registration';
+  const initialChallengeId = searchParams.get('challengeId') || '';
+  const initialResendAfter = parseInt(searchParams.get('resendAfter') || '', 10) || DEFAULT_RESEND_COOLDOWN;
+  const redirectTo = searchParams.get('redirectTo');
+
+  const [challengeId, setChallengeId] = useState(initialChallengeId);
+  const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  const [countdown, setCountdown] = useState(RESEND_COOLDOWN);
+  const [countdown, setCountdown] = useState(initialResendAfter);
   const [canResend, setCanResend] = useState(false);
 
-  const router = useRouter();
-  const { lang } = useParams() as { lang: string };
-  const searchParams = useSearchParams();
-  const phoneNumber = searchParams.get('phone') || '';
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Timer logic for resend cooldown
+  // Visible countdown; the backend enforces the real cooldown independently.
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (countdown > 0 && !canResend) {
-      timer = setInterval(() => {
-        setCountdown((prev) => prev - 1);
-      }, 1000);
+      timer = setInterval(() => setCountdown((prev) => prev - 1), 1000);
     } else {
       setCanResend(true);
     }
     return () => clearInterval(timer);
   }, [countdown, canResend]);
 
-  // Handle OTP verification
   const handleOtpVerification = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (isVerifying) return;
@@ -48,84 +54,60 @@ export default function VerifyOtpPage() {
     setError(null);
     setSuccess(null);
     const otpString = otp.join('');
-
-    if (otpString.length < 6) {
-      setError('Please enter all 6 digits.');
+    if (otpString.length < OTP_LENGTH) {
+      setError(`Please enter all ${OTP_LENGTH} digits.`);
       return;
     }
 
     setIsVerifying(true);
+    const redirectSuffix = redirectTo ? `&redirectTo=${encodeURIComponent(redirectTo)}` : '';
     try {
-      const response = await verifyOtp(phoneNumber, otpString);
-
-      if (response.success || response.status === 'success') {
-        try {
-          const userProfile = await fetchCurrentUser();
-          login({
-            id: userProfile.id,
-            name: userProfile.name || `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim() || 'User',
-            email: userProfile.email || '',
-            phone: userProfile.phone || '',
-            role: userProfile.role || 'User'
-          });
-
-          const target = searchParams.get('redirectTo');
-          const redirectSuffix = target ? `&redirectTo=${encodeURIComponent(target)}` : '';
-          const hasPin = !!(response?.data?.hasPin);
-
-          if (!hasPin) {
-            // Number verified for the first time → have the user create a login PIN.
-            setSuccess('Verified! Set up your PIN...');
-            setTimeout(() => {
-              router.push(`/${lang}/auth/pin?mode=create&phone=${phoneNumber}${redirectSuffix}`);
-            }, 800);
-          } else {
-            setSuccess('Identity verified! Redirecting...');
-            setTimeout(() => {
-              router.push(target ? decodeURIComponent(target) : '/');
-            }, 1000);
-          }
-        } catch (err) {
-          console.error("Failed to fetch user profile", err);
-          setError("Logged in but failed to load profile.");
-        }
-      } else {
-        setError(response.message || 'Invalid OTP. Please try again.');
+      if (purpose === 'forgot') {
+        const { resetTicket } = await forgotPinVerify(challengeId, otpString);
+        setSuccess('Verified! Set your new PIN...');
+        router.push(`/${lang}/auth/pin?mode=reset&ticket=${encodeURIComponent(resetTicket)}${redirectSuffix}`);
+        return;
       }
-    } catch (err: any) {
-      setError(err?.message || 'An error occurred during verification.');
-    } finally {
+
+      const result = await verifyOtp(challengeId, otpString);
+      if (result.nextStep === 'pin_setup' && result.setupTicket) {
+        setSuccess('Verified! Create your PIN...');
+        router.push(`/${lang}/auth/pin?mode=create&ticket=${encodeURIComponent(result.setupTicket)}${redirectSuffix}`);
+      } else {
+        // Existing account — phone ownership proven, continue with PIN login.
+        setSuccess('Verified! Sign in with your PIN...');
+        router.push(`/${lang}/auth/pin?mode=login&phone=${phone}${redirectSuffix}`);
+      }
+    } catch (err) {
+      const ui = toAuthUiError(err);
+      setError(ui.message);
+      setOtp(Array(OTP_LENGTH).fill(''));
+      inputRefs.current[0]?.focus();
       setIsVerifying(false);
     }
   };
 
   const handleResend = async () => {
     if (!canResend || isResending) return;
-
     setError(null);
     setSuccess(null);
     setIsResending(true);
-
     try {
-      const response = await resendOtp(phoneNumber);
-      if (response.status === 'success') {
-        setSuccess('New code sent successfully!');
-        // Log OTP in console as requested for dev mode
-        if (response.data?.otp) {
-          console.log('%c [AUTH] New Testing OTP: ' + response.data.otp, 'background: #064e3b; color: #fff; padding: 4px 8px; border-radius: 4px; font-weight: bold;');
-        }
-        setCountdown(RESEND_COOLDOWN);
+      const challenge =
+        purpose === 'forgot' ? await forgotPinRequest(phone) : await requestOtp(phone);
+      // The new challenge invalidates the previous one server-side.
+      setChallengeId(challenge.challengeId);
+      setSuccess('New code sent.');
+      setCountdown(challenge.resendAfterSeconds || DEFAULT_RESEND_COOLDOWN);
+      setCanResend(false);
+      setOtp(Array(OTP_LENGTH).fill(''));
+      inputRefs.current[0]?.focus();
+    } catch (err) {
+      const ui = toAuthUiError(err);
+      setError(ui.message);
+      if (ui.retryAfterSeconds) {
+        setCountdown(ui.retryAfterSeconds);
         setCanResend(false);
-        setOtp(['', '', '', '', '', '']);
-        inputRefs.current[0]?.focus();
-      } else {
-        setError('Failed to resend code. Please try again.');
-      }
-    } catch (err: any) {
-      if (err?.status === 429) {
-        setError('Too many requests. Please wait.');
-      } else {
-        setError('Failed to resend code.');
       }
     } finally {
       setIsResending(false);
@@ -139,9 +121,7 @@ export default function VerifyOtpPage() {
     const newOtp = [...otp];
     newOtp[index] = value.slice(-1);
     setOtp(newOtp);
-
-    // Auto-focus the next input
-    if (value && index < 5) {
+    if (value && index < OTP_LENGTH - 1) {
       inputRefs.current[index + 1]?.focus();
     }
   };
@@ -153,34 +133,30 @@ export default function VerifyOtpPage() {
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {
-    const pasteData = e.clipboardData.getData('text').slice(0, 6);
+    const pasteData = e.clipboardData.getData('text').slice(0, OTP_LENGTH);
     if (!/^\d+$/.test(pasteData)) return;
 
     const digits = pasteData.split('');
-    const newOtp = [...otp];
+    const newOtp = Array(OTP_LENGTH).fill('');
     digits.forEach((digit, i) => {
-      if (i < 6) newOtp[i] = digit;
+      if (i < OTP_LENGTH) newOtp[i] = digit;
     });
     setOtp(newOtp);
-
-    // Focus last filled or next empty
-    const nextIndex = Math.min(digits.length, 5);
+    const nextIndex = Math.min(digits.length, OTP_LENGTH - 1);
     inputRefs.current[nextIndex]?.focus();
-
-    // Auto-submit if 6 digits pasted
-    if (digits.length === 6) {
+    if (digits.length === OTP_LENGTH) {
       setTimeout(() => handleOtpVerification(), 50);
     }
   };
 
-  // Auto-submit when all fields are filled
+  // Auto-submit when all fields are filled (not while showing an error).
   useEffect(() => {
-    if (otp.every(digit => digit !== '') && !isVerifying) {
+    if (otp.every((digit) => digit !== '') && !isVerifying && !error) {
       handleOtpVerification();
     }
   }, [otp]);
 
-  if (!phoneNumber) {
+  if (!phone || !challengeId) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-xl text-center">
@@ -188,8 +164,8 @@ export default function VerifyOtpPage() {
             <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
           </div>
           <h2 className="text-2xl font-bold text-slate-900 mb-2">Session Invalid</h2>
-          <p className="text-slate-500 mb-8">We couldn't find a phone number to verify. Please restart the sign-in process.</p>
-          <Button onClick={() => router.push(`/${lang}/auth/send-otp`)} className="w-full h-14 rounded-2xl bg-slate-900 text-white font-bold">Go Back</Button>
+          <p className="text-slate-500 mb-8">This verification link is incomplete. Please restart the sign-in process.</p>
+          <Button onClick={() => router.push(`/${lang}/auth/login`)} className="w-full h-14 rounded-2xl bg-slate-900 text-white font-bold">Go Back</Button>
         </div>
       </div>
     );
@@ -238,7 +214,7 @@ export default function VerifyOtpPage() {
         {/* Right Side: Verification Form */}
         <div className="p-6 sm:p-12 md:p-16 flex flex-col justify-center relative bg-white">
           <button
-            onClick={() => router.push(`/${lang}/auth/send-otp`)}
+            onClick={() => router.push(`/${lang}/auth/login`)}
             className="absolute top-6 left-6 w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-all"
             title="Go Back"
           >
@@ -247,16 +223,16 @@ export default function VerifyOtpPage() {
 
           <header className="mb-8 sm:mb-12 text-center lg:text-left pt-6 lg:pt-0">
             <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest mb-4">
-              Identity Shield
+              {purpose === 'forgot' ? 'PIN Recovery' : 'Identity Shield'}
             </span>
             <Typography variant="h1" className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter leading-[0.85] uppercase italic">
               Verify <br /> Phone.
             </Typography>
             <div className="mt-4 flex flex-col lg:flex-row items-center gap-2">
               <p className="text-slate-400 font-medium text-sm italic">
-                Sent to <span className="text-slate-900 font-black">+91 {phoneNumber}</span>
+                Sent to <span className="text-slate-900 font-black">+91 {maskPhone(phone)}</span>
               </p>
-              <button onClick={() => router.push(`/${lang}/auth/send-otp`)} className="text-emerald-500 text-[10px] font-black uppercase tracking-widest hover:underline">
+              <button onClick={() => router.push(`/${lang}/auth/login`)} className="text-emerald-500 text-[10px] font-black uppercase tracking-widest hover:underline">
                 (Change)
               </button>
             </div>
@@ -264,9 +240,9 @@ export default function VerifyOtpPage() {
 
           <Form onSubmit={handleOtpVerification} className="space-y-8 sm:space-y-10">
             {/* Feedback Banners */}
-            <div className="min-h-[40px]">
+            <div className="min-h-[40px]" aria-live="polite">
               {error && (
-                <div className="p-3 sm:p-4 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 text-[10px] font-black uppercase tracking-widest text-center animate-shake">
+                <div role="alert" className="p-3 sm:p-4 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 text-[10px] font-black uppercase tracking-widest text-center animate-shake">
                   {error}
                 </div>
               )}
@@ -285,6 +261,7 @@ export default function VerifyOtpPage() {
                   type="text"
                   inputMode="numeric"
                   autoComplete="one-time-code"
+                  aria-label={`Digit ${index + 1} of ${OTP_LENGTH}`}
                   value={digit}
                   onChange={(e) => handleChange(e, index)}
                   onKeyDown={(e) => handleKeyDown(e, index)}
@@ -317,7 +294,7 @@ export default function VerifyOtpPage() {
                   onClick={handleResend}
                   className="group inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 disabled:opacity-75 transition-colors"
                 >
-                  <span>Didn't receive code?</span>
+                  <span>Didn&apos;t receive code?</span>
                   {canResend ? (
                     <span className="text-emerald-500 underline underline-offset-4 group-hover:text-emerald-600 transition-all flex items-center gap-2">
                       {isResending ? 'Sending...' : 'Resend Now'}
@@ -333,7 +310,7 @@ export default function VerifyOtpPage() {
           </Form>
 
           <footer className="mt-12 lg:mt-24 text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 text-center lg:text-left">
-            &copy; 2024 Local Connect Portal, Secured by LC Auth
+            &copy; 2026 Local Connect Portal, Secured by LC Auth
           </footer>
         </div>
       </main>

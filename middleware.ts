@@ -41,8 +41,8 @@ export function middleware(request: NextRequest) {
 
     // Check if the user is trying to access a protected route
     if (isProtected) {
-        const token = request.cookies.get('accessToken'); // Check for the access token
-        console.log("Middleware Token:", token);
+        // SECURITY: never log the token — it is a bearer credential.
+        const token = request.cookies.get('accessToken');
 
         if (!token) {
             // Redirect to the login page if no token is found

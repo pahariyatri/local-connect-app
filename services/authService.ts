@@ -1,80 +1,94 @@
 /**
- * Auth Service — handles login, OTP, guest, and profile
+ * Auth Service — the single integration with the backend auth lifecycle.
+ *
+ * Contract (backend /api/v1, see backend Swagger `Auth Flow (PIN + OTP)`):
+ *   POST /auth/otp/request          {phone, purpose:'registration'} → {challengeId, resendAfterSeconds}
+ *   POST /auth/otp/verify           {challengeId, otp}              → {nextStep, setupTicket?}
+ *   POST /auth/pin/setup            {setupTicket, pin, confirmPin}  → session cookies
+ *   POST /auth/pin/login            {phone, pin}                    → session cookies
+ *   POST /auth/pin/forgot/request   {phone}                         → {challengeId, resendAfterSeconds}
+ *   POST /auth/pin/forgot/verify    {challengeId, otp}              → {resetTicket}
+ *   POST /auth/pin/reset            {resetTicket, pin, confirmPin}
+ *   POST /auth/token/refresh        (cookie)                        → rotated cookies
+ *   POST /auth/logout               (cookie)
+ *   GET  /auth/me
+ *
+ * Security rules enforced here:
+ *  - Never persist or log OTPs or PINs.
+ *  - Never place phone numbers or auth data in analytics metadata.
+ *  - Tokens live only in backend-set HttpOnly cookies.
  */
 import { api } from '@/lib/apiClient';
 import { sessionTracker } from './sessionService';
 
-export const sendOtp = async (phoneNumber: string) => {
-  sessionTracker.track('login_started', { metadata: { method: 'otp', phoneNumber } });
-  return api.post('/auth/send-otp', { phoneNumber }, { skipAuth: true });
+export type OtpNextStep = 'pin_setup' | 'pin_login';
+
+export interface OtpChallenge {
+  challengeId: string;
+  resendAfterSeconds: number;
+}
+
+const dataOf = (result: any) => result?.data ?? result;
+
+/** Request a registration/login OTP. Generic response — reveals no account state. */
+export const requestOtp = async (phone: string): Promise<OtpChallenge> => {
+  sessionTracker.track('login_started', { metadata: { method: 'otp' } });
+  const result = await api.post('/auth/otp/request', { phone, purpose: 'registration' });
+  return dataOf(result);
 };
 
-export const resendOtp = async (phoneNumber: string) => {
-  return api.post('/auth/resend-otp', { phoneNumber }, { skipAuth: true });
+/** Verify the registration OTP. Backend directs the verified flow. */
+export const verifyOtp = async (
+  challengeId: string,
+  otp: string,
+): Promise<{ nextStep: OtpNextStep; setupTicket?: string }> => {
+  const result = await api.post('/auth/otp/verify', { challengeId, otp });
+  return dataOf(result);
 };
 
-/** Check whether a phone number is registered and already has a login PIN. */
-export const accountStatus = async (phoneNumber: string): Promise<{ exists: boolean; hasPin: boolean }> => {
-  const result = await api.post('/auth/account-status', { phoneNumber }, { skipAuth: true });
-  const data = result?.data || result;
-  return { exists: !!data?.exists, hasPin: !!data?.hasPin };
+/** Complete first registration: create the 4-digit PIN. Session cookies are set. */
+export const setupPin = async (setupTicket: string, pin: string, confirmPin: string) => {
+  const result = await api.post('/auth/pin/setup', { setupTicket, pin, confirmPin });
+  sessionTracker.track('login_completed', { metadata: { method: 'pin_setup' } });
+  return dataOf(result);
 };
 
-/** Create/replace the 4-digit PIN for the currently authenticated user. */
-export const setPin = async (pin: string) => {
-  return api.post('/auth/set-pin', { pin });
+/** Normal login: phone + PIN, no OTP. Session cookies are set. */
+export const loginWithPin = async (phone: string, pin: string) => {
+  const result = await api.post('/auth/pin/login', { phone, pin });
+  sessionTracker.track('login_completed', { metadata: { method: 'pin' } });
+  return dataOf(result);
 };
 
-/** Log in a returning user with phone + 4-digit PIN (no OTP). */
-export const loginWithPin = async (phoneNumber: string, pin: string) => {
-  const result = await api.post('/auth/login-pin', { phoneNumber, pin }, { skipAuth: true });
-  const data = result?.data || result;
-
-  // Tokens are set by the backend as HttpOnly cookies — never persist them in JS-accessible storage.
-  if (data?.accessToken) {
-    sessionTracker.track('login_completed', { metadata: { method: 'pin' } });
-    if (data.userId) sessionTracker.linkUser(data.userId);
-  }
-
-  return result;
+/** Forgot PIN: always-generic request. */
+export const forgotPinRequest = async (phone: string): Promise<OtpChallenge> => {
+  const result = await api.post('/auth/pin/forgot/request', { phone });
+  return dataOf(result);
 };
 
-export const verifyOtp = async (phoneNumber: string, otp: string) => {
-  const result = await api.post('/auth/verify-otp', { phoneNumber, otp }, { skipAuth: true });
-  const data = result?.data || result;
-
-  // Tokens are set by the backend as HttpOnly cookies — link the session only.
-  if (data?.accessToken) {
-    sessionTracker.track('login_completed', { metadata: { method: 'otp' } });
-    if (data.userId) sessionTracker.linkUser(data.userId);
-  }
-
-  return result;
+/** Forgot PIN: verify the OTP, receive the single-use reset ticket. */
+export const forgotPinVerify = async (
+  challengeId: string,
+  otp: string,
+): Promise<{ resetTicket: string }> => {
+  const result = await api.post('/auth/pin/forgot/verify', { challengeId, otp });
+  return dataOf(result);
 };
 
+/** Forgot PIN: set the new PIN. All previous sessions are revoked server-side. */
+export const resetPin = async (resetTicket: string, pin: string, confirmPin: string) => {
+  const result = await api.post('/auth/pin/reset', { resetTicket, pin, confirmPin });
+  return dataOf(result);
+};
 
 export const loginAsGuest = async () => {
-  const result = await api.post('/auth/login-as-guest', undefined, { skipAuth: true });
+  const result = await api.post('/auth/login-as-guest', undefined);
   if (result?.data?.accessToken) {
-    // Guest token is set by the backend as an HttpOnly cookie.
     sessionTracker.track('login_completed', { metadata: { method: 'guest' } });
     sessionTracker.linkUser(result.data.userId);
   }
   return result;
 };
-
-export const verifyGoogleToken = async (idToken: string) => {
-  const result = await api.post('/auth/google-login', { token: idToken }, { skipAuth: true });
-  const data = result?.data || result;
-
-  if (data?.accessToken) {
-    // Tokens are set by the backend as HttpOnly cookies.
-    sessionTracker.track('login_completed', { metadata: { method: 'google' } });
-    if (data.userId) sessionTracker.linkUser(data.userId);
-  }
-  return result;
-};
-
 
 export const getMe = async () => {
   return api.get('/auth/me');
@@ -82,10 +96,15 @@ export const getMe = async () => {
 
 export const logout = async () => {
   try {
-    // Clears the HttpOnly auth cookies server-side.
-    await api.post('/auth/logout', undefined, { skipAuth: true });
+    // Revokes the server-side session and clears the HttpOnly auth cookies.
+    await api.post('/auth/logout', undefined);
   } catch {
     /* best-effort — still clear local cache below */
   }
+  api.clearAllCache();
+};
+
+export const logoutAll = async () => {
+  await api.post('/auth/logout-all', undefined);
   api.clearAllCache();
 };

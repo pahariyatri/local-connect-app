@@ -4,7 +4,9 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Typography from "../../components/atoms/Typography";
 import DayItinerary from "../../results/components/DayItinerary";
+import PlanPreview from "./PlanPreview";
 import DiscoveryDrawer from "../../components/molecules/DiscoveryDrawer";
+import { TripStop } from "@/types/tripBuilder";
 import { Vendor } from "../../results/components/VendorSelectionCard";
 import { discoverServices, buildDiscoveryParams, vendorTypeToPreference } from "@/services/vendorService";
 import { createPackage } from "@/services/packageService";
@@ -56,6 +58,7 @@ interface PackageBuilderStepProps {
   lang: string;
   dict: any;
   routeStops?: string[];
+  tripStops?: TripStop[];
   stopServicesByDay?: Record<number, string[]>;
   onCreatingChange?: (creating: boolean) => void;
   onStep5Footer?: (data: { totalPrice: number; onCreatePackage: () => Promise<void> }) => void;
@@ -71,6 +74,7 @@ export default function PackageBuilderStep({
   lang,
   dict,
   routeStops,
+  tripStops,
   stopServicesByDay,
   onCreatingChange,
   onStep5Footer,
@@ -292,6 +296,14 @@ export default function PackageBuilderStep({
         </p>
       </div>
 
+      {/* Day-wise plan preview from the structured stops chosen in Step 5 */}
+      {tripStops && tripStops.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-3">Your day-by-day plan</h3>
+          <PlanPreview origin={origin} destinationLabels={destinations || []} stops={tripStops} compact />
+        </div>
+      )}
+
       <div className="space-y-12">
         {itineraryDays.map((day) => (
           <DayItinerary
@@ -301,6 +313,7 @@ export default function PackageBuilderStep({
             onVendorChange={(cat, id) => handleVendorChange(day, cat, id)}
             onRemove={(cat) => handleRemove(day, cat)}
             onAdd={(cat) => setDiscoveryState({ isOpen: true, category: cat, day })}
+            onViewAll={(cat) => setDiscoveryState({ isOpen: true, category: cat, day })}
             selections={categories
               .filter((c) => dayWants(day, c.key, c.show))
               .map((c) => ({

@@ -22,6 +22,24 @@ export default function robots(): MetadataRoute.Robots {
         rules: {
             userAgent: '*',
             allow: ['/', '/api/og/*'],
+            // Private/authenticated surfaces must never be indexed.
+            // Locale-prefixed routes (/{lang}/...) are matched by the wildcard.
+            disallow: [
+                '/*/auth/',
+                '/*/profile',
+                '/*/admin',
+                '/*/bookings',
+                '/*/checkout',
+                '/*/vendor/onboarding',
+                '/*/vendor/dashboard',
+                '/*/vendor/payouts',
+                '/*/vendor/calendar',
+                '/*/vendor/contracts',
+                '/*/vendor/partnerships',
+                '/*/vendor/services',
+                '/*/vendor/bookings',
+                '/*/journey/view',
+            ],
         },
         sitemap: `https://pahariyatri.com/sitemap.xml`,
         host: 'https://pahariyatri.com',
