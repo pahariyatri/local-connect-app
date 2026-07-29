@@ -18,8 +18,8 @@ type HomeProps = {
 
 type IconName =
   | "message" | "shield-check" | "map-pin" | "users" | "compass" | "sparkles"
-  | "home" | "car" | "utensils" | "mountain" | "heart" | "camera"
-  | "check" | "star" | "arrow-right";
+  | "home" | "car" | "utensils" | "mountain" | "heart" | "camera" | "route"
+  | "check" | "star" | "arrow-right" | "layers" | "storefront" | "life-buoy" | "shopping-bag";
 
 const ICON_PATHS: Record<IconName, React.ReactNode> = {
   message: <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />,
@@ -34,9 +34,14 @@ const ICON_PATHS: Record<IconName, React.ReactNode> = {
   mountain: <path d="m8 3 4 8 5-5 5 15H2L8 3z" />,
   heart: <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />,
   camera: <><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></>,
+  route: <><circle cx="6" cy="19" r="3" /><circle cx="18" cy="5" r="3" /><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15" /></>,
   check: <path d="M20 6 9 17l-5-5" />,
   star: <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />,
   "arrow-right": <path d="M5 12h14M12 5l7 7-7 7" />,
+  layers: <><polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline points="2 17 12 22 22 17" /><polyline points="2 12 12 17 22 12" /></>,
+  storefront: <><path d="M3 9V6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v3" /><path d="M3 9a2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0 2 2 0 0 0 4 0" /><path d="M4 9v10a1 1 0 0 0 1 1h4v-6h6v6h4a1 1 0 0 0 1-1V9" /></>,
+  "life-buoy": <><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="4" /><path d="m4.93 4.93 4.24 4.24m5.66 5.66 4.24 4.24m0-14.14-4.24 4.24m-5.66 5.66-4.24 4.24" /></>,
+  "shopping-bag": <><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" /><path d="M3 6h18" /><path d="M16 10a4 4 0 0 1-8 0" /></>,
 };
 
 function Icon({ name, className = "", filled = false }: { name: IconName; className?: string; filled?: boolean }) {
@@ -49,55 +54,49 @@ function Icon({ name, className = "", filled = false }: { name: IconName; classN
 
 // ─── Static content ──────────────────────────────────────────────────────────
 
-const TRUST_BADGES = ["Verified local partners", "Local stays & taxis", "Custom stop-based planning", "Request before booking"];
+const TRUST_BADGES = ["Verified local vendors", "Support along the whole route", "Request before you book", "No upfront payment"];
 
-const HOW_STEPS: { icon: IconName; title: string; desc: string }[] = [
-  { icon: "map-pin", title: "Tell us your route", desc: "Starting point, destination and rough dates. One-way, round trip, or not sure yet — all fine." },
-  { icon: "compass", title: "Add stops & needs", desc: "Mark where you want to pause, stay, eat or explore. Choose what you need — stay, taxi, guide, food and more." },
-  { icon: "message", title: "Request local options", desc: "Verified locals reply with real options. You confirm when you're ready — no upfront payment." },
+const USP_STEPS: { icon: IconName; title: string; desc: string }[] = [
+  { icon: "route", title: "Select or build your route", desc: "Add your starting point, destination, and any stops along the way — one-way, round trip, or still deciding." },
+  { icon: "layers", title: "We surface services along that route", desc: "Not just the final destination — stays, transport, food, guides and more at every point you pass through." },
+  { icon: "compass", title: "View and choose local vendors", desc: "Compare verified local vendors and service providers, see real options, and ask questions before booking." },
+  { icon: "storefront", title: "Local vendors get real business", desc: "Every request connects a traveller with a trusted local — more visibility and bookings for the community." },
 ];
 
-const NEED_CATEGORIES: { icon: IconName; label: string; desc: string }[] = [
-  { icon: "home", label: "Stay", desc: "Homestays & local stays" },
-  { icon: "car", label: "Local transport", desc: "Taxis & shared rides" },
-  { icon: "compass", label: "Guides", desc: "People who know the trail" },
-  { icon: "utensils", label: "Food & local meals", desc: "Home food & dhabas" },
-  { icon: "mountain", label: "Adventure", desc: "Treks & activities" },
-  { icon: "sparkles", label: "Spiritual / yatra support", desc: "Temple & devta routes" },
-  { icon: "heart", label: "Local experiences", desc: "Culture with real families" },
-  { icon: "camera", label: "Creator-friendly spots", desc: "Quiet, photogenic places" },
-];
-
-const EXAMPLE_PLAN: { day: string; route: string; items: string[] }[] = [
-  { day: "Day 1", route: "Delhi → Chandigarh → Manali", items: ["Lunch stop · Chandigarh", "Stay · Manali", "Need · local taxi"] },
-  { day: "Day 2", route: "Manali → Kasol → Kalga", items: ["Stop · Kasol", "Stay · Kalga", "Need · homestay + local guide"] },
-  { day: "Day 3", route: "Kalga · Pulga · Waichin", items: ["Local experience", "Food · guide · transport options"] },
-  { day: "Return", route: "Flexible return", items: ["Rest stop wherever you like"] },
+const FALLBACK_CATEGORIES: { icon: IconName; label: string; desc: string }[] = [
+  { icon: "home", label: "Hotels & Stays", desc: "Verified stays at every stop" },
+  { icon: "car", label: "Local Transport", desc: "Taxis, shared rides & transfers" },
+  { icon: "utensils", label: "Food & Restaurants", desc: "Local meals along your route" },
+  { icon: "compass", label: "Tour Guides", desc: "People who know the area" },
+  { icon: "sparkles", label: "Activities & Experiences", desc: "Things to do, wherever you are" },
+  { icon: "life-buoy", label: "Emergency Assistance", desc: "Help when you need it, on the road" },
+  { icon: "shopping-bag", label: "Shopping & Local Products", desc: "Genuine local goods" },
+  { icon: "map-pin", label: "Other Route Services", desc: "More ways locals can help" },
 ];
 
 const WHY_POINTS: { icon: IconName; title: string; desc: string }[] = [
-  { icon: "users", title: "Yatri, not tourist", desc: "You travel with people who live in the mountains — not a call centre reading a brochure." },
-  { icon: "compass", title: "Local truth", desc: "Routes, stays and stops come from locals who actually know the region and its seasons." },
+  { icon: "route", title: "Support at every point, not just the destination", desc: "We connect you with trusted local vendors throughout your entire journey — not only where you're headed." },
+  { icon: "shield-check", title: "Verified access", desc: "Vendors and service providers are checked before they appear. Trust is the whole point of Local Connect." },
   { icon: "message", title: "Request before booking", desc: "See real options first, ask questions, then decide. No fake urgency, no automatic charges." },
-  { icon: "shield-check", title: "Verified access", desc: "Partners are checked before they appear. Trust is the whole point of Local Connect." },
+  { icon: "users", title: "Real people, real local knowledge", desc: "Every vendor lives and works where you're travelling — not a call centre reading a script." },
 ];
 
 // ─── Vendor mapping (unchanged working logic) ────────────────────────────────
 
 const LOCAL_PROVIDERS = [
-  { id: "p1", name: "Tenzing Sherpa", role: "Mountain Guide", location: "Manali, HP", rating: 4.9, reviews: 142, tags: ["Trek", "Camping", "Rescue"], image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=400", badge: "Verified" },
+  { id: "p1", name: "Tenzing Sherpa", role: "Local Guide", location: "Manali, HP", rating: 4.9, reviews: 142, tags: ["Trek", "Camping", "Rescue"], image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=400", badge: "Verified" },
   { id: "p2", name: "Priya Homestay", role: "Host · 4 Rooms", location: "Old Manali", rating: 4.8, reviews: 89, tags: ["Rooms", "Meals", "Wi-Fi"], image: "https://images.unsplash.com/photo-1651319485646-f0f30e46b761?q=80&w=400", badge: "Verified" },
   { id: "p3", name: "Arjun Thakur", role: "Local Food Guide", location: "Shimla, HP", rating: 4.7, reviews: 63, tags: ["Food", "Culture", "History"], image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=400", badge: "Verified" },
   { id: "p4", name: "Sonam Wangchuk", role: "Transport Operator", location: "Leh, Ladakh", rating: 4.9, reviews: 211, tags: ["4x4", "Permits", "Ladakh"], image: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=400", badge: "Verified" },
-  { id: "p5", name: "Kavya Nair", role: "Yoga & Wellness", location: "Rishikesh, UK", rating: 5.0, reviews: 47, tags: ["Yoga", "Meditation", "Detox"], image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=400", badge: "New" },
-  { id: "p6", name: "Rajan Chauhan", role: "River Rafting Pro", location: "Kullu, HP", rating: 4.8, reviews: 178, tags: ["Rafting", "Kayak", "Safety"], image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400", badge: "Verified" },
+  { id: "p5", name: "Kavya Nair", role: "Wellness Host", location: "Rishikesh, UK", rating: 5.0, reviews: 47, tags: ["Yoga", "Meditation", "Detox"], image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=400", badge: "New" },
+  { id: "p6", name: "Rajan Chauhan", role: "Activity Operator", location: "Kullu, HP", rating: 4.8, reviews: 178, tags: ["Rafting", "Kayak", "Safety"], image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400", badge: "Verified" },
 ];
 
 const mapHomeVendor = (v: any) => {
   const type = v.types?.[0] || "hotel";
   const roleMap: Record<string, string> = {
-    hotel: "Host · Local Stay", adventure: "Adventure Specialist", transport: "Transport Operator",
-    restaurant: "Culinary Host", guide: "Local Guide", wellness: "Yoga & Wellness",
+    hotel: "Host · Local Stay", adventure: "Activity Operator", transport: "Transport Operator",
+    restaurant: "Culinary Host", guide: "Local Guide", wellness: "Wellness Host",
   };
   let location = "Manali, HP";
   const lowerName = v.businessName.toLowerCase();
@@ -120,7 +119,7 @@ const mapHomeVendor = (v: any) => {
   };
   const cleanName = v.businessName.replace(/\s*\(.*?\)\s*/g, "").trim();
   return {
-    id: v.id, name: cleanName, role: roleMap[type.toLowerCase()] || "Local Expert", location,
+    id: v.id, name: cleanName, role: roleMap[type.toLowerCase()] || "Local Vendor", location,
     rating: v.trustScore || 4.8,
     reviews: v.reviews || Math.floor((v.trustScore || 4.8) * 20) + (parseInt(v.id.slice(0, 2), 16) % 50 || 20),
     tags: v.services?.map((s: any) => s.name).slice(0, 3) || ["Verified", "Local"],
@@ -128,6 +127,13 @@ const mapHomeVendor = (v: any) => {
     badge: v.isVerified ? "Verified" : "Local",
   };
 };
+
+/** Backend categories → homepage cards. Falls back to FALLBACK_CATEGORIES if the API has none yet. */
+const mapApiCategory = (c: any, i: number): { icon: IconName; label: string; desc: string } => ({
+  icon: FALLBACK_CATEGORIES[i % FALLBACK_CATEGORIES.length].icon,
+  label: c.name,
+  desc: c.description || "Local services along your route",
+});
 
 // ─── Small presentational helpers (match app: uppercase-black, emerald eyebrow) ─
 
@@ -149,6 +155,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
 
   const [providersList, setProvidersList] = useState<any[]>([]);
   const [isProvidersLoading, setIsProvidersLoading] = useState(true);
+  const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
 
   useEffect(() => {
     if (!dict) return;
@@ -164,6 +171,18 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
         if (!cancelled) setProvidersList(LOCAL_PROVIDERS);
       } finally {
         if (!cancelled) setIsProvidersLoading(false);
+      }
+    })();
+    (async () => {
+      try {
+        const response: any = await api.get("/categories", { sessionCache: true });
+        const list = response?.data ?? response;
+        const topLevel = Array.isArray(list) ? list.filter((c: any) => !c.parent).slice(0, 8) : [];
+        if (!cancelled && topLevel.length) setCategories(topLevel.map(mapApiCategory));
+      } catch (err) {
+        console.error("Error fetching homepage categories:", err);
+        // Keep FALLBACK_CATEGORIES — this is temporary content until the
+        // category catalog is fully populated.
       }
     })();
     return () => { cancelled = true; };
@@ -183,22 +202,22 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
         <div className="relative z-10 max-w-5xl mx-auto w-full">
           <span className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/15 px-3.5 py-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span className="text-slate-200 text-[10px] font-black uppercase tracking-[0.2em]">Pahari Yatri · Local Connect</span>
+            <span className="text-slate-200 text-[10px] font-black uppercase tracking-[0.2em]">Local Connect</span>
           </span>
 
           <h1 className="mt-6 text-white text-4xl sm:text-6xl font-black uppercase tracking-tight leading-[1.05] max-w-3xl">
-            Build your <span className="text-emerald-400">Yatra</span> with trusted locals.
+            Trusted Local Services <span className="text-emerald-400">Across Your Entire Journey</span>
           </h1>
           <p className="mt-5 text-slate-300 text-base sm:text-lg font-medium max-w-2xl leading-relaxed">
-            Choose your route, dates, stops, stays, taxis, guides and local experiences — all in one simple plan.
+            Discover verified local vendors, stays, transport, food, experiences and essential services throughout your travel route — not only at your final destination.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row gap-3">
             <Button onClick={() => router.push(builderHref)} iconRight={<Icon name="arrow-right" className="w-4 h-4" />} className="group bg-emerald-500 text-white hover:bg-emerald-600 h-14 rounded-2xl text-xs">
-              Start Planning
+              Start Planning Your Journey
             </Button>
-            <Button onClick={() => router.push(vendorHref)} className="bg-transparent border border-white/25 text-white hover:bg-white/10 shadow-none h-14 rounded-2xl text-xs">
-              Join as Local Partner
+            <Button onClick={() => router.push(discoverHref)} className="bg-transparent border border-white/25 text-white hover:bg-white/10 shadow-none h-14 rounded-2xl text-xs">
+              Explore Services
             </Button>
           </div>
 
@@ -213,12 +232,16 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
         </div>
       </section>
 
-      {/* ── 2 · HOW IT WORKS ─────────────────────────────────────────── */}
+      {/* ── 2 · HOW THE PLATFORM WORKS (USP) ─────────────────────────── */}
       <section className="px-6 py-20 sm:py-28">
         <div className="max-w-6xl mx-auto">
-          <SectionHeading eyebrow="How it works" title="Plan with people who know the mountains." subtitle="Three simple steps. No package pressure — just a clear local plan you control." />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {HOW_STEPS.map((s, i) => (
+          <SectionHeading
+            eyebrow="How it works"
+            title="Local support at every point along your route."
+            subtitle="We don't just connect you with vendors at your final destination — we help you find trusted local support throughout the complete journey."
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+            {USP_STEPS.map((s, i) => (
               <div key={s.title} className="bg-slate-50 border border-slate-100 rounded-[2rem] p-7">
                 <div className="flex items-center gap-3 mb-5">
                   <span className="w-11 h-11 rounded-2xl bg-slate-900 text-white flex items-center justify-center"><Icon name={s.icon} className="w-5 h-5" /></span>
@@ -232,12 +255,12 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
         </div>
       </section>
 
-      {/* ── 3 · WHAT YOU CAN PLAN ────────────────────────────────────── */}
+      {/* ── 3 · SERVICE CATEGORIES ───────────────────────────────────── */}
       <section className="px-6 py-20 sm:py-28 bg-slate-50">
         <div className="max-w-6xl mx-auto">
-          <SectionHeading eyebrow="What you can plan" title="Local stays, taxis, guides and experiences." subtitle="Pick only what matters for your Yatra. Add or drop anything while you plan." />
+          <SectionHeading eyebrow="Service categories" title="Everything you need, wherever you are." subtitle="From your first stop to your last — pick what matters for this trip. Add or drop anything while you plan." />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-            {NEED_CATEGORIES.map((c) => (
+            {categories.map((c) => (
               <button key={c.label} type="button" onClick={() => router.push(builderHref)} className="group text-left bg-white border border-slate-100 rounded-[2rem] p-5 hover:border-emerald-100 hover:shadow-lg hover:shadow-slate-200/50 transition-all active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
                 <span className="w-11 h-11 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mb-4 group-hover:bg-emerald-500 group-hover:text-white transition-colors"><Icon name={c.icon} className="w-5 h-5" /></span>
                 <h3 className="text-slate-900 font-black text-sm uppercase tracking-tight">{c.label}</h3>
@@ -248,43 +271,13 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
         </div>
       </section>
 
-      {/* ── 4 · EXAMPLE LOCAL PLAN ───────────────────────────────────── */}
+      {/* ── 4 · VERIFIED LOCAL VENDORS ───────────────────────────────── */}
       <section className="px-6 py-20 sm:py-28">
-        <div className="max-w-6xl mx-auto">
-          <div className="bg-slate-900 rounded-[2.5rem] sm:rounded-[3rem] p-8 sm:p-14 relative overflow-hidden">
-            <div className="absolute inset-0 opacity-40 bg-gradient-to-br from-emerald-500/15 to-indigo-500/15 pointer-events-none" />
-            <div className="relative z-10">
-              <SectionHeading eyebrow="Example local plan" title="Not a generic package. A local access plan." subtitle="This is how a Yatra takes shape — day by day, stop by stop, with real locals behind each need." dark />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {EXAMPLE_PLAN.map((d) => (
-                  <div key={d.day} className="rounded-[1.75rem] bg-white/5 border border-white/10 p-6">
-                    <div className="flex items-baseline justify-between gap-3 mb-3">
-                      <span className="text-emerald-400 font-black text-xs uppercase tracking-widest">{d.day}</span>
-                      <span className="text-slate-400 text-xs font-medium truncate">{d.route}</span>
-                    </div>
-                    <ul className="space-y-2">
-                      {d.items.map((it) => (
-                        <li key={it} className="flex items-center gap-2.5 text-sm text-slate-200"><span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-emerald-400" />{it}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-8">
-                <Button onClick={() => router.push(builderHref)} iconRight={<Icon name="arrow-right" className="w-4 h-4" />} className="group bg-emerald-500 text-white hover:bg-emerald-600 h-14 rounded-2xl text-xs">Build my plan</Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── 5 · VERIFIED LOCAL PARTNERS ──────────────────────────────── */}
-      <section className="px-6 py-20 sm:py-28 bg-slate-50">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-end justify-between gap-4 mb-10 sm:mb-14">
             <div className="max-w-xl">
-              <span className="text-emerald-600 text-[10px] font-black uppercase tracking-[0.25em] block mb-3">Verified local partners</span>
-              <h2 className="text-slate-900 text-3xl sm:text-4xl font-black uppercase tracking-tight leading-tight">The real locals of the Himalayas.</h2>
+              <span className="text-emerald-600 text-[10px] font-black uppercase tracking-[0.25em] block mb-3">Verified local vendors</span>
+              <h2 className="text-slate-900 text-3xl sm:text-4xl font-black uppercase tracking-tight leading-tight">Real local vendors, ready to help.</h2>
             </div>
             <button onClick={() => router.push(discoverHref)} className="flex-shrink-0 text-[10px] font-black uppercase tracking-widest text-emerald-600 border-b-2 border-emerald-500/20 pb-1 hover:text-emerald-700 hover:border-emerald-700 transition-all">
               View all
@@ -333,13 +326,13 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
         </div>
       </section>
 
-      {/* ── 6 · WHY LOCAL ACCESS MATTERS ─────────────────────────────── */}
-      <section className="px-6 py-20 sm:py-28">
+      {/* ── 5 · WHY LOCAL CONNECT ────────────────────────────────────── */}
+      <section className="px-6 py-20 sm:py-28 bg-slate-50">
         <div className="max-w-6xl mx-auto">
-          <SectionHeading eyebrow="Why local access matters" title="Trusted local access, not a tour desk." />
+          <SectionHeading eyebrow="Why Local Connect" title="Not vendors only at the destination." />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {WHY_POINTS.map((w) => (
-              <div key={w.title} className="flex gap-4 bg-slate-50 border border-slate-100 rounded-[2rem] p-7">
+              <div key={w.title} className="flex gap-4 bg-white border border-slate-100 rounded-[2rem] p-7">
                 <span className="flex-shrink-0 w-11 h-11 rounded-2xl bg-slate-900 text-white flex items-center justify-center"><Icon name={w.icon} className="w-5 h-5" /></span>
                 <div>
                   <h3 className="text-slate-900 font-black text-base uppercase tracking-tight mb-1.5">{w.title}</h3>
@@ -351,29 +344,29 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
         </div>
       </section>
 
-      {/* ── 7 · TRAVELLER CTA + LOCAL PARTNER CTA ────────────────────── */}
-      <section className="px-6 py-20 sm:py-28 bg-slate-50">
+      {/* ── 6 · TRAVELLER CTA + LOCAL VENDOR CTA ─────────────────────── */}
+      <section className="px-6 py-20 sm:py-28">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Traveller */}
           <div className="bg-slate-900 rounded-[2.5rem] p-8 sm:p-10 flex flex-col relative overflow-hidden">
             <div className="absolute inset-0 opacity-40 bg-gradient-to-br from-emerald-500/15 to-indigo-500/15 pointer-events-none" />
             <div className="relative z-10 flex flex-col h-full">
-              <h3 className="text-white text-2xl font-black uppercase tracking-tight leading-tight">Ready to build your Yatra?</h3>
+              <h3 className="text-white text-2xl font-black uppercase tracking-tight leading-tight">Ready to build your route?</h3>
               <p className="text-slate-300 text-sm mt-3 leading-relaxed flex-1">Start with your route and dates. Add stops and needs. Request local options when you're ready.</p>
-              <Button onClick={() => router.push(builderHref)} iconRight={<Icon name="arrow-right" className="w-4 h-4" />} className="group mt-6 bg-emerald-500 text-white hover:bg-emerald-600 h-14 rounded-2xl text-xs w-full sm:w-fit">Start Planning</Button>
+              <Button onClick={() => router.push(builderHref)} iconRight={<Icon name="arrow-right" className="w-4 h-4" />} className="group mt-6 bg-emerald-500 text-white hover:bg-emerald-600 h-14 rounded-2xl text-xs w-full sm:w-fit">Build Your Route</Button>
             </div>
           </div>
           {/* Vendor */}
           <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 sm:p-10 flex flex-col">
-            <h3 className="text-slate-900 text-2xl font-black uppercase tracking-tight leading-tight">Are you a local partner?</h3>
-            <p className="text-slate-500 text-sm mt-3 leading-relaxed flex-1">List your stay, taxi, guiding or experience. Reach Yatris who want the real mountains, on your terms.</p>
-            <Button onClick={() => router.push(vendorHref)} iconRight={<Icon name="arrow-right" className="w-4 h-4" />} className="group mt-6 bg-slate-900 text-white hover:bg-black h-14 rounded-2xl text-xs w-full sm:w-fit">Join as Local Partner</Button>
+            <h3 className="text-slate-900 text-2xl font-black uppercase tracking-tight leading-tight">Are you a local service provider?</h3>
+            <p className="text-slate-500 text-sm mt-3 leading-relaxed flex-1">List your stay, transport, guiding or experience. Reach travellers passing through your area, on your terms.</p>
+            <Button onClick={() => router.push(vendorHref)} iconRight={<Icon name="arrow-right" className="w-4 h-4" />} className="group mt-6 bg-slate-900 text-white hover:bg-black h-14 rounded-2xl text-xs w-full sm:w-fit">Join as Local Provider</Button>
           </div>
         </div>
       </section>
 
       {/* ── Trust footer strip ───────────────────────────────────────── */}
-      <section className="px-6 py-10 bg-white border-t border-slate-100">
+      <section className="px-6 py-10 bg-slate-50 border-t border-slate-100">
         <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
           {TRUST_BADGES.map((b) => (
             <div key={b} className="flex items-center gap-2 text-slate-500">

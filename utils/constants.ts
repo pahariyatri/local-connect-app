@@ -1,4 +1,26 @@
-export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000') + '/api/v1';
+/**
+ * Backend host, no /api/v1 suffix (apiClient.ts appends it).
+ * NEXT_PUBLIC_API_BASE_URL should be set per-environment (Vercel dashboard
+ * for Preview/Production — see backend/docs/vercel-environments.md). This
+ * fallback only covers the case where it's unset: local dev falls back to
+ * localhost, and production builds fall back to the live API rather than
+ * silently pointing at localhost.
+ */
+const DEFAULT_API_BASE_URL =
+  process.env.NODE_ENV === 'production' ? 'https://api.pahariyatri.com' : 'http://localhost:4000';
+
+export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || DEFAULT_API_BASE_URL) + '/api/v1';
+
+/**
+ * Active authentication mode.
+ *   'pin' — phone number + PIN only, no OTP (current testing phase).
+ *   'otp' — OTP-verified registration/recovery (needs a real OTP provider;
+ *           backend fails closed on OTP_PROVIDER=fake in production).
+ * OTP screens/services stay in the codebase either way — this flag only
+ * decides which flow the login entry point routes into.
+ */
+export const AUTH_MODE: 'pin' | 'otp' =
+  process.env.NEXT_PUBLIC_AUTH_MODE === 'otp' ? 'otp' : 'pin';
 
 /**
  * Centralized API endpoint constants.

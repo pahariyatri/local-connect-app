@@ -10,7 +10,12 @@ const nextConfig = {
     ],
   },
   env: {
-    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000',
+    // Explicit env (Docker build-arg, platform dashboard var, .env.production)
+    // always wins. Absent that, production builds default to the live API
+    // rather than silently pointing at localhost; dev keeps localhost.
+    NEXT_PUBLIC_API_BASE_URL:
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      (process.env.NODE_ENV === 'production' ? 'https://api.pahariyatri.com' : 'http://localhost:4000'),
   },
   typescript: {
     ignoreBuildErrors: true,

@@ -5,9 +5,10 @@ import { useRouter, useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Typography from "../../components/atoms/Typography";
 import Button from "../../components/atoms/Button";
-import Input from "../../components/atoms/Input";
-import TopNavigation from "../../components/organisms/TopNavigation";
+import BackButton from "../../components/atoms/BackButton";
 import { sanitizePhone, isValidPhone, PHONE_LENGTH } from "@/utils/validation";
+import { AUTH_MODE } from "@/utils/constants";
+import { toAuthUiError } from "@/utils/authErrors";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -22,18 +23,30 @@ export default function LoginPage() {
     const phoneValid = isValidPhone(phone);
     // Only nudge the user once they've started typing and moved on, never while empty.
     const showInvalid = touched && phone.length > 0 && !phoneValid;
+    const redirectSuffix = redirectTo ? `&redirectTo=${encodeURIComponent(redirectTo)}` : "";
 
-    // Enumeration-safe flow: the user chooses PIN or OTP — the app never asks
-    // the backend whether this number has an account before verification.
-    const handlePinLogin = () => {
+    // Testing-phase flow: phone number + PIN, no OTP. The backend tells us
+    // whether this number already has an account, and we route accordingly.
+    const handleContinue = async () => {
         if (!phoneValid) {
             setTouched(true);
             return;
         }
-        const redirectSuffix = redirectTo ? `&redirectTo=${encodeURIComponent(redirectTo)}` : "";
-        router.push(`/${lang}/auth/pin?mode=login&phone=${phone}${redirectSuffix}`);
+        setError(null);
+        setLoading(true);
+        try {
+            const { checkPhoneExists } = await import("@/services/authService");
+            const exists = await checkPhoneExists(phone);
+            const mode = exists ? "login" : "create";
+            router.push(`/${lang}/auth/pin?mode=${mode}&phone=${phone}${redirectSuffix}`);
+        } catch (err) {
+            setError(toAuthUiError(err).message);
+            setLoading(false);
+        }
     };
 
+    // Legacy OTP-verified flow (AUTH_MODE='otp'). Kept fully working so the
+    // switch back to OTP only requires flipping the config value.
     const handleOtpFlow = async () => {
         if (!phoneValid) {
             setTouched(true);
@@ -43,27 +56,27 @@ export default function LoginPage() {
         setLoading(true);
         try {
             const { requestOtp } = await import("@/services/authService");
-            const { toAuthUiError } = await import("@/utils/authErrors");
-            const redirectSuffix = redirectTo ? `&redirectTo=${encodeURIComponent(redirectTo)}` : "";
-            try {
-                const challenge = await requestOtp(phone);
-                router.push(
-                    `/${lang}/auth/verify-otp?phone=${phone}&challengeId=${encodeURIComponent(challenge.challengeId)}&resendAfter=${challenge.resendAfterSeconds}${redirectSuffix}`,
-                );
-            } catch (err) {
-                setError(toAuthUiError(err).message);
-                setLoading(false);
-            }
-        } catch {
-            setError("Something went wrong. Please check your connection and try again.");
+            const challenge = await requestOtp(phone);
+            router.push(
+                `/${lang}/auth/verify-otp?phone=${phone}&challengeId=${encodeURIComponent(challenge.challengeId)}&resendAfter=${challenge.resendAfterSeconds}${redirectSuffix}`,
+            );
+        } catch (err) {
+            setError(toAuthUiError(err).message);
             setLoading(false);
         }
     };
 
+    const handlePinLoginDirect = () => {
+        if (!phoneValid) {
+            setTouched(true);
+            return;
+        }
+        router.push(`/${lang}/auth/pin?mode=login&phone=${phone}${redirectSuffix}`);
+    };
 
     return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-            
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 pt-28 sm:pt-32">
+
             <main className="max-w-4xl w-full bg-white rounded-[3rem] shadow-2xl overflow-hidden grid lg:grid-cols-2">
                 <div className="hidden lg:block relative p-12 bg-slate-900 text-white flex flex-col justify-between overflow-hidden">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px]" />
@@ -72,11 +85,11 @@ export default function LoginPage() {
                             LC
                         </Link>
                         <h2 className="text-4xl font-black leading-[0.9] uppercase italic tracking-tighter mb-6">
-                            The Legend <br /> Network.
+                            Trusted Local <br /> Access.
                         </h2>
-                        <p className="text-slate-400 font-medium leading-relaxed max-w-xs">Join the most exclusive community of mountain explorers and local experts.</p>
+                        <p className="text-slate-400 font-medium leading-relaxed max-w-xs">Sign in to plan your route and connect with verified local vendors along the way.</p>
                     </div>
-                    
+
                     <div className="relative z-10 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">
                         © 2026 Local Connect Portal
                     </div>
@@ -84,18 +97,13 @@ export default function LoginPage() {
 
                 <div className="p-8 sm:p-12 md:p-16 flex flex-col justify-center relative">
                     {/* Floating Back Button for Mobile */}
-                    <button 
-                        onClick={() => router.back()}
-                        className="absolute top-8 left-8 w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 lg:hidden"
-                    >
-                        ←
-                    </button>
+                    <BackButton onClick={() => router.back()} className="absolute top-8 left-8 lg:hidden" />
 
                     <header className="mb-10 text-center lg:text-left">
                         <Typography variant="h1" className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter leading-[0.85] uppercase italic">
-                            Welcome <br /> Back, Yatri.
+                            Welcome <br /> Back.
                         </Typography>
-                        <p className="mt-4 text-slate-400 font-medium text-sm">Securely access your path.</p>
+                        <p className="mt-4 text-slate-400 font-medium text-sm">Securely access your account.</p>
                     </header>
 
                     <div className="space-y-6">
@@ -124,7 +132,7 @@ export default function LoginPage() {
                                     value={phone}
                                     onChange={(e) => { setPhone(sanitizePhone(e.target.value)); if (error) setError(null); }}
                                     onBlur={() => setTouched(true)}
-                                    onKeyDown={(e) => { if (e.key === "Enter" && phoneValid && !loading) handlePinLogin(); }}
+                                    onKeyDown={(e) => { if (e.key === "Enter" && phoneValid && !loading) (AUTH_MODE === "pin" ? handleContinue() : handlePinLoginDirect()); }}
                                 />
                             </div>
                             {showInvalid ? (
@@ -133,7 +141,7 @@ export default function LoginPage() {
                                 </p>
                             ) : (
                                 <p id="phone-hint" className="text-[11px] font-medium text-slate-300 pl-2 mt-2">
-                                    We will text you a one-time code to verify.
+                                    {AUTH_MODE === "pin" ? "We'll check if you already have an account." : "We will text you a one-time code to verify."}
                                 </p>
                             )}
                         </div>
@@ -144,36 +152,56 @@ export default function LoginPage() {
                                     {error}
                                 </p>
                             )}
-                            <Button
-                                onClick={handlePinLogin}
-                                disabled={!phoneValid || loading}
-                                aria-busy={loading}
-                                className={`w-full h-16 rounded-2xl text-base font-black tracking-widest transition-all uppercase italic shadow-xl ${
-                                    loading ? "bg-slate-200 text-slate-400" : "bg-slate-900 hover:bg-black text-white shadow-slate-200 active:scale-95"
-                                }`}
-                            >
-                                Continue with PIN
-                            </Button>
 
-                            <div className="relative py-2 text-center">
-                                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
-                                <span className="relative px-2 bg-white text-[9px] font-black text-slate-300 uppercase tracking-widest">New Here?</span>
-                            </div>
+                            {AUTH_MODE === "pin" ? (
+                                <Button
+                                    onClick={handleContinue}
+                                    disabled={!phoneValid || loading}
+                                    aria-busy={loading}
+                                    className={`w-full h-16 rounded-2xl text-base font-black tracking-widest transition-all uppercase italic shadow-xl flex items-center justify-center gap-3 ${
+                                        loading ? "bg-slate-200 text-slate-400" : "bg-slate-900 hover:bg-black text-white shadow-slate-200 active:scale-95"
+                                    }`}
+                                >
+                                    {loading ? (
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    ) : (
+                                        "Continue"
+                                    )}
+                                </Button>
+                            ) : (
+                                <>
+                                    <Button
+                                        onClick={handlePinLoginDirect}
+                                        disabled={!phoneValid || loading}
+                                        aria-busy={loading}
+                                        className={`w-full h-16 rounded-2xl text-base font-black tracking-widest transition-all uppercase italic shadow-xl ${
+                                            loading ? "bg-slate-200 text-slate-400" : "bg-slate-900 hover:bg-black text-white shadow-slate-200 active:scale-95"
+                                        }`}
+                                    >
+                                        Continue with PIN
+                                    </Button>
 
-                            <button
-                                onClick={handleOtpFlow}
-                                disabled={!phoneValid || loading}
-                                aria-busy={loading}
-                                className="w-full h-14 rounded-2xl border-2 border-slate-100 font-black text-[10px] uppercase tracking-widest text-slate-500 hover:bg-emerald-50 hover:border-emerald-100 hover:text-emerald-600 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-                            >
-                                {loading ? "Sending code..." : "Verify with OTP (New / Recover)"}
-                            </button>
+                                    <div className="relative py-2 text-center">
+                                        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
+                                        <span className="relative px-2 bg-white text-[9px] font-black text-slate-300 uppercase tracking-widest">New Here?</span>
+                                    </div>
+
+                                    <button
+                                        onClick={handleOtpFlow}
+                                        disabled={!phoneValid || loading}
+                                        aria-busy={loading}
+                                        className="w-full h-14 rounded-2xl border-2 border-slate-100 font-black text-[10px] uppercase tracking-widest text-slate-500 hover:bg-emerald-50 hover:border-emerald-100 hover:text-emerald-600 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                                    >
+                                        {loading ? "Sending code..." : "Verify with OTP (New / Recover)"}
+                                    </button>
+                                </>
+                            )}
                         </div>
 
                         <div className="text-center mt-10">
                             <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest leading-relaxed">
                                 By entering, you agree to our <br />
-                                <Link href={`/${lang}/terms-conditions`} className="text-emerald-500/60 font-bold underline px-1">Code</Link> & <Link href={`/${lang}/privacy-policy`} className="text-emerald-500/60 font-bold underline px-1">Privacy</Link>
+                                <Link href={`/${lang}/terms-conditions`} className="text-emerald-500/60 font-bold underline px-1">Terms</Link> & <Link href={`/${lang}/privacy-policy`} className="text-emerald-500/60 font-bold underline px-1">Privacy</Link>
                             </p>
                         </div>
                     </div>

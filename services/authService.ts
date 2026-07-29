@@ -13,6 +13,11 @@
  *   POST /auth/logout               (cookie)
  *   GET  /auth/me
  *
+ * TESTING-PHASE ONLY (AUTH_MODE='pin', backend AUTH_DIRECT_PIN_SIGNUP=true —
+ * both flags must come back off together with a real OTP provider):
+ *   POST /auth/phone/check          {phone}                         → {exists}
+ *   POST /auth/pin/signup           {phone, pin, confirmPin}        → session cookies
+ *
  * Security rules enforced here:
  *  - Never persist or log OTPs or PINs.
  *  - Never place phone numbers or auth data in analytics metadata.
@@ -78,6 +83,22 @@ export const forgotPinVerify = async (
 /** Forgot PIN: set the new PIN. All previous sessions are revoked server-side. */
 export const resetPin = async (resetTicket: string, pin: string, confirmPin: string) => {
   const result = await api.post('/auth/pin/reset', { resetTicket, pin, confirmPin });
+  return dataOf(result);
+};
+
+// ── Direct signup (TESTING PHASE ONLY, AUTH_MODE='pin') ────────────────────
+// Skips OTP phone verification. See module doc comment for the disable path.
+
+/** Whether an account already exists for this number (drives login vs create-PIN). */
+export const checkPhoneExists = async (phone: string): Promise<boolean> => {
+  const result = await api.post('/auth/phone/check', { phone });
+  return Boolean(dataOf(result)?.exists);
+};
+
+/** Create an account with phone + PIN, no OTP. Session cookies are set. */
+export const signupWithPin = async (phone: string, pin: string, confirmPin: string) => {
+  const result = await api.post('/auth/pin/signup', { phone, pin, confirmPin });
+  sessionTracker.track('login_completed', { metadata: { method: 'pin_signup' } });
   return dataOf(result);
 };
 

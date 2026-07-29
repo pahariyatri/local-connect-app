@@ -16,6 +16,8 @@ const CODE_MESSAGES: Record<string, string> = {
   AUTH_RESET_TICKET_INVALID: 'This request is no longer valid. Please start again.',
   AUTH_SESSION_EXPIRED: 'Your session has expired. Please sign in again.',
   AUTH_PROVIDER_UNAVAILABLE: 'The verification service is briefly unavailable. Please try again shortly.',
+  AUTH_USER_EXISTS: 'An account already exists for this number. Please sign in instead.',
+  AUTH_FEATURE_DISABLED: 'This feature is not available right now.',
 };
 
 export interface AuthUiError {
