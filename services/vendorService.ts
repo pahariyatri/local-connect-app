@@ -110,10 +110,6 @@ export const updateVendor = async (id: string, vendorData: any) => {
   return result;
 };
 
-export const getVendorServices = async (vendorId: string) => {
-  return api.get(`/vendors/${vendorId}/services`, { skipAuth: true });
-};
-
 export const deleteVendor = async (id: string) => {
   const result = await api.delete(`/vendors/${id}`);
   api.invalidateCache('/vendors');
