@@ -1,5 +1,10 @@
 import type { Config } from "tailwindcss";
 
+/**
+ * Tailwind theme wired to the design tokens in app/globals.css.
+ * Prefer the semantic names (primary, brand, surface, card…) in components so
+ * a token change restyles the whole app consistently.
+ */
 export default {
   content: [
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -12,18 +17,36 @@ export default {
         mono: ["var(--font-geist-mono)", "monospace"],
       },
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        surface: "hsl(var(--surface))",
         primary: {
-          DEFAULT: "#10b981", // Emerald-500
-          hover: "#059669",   // Emerald-600
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
         },
-        secondary: "#6366f1", // Indigo-500
-        accent: "#f59e0b",    // Amber-500
-        slate: {
-          50: "#f8fafc",
-          100: "#f1f5f9",
-        }
+        brand: {
+          DEFAULT: "hsl(var(--brand))",
+          foreground: "hsl(var(--brand-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        danger: "hsl(var(--danger))",
+        subtle: "hsl(var(--border-subtle))",
+      },
+      borderRadius: {
+        control: "var(--radius-control)",
+        card: "var(--radius-card)",
+        panel: "var(--radius-panel)",
+      },
+      height: {
+        control: "var(--h-control)",
+        "control-sm": "var(--h-control-sm)",
+      },
+      boxShadow: {
+        card: "var(--shadow-card)",
+        float: "var(--shadow-float)",
       },
     },
   },

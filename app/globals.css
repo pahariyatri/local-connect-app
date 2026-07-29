@@ -2,26 +2,63 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ───────────────────────── Design tokens ─────────────────────────
+ * Single source of truth for the app's visual system (reference: Builder page).
+ * Tailwind consumes these via tailwind.config.ts — prefer the semantic classes
+ * (bg-surface, text-body, h-control, rounded-card…) over raw palette values.
+ */
 :root {
-  --primary: 222.2 47.4% 11.2%; /* Deep Navy */
+  /* Colour — HSL triplets so Tailwind can apply opacity modifiers */
+  --primary: 222.2 47.4% 11.2%;          /* slate-900 — primary actions, headings */
   --primary-foreground: 210 40% 98%;
 
-  --brand: 160 84% 39%; /* Premium Emerald */
+  --brand: 160 84% 39%;                  /* emerald-500 — brand accent, highlights */
   --brand-foreground: 210 40% 98%;
 
   --accent: 210 40% 96.1%;
   --accent-foreground: 222.2 47.4% 11.2%;
 
-  --background: 0 0% 100%;
+  --background: 0 0% 100%;               /* page background */
   --foreground: 222.2 84% 4.9%;
 
-  --card: 0 0% 100%;
+  --surface: 210 40% 98%;                /* slate-50 — subdued section/page bg */
+  --card: 0 0% 100%;                     /* card background */
   --card-foreground: 222.2 84% 4.9%;
+  --border-subtle: 210 40% 94%;          /* slate-100 — default card/input border */
 
   --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
+  --muted-foreground: 215.4 16.3% 46.9%; /* slate-500 — body/secondary text */
+  --text-faint: 213 27% 84%;             /* slate-300 — hints, placeholders */
 
-  --radius: 1rem;
+  --danger: 350 89% 60%;                 /* rose-500 — errors */
+  --success: 160 84% 39%;                /* matches brand — confirmations */
+
+  /* Typography scale (rem) */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+  --text-3xl: 2.5rem;
+
+  /* Radii */
+  --radius: 1rem;          /* inputs, small controls */
+  --radius-control: 1rem;
+  --radius-card: 2rem;     /* standard card */
+  --radius-panel: 2.5rem;  /* hero/section panels */
+
+  /* Control sizing */
+  --h-control: 3.5rem;     /* 56px — inputs and buttons (touch-friendly) */
+  --h-control-sm: 2.75rem; /* 44px — compact controls */
+
+  /* Spacing rhythm */
+  --space-section: 5rem;   /* vertical rhythm between page sections */
+  --space-card: 1.75rem;   /* internal card padding */
+
+  /* Elevation */
+  --shadow-card: 0 10px 40px -10px rgba(0, 0, 0, 0.04), 0 0 1px rgba(0, 0, 0, 0.1);
+  --shadow-float: 0 25px 50px -12px rgba(15, 23, 42, 0.15);
 }
 
 body {

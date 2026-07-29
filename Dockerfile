@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1
 # Production image for the Next.js frontend (standalone output).
-# Build:  docker build --build-arg NEXT_PUBLIC_API_BASE_URL=https://api.example.com -t local-connect-frontend .
+# Build:  docker build -t local-connect-frontend .
 # Run:    docker run -p 3000:3000 local-connect-frontend
+# Override for staging/local: --build-arg NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
 
 FROM node:22-alpine AS base
 RUN apk add --no-cache libc6-compat
@@ -16,8 +17,9 @@ RUN npm ci --legacy-peer-deps
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# NEXT_PUBLIC_* values are baked in at build time — pass the real API URL here.
-ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
+# NEXT_PUBLIC_* values are baked in at build time. Defaults to the live API —
+# override with --build-arg for staging/local image builds.
+ARG NEXT_PUBLIC_API_BASE_URL=https://api.pahariyatri.com
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build

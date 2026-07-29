@@ -2,13 +2,15 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
-import { loginWithPin, setupPin, resetPin, forgotPinRequest } from '@/services/authService';
+import { loginWithPin, setupPin, signupWithPin, resetPin, forgotPinRequest } from '@/services/authService';
+import { ApiClientError } from '@/lib/apiClient';
 import { toAuthUiError } from '@/utils/authErrors';
 import { fetchCurrentUser } from '@/services/userService';
 import { useAuth } from '@/contexts/AuthContext';
 import { PIN_LENGTH, isWeakPin } from '@/utils/validation';
 import Button from '../../components/atoms/Button';
 import Typography from '../../components/atoms/Typography';
+import BackButton from '../../components/atoms/BackButton';
 
 type Mode = 'create' | 'login' | 'reset';
 
@@ -157,10 +159,20 @@ export default function PinPage() {
         setTimeout(() => router.push(`/${lang}/auth/login`), 900);
         return;
       }
-      await setupPin(ticket, pinStr, confirmStr);
+      // AUTH_MODE='pin' testing flow: no OTP ticket, phone-based signup.
+      if (ticket) {
+        await setupPin(ticket, pinStr, confirmStr);
+      } else {
+        await signupWithPin(phoneNumber, pinStr, confirmStr);
+      }
       await completeLogin('PIN created! Redirecting...');
     } catch (err) {
       failWith(err);
+      if (err instanceof ApiClientError && err.code === 'AUTH_USER_EXISTS') {
+        // Race: account was created between the phone check and this submit.
+        setTimeout(() => router.push(`/${lang}/auth/login`), 1200);
+        return;
+      }
       // A consumed/expired ticket cannot be retried — restart the flow.
       setConfirm(empty());
       setStage('enter');
@@ -198,10 +210,15 @@ export default function PinPage() {
   const isTwoStage = mode === 'create' || mode === 'reset';
   const submit = () => (isTwoStage ? handleCreateOrReset() : handleLogin());
 
-  // Guard: login needs a phone; create/reset need a ticket.
-  if ((mode === 'login' && !phoneNumber) || (isTwoStage && !ticket)) {
+  // Guard: login needs a phone; reset needs a ticket; create needs a ticket
+  // (OTP flow) OR a phone (AUTH_MODE='pin' direct-signup flow).
+  if (
+    (mode === 'login' && !phoneNumber) ||
+    (mode === 'reset' && !ticket) ||
+    (mode === 'create' && !ticket && !phoneNumber)
+  ) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 pt-28 sm:pt-32">
         <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-xl text-center">
           <h2 className="text-2xl font-bold text-slate-900 mb-2">Session Invalid</h2>
           <p className="text-slate-500 mb-8">This link is incomplete or has expired. Please restart the sign-in process.</p>
@@ -228,7 +245,7 @@ export default function PinPage() {
     : `Enter your ${PIN_LENGTH}-digit PIN to continue.`;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-2 sm:p-4">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-2 sm:p-4 pt-28 sm:pt-32">
       <main className="max-w-4xl w-full bg-white rounded-[2rem] sm:rounded-[3rem] shadow-2xl overflow-hidden grid lg:grid-cols-2">
 
         {/* Brand panel */}
@@ -249,13 +266,7 @@ export default function PinPage() {
 
         {/* Form panel */}
         <div className="p-6 sm:p-12 md:p-16 flex flex-col justify-center relative bg-white">
-          <button
-            onClick={() => router.push(`/${lang}/auth/login`)}
-            className="absolute top-6 left-6 w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-all"
-            title="Go Back"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-          </button>
+          <BackButton onClick={() => router.push(`/${lang}/auth/login`)} className="absolute top-6 left-6" />
 
           <header className="mb-8 sm:mb-10 text-center lg:text-left pt-6 lg:pt-0">
             <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest mb-4">
@@ -266,7 +277,7 @@ export default function PinPage() {
             </Typography>
             <p className="mt-4 text-slate-400 font-medium text-sm italic">
               {subtitle}{' '}
-              {mode === 'login' && (
+              {(mode === 'login' || (mode === 'create' && phoneNumber)) && (
                 <span className="text-slate-900 font-black not-italic">+91 {maskPhone(phoneNumber)}</span>
               )}
             </p>
