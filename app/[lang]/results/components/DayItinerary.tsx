@@ -41,9 +41,20 @@ export default function DayItinerary({
       </div>
 
       <div className="space-y-10">
+        {selections.length === 0 && (
+          <div className="p-4 rounded-[2rem] border-2 border-dashed border-slate-200 bg-slate-50/50 text-center">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nothing planned for this day yet</span>
+          </div>
+        )}
         {selections.map((selection, idx) => {
           const selectedVendor = selection.options.find(v => v.id === selection.selectedVendorId);
-          
+          // A category only auto-selects its first option when options exist, so
+          // "no options" (nothing was ever available) and "removed" (the user
+          // actively cleared a prior selection) are distinguishable by whether
+          // options exist at all.
+          const hasNoOptions = !selection.selectedVendorId && selection.options.length === 0;
+          const wasRemoved = !selection.selectedVendorId && selection.options.length > 0;
+
           return (
             <div key={idx} className="space-y-4">
               <div className="flex items-center justify-between">
@@ -53,8 +64,11 @@ export default function DayItinerary({
                       {selection.category}
                   </Typography>
                 </div>
-                {!selection.selectedVendorId && (
+                {wasRemoved && (
                   <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded">Removed</span>
+                )}
+                {hasNoOptions && (
+                  <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 px-2 py-0.5 rounded">No options nearby</span>
                 )}
               </div>
 

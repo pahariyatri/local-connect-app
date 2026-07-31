@@ -308,12 +308,11 @@ export default function PinPage() {
             <div className="space-y-4">
               <Button
                 onClick={submit}
-                disabled={!filled || busy}
+                disabled={!filled}
+                isLoading={busy}
                 className="w-full h-14 sm:h-16 rounded-2xl bg-slate-900 text-white font-black uppercase tracking-widest italic shadow-xl shadow-slate-200 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
               >
-                {busy ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : isTwoStage ? (stage === 'confirm' ? 'Confirm PIN' : 'Continue') : 'Login'}
+                {isTwoStage ? (stage === 'confirm' ? 'Confirm PIN' : 'Continue') : 'Login'}
               </Button>
 
               {mode === 'login' && (

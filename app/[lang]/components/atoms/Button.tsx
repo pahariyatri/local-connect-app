@@ -7,6 +7,7 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   size?: "small" | "medium" | "large";
   icon?: React.ReactNode;
   iconRight?: React.ReactNode;
+  isLoading?: boolean;
 };
 
 export default function Button({
@@ -17,6 +18,7 @@ export default function Button({
   iconRight,
   onClick,
   disabled = false,
+  isLoading = false,
   children,
   className = "",
   ...props
@@ -41,14 +43,21 @@ export default function Button({
     <button
       type={type}
       onClick={onClick}
-      disabled={disabled}
+      disabled={disabled || isLoading}
       className={`${baseClass} ${variants[variant]} ${sizes[size]} ${className} disabled:opacity-50 disabled:scale-100 disabled:shadow-none`}
-      aria-disabled={disabled}
+      aria-disabled={disabled || isLoading}
+      aria-busy={isLoading}
       {...props}
     >
-      {icon && <span className="transition-transform group-hover:scale-110">{icon}</span>}
-      {children}
-      {iconRight && <span className="transition-transform group-hover:translate-x-1">{iconRight}</span>}
+      {isLoading ? (
+        <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+      ) : (
+        <>
+          {icon && <span className="transition-transform group-hover:scale-110">{icon}</span>}
+          {children}
+          {iconRight && <span className="transition-transform group-hover:translate-x-1">{iconRight}</span>}
+        </>
+      )}
     </button>
   );
 }

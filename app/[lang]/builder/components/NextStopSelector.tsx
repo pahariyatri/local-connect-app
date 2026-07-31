@@ -43,6 +43,36 @@ interface StopPlace {
   categories: Record<string, number>;
 }
 
+// Module-level (survives step remounts, unlike component state): the discover
+// request only actually varies by guestCount/startDate/endDate — origin and
+// destinations are used purely client-side to filter the same catalogue — so
+// navigating back and forth between builder steps shouldn't refetch it.
+const regionalCatalogueCache = new Map<string, any[]>();
+
+// We intentionally don't constrain the discover request by destination/category
+// so that *intermediate* towns on the corridor surface; then we drop the origin
+// and the final destinations here, client-side, leaving genuine stop options.
+function buildPlacesFrom(services: any[], origin: string, destinations: string[]): StopPlace[] {
+  const excluded = new Set<string>([
+    origin.trim().toLowerCase(),
+    ...destinations.map((d) => d.trim().toLowerCase()),
+  ]);
+  const byCity: Record<string, StopPlace> = {};
+  services.forEach((s: any) => {
+    const addr = (s.addresses || []).find((a: any) => a?.city) || (s.addresses || [])[0];
+    const cityRaw = addr?.city;
+    if (!cityRaw) return;
+    const key = String(cityRaw).trim().toLowerCase();
+    if (!key || excluded.has(key)) return; // origin & destinations aren't "stops"
+    if (!byCity[key]) {
+      byCity[key] = { key, name: titleCase(cityRaw), total: 0, categories: { Stay: 0, Taxi: 0, Adventure: 0, Meals: 0 } };
+    }
+    byCity[key].total += 1;
+    byCity[key].categories[categoryOf(s)] += 1;
+  });
+  return Object.values(byCity).sort((a, b) => b.total - a.total);
+}
+
 interface RouteStopsSelectorProps {
   origin: string;
   destinations: string[]; // destination ids from step 1
@@ -65,8 +95,12 @@ export default function NextStopSelector({
   dict,
 }: RouteStopsSelectorProps) {
   const b = dict?.page?.builder?.next_stop || {};
-  const [places, setPlaces] = useState<StopPlace[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = [guestCount ?? 2, startDate ?? "", endDate ?? ""].join("|");
+  const [places, setPlaces] = useState<StopPlace[]>(() => {
+    const cached = regionalCatalogueCache.get(cacheKey);
+    return cached ? buildPlacesFrom(cached, origin, destinations) : [];
+  });
+  const [loading, setLoading] = useState(() => !regionalCatalogueCache.has(cacheKey));
 
   // ── Stop mutations ──────────────────────────────────────────────────────
   const addStop = (name: string) => onStopsChange([...stops, createTripStop(name)]);
@@ -101,10 +135,12 @@ export default function NextStopSelector({
   };
 
   // ── Live regional catalogue → group services by the town they sit in ─────
-  // We intentionally don't constrain by destination/category here so that the
-  // *intermediate* towns on the corridor surface; then we drop the origin and
-  // the final destinations, leaving genuine "where do you want to stop" options.
+  // Cache-hit case is handled by the useState lazy initializer above (no
+  // network call, no effect needed). This effect only runs the fetch when
+  // this guestCount/startDate/endDate combo hasn't been seen yet.
   useEffect(() => {
+    if (regionalCatalogueCache.has(cacheKey)) return;
+
     let cancelled = false;
     setLoading(true);
     const params = buildDiscoveryParams({
@@ -114,28 +150,12 @@ export default function NextStopSelector({
       startDate: startDate ?? undefined,
       endDate: endDate ?? undefined,
     });
-    const excluded = new Set<string>([
-      origin.trim().toLowerCase(),
-      ...destinations.map((d) => d.trim().toLowerCase()),
-    ]);
     discoverServices(params)
       .then((response: any) => {
         if (cancelled) return;
         const services = response?.data ?? response?.services ?? [];
-        const byCity: Record<string, StopPlace> = {};
-        services.forEach((s: any) => {
-          const addr = (s.addresses || []).find((a: any) => a?.city) || (s.addresses || [])[0];
-          const cityRaw = addr?.city;
-          if (!cityRaw) return;
-          const key = String(cityRaw).trim().toLowerCase();
-          if (!key || excluded.has(key)) return; // origin & destinations aren't "stops"
-          if (!byCity[key]) {
-            byCity[key] = { key, name: titleCase(cityRaw), total: 0, categories: { Stay: 0, Taxi: 0, Adventure: 0, Meals: 0 } };
-          }
-          byCity[key].total += 1;
-          byCity[key].categories[categoryOf(s)] += 1;
-        });
-        setPlaces(Object.values(byCity).sort((a, b) => b.total - a.total));
+        regionalCatalogueCache.set(cacheKey, services);
+        setPlaces(buildPlacesFrom(services, origin, destinations));
       })
       .catch((err) => {
         if (!cancelled) {
@@ -147,7 +167,10 @@ export default function NextStopSelector({
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [destinations.join(","), origin, guestCount, startDate, endDate]); // eslint-disable-line react-hooks/exhaustive-deps
+    // Only guestCount/startDate/endDate actually change what the backend
+    // returns — origin/destinations are applied client-side in buildPlacesFrom,
+    // and this component fully remounts whenever those change (step switch).
+  }, [cacheKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const destinationLabels = useMemo(() => destinations.map(titleCase), [destinations]);
   const selectedCount = stops.length;

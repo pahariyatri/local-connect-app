@@ -156,17 +156,13 @@ export default function LoginPage() {
                             {AUTH_MODE === "pin" ? (
                                 <Button
                                     onClick={handleContinue}
-                                    disabled={!phoneValid || loading}
-                                    aria-busy={loading}
+                                    disabled={!phoneValid}
+                                    isLoading={loading}
                                     className={`w-full h-16 rounded-2xl text-base font-black tracking-widest transition-all uppercase italic shadow-xl flex items-center justify-center gap-3 ${
                                         loading ? "bg-slate-200 text-slate-400" : "bg-slate-900 hover:bg-black text-white shadow-slate-200 active:scale-95"
                                     }`}
                                 >
-                                    {loading ? (
-                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    ) : (
-                                        "Continue"
-                                    )}
+                                    Continue
                                 </Button>
                             ) : (
                                 <>

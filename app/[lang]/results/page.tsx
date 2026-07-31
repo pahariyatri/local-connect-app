@@ -18,16 +18,10 @@ import DiscoveryDrawer from "../components/molecules/DiscoveryDrawer";
 import {
   discoverServices,
   buildDiscoveryParams,
-  vendorTypeToPreference,
+  mapServicesToVendors,
+  EMPTY_VENDORS,
 } from "@/services/vendorService";
 import { getPackage } from "@/services/packageService";
-
-const EMPTY_VENDORS: Record<string, Vendor[]> = {
-  Stay: [],
-  Taxi: [],
-  Adventure: [],
-  Meals: [],
-};
 
 function parsePlanFromUrl(searchParams: URLSearchParams) {
   try {
@@ -113,31 +107,6 @@ export default function ResultsPage() {
       prepTracker.shareOpened(destinations);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  function mapServicesToVendors(services: any[]): Record<string, Vendor[]> {
-    const categorized: Record<string, Vendor[]> = { stay: [], travel: [], activity: [], food: [] };
-    services.forEach((s: any) => {
-      const vendorType = s.vendor?.type;
-      const type = vendorTypeToPreference(vendorType);
-      const priceVal = Array.isArray(s.prices) && s.prices.length > 0 ? Number(s.prices[0]?.price) : 1500;
-      const mapped: Vendor = {
-        id: s.id.toString(),
-        name: s.name,
-        image: s.image || (s.additionalData?.images?.[0]) || "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=400",
-        rating: s.rating || 4.5,
-        price: priceVal,
-        category: type,
-        description: s.description
-      };
-      if (categorized[type]) categorized[type].push(mapped);
-    });
-    return {
-      Stay: categorized.stay,
-      Taxi: categorized.travel,
-      Adventure: categorized.activity,
-      Meals: categorized.food,
-    };
-  }
 
   // 📡 Load package by ID (read-only mode from builder) — no discover
   useEffect(() => {
@@ -366,10 +335,7 @@ export default function ResultsPage() {
     // We now rely on the 'user' object from useAuth() which is verified via HttpOnly cookies
     const isRealUser = !!(user && user.role !== 'Guest' && user.id);
 
-    console.log('[DEBUG] Auth state:', { isRealUser, userRole: user?.role, userId: user?.id });
-
     if (!isRealUser) {
-      console.log('[DEBUG] Redirecting to login because user is not authenticated or is Guest...');
       showNotification("Please login to proceed with the booking.", "info");
       const currentUrl = encodeURIComponent(window.location.pathname + window.location.search);
       const langCode = (pathLang as string) || 'en';

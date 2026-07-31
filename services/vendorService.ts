@@ -3,6 +3,47 @@
  */
 import { api } from '@/lib/apiClient';
 import { sessionTracker } from './sessionService';
+import type { Vendor } from '@/app/[lang]/results/components/VendorSelectionCard';
+
+export const EMPTY_VENDORS: Record<string, Vendor[]> = {
+  Stay: [],
+  Taxi: [],
+  Adventure: [],
+  Meals: [],
+};
+
+/**
+ * Categorizes raw /service/discover results into the Stay/Taxi/Adventure/Meals
+ * buckets the builder and results pages both render.
+ */
+export function mapServicesToVendors(services: any[]): Record<string, Vendor[]> {
+  const categorized: Record<string, Vendor[]> = { stay: [], travel: [], activity: [], food: [] };
+  services.forEach((s: any) => {
+    // Backend exposes vendor.types as an array (e.g. ["hotel"]); fall back to the
+    // legacy singular field / subcategory name for older payloads.
+    const vendorType = Array.isArray(s.vendor?.types) && s.vendor.types.length
+      ? s.vendor.types[0]
+      : (s.vendor?.type ?? s.subcategory?.parent?.name);
+    const type = vendorTypeToPreference(vendorType);
+    const priceVal = Array.isArray(s.prices) && s.prices.length > 0 ? Number(s.prices[0]?.price) : 1500;
+    const mapped: Vendor = {
+      id: s.id.toString(),
+      name: s.name,
+      image: s.image || (s.additionalData?.images?.[0]) || "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=400",
+      rating: s.rating || 4.5,
+      price: priceVal,
+      category: type,
+      description: s.description,
+    };
+    if (categorized[type]) categorized[type].push(mapped);
+  });
+  return {
+    Stay: categorized.stay,
+    Taxi: categorized.travel,
+    Adventure: categorized.activity,
+    Meals: categorized.food,
+  };
+}
 
 export interface DiscoveryParams {
   destinations?: string[];
@@ -108,10 +149,6 @@ export const updateVendor = async (id: string, vendorData: any) => {
   api.invalidateCache('/vendors');
   api.invalidateCache(`/vendors/${id}`);
   return result;
-};
-
-export const getVendorServices = async (vendorId: string) => {
-  return api.get(`/vendors/${vendorId}/services`, { skipAuth: true });
 };
 
 export const deleteVendor = async (id: string) => {
