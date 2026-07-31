@@ -162,7 +162,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
     let cancelled = false;
     (async () => {
       try {
-        const response = await api.get("/vendors");
+        const response = await api.get("/vendors", { sessionCache: true });
         if (!cancelled) {
           setProvidersList(response && Array.isArray(response) && response.length ? response.slice(0, 6).map(mapHomeVendor) : LOCAL_PROVIDERS);
         }

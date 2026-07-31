@@ -6,6 +6,7 @@ import { verifyOtp, forgotPinVerify, requestOtp, forgotPinRequest } from '@/serv
 import { toAuthUiError } from '@/utils/authErrors';
 import Form from '../../components/molecules/Form';
 import Button from '../../components/atoms/Button';
+import BackButton from '../../components/atoms/BackButton';
 import Typography from '../../components/atoms/Typography';
 
 const OTP_LENGTH = 6;
@@ -213,13 +214,7 @@ export default function VerifyOtpPage() {
 
         {/* Right Side: Verification Form */}
         <div className="p-6 sm:p-12 md:p-16 flex flex-col justify-center relative bg-white">
-          <button
-            onClick={() => router.push(`/${lang}/auth/login`)}
-            className="absolute top-6 left-6 w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-all"
-            title="Go Back"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-          </button>
+          <BackButton onClick={() => router.push(`/${lang}/auth/login`)} className="absolute top-6 left-6" />
 
           <header className="mb-8 sm:mb-12 text-center lg:text-left pt-6 lg:pt-0">
             <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest mb-4">
@@ -277,14 +272,11 @@ export default function VerifyOtpPage() {
             <div className="space-y-4">
               <Button
                 type="submit"
-                disabled={otp.some((digit) => !digit) || isVerifying}
+                disabled={otp.some((digit) => !digit)}
+                isLoading={isVerifying}
                 className="w-full h-14 sm:h-16 rounded-2xl bg-slate-900 text-white font-black uppercase tracking-widest italic shadow-xl shadow-slate-200 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
               >
-                {isVerifying ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  'Verify & Continue'
-                )}
+                Verify & Continue
               </Button>
 
               <div className="text-center lg:text-left">

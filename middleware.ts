@@ -46,7 +46,9 @@ export function middleware(request: NextRequest) {
 
         if (!token) {
             // Redirect to the login page if no token is found
-            return NextResponse.redirect(new URL(`/${locale}/auth/send-otp`, request.url));
+            const loginUrl = new URL(`/${locale}/auth/login`, request.url);
+            loginUrl.searchParams.set("redirectTo", pathname);
+            return NextResponse.redirect(loginUrl);
         }
     }
 

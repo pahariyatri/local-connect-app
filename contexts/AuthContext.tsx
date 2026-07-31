@@ -27,14 +27,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const checkUser = async () => {
       const storedUser = localStorage.getItem('user_meta');
 
-      // 1. If we have meta locally, use it immediately for speed (UI "feel" as logged in)
-      if (storedUser) {
-        try {
-          setUser(JSON.parse(storedUser));
-        } catch { localStorage.removeItem('user_meta'); }
+      // No local session hint: nothing to verify, this is a guest on a
+      // (likely public) page. Render immediately instead of gating the
+      // whole app behind a network call — protected routes are already
+      // enforced server-side by middleware.ts via the accessToken cookie.
+      if (!storedUser) {
+        setIsLoading(false);
+        return;
       }
 
-      // 2. Always verify the session with the backend (HttpOnly cookies).
+      // 1. We have meta locally, use it immediately for speed (UI "feel" as logged in)
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch { localStorage.removeItem('user_meta'); }
+
+      // 2. Verify the session with the backend (HttpOnly cookies) since the
+      //    user appears logged in.
       //    Goes through the central api client: typed errors + bounded
       //    silent-refresh on 401 — no bespoke fetch, no second client.
       try {
