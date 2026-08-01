@@ -7,6 +7,7 @@ import Button from "../../components/atoms/Button";
 import { sanitizePhone, isValidPhone, PHONE_LENGTH } from "@/utils/validation";
 import { AUTH_MODE } from "@/utils/constants";
 import { toAuthUiError } from "@/utils/authErrors";
+import { ApiClientError } from "@/lib/apiClient";
 import AuthShell from "../components/AuthShell";
 
 export default function LoginPage() {
@@ -39,6 +40,13 @@ export default function LoginPage() {
             const mode = exists ? "login" : "create";
             router.push(`/${lang}/auth/pin?mode=${mode}&phone=${phone}${redirectSuffix}`);
         } catch (err) {
+            // Backend keeps this endpoint disabled outside the testing phase
+            // (AUTH_DIRECT_PIN_SIGNUP off). Don't dead-end here — fall back to
+            // the always-available direct PIN login instead of erroring out.
+            if (err instanceof ApiClientError && err.code === "AUTH_FEATURE_DISABLED") {
+                router.push(`/${lang}/auth/pin?mode=login&phone=${phone}${redirectSuffix}`);
+                return;
+            }
             setError(toAuthUiError(err).message);
             setLoading(false);
         }

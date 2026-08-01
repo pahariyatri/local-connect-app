@@ -13,14 +13,20 @@ export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || DEFAULT_API
 
 /**
  * Active authentication mode.
- *   'pin' — phone number + PIN only, no OTP (current testing phase).
- *   'otp' — OTP-verified registration/recovery (needs a real OTP provider;
- *           backend fails closed on OTP_PROVIDER=fake in production).
+ *   'pin' — single-step phone+PIN entry point (`POST /auth/phone/check` +
+ *           `POST /auth/pin/signup`). Backend keeps both routes behind
+ *           AUTH_DIRECT_PIN_SIGNUP, OFF by default in production (account-
+ *           enumeration oracle by design) — so this mode 404s there unless
+ *           that flag is deliberately enabled. Opt in locally with
+ *           NEXT_PUBLIC_AUTH_MODE=pin.
+ *   'otp' — default. Existing users sign in directly via `/auth/pin/login`
+ *           (no gated endpoint involved); new users verify via real OTP.
+ *           Both routes are always enabled in production.
  * OTP screens/services stay in the codebase either way — this flag only
  * decides which flow the login entry point routes into.
  */
 export const AUTH_MODE: 'pin' | 'otp' =
-  process.env.NEXT_PUBLIC_AUTH_MODE === 'otp' ? 'otp' : 'pin';
+  process.env.NEXT_PUBLIC_AUTH_MODE === 'pin' ? 'pin' : 'otp';
 
 /**
  * Centralized API endpoint constants.
