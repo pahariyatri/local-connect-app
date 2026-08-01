@@ -9,7 +9,9 @@ interface Vendor {
   id: string;
   name: string;
   image: string;
-  rating: number;
+  // No review/rating system exists on the backend yet — genuinely absent for
+  // real services, not defaulted to a fake number.
+  rating?: number;
   price: number;
   category: string;
   description?: string;
@@ -80,8 +82,12 @@ const DiscoveryDrawer: React.FC<DiscoveryDrawerProps> = ({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-emerald-600 font-black text-xs">★ {vendor.rating}</span>
-                    <span className="w-1 h-1 rounded-full bg-slate-200"></span>
+                    {vendor.rating != null && (
+                      <>
+                        <span className="text-emerald-600 font-black text-xs">★ {vendor.rating}</span>
+                        <span className="w-1 h-1 rounded-full bg-slate-200"></span>
+                      </>
+                    )}
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{vendor.category}</span>
                   </div>
                   <h3 className="text-lg font-black text-slate-900 truncate mb-1">{vendor.name}</h3>

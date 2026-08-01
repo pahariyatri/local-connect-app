@@ -8,7 +8,7 @@ import Button from "../components/atoms/Button";
 import LocalImage from "../components/atoms/Image";
 import { useParams, useRouter } from "next/navigation";
 import Loading from "@/app/loading";
-import api from "@/lib/apiClient";
+import { getVendors } from "@/services/vendorService";
 
 // Mock Data for Discover matching details page profiles
 const VENDORS = [
@@ -118,9 +118,10 @@ const mapBackendVendor = (v: any) => {
         name: cleanName,
         category,
         location,
-        rating: v.trustScore || 4.8,
-        reviews: v.reviews || Math.floor((v.trustScore || 4.8) * 20) + (parseInt(v.id.slice(0, 2), 16) % 50 || 20),
-        priceRange: v.services?.[0] ? `₹${v.services[0].price}/${v.services[0].unit || "day"}` : "₹2,500/day",
+        // Real field only — no fabricated review count exists on the backend
+        // (no review entity at all), so we don't invent one.
+        rating: v.trustScore,
+        priceRange: v.services?.[0] ? `₹${v.services[0].price}/${v.services[0].unit || "day"}` : "Price on request",
         image: categoryImages[category] || categoryImages["Guides"],
         tags: v.services?.map((s: any) => s.name).slice(0, 3) || ["Verified Local", "Premium Partner"]
     };
@@ -273,8 +274,11 @@ export default function DiscoverPage() {
                                     <div className="absolute bottom-4 left-4 right-4 text-white">
                                         <h3 className="text-xl font-black uppercase tracking-tight italic">{vendor.name}</h3>
                                         <div className="flex items-center gap-2 mt-1">
-                                            <div className="flex text-amber-400 text-[10px]">★★★★★</div>
-                                            <p className="text-[10px] font-bold text-white/70 uppercase">{vendor.rating} • {vendor.reviews} {discover.vendor_card?.reviews ?? "reviews"}</p>
+                                            <span className="text-amber-400 text-[10px]">★</span>
+                                            <p className="text-[10px] font-bold text-white/70 uppercase">
+                                                {typeof vendor.rating === "number" ? vendor.rating.toFixed(1) : vendor.rating}
+                                                {vendor.reviews != null ? ` • ${vendor.reviews} ${discover.vendor_card?.reviews ?? "reviews"}` : ""}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>

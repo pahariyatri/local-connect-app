@@ -248,10 +248,10 @@ export default function PackageBuilderStep({
   }
 
   const categories = [
-    { key: "Stay", icon: "🏨", show: wantsStay },
-    { key: "Taxi", icon: "🚗", show: wantsTaxi },
-    { key: "Adventure", icon: "🏔️", show: wantsAdventure },
-    { key: "Meals", icon: "🍛", show: wantsMeals },
+    { key: "Stay", show: wantsStay },
+    { key: "Taxi", show: wantsTaxi },
+    { key: "Adventure", show: wantsAdventure },
+    { key: "Meals", show: wantsMeals },
   ].filter((c) => c.show);
 
   return (
@@ -290,7 +290,6 @@ export default function PackageBuilderStep({
               .filter((c) => dayWants(day, c.key, c.show))
               .map((c) => ({
                 category: c.key,
-                icon: c.icon,
                 selectedVendorId: selections[day]?.[c.key] ?? null,
                 options: liveVendors[c.key] || [],
               }))}

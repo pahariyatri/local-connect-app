@@ -8,7 +8,7 @@ import LocalImage from "./components/atoms/Image";
 import VerifiedBadge from "./components/atoms/VerifiedBadge";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import Loading from "../loading";
-import api from "@/lib/apiClient";
+import { getVendors } from "@/services/vendorService";
 
 type HomeProps = {
   params: Promise<{ lang: Locale }>;
@@ -263,7 +263,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
     let cancelled = false;
     (async () => {
       try {
-        const response = await api.get("/vendors", { sessionCache: true });
+        const response = await getVendors();
         if (!cancelled && Array.isArray(response) && response.length) {
           setProvidersList(response.slice(0, 4).map(mapBackendVendor));
         }

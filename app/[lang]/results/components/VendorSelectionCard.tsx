@@ -7,7 +7,9 @@ export interface Vendor {
   id: string;
   name: string;
   image: string;
-  rating: number;
+  // No review/rating system exists on the backend yet — genuinely absent for
+  // real services, not defaulted to a fake number.
+  rating?: number;
   price: number;
   category: string;
   description?: string;
@@ -72,24 +74,19 @@ export default function VendorSelectionCard({
             </div>
             
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-0.5">
-                <span className="text-[10px] font-black text-amber-500">★</span>
-                <span className="text-[10px] font-bold text-slate-600">{vendor.rating}</span>
-              </div>
-              <span className="text-slate-300 text-[10px]">|</span>
+              {vendor.rating != null && (
+                <>
+                  <div className="flex items-center gap-0.5">
+                    <span className="text-[10px] font-black text-amber-500">★</span>
+                    <span className="text-[10px] font-bold text-slate-600">{vendor.rating}</span>
+                  </div>
+                  <span className="text-slate-300 text-[10px]">|</span>
+                </>
+              )}
               <div className="flex items-center gap-2">
                 <span className={`font-black text-emerald-600 ${isAlternative ? "text-[10px]" : "text-sm"}`}>
                     ₹{vendor.price}
                 </span>
-                {/* 🏷️ Partner Discount Visual */}
-                {!isAlternative && (
-                  <div className="flex items-center gap-1">
-                    <span className="text-[9px] text-slate-400 line-through">₹{Math.round(vendor.price * 1.2)}</span>
-                    <span className="bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-md text-[7px] font-black uppercase tracking-widest whitespace-nowrap">
-                        PARTNER RATE
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
 

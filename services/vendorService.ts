@@ -30,7 +30,9 @@ export function mapServicesToVendors(services: any[]): Record<string, Vendor[]> 
       id: s.id.toString(),
       name: s.name,
       image: s.image || (s.additionalData?.images?.[0]) || "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=400",
-      rating: s.rating || 4.5,
+      // No review/rating system exists on the backend — there is no `s.rating`
+      // to ever read. `undefined` here means "not rated", not a fake 4.5.
+      rating: s.rating,
       price: priceVal,
       category: type,
       description: s.description,
