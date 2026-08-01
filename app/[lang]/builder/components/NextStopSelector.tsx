@@ -159,7 +159,8 @@ export default function NextStopSelector({
       })
       .catch((err) => {
         if (!cancelled) {
-          console.error("Route stop discovery failed:", err);
+          // Already handled below (empty places list) — not worth an error-level log.
+          console.warn("Route stop discovery unavailable:", (err as Error)?.message || err);
           setPlaces([]);
         }
       })

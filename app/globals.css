@@ -95,7 +95,7 @@ body {
   }
 
   .btn-premium {
-    @apply px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all duration-300 active:scale-95 shadow-xl flex items-center justify-center gap-3;
+    @apply px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all duration-300 active:scale-95 shadow-xl flex items-center justify-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500;
   }
 
   .btn-primary {
@@ -227,4 +227,28 @@ body {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Fixed bottom action bars (e.g. the builder footer): keep content clear of
+ * device safe areas (iOS home indicator, gesture bar) on top of the normal
+ * spacing scale already used for that bar. */
+.builder-footer-safe-area {
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 640px) {
+  .builder-footer-safe-area {
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Respect the user's motion preference across every animation/transition. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

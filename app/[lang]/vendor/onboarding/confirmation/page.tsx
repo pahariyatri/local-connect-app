@@ -15,14 +15,13 @@ export default function Confirmation() {
     const conf = dict.page.vendor_onboarding.confirmation;
 
   return (
-    <div className="text-center py-8 animate-in fade-in zoom-in-95 duration-1000">
+    <div className="max-w-md mx-auto text-center py-8 animate-in fade-in zoom-in-95 duration-1000">
       <div className="relative inline-block mb-10">
         <div className="w-24 h-24 bg-emerald-500 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-[0_30px_60px_-10px_rgba(16,185,129,0.4)] rotate-3">
             <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"/>
             </svg>
         </div>
-        <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-xl animate-bounce">🎊</div>
       </div>
       
       <Typography variant="h1" className="text-4xl font-black text-slate-900 mb-3 tracking-tighter">
@@ -73,8 +72,11 @@ export default function Confirmation() {
 
       <div className="space-y-4">
         <Link href={`/${lang}/vendor/dashboard`} className="block">
-            <Button className="w-full h-18 py-6 rounded-3xl bg-slate-900 hover:bg-black text-white font-black text-xs uppercase tracking-[0.3em] shadow-2xl active:scale-95 transition-all group">
-                {conf.cta} <span className="ml-2 group-hover:translate-x-2 transition-transform inline-block">🚀</span>
+            <Button className="w-full h-18 py-6 rounded-3xl bg-slate-900 hover:bg-black text-white font-black text-xs uppercase tracking-[0.3em] shadow-2xl active:scale-95 transition-all group flex items-center justify-center gap-2">
+                {conf.cta}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="group-hover:translate-x-1 transition-transform">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
             </Button>
         </Link>
         
