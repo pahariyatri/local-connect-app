@@ -34,7 +34,7 @@ const pageCategories = [
         description: "Vendor Management",
         icon: "🛡️",
         links: [
-            { name: "Vendor Dashboard", path: "/vendor" },
+            { name: "Vendor Dashboard", path: "/vendor/dashboard" },
             { name: "My Offerings", path: "/vendor/services" },
             { name: "Guest Check-ins", path: "/vendor/bookings" },
             { name: "Alliance Management", path: "/vendor/partnerships" },
