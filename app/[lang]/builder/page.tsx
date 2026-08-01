@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useParams, useRouter } from "next/navigation";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { useTripPlanner, ServiceType } from "@/contexts/TripPlannerContext";
@@ -40,6 +41,16 @@ export default function TripBuilderPage() {
   const [localStopServices, setLocalStopServices] = useState<Record<number, string[]>>(stopServicesByDay || {});
   const [isGenerating, setIsGenerating] = useState(false);
   const [step5Footer, setStep5Footer] = useState<{ totalPrice: number; onCreatePackage: () => Promise<void> } | null>(null);
+  // The action bar is portaled to <body> so it stays fixed to the viewport
+  // even though the page wrapper (`.page-fade-in`) runs a transform-based
+  // entrance animation, which would otherwise turn `position: fixed` into
+  // "fixed to the page" instead of the screen. Portal target only exists
+  // client-side, hence the mounted gate.
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Sync state from context on mount
   useEffect(() => {
@@ -277,46 +288,53 @@ export default function TripBuilderPage() {
             </div>
         </div>
   
-        {/* Sticky Bottom Action */}
-        <div className="fixed bottom-0 left-0 right-0 p-3 sm:p-6 bg-white/90 backdrop-blur-xl border-t border-slate-100 z-50 safe-area-inset-bottom">
-          <div className="max-w-6xl mx-auto px-2 sm:px-4 flex items-center justify-between gap-3 sm:gap-4">
-              {currentStep > 1 && (
-                  <Button variant="ghost" onClick={handleBack} className="w-fit px-6 sm:px-8 h-12 sm:h-16 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:bg-slate-100 text-[9px] sm:text-xs">
-                      {builder.buttons.back}
-                  </Button>
-              )}
-              {currentStep === 6 && step5Footer ? (
-                <>
-                  <div className="flex-1 flex items-center gap-4">
-                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Total</p>
-                    <p className="text-2xl font-black text-slate-900">₹{step5Footer.totalPrice.toLocaleString()}</p>
-                  </div>
-                  <Button
-                    onClick={() => step5Footer.onCreatePackage()}
-                    disabled={isGenerating}
-                    className="h-12 sm:h-16 px-8 rounded-xl sm:rounded-2xl bg-emerald-500 text-white font-black text-sm uppercase tracking-widest disabled:opacity-50"
-                  >
-                    {isGenerating ? (builder.buttons.building ?? "Creating...") : (builder.buttons.createPackage ?? "Create my package")}
-                  </Button>
-                </>
-              ) : currentStep < 6 && (
-              <Button 
-                onClick={handleNext}
-                disabled={isGenerating || !isStepValid()}
-                className={`flex-1 h-12 sm:h-16 rounded-xl sm:rounded-2xl text-sm sm:text-lg font-black tracking-[0.15em] sm:tracking-[0.2em] transition-all uppercase ${
-                  isGenerating ? "bg-slate-900" : "bg-slate-900 hover:bg-black text-white shadow-2xl active:scale-[0.98]"
-                }`}
-              >
-                {isGenerating ? (
-                  <div className="flex items-center justify-center gap-3">
-                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                    <span className="text-xs md:text-sm tracking-widest">{builder.buttons.building}</span>
-                  </div>
-                ) : currentStep === 5 ? (builder.buttons.seePlan ?? "See My Plan") : builder.buttons.continue}
-              </Button>
-              )}
-          </div>
-        </div>
+        {/* Sticky Bottom Action — one Back + one primary Continue/Create on every step,
+            with the live package total folded into the primary button's own label.
+            Portaled to <body>: the page wrapper animates `transform` on mount, which
+            would otherwise turn `position: fixed` into "fixed to the page". */}
+        {isMounted && createPortal(
+          <div className="builder-footer-safe-area fixed bottom-0 left-0 right-0 px-3 sm:px-6 pt-3 sm:pt-6 bg-white/90 backdrop-blur-xl border-t border-slate-100 z-50">
+            <div className="max-w-6xl mx-auto px-2 sm:px-4 flex items-center justify-between gap-3 sm:gap-4">
+                {currentStep > 1 && (
+                    <Button variant="ghost" onClick={handleBack} className="w-fit px-6 sm:px-8 h-12 sm:h-16 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:bg-slate-100 text-[9px] sm:text-xs">
+                        {builder.buttons.back}
+                    </Button>
+                )}
+                {currentStep === 6 ? (
+                  step5Footer && (
+                    <Button
+                      onClick={() => step5Footer.onCreatePackage()}
+                      disabled={isGenerating}
+                      className="flex-1 h-12 sm:h-16 rounded-xl sm:rounded-2xl text-sm sm:text-lg font-black tracking-[0.15em] sm:tracking-[0.2em] transition-all uppercase bg-emerald-500 hover:bg-emerald-600 text-white shadow-2xl active:scale-[0.98]"
+                    >
+                      {isGenerating ? (
+                        <div className="flex items-center justify-center gap-3">
+                          <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                          <span className="text-xs md:text-sm tracking-widest">{builder.buttons.building}</span>
+                        </div>
+                      ) : (
+                        `${builder.buttons.createPackage ?? "Create my package"} · ₹${step5Footer.totalPrice.toLocaleString()}`
+                      )}
+                    </Button>
+                  )
+                ) : (
+                <Button
+                  onClick={handleNext}
+                  disabled={isGenerating || !isStepValid()}
+                  className="flex-1 h-12 sm:h-16 rounded-xl sm:rounded-2xl text-sm sm:text-lg font-black tracking-[0.15em] sm:tracking-[0.2em] transition-all uppercase bg-slate-900 hover:bg-black text-white shadow-2xl active:scale-[0.98]"
+                >
+                  {isGenerating ? (
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                      <span className="text-xs md:text-sm tracking-widest">{builder.buttons.building}</span>
+                    </div>
+                  ) : currentStep === 5 ? (builder.buttons.seePlan ?? "See My Plan") : builder.buttons.continue}
+                </Button>
+                )}
+            </div>
+          </div>,
+          document.body
+        )}
 
         {/* Loading Overlay */}
         {isGenerating && (

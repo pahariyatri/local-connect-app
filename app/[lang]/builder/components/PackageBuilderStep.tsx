@@ -98,7 +98,8 @@ export default function PackageBuilderStep({
         if (services.length > 0) setLiveVendors(mapServicesToVendors(services));
       })
       .catch((err) => {
-        if (!cancelled) console.error("Discover failed:", err);
+        // Already handled below (vendors stay empty, UI shows "no options nearby").
+        if (!cancelled) console.warn("Discover unavailable:", (err as Error)?.message || err);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
