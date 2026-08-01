@@ -9,8 +9,7 @@ import { fetchCurrentUser } from '@/services/userService';
 import { useAuth } from '@/contexts/AuthContext';
 import { PIN_LENGTH, isWeakPin } from '@/utils/validation';
 import Button from '../../components/atoms/Button';
-import Typography from '../../components/atoms/Typography';
-import BackButton from '../../components/atoms/BackButton';
+import AuthShell from '../components/AuthShell';
 
 type Mode = 'create' | 'login' | 'reset';
 
@@ -55,7 +54,7 @@ function PinBoxes({
   };
 
   return (
-    <div className="flex justify-center gap-3 sm:gap-4 max-w-xs mx-auto lg:mx-0" onPaste={handlePaste}>
+    <div className="flex justify-center gap-2.5" onPaste={handlePaste}>
       {Array.from({ length: PIN_LENGTH }).map((_, i) => (
         <input
           key={i}
@@ -68,9 +67,9 @@ function PinBoxes({
           value={value[i] || ''}
           onChange={(e) => handleChange(e, i)}
           onKeyDown={(e) => handleKeyDown(e, i)}
-          className={`w-14 h-16 sm:w-16 sm:h-20 text-center text-2xl sm:text-3xl font-black rounded-2xl transition-all outline-none border-2 ${
-            value[i] ? 'border-slate-900 bg-white text-slate-900' : 'border-transparent bg-slate-50 text-slate-400'
-          } focus:bg-white focus:border-slate-900 focus:shadow-lg focus:shadow-slate-100`}
+          className={`w-11 h-12 sm:w-12 sm:h-14 text-center text-lg font-semibold rounded-xl transition-colors outline-none border ${
+            value[i] ? 'border-slate-900 bg-white text-slate-900' : 'border-slate-200 bg-white text-slate-400'
+          } focus:border-slate-900`}
           placeholder="•"
         />
       ))}
@@ -218,13 +217,11 @@ export default function PinPage() {
     (mode === 'create' && !ticket && !phoneNumber)
   ) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 pt-28 sm:pt-32">
-        <div className="max-w-md w-full bg-white p-8 rounded-3xl shadow-xl text-center">
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">Session Invalid</h2>
-          <p className="text-slate-500 mb-8">This link is incomplete or has expired. Please restart the sign-in process.</p>
-          <Button onClick={() => router.push(`/${lang}/auth/login`)} className="w-full h-14 rounded-2xl bg-slate-900 text-white font-bold">Go to Login</Button>
-        </div>
-      </div>
+      <AuthShell lang={lang} title="Session expired" subtitle="This link is incomplete or has expired. Please start over.">
+        <Button onClick={() => router.push(`/${lang}/auth/login`)} className="w-full h-12 rounded-xl bg-slate-900 hover:bg-black text-white text-sm font-semibold transition-colors">
+          Go to sign in
+        </Button>
+      </AuthShell>
     );
   }
 
@@ -233,8 +230,8 @@ export default function PinPage() {
   const filled = activeValue.join('').length === PIN_LENGTH;
 
   const heading = isTwoStage
-    ? (stage === 'confirm' ? <>Confirm <br /> PIN.</> : (mode === 'reset' ? <>New <br /> PIN.</> : <>Create <br /> PIN.</>))
-    : <>Enter <br /> PIN.</>;
+    ? (stage === 'confirm' ? 'Confirm your PIN' : (mode === 'reset' ? 'Choose a new PIN' : 'Create a PIN'))
+    : 'Enter your PIN';
 
   const subtitle = isTwoStage
     ? (stage === 'confirm'
@@ -245,92 +242,66 @@ export default function PinPage() {
     : `Enter your ${PIN_LENGTH}-digit PIN to continue.`;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-2 sm:p-4 pt-28 sm:pt-32">
-      <main className="max-w-4xl w-full bg-white rounded-[2rem] sm:rounded-[3rem] shadow-2xl overflow-hidden grid lg:grid-cols-2">
-
-        {/* Brand panel */}
-        <div className="hidden lg:flex relative p-12 bg-slate-900 text-white flex-col justify-between overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px]" />
-          <div className="relative z-10">
-            <div onClick={() => router.push('/')} className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center font-black text-white text-xl mb-12 cursor-pointer hover:bg-white/20 transition-all">LC</div>
-            <h2 className="text-5xl font-black leading-[0.9] uppercase italic tracking-tighter mb-6">
-              {isTwoStage ? <>Your <br /> Key.</> : <>Quick <br /> Access.</>}
-            </h2>
-            <div className="flex items-center gap-3 text-emerald-400">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-widest">PIN secured</span>
-            </div>
-          </div>
-          <span className="relative z-10 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Local Connect Portal</span>
-        </div>
-
-        {/* Form panel */}
-        <div className="p-6 sm:p-12 md:p-16 flex flex-col justify-center relative bg-white">
-          <BackButton onClick={() => router.push(`/${lang}/auth/login`)} className="absolute top-6 left-6" />
-
-          <header className="mb-8 sm:mb-10 text-center lg:text-left pt-6 lg:pt-0">
-            <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest mb-4">
-              {mode === 'reset' ? 'Reset your PIN' : mode === 'create' ? 'Set your PIN' : 'PIN Login'}
-            </span>
-            <Typography variant="h1" className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter leading-[0.85] uppercase italic">
-              {heading}
-            </Typography>
-            <p className="mt-4 text-slate-400 font-medium text-sm italic">
-              {subtitle}{' '}
-              {(mode === 'login' || (mode === 'create' && phoneNumber)) && (
-                <span className="text-slate-900 font-black not-italic">+91 {maskPhone(phoneNumber)}</span>
-              )}
+    <AuthShell
+      lang={lang}
+      eyebrow={mode === 'reset' ? 'Reset PIN' : mode === 'create' ? 'Set PIN' : 'PIN login'}
+      title={heading}
+      subtitle={
+        <>
+          {subtitle}{' '}
+          {(mode === 'login' || (mode === 'create' && phoneNumber)) && (
+            <span className="text-slate-900 font-medium">+91 {maskPhone(phoneNumber)}</span>
+          )}
+        </>
+      }
+      onBack={() => router.push(`/${lang}/auth/login`)}
+    >
+      <div className="space-y-6">
+        <div className="min-h-[20px]" aria-live="polite">
+          {error && (
+            <p role="alert" className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg py-2 px-3 text-center">
+              {error}
             </p>
-          </header>
-
-          <div className="space-y-8">
-            <div className="min-h-[40px]" aria-live="polite">
-              {error && (
-                <div role="alert" className="p-3 sm:p-4 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 text-[10px] font-black uppercase tracking-widest text-center animate-shake">
-                  {error}
-                </div>
-              )}
-              {success && (
-                <div className="p-3 sm:p-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-600 text-[10px] font-black uppercase tracking-widest text-center animate-fade-in">
-                  {success}
-                </div>
-              )}
-            </div>
-
-            <PinBoxes
-              key={isTwoStage ? stage : 'login'}
-              value={activeValue}
-              onChange={setActiveValue}
-              autoFocus
-              label={stage === 'confirm' ? 'Confirm PIN' : 'PIN'}
-            />
-
-            <div className="space-y-4">
-              <Button
-                onClick={submit}
-                disabled={!filled}
-                isLoading={busy}
-                className="w-full h-14 sm:h-16 rounded-2xl bg-slate-900 text-white font-black uppercase tracking-widest italic shadow-xl shadow-slate-200 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-              >
-                {isTwoStage ? (stage === 'confirm' ? 'Confirm PIN' : 'Continue') : 'Login'}
-              </Button>
-
-              {mode === 'login' && (
-                <div className="text-center lg:text-left">
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={handleForgotPin}
-                    className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-emerald-500 transition-colors disabled:opacity-50"
-                  >
-                    Forgot PIN? <span className="text-emerald-500 underline underline-offset-4">Recover with OTP</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+          )}
+          {success && (
+            <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg py-2 px-3 text-center">
+              {success}
+            </p>
+          )}
         </div>
-      </main>
-    </div>
+
+        <PinBoxes
+          key={isTwoStage ? stage : 'login'}
+          value={activeValue}
+          onChange={setActiveValue}
+          autoFocus
+          label={stage === 'confirm' ? 'Confirm PIN' : 'PIN'}
+        />
+
+        <div className="space-y-3">
+          <Button
+            onClick={submit}
+            disabled={!filled}
+            isLoading={busy}
+            className="w-full h-12 rounded-xl bg-slate-900 hover:bg-black text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {isTwoStage ? (stage === 'confirm' ? 'Confirm PIN' : 'Continue') : 'Sign in'}
+          </Button>
+
+          {mode === 'login' && (
+            <div className="text-center">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={handleForgotPin}
+                className="text-xs text-slate-400 hover:text-slate-900 transition-colors disabled:opacity-50"
+              >
+                Forgot PIN? <span className="text-emerald-600 underline underline-offset-2">Recover with OTP</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </AuthShell>
   );
 }
