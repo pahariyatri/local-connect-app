@@ -50,8 +50,38 @@ export const cancelBooking = async (bookingId: string) => {
   return api.post(`/booking/${bookingId}/cancel`);
 };
 
-export const getUserBookings = async () => {
-  return api.get('/booking', { skipCache: true });
+export interface UserBookingsQuery {
+  status?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface UserBookingsResult {
+  bookings: any[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
+/** The logged-in traveller's own bookings ("My Trips"). See `GET /api/v1/booking`. */
+export const getUserBookings = async (query: UserBookingsQuery = {}): Promise<UserBookingsResult> => {
+  const params = new URLSearchParams();
+  if (query.status) params.set('status', query.status);
+  if (query.page) params.set('page', String(query.page));
+  if (query.limit) params.set('limit', String(query.limit));
+  const qs = params.toString();
+
+  const raw = await api.get(`/booking${qs ? `?${qs}` : ''}`, { skipCache: true });
+  const result = (raw as any)?.data ?? raw;
+
+  return {
+    bookings: Array.isArray(result?.data) ? result.data : [],
+    total: result?.total ?? 0,
+    page: result?.page ?? 1,
+    limit: result?.limit ?? 20,
+    pages: result?.pages ?? 0,
+  };
 };
 
 export interface VendorBookingsQuery {

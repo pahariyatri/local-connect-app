@@ -57,10 +57,19 @@ export function initRazorpayCheckout(opts: InitCheckoutOptions): Promise<Razorpa
   return new Promise(async (resolve, reject) => {
     try {
       await loadRazorpayScript();
-    } catch (err) {
+    } catch {
       reject(new Error('Payment gateway unavailable. Please refresh and try again.'));
       return;
     }
+
+    let settled = false;
+    let openTimeout: ReturnType<typeof setTimeout>;
+    const settle = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(openTimeout);
+      fn();
+    };
 
     const options = {
       key: opts.keyId,
@@ -79,18 +88,33 @@ export function initRazorpayCheckout(opts: InitCheckoutOptions): Promise<Razorpa
       },
       modal: {
         ondismiss: () => {
-          reject(new Error('Payment cancelled by user'));
+          settle(() => reject(new Error('Payment cancelled by user')));
         },
       },
       handler: (response: RazorpayResult) => {
-        resolve(response);
+        settle(() => resolve(response));
       },
     };
 
     const rzp = new (window as any).Razorpay(options);
     rzp.on('payment.failed', (response: any) => {
-      reject(new Error(response?.error?.description || 'Payment failed'));
+      settle(() => reject(new Error(response?.error?.description || 'Payment failed')));
     });
+
+    // If the widget never actually renders (invalid key, Razorpay outage, the
+    // script loaded but init silently failed) none of handler/ondismiss/
+    // payment.failed ever fire, and the caller hangs on "Opening Payment..."
+    // forever with no error. Detect that specifically — once the checkout
+    // iframe is actually in the DOM, the user may take as long as they want,
+    // so this only guards the "never opened at all" window, not the whole
+    // payment flow.
+    openTimeout = setTimeout(() => {
+      const opened = typeof document !== 'undefined' && document.querySelector('iframe.razorpay-checkout-frame');
+      if (!opened) {
+        settle(() => reject(new Error('Payment gateway did not respond. Please try again.')));
+      }
+    }, 8000);
+
     rzp.open();
   });
 }

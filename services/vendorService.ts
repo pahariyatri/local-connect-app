@@ -132,6 +132,19 @@ export const getVendors = async () => {
   return (raw as any)?.data ?? raw;
 };
 
+/**
+ * The vendor the logged-in user created at onboarding, resolved server-side
+ * (via their point-of-contact phone), or null if they never onboarded one.
+ * Prefer this over the `vendorId` localStorage value where possible — that
+ * value only ever gets written once, in the browser session onboarding
+ * happened in, and is lost on a new device, a cleared cache, or even just a
+ * different browser profile.
+ */
+export const getMyVendor = async () => {
+  const raw = await api.get('/vendors/mine');
+  return (raw as any)?.data ?? raw;
+};
+
 export const getVendorById = async (id: string) => {
   // Track vendor click for popularity ranking
   sessionTracker.track('vendor_clicked', {

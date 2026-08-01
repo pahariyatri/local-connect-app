@@ -76,17 +76,12 @@ export default function ProfilePage() {
     useEffect(() => {
         Promise.all([
             fetchCurrentUser().catch(() => null),
-            getUserBookings().catch(() => null),
-        ]).then(([userData, bookingsRaw]) => {
+            getUserBookings({ limit: 3 }).catch(() => null),
+        ]).then(([userData, bookingsResult]) => {
             if (userData) setUser(userData);
             else router.push(`/${lang}/auth/login`);
 
-            const list: Booking[] = Array.isArray(bookingsRaw?.data)
-                ? bookingsRaw.data
-                : Array.isArray(bookingsRaw)
-                ? bookingsRaw
-                : [];
-            setBookings(list.slice(0, 3));
+            setBookings(bookingsResult?.bookings ?? []);
         }).finally(() => setLoading(false));
     }, [router, lang]);
 

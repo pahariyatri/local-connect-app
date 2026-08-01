@@ -8,6 +8,7 @@ import Button from "../../components/atoms/Button";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import Loading from "@/app/loading";
 import { getVendorBookings } from "@/services/bookingService";
+import { getMyVendor } from "@/services/vendorService";
 import { toApiUiError } from "@/utils/apiErrors";
 
 type FilterKey = "all" | "pending" | "confirmed" | "completed" | "cancelled";
@@ -72,10 +73,35 @@ export default function ManageBookingsPage() {
 
   // Lazy initializer (not an effect) — localStorage only exists client-side,
   // but this page is behind auth and always client-rendered in practice.
-  const [vendorId] = useState<string | null>(() => {
+  // This is only a fast-path cache: it's written once, in whichever browser
+  // session onboarding happened in, so a new device/tab/cleared-storage user
+  // falls through to the server-resolved lookup below instead of losing
+  // access to their own vendor entirely.
+  const [vendorId, setVendorId] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
     try { return window.localStorage.getItem("vendorId"); } catch { return null; }
   });
+  // Lazy initializer mirrors vendorId's own — if the fast-path cache already
+  // had a value there's nothing to resolve, so start "not resolving" rather
+  // than flipping it inside an effect.
+  const [resolvingVendor, setResolvingVendor] = useState(() => {
+    if (typeof window === "undefined") return true;
+    try { return !window.localStorage.getItem("vendorId"); } catch { return true; }
+  });
+
+  useEffect(() => {
+    if (vendorId) return; // already resolved via the fast-path cache
+    let cancelled = false;
+    getMyVendor()
+      .then((vendor) => {
+        if (cancelled || !vendor?.id) return;
+        setVendorId(vendor.id);
+        try { window.localStorage.setItem("vendorId", vendor.id); } catch { /* non-fatal */ }
+      })
+      .catch(() => { /* genuinely no vendor for this user — handled by the empty state below */ })
+      .finally(() => { if (!cancelled) setResolvingVendor(false); });
+    return () => { cancelled = true; };
+  }, [vendorId]);
 
   const [filter, setFilter] = useState<FilterKey>("all");
   const [bookings, setBookings] = useState<any[]>([]);
@@ -115,7 +141,9 @@ export default function ManageBookingsPage() {
     .filter((b) => STATUS_TO_FILTER[b.status] !== "cancelled")
     .reduce((sum, b) => sum + Number(b.totalAmount || 0), 0);
 
-  // No vendor profile linked in this browser yet — nothing to fetch.
+  if (resolvingVendor) return <Loading />;
+
+  // No vendor profile exists for this user at all — nothing to fetch.
   if (vendorId === null) {
     return (
       <div className="max-w-md mx-auto text-center py-20">

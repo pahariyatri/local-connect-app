@@ -151,7 +151,7 @@ export default function DiscoverPage() {
         if (!dict) return;
         const fetchVendors = async () => {
             try {
-                const response = await api.get('/vendors');
+                const response = await getVendors();
                 if (response && Array.isArray(response)) {
                     setVendors(response.map(mapBackendVendor));
                 } else {

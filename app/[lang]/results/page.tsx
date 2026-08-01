@@ -447,7 +447,6 @@ export default function ResultsPage() {
               {itineraryDays.map(day => {
                 const allCats = ["Stay", "Taxi", "Adventure", "Meals"];
                 const cats = packageData ? allCats.filter(c => selections[day]?.[c]) : allCats;
-                const icons: Record<string, string> = { Stay: "🏨", Taxi: "🚗", Adventure: "🏔️", Meals: "🍛" };
                 return (
                   <DayItinerary
                     key={day}
@@ -459,7 +458,6 @@ export default function ResultsPage() {
                     readOnly={!!packageData}
                     selections={cats.map(cat => ({
                       category: cat,
-                      icon: icons[cat] ?? "•",
                       selectedVendorId: selections[day]?.[cat] ?? null,
                       options: liveVendors[cat] || [],
                     }))}

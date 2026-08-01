@@ -37,7 +37,8 @@ export const deleteTrip = async (id: number) => {
 // ═══════════════════ SERVICES ═══════════════════
 
 export const getServices = async () => {
-  return api.get('/service', { skipAuth: true });
+  const raw = await api.get('/service', { skipAuth: true });
+  return (raw as any)?.data ?? raw;
 };
 
 export const getServiceById = async (id: number | string) => {

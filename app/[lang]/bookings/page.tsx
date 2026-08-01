@@ -73,11 +73,8 @@ export default function BookingsListPage() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        getUserBookings()
-            .then((raw: any) => {
-                const list: Booking[] = Array.isArray(raw?.data) ? raw.data : Array.isArray(raw) ? raw : [];
-                setBookings(list);
-            })
+        getUserBookings({ limit: 50 })
+            .then((result) => setBookings(result.bookings))
             .catch(() => setError("Could not load bookings."))
             .finally(() => setLoading(false));
     }, []);
