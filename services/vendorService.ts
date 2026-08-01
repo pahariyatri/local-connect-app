@@ -126,7 +126,8 @@ export const discoverServices = async (params: DiscoveryParams) => {
 };
 
 export const getVendors = async () => {
-  return api.get('/vendors', { skipAuth: true });
+  const raw = await api.get('/vendors', { skipAuth: true });
+  return (raw as any)?.data ?? raw;
 };
 
 export const getVendorById = async (id: string) => {
@@ -135,24 +136,40 @@ export const getVendorById = async (id: string) => {
     entityType: 'vendor',
     entityId: id,
   });
-  return api.get(`/vendors/${id}`, { skipAuth: true });
+  const raw = await api.get(`/vendors/${id}`, { skipAuth: true });
+  return (raw as any)?.data ?? raw;
 };
 
+/** Every successful backend response is wrapped in `{ success, data, meta }` (see
+ * backend/src/shared/interceptors/response/response.interceptor.ts) — unwrap here
+ * once so every caller gets the Vendor record itself, not the envelope. */
 export const createVendor = async (vendorData: any) => {
-  const result = await api.post('/vendors', vendorData);
+  const raw = await api.post('/vendors', vendorData);
   api.invalidateCache('/vendors');
-  return result;
+  return (raw as any)?.data ?? raw;
 };
 
 export const updateVendor = async (id: string, vendorData: any) => {
-  const result = await api.put(`/vendors/${id}`, vendorData);
+  const raw = await api.put(`/vendors/${id}`, vendorData);
   api.invalidateCache('/vendors');
   api.invalidateCache(`/vendors/${id}`);
-  return result;
+  return (raw as any)?.data ?? raw;
 };
 
 export const deleteVendor = async (id: string) => {
-  const result = await api.delete(`/vendors/${id}`);
+  const raw = await api.delete(`/vendors/${id}`);
   api.invalidateCache('/vendors');
-  return result;
+  return (raw as any)?.data ?? raw;
+};
+
+/**
+ * Vendor's contact person — name/email/phone live on PointOfContact, not
+ * Vendor itself (see backend/src/feature/point-of-contact). Call this right
+ * after createVendor() with the new vendor's id to persist onboarding's
+ * contact fields, which the Vendor endpoint silently drops (whitelist-only
+ * validation strips any field CreateVendorDto doesn't declare).
+ */
+export const createPointOfContact = async (data: { vendorId: string; name: string; email?: string; phone: string }) => {
+  const raw = await api.post('/point-of-contact', data);
+  return (raw as any)?.data ?? raw;
 };
