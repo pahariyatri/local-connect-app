@@ -7,12 +7,30 @@ import PlanPreview from "./PlanPreview";
 import { TripStop, createTripStop, duplicateTripStop } from "@/types/tripBuilder";
 
 // Category keys align with PackageBuilderStep / DayItinerary.
-const STOP_CATEGORIES: { key: string; icon: string }[] = [
-  { key: "Stay", icon: "🏨" },
-  { key: "Taxi", icon: "🚗" },
-  { key: "Adventure", icon: "🏔️" },
-  { key: "Meals", icon: "🍛" },
+const STOP_CATEGORIES: { key: string }[] = [
+  { key: "Stay" },
+  { key: "Taxi" },
+  { key: "Adventure" },
+  { key: "Meals" },
 ];
+
+// Same inline-stroke-SVG convention used everywhere else — no emoji icons.
+const CATEGORY_ICON_PATHS: Record<string, React.ReactNode> = {
+  Stay: <><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><path d="M9 22V12h6v10" /></>,
+  Taxi: <><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2" /><circle cx="6.5" cy="16.5" r="2.5" /><circle cx="16.5" cy="16.5" r="2.5" /></>,
+  Adventure: <path d="m8 3 4 8 5-5 5 15H2L8 3z" />,
+  Meals: <><path d="M3 2v7c0 1.1.9 2 2 2s2-.9 2-2V2" /><path d="M7 2v20" /><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" /></>,
+};
+
+function CategoryIcon({ category, className = "" }: { category: string; className?: string }) {
+  const path = CATEGORY_ICON_PATHS[category];
+  if (!path) return null;
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      {path}
+    </svg>
+  );
+}
 
 function titleCase(s: string): string {
   return (s || "")
@@ -311,7 +329,7 @@ export default function NextStopSelector({
                         selected ? "bg-white text-slate-600" : "bg-slate-50 text-slate-500"
                       }`}
                     >
-                      <span>{c.icon}</span>
+                      <CategoryIcon category={c.key} className="w-3 h-3" />
                       <span>{place.categories[c.key]}</span>
                     </span>
                   ))}

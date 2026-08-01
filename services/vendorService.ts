@@ -30,7 +30,9 @@ export function mapServicesToVendors(services: any[]): Record<string, Vendor[]> 
       id: s.id.toString(),
       name: s.name,
       image: s.image || (s.additionalData?.images?.[0]) || "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=400",
-      rating: s.rating || 4.5,
+      // No review/rating system exists on the backend — there is no `s.rating`
+      // to ever read. `undefined` here means "not rated", not a fake 4.5.
+      rating: s.rating,
       price: priceVal,
       category: type,
       description: s.description,
@@ -127,6 +129,19 @@ export const discoverServices = async (params: DiscoveryParams) => {
 
 export const getVendors = async () => {
   const raw = await api.get('/vendors', { skipAuth: true });
+  return (raw as any)?.data ?? raw;
+};
+
+/**
+ * The vendor the logged-in user created at onboarding, resolved server-side
+ * (via their point-of-contact phone), or null if they never onboarded one.
+ * Prefer this over the `vendorId` localStorage value where possible — that
+ * value only ever gets written once, in the browser session onboarding
+ * happened in, and is lost on a new device, a cleared cache, or even just a
+ * different browser profile.
+ */
+export const getMyVendor = async () => {
+  const raw = await api.get('/vendors/mine');
   return (raw as any)?.data ?? raw;
 };
 

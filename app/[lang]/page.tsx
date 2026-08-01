@@ -8,7 +8,7 @@ import LocalImage from "./components/atoms/Image";
 import VerifiedBadge from "./components/atoms/VerifiedBadge";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import Loading from "../loading";
-import api from "@/lib/apiClient";
+import { getVendors } from "@/services/vendorService";
 
 type HomeProps = {
   params: Promise<{ lang: Locale }>;
@@ -136,11 +136,18 @@ function RouteTimeline({ days }: { days: typeof ROUTE_DAYS }) {
       {days.map((d, i) => (
         <div key={d.day} className="flex gap-6">
           <div className="flex flex-col items-center flex-shrink-0">
-            <span
-              className={`w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center transition-all duration-500 ease-out ${visible ? "scale-100 opacity-100" : "scale-50 opacity-0"}`}
-              style={{ transitionDelay: visible ? `${i * 180}ms` : "0ms" }}
-            >
-              <Icon name={d.icon} className="w-4 h-4" />
+            <span className="relative">
+              <span
+                className={`absolute inset-0 rounded-full ${ROUTE_DAY_COLORS[i % ROUTE_DAY_COLORS.length]} blur-lg transition-opacity duration-700 ease-out ${visible ? "opacity-30" : "opacity-0"}`}
+                style={{ transitionDelay: visible ? `${i * 180 + 100}ms` : "0ms" }}
+                aria-hidden="true"
+              />
+              <span
+                className={`relative w-9 h-9 rounded-full ${ROUTE_DAY_COLORS[i % ROUTE_DAY_COLORS.length]} text-white flex items-center justify-center transition-all duration-500 ease-out shadow-lg ${visible ? "scale-100 opacity-100" : "scale-50 opacity-0"}`}
+                style={{ transitionDelay: visible ? `${i * 180}ms` : "0ms" }}
+              >
+                <Icon name={d.icon} className="w-4 h-4" />
+              </span>
             </span>
             {i < days.length - 1 && (
               <span className="w-0.5 flex-1 bg-slate-100 my-1 relative overflow-hidden">
@@ -155,7 +162,7 @@ function RouteTimeline({ days }: { days: typeof ROUTE_DAYS }) {
             className={`transition-all duration-500 ease-out ${i < days.length - 1 ? "pb-12" : ""} ${visible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"}`}
             style={{ transitionDelay: visible ? `${i * 180 + 80}ms` : "0ms" }}
           >
-            <span className="text-emerald-600 text-[10px] font-black uppercase tracking-widest">Day {d.day}</span>
+            <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Day {d.day}</span>
             <p className="text-slate-900 font-black text-2xl sm:text-3xl mt-1.5 tracking-tight">{d.from} <span className="text-slate-300">&rarr;</span> {d.to}</p>
             <p className="text-slate-400 text-sm mt-1.5">{d.note}</p>
           </div>
@@ -173,27 +180,10 @@ const ROUTE_DAYS: { day: number; from: string; to: string; note: string; icon: I
   { day: 3, from: "Kullu", to: "Manali", note: "Stay", icon: "home" },
 ];
 
-const PACKAGE_PREVIEW = {
-  route: "Chandigarh → Kasol → Manali",
-  total: 18500,
-  days: [
-    { day: 1, items: [{ icon: "home" as IconName, label: "Stay" }, { icon: "utensils" as IconName, label: "Meals" }] },
-    { day: 2, items: [{ icon: "car" as IconName, label: "Taxi" }, { icon: "mountain" as IconName, label: "Adventure" }] },
-    { day: 3, items: [{ icon: "home" as IconName, label: "Stay" }, { icon: "utensils" as IconName, label: "Meals" }] },
-  ],
-};
-
-const CATEGORY_ICONS: Record<string, IconName> = {
-  homestays: "home",
-  food: "utensils",
-  transport: "car",
-  adventures: "mountain",
-  camping: "mountain",
-  guides: "compass",
-  wellness: "compass",
-  photography: "compass",
-};
-const CATEGORY_ORDER = ["homestays", "food", "transport", "adventures", "guides"];
+// Per-day accent colours for the route timeline — cycles through the same
+// small palette used for category selection elsewhere in the app (indigo /
+// emerald / blue / amber), so a 3-5 day route doesn't read as monotone.
+const ROUTE_DAY_COLORS = ["bg-indigo-500", "bg-emerald-500", "bg-blue-500", "bg-amber-500"];
 
 // ─── Vendor mapping — mirrors the shape already used across the app; no
 // fabricated ratings or review counts. ───────────────────────────────────────
@@ -240,6 +230,25 @@ function SectionHeading({ eyebrow, title, subtitle, center = false, dark = false
   );
 }
 
+// ─── Footer link column ──────────────────────────────────────────────────────
+
+function FooterColumn({ title, links }: { title: string; links: { label: string; onClick: () => void }[] }) {
+  return (
+    <div>
+      <h3 className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-4">{title}</h3>
+      <ul className="space-y-3">
+        {links.map((l) => (
+          <li key={l.label}>
+            <button onClick={l.onClick} className="text-slate-300 text-sm font-medium hover:text-white transition-colors">
+              {l.label}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function Home({ params }: HomeProps) { // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -254,7 +263,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
     let cancelled = false;
     (async () => {
       try {
-        const response = await api.get("/vendors", { sessionCache: true });
+        const response = await getVendors();
         if (!cancelled && Array.isArray(response) && response.length) {
           setProvidersList(response.slice(0, 4).map(mapBackendVendor));
         }
@@ -273,16 +282,11 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
 
   const pageDict = (dict as any)?.page?.home || {};
   const heroDict = pageDict?.hero || {};
-  const builderDict = pageDict?.builder || {};
   const categoriesDict = pageDict?.categories || {};
   const categoryItems: Record<string, string> = categoriesDict?.items || {};
   const providersDict = pageDict?.providers || {};
   const joinDict = pageDict?.join || {};
   const trustDict = pageDict?.trust || {};
-
-  const categoryPills = CATEGORY_ORDER
-    .filter((key) => categoryItems[key])
-    .map((key) => ({ key, label: categoryItems[key], icon: CATEGORY_ICONS[key] || "compass" }));
 
   const trustBadges = [trustDict.verified, trustDict.escrow, trustDict.messaging, trustDict.reviews].filter(Boolean);
 
@@ -361,79 +365,51 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
       </section>
 
       {/* ── 2 · ROUTE, DAY BY DAY ────────────────────────────────────────── */}
-      <section className="px-6 py-24 md:py-32">
-        <div className="max-w-2xl mx-auto">
-          <Reveal>
-            <SectionHeading eyebrow="Your route" title="The journey, day by day." subtitle="Every stop planned in advance, not figured out on arrival." center />
-          </Reveal>
-          <div className="mt-16">
-            <RouteTimeline days={ROUTE_DAYS} />
-          </div>
-        </div>
-      </section>
-
-      {/* ── 3 · BUILD YOUR PACKAGE ───────────────────────────────────────── */}
       <section className="px-6 py-24 md:py-32 bg-slate-50">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           <Reveal>
-            <SectionHeading
-              title="Combine services into one package."
-              subtitle={builderDict?.subtitle || "Route, dates and interests — turned into one bookable package."}
-            />
+            <div className="flex items-end justify-between gap-4 mb-12">
+              <SectionHeading eyebrow="Your route" title="The journey, day by day." subtitle="Every stop planned in advance, not figured out on arrival." />
+              <span className="hidden sm:inline-block flex-shrink-0 text-[9px] font-black uppercase tracking-widest text-slate-300">Example</span>
+            </div>
           </Reveal>
-
-          {categoryPills.length > 0 && (
-            <Reveal delayMs={80} className="mt-12">
-              <div className="flex flex-wrap gap-3">
-                {categoryPills.map((c) => (
-                  <button
-                    key={c.key}
-                    type="button"
-                    onClick={() => router.push(builderHref)}
-                    className="group inline-flex items-center gap-2.5 bg-white border border-slate-200 rounded-full pl-2.5 pr-5 py-2.5 hover:border-emerald-300 hover:bg-emerald-50 transition-colors active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-                  >
-                    <span className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center group-hover:bg-emerald-500 transition-colors"><Icon name={c.icon} className="w-4 h-4" /></span>
-                    <span className="text-slate-900 text-sm font-bold">{c.label}</span>
-                  </button>
-                ))}
-              </div>
-            </Reveal>
-          )}
-
-          {/* One package summary: route, days, price, single action */}
-          <Reveal delayMs={140} className="mt-12">
-            <div className="bg-white rounded-panel shadow-float p-7 sm:p-9 max-w-md">
-              <div className="flex items-center justify-between mb-6">
-                <p className="text-slate-900 font-black text-sm uppercase tracking-tight">{PACKAGE_PREVIEW.route}</p>
-                <span className="text-[9px] font-black uppercase tracking-widest text-slate-300">Example</span>
-              </div>
-              <div className="space-y-5">
-                {PACKAGE_PREVIEW.days.map((d) => (
-                  <div key={d.day} className="flex items-center gap-3">
-                    <span className="flex-shrink-0 w-9 h-9 rounded-xl bg-slate-900 text-white text-[10px] font-black flex items-center justify-center">D{d.day}</span>
-                    <div className="flex gap-2 flex-wrap">
-                      {d.items.map((it) => (
-                        <span key={it.label} className="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-600 bg-slate-50 border border-slate-100 rounded-lg px-2.5 py-1.5">
-                          <Icon name={it.icon} className="w-3 h-3 text-emerald-500" />{it.label}
-                        </span>
-                      ))}
-                    </div>
+          <Reveal delayMs={80}>
+            <div className="bg-white rounded-panel border border-slate-100 shadow-float overflow-hidden">
+              {/* Route overview strip: origin → destination, with the day/stop
+                  count derived from the itinerary itself, not fabricated. */}
+              <div className="relative bg-slate-50/80 bg-grid-pattern border-b border-slate-100 px-8 sm:px-10 py-8">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center flex-shrink-0"><Icon name="map-pin" className="w-4 h-4" /></span>
+                    <span className="text-slate-900 text-xs font-black uppercase tracking-tight">{ROUTE_DAYS[0].from}</span>
                   </div>
-                ))}
+                  <RouteLine className="flex-1 h-2 text-emerald-300" delayMs={200} />
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className="text-slate-900 text-xs font-black uppercase tracking-tight">{ROUTE_DAYS[ROUTE_DAYS.length - 1].to}</span>
+                    <span className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center flex-shrink-0"><Icon name="flag" className="w-4 h-4" /></span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 mt-6">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{ROUTE_DAYS.length} Days</span>
+                  <span className="w-1 h-1 rounded-full bg-slate-300" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{ROUTE_DAYS.length - 1} Stops</span>
+                </div>
               </div>
-              <div className="mt-7 pt-6 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Estimated total</span>
-                <span className="text-3xl font-black text-slate-900">₹{PACKAGE_PREVIEW.total.toLocaleString()}</span>
+
+              <div className="p-8 sm:p-10">
+                <RouteTimeline days={ROUTE_DAYS} />
+                <div className="mt-2 pt-8 border-t border-slate-100">
+                  <Button onClick={() => router.push(builderHref)} variant="primary" iconRight={<Icon name="arrow-right" className="w-4 h-4" />} className="group btn-primary w-full sm:w-auto h-control rounded-2xl text-xs px-8">
+                    {heroDict?.cta_plan || "Start Planning"}
+                  </Button>
+                </div>
               </div>
-              <Button onClick={() => router.push(builderHref)} variant="primary" iconRight={<Icon name="arrow-right" className="w-4 h-4" />} className="group btn-primary mt-6 w-full h-control rounded-2xl text-xs">
-                {builderDict?.cta || "Start building"}
-              </Button>
             </div>
           </Reveal>
         </div>
       </section>
 
-      {/* ── 4 · LOCAL VENDORS ────────────────────────────────────────────── */}
+      {/* ── 3 · LOCAL VENDORS ────────────────────────────────────────────── */}
       <section className="px-6 py-24 md:py-32">
         <div className="max-w-6xl mx-auto">
           <Reveal>
@@ -486,31 +462,40 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
         </div>
       </section>
 
-      {/* ── 5 · JOIN AS A LOCAL PROVIDER ─────────────────────────────────── */}
+      {/* ── 4 · JOIN AS A LOCAL PROVIDER ─────────────────────────────────── */}
       {joinDict?.title && (
         <section className="px-6 py-24 md:py-32 bg-slate-50">
           <Reveal>
-            <div className="max-w-4xl mx-auto bg-slate-900 rounded-panel p-12 sm:p-16 text-center">
-              {joinDict?.badge && <span className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.25em] block mb-5">{joinDict.badge}</span>}
-              <h2 className="text-white text-4xl sm:text-5xl font-black leading-[1.02] tracking-tight [text-wrap:balance]" dangerouslySetInnerHTML={{ __html: joinDict.title }} />
-              {joinDict?.subtitle && <p className="text-slate-300 text-base mt-5 max-w-md mx-auto leading-relaxed">{joinDict.subtitle}</p>}
-              <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Button onClick={() => router.push(vendorHref)} variant="primary" iconRight={<Icon name="arrow-right" className="w-4 h-4" />} className="group bg-emerald-500 hover:bg-emerald-600 text-white h-control rounded-full px-9 text-xs w-full sm:w-auto">
-                  {joinDict?.cta_join || "Join free"}
-                </Button>
-                {joinDict?.cta_learn && (
-                  <Button onClick={() => router.push(aboutHref)} className="bg-transparent border border-white/25 text-white hover:bg-white/10 shadow-none h-control rounded-full px-9 text-xs w-full sm:w-auto">
-                    {joinDict.cta_learn}
+            <div className="relative max-w-4xl mx-auto bg-slate-900 rounded-panel p-12 sm:p-16 text-center overflow-hidden">
+              <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-56 h-56 bg-emerald-500/10 rounded-full blur-[90px] pointer-events-none" />
+              <div className="relative">
+                {joinDict?.badge && <span className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.25em] block mb-5">{joinDict.badge}</span>}
+                <h2 className="text-white text-4xl sm:text-5xl font-black leading-[1.02] tracking-tight [text-wrap:balance]" dangerouslySetInnerHTML={{ __html: joinDict.title }} />
+                {joinDict?.subtitle && <p className="text-slate-300 text-base mt-5 max-w-md mx-auto leading-relaxed">{joinDict.subtitle}</p>}
+                <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <Button onClick={() => router.push(vendorHref)} variant="primary" iconRight={<Icon name="arrow-right" className="w-4 h-4" />} className="group bg-emerald-500 hover:bg-emerald-600 text-white h-control rounded-full px-9 text-xs w-full sm:w-auto shadow-none">
+                    {joinDict?.cta_join || "Join free"}
                   </Button>
+                  {joinDict?.cta_learn && (
+                    <Button onClick={() => router.push(aboutHref)} className="bg-transparent border border-white/25 text-white hover:bg-white/10 shadow-none h-control rounded-full px-9 text-xs w-full sm:w-auto">
+                      {joinDict.cta_learn}
+                    </Button>
+                  )}
+                </div>
+                {joinDict?.note && (
+                  <div className="mt-8 inline-flex items-center gap-2">
+                    <span className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0"><Icon name="check" className="w-2.5 h-2.5 text-emerald-400" /></span>
+                    <span className="text-slate-400 text-[10px] font-black uppercase tracking-wider">{joinDict.note}</span>
+                  </div>
                 )}
               </div>
-              {joinDict?.note && <p className="text-slate-500 text-[10px] font-medium mt-7 uppercase tracking-wider">{joinDict.note}</p>}
             </div>
           </Reveal>
         </section>
       )}
 
-      {/* ── 6 · TRUST ─────────────────────────────────────────────────────── */}
+      {/* ── 5 · TRUST ─────────────────────────────────────────────────────── */}
       {trustBadges.length > 0 && (
         <section className="px-6 py-20">
           <Reveal>
@@ -526,7 +511,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
         </section>
       )}
 
-      {/* ── 7 · FINAL CTA ─────────────────────────────────────────────────── */}
+      {/* ── 6 · FINAL CTA ─────────────────────────────────────────────────── */}
       <section className="px-6 py-28 md:py-40">
         <Reveal>
           <div className="max-w-3xl mx-auto text-center">
@@ -542,23 +527,44 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
       </section>
 
       {/* ── FOOTER ────────────────────────────────────────────────────────── */}
-      <footer className="px-6 py-12 bg-white border-t border-slate-100">
+      <footer className="px-6 pt-20 pb-10 bg-slate-900">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 pb-8 border-b border-slate-100">
-            <div className="flex items-center gap-3">
-              <span className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-xs">LC</span>
-              <span className="text-slate-900 font-black text-xs uppercase tracking-[0.2em] italic">Local Connect</span>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-x-6 gap-y-12 pb-14">
+            <div className="col-span-2">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="w-8 h-8 rounded-xl bg-white text-slate-900 flex items-center justify-center font-black text-xs flex-shrink-0">LC</span>
+                <span className="text-white font-black text-xs uppercase tracking-[0.2em] italic">Local Connect</span>
+              </div>
+              <p className="text-slate-400 text-sm leading-relaxed max-w-[240px]">
+                One route, planned end to end, with local support at every stop.
+              </p>
             </div>
-            <nav aria-label="Footer Navigation" className="flex flex-wrap gap-x-6 gap-y-2">
-              <button onClick={() => router.push(aboutHref)} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">About</button>
-              <button onClick={() => router.push(discoverHref)} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">Discover</button>
-              <button onClick={() => router.push(communityHref)} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">Community</button>
-              <button onClick={() => router.push(vendorHref)} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">Become a Vendor</button>
-              <button onClick={() => router.push(termsHref)} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">Terms</button>
-              <button onClick={() => router.push(privacyHref)} className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">Privacy</button>
-            </nav>
+            <FooterColumn
+              title="Explore"
+              links={[
+                { label: "Start Planning", onClick: () => router.push(builderHref) },
+                { label: "Discover Locals", onClick: () => router.push(discoverHref) },
+                { label: "Community", onClick: () => router.push(communityHref) },
+              ]}
+            />
+            <FooterColumn
+              title="Company"
+              links={[
+                { label: "About", onClick: () => router.push(aboutHref) },
+                { label: "Terms", onClick: () => router.push(termsHref) },
+                { label: "Privacy", onClick: () => router.push(privacyHref) },
+              ]}
+            />
+            <FooterColumn
+              title="For Locals"
+              links={[
+                { label: "Become a Vendor", onClick: () => router.push(vendorHref) },
+              ]}
+            />
           </div>
-          <p className="text-slate-400 text-[10px] font-medium mt-6 text-center sm:text-left">© 2026 Local Connect Portal. All rights reserved.</p>
+          <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-slate-500 text-[10px] font-medium">© 2026 Local Connect Portal. All rights reserved.</p>
+          </div>
         </div>
       </footer>
     </main>

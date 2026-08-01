@@ -16,10 +16,10 @@ import React from "react";
 export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
     return (
         <div className="min-h-dvh bg-white">
-            {/* max-w-6xl matches the trip builder (app/[lang]/builder/page.tsx) — the
-                onboarding page uses the same width to fit its sidebar + step grid.
-                confirmation/page.tsx (no sidebar) constrains its own inner width. */}
-            <div className="max-w-6xl mx-auto px-4 pt-28 sm:pt-36 pb-32 sm:pb-40">
+            {/* Single controlled-width column — no sidebar, so the form itself sets
+                the page width. Matches confirmation/page.tsx's own max-w-md, just
+                wide enough for the step-2 category grid to breathe. */}
+            <div className="max-w-2xl mx-auto px-4 pt-28 sm:pt-36 pb-32 sm:pb-40">
                 {children}
             </div>
         </div>

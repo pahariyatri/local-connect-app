@@ -28,15 +28,10 @@ export default function VendorQRCode({ businessName }: VendorQRCodeProps) {
         </div>
 
         <div className="mt-8 text-center">
-            <Typography variant="h3" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">SCAN TO BOOK</Typography>
+            <Typography variant="h3" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">SCAN TO VIEW</Typography>
             <p className="text-xs font-black text-slate-900 uppercase">{businessName}</p>
         </div>
       </div>
-      
-      <p className="mt-6 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center px-10 leading-relaxed">
-        Part of the <span className="text-emerald-500">Local Connect Secret Group</span>. 
-        <br />Scan to access exclusive direct-from-vendor rates.
-      </p>
     </div>
   );
 }

@@ -15,7 +15,7 @@ import Textarea from "../../components/atoms/Textarea";
 
 // ─── Icon system — same inline-stroke-SVG convention used across the app ───
 
-type IconName = "home" | "utensils" | "car" | "mountain" | "check" | "arrow-right" | "upload" | "file" | "trash" | "user" | "phone" | "mail" | "shield" | "clock" | "coin";
+type IconName = "home" | "utensils" | "car" | "mountain" | "check" | "upload" | "file" | "trash" | "user" | "phone" | "mail";
 
 const ICON_PATHS: Record<IconName, React.ReactNode> = {
   home: <><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><path d="M9 22V12h6v10" /></>,
@@ -23,16 +23,12 @@ const ICON_PATHS: Record<IconName, React.ReactNode> = {
   car: <><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2" /><circle cx="6.5" cy="16.5" r="2.5" /><circle cx="16.5" cy="16.5" r="2.5" /></>,
   mountain: <path d="m8 3 4 8 5-5 5 15H2L8 3z" />,
   check: <path d="M20 6 9 17l-5-5" />,
-  "arrow-right": <path d="M5 12h14M12 5l7 7-7 7" />,
   upload: <><path d="M12 3v12" /><path d="m7 8 5-5 5 5" /><path d="M5 21h14" /></>,
   file: <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></>,
   trash: <><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></>,
   user: <><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></>,
   phone: <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />,
   mail: <><path d="m22 6-10 7L2 6" /><path d="M2 6h20v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z" /></>,
-  shield: <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="m9 12 2 2 4-4" /></>,
-  clock: <><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></>,
-  coin: <><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></>,
 };
 
 function Icon({ name, className = "" }: { name: IconName; className?: string }) {
@@ -70,6 +66,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 type DocEntry = UploadedMedia & { label: string; uploading?: boolean };
 
 const TOTAL_STEPS = 5;
+const STEP_LABELS = ["Basic info", "Category", "About", "Documents", "Review"];
 
 export default function VendorOnboardingPage() {
   const { lang } = useParams();
@@ -228,80 +225,68 @@ export default function VendorOnboardingPage() {
   }, [createdVendorId, documents, businessName, description, types, contactName, phone, email, lang, router]);
 
   // ─── Step content ──────────────────────────────────────────────────────
-  // Same header pattern as the trip builder: short heading with one coloured
-  // accent word + a one-line subtitle, inside each step (app/[lang]/builder/page.tsx).
+  // The step number + title live in the progress indicator (below), so each
+  // step only needs a short instruction where the fields alone aren't
+  // self-explanatory — no repeated per-step headline.
 
   const renderStep = () => {
     switch (step) {
       case 1:
         return (
-          <div className="animate-fade-in">
-            <header className="mb-6 sm:mb-8">
-              <Typography variant="h1" className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
-                The <span className="text-emerald-500">basics.</span>
-              </Typography>
-              <p className="text-slate-400 font-medium mt-1 text-xs sm:text-sm">Who we&apos;ll be working with.</p>
-            </header>
-            <div className="p-4 sm:p-6 bg-white rounded-[2rem] shadow-sm border border-slate-100 space-y-5">
-              <Input
-                label="Your name"
-                name="contactName"
-                value={contactName}
-                onChange={(e) => setContactName(e.target.value)}
-                onBlur={() => markTouched("contactName")}
-                placeholder="e.g. Priya Sharma"
-                autoFocus
-                error={touched.contactName ? errors.contactName : undefined}
-              />
-              <Input
-                label="Business or provider name"
-                name="businessName"
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-                onBlur={() => markTouched("businessName")}
-                placeholder="e.g. Everest Travels"
-                error={touched.businessName ? errors.businessName : undefined}
-              />
-              <div>
-                <label htmlFor="phone" className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2 mb-2">Mobile number</label>
-                <div className={`w-full border-2 rounded-2xl flex items-center bg-slate-50/50 transition-all ${touched.phone && errors.phone ? "border-red-300" : "border-slate-100/50 focus-within:border-slate-900 focus-within:bg-white"}`}>
-                  <span className="pl-5 pr-3 font-black text-slate-400 text-sm select-none border-r border-slate-200 h-6 flex items-center">+91</span>
-                  <input
-                    id="phone"
-                    type="tel"
-                    inputMode="numeric"
-                    maxLength={PHONE_LENGTH}
-                    value={phone}
-                    onChange={(e) => setPhone(sanitizePhone(e.target.value))}
-                    onBlur={() => markTouched("phone")}
-                    placeholder="00000 00000"
-                    className="flex-1 h-full px-4 py-4 bg-transparent border-0 outline-none font-medium text-slate-900"
-                  />
-                </div>
-                {touched.phone && errors.phone && <p role="alert" className="text-xs text-red-500 mt-1.5 pl-2">{errors.phone}</p>}
+          <div key={step} className="animate-fade-in space-y-5">
+            <Input
+              label="Your name"
+              name="contactName"
+              value={contactName}
+              onChange={(e) => setContactName(e.target.value)}
+              onBlur={() => markTouched("contactName")}
+              placeholder="e.g. Priya Sharma"
+              autoFocus
+              error={touched.contactName ? errors.contactName : undefined}
+            />
+            <Input
+              label="Business or provider name"
+              name="businessName"
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              onBlur={() => markTouched("businessName")}
+              placeholder="e.g. Everest Travels"
+              error={touched.businessName ? errors.businessName : undefined}
+            />
+            <div>
+              <label htmlFor="phone" className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2 mb-2">Mobile number</label>
+              <div className={`w-full border-2 rounded-2xl flex items-center bg-slate-50/50 transition-all ${touched.phone && errors.phone ? "border-red-300" : "border-slate-100/50 focus-within:border-slate-900 focus-within:bg-white"}`}>
+                <span className="pl-5 pr-3 font-black text-slate-400 text-sm select-none border-r border-slate-200 h-6 flex items-center">+91</span>
+                <input
+                  id="phone"
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={PHONE_LENGTH}
+                  value={phone}
+                  onChange={(e) => setPhone(sanitizePhone(e.target.value))}
+                  onBlur={() => markTouched("phone")}
+                  placeholder="00000 00000"
+                  className="flex-1 h-full px-4 py-4 bg-transparent border-0 outline-none font-medium text-slate-900"
+                />
               </div>
-              <Input
-                label="Email (optional)"
-                name="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onBlur={() => markTouched("email")}
-                placeholder="you@example.com"
-                error={touched.email ? errors.email : undefined}
-              />
+              {touched.phone && errors.phone && <p role="alert" className="text-xs text-red-500 mt-1.5 pl-2 animate-fade-in">{errors.phone}</p>}
             </div>
+            <Input
+              label="Email (optional)"
+              name="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onBlur={() => markTouched("email")}
+              placeholder="you@example.com"
+              error={touched.email ? errors.email : undefined}
+            />
           </div>
         );
       case 2:
         return (
-          <div className="animate-fade-in">
-            <header className="mb-6 sm:mb-8">
-              <Typography variant="h1" className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
-                What do you <span className="text-emerald-500">offer?</span>
-              </Typography>
-              <p className="text-slate-400 font-medium mt-1 text-xs sm:text-sm">Select every category you offer services in.</p>
-            </header>
+          <div key={step} className="animate-fade-in">
+            <p className="text-xs sm:text-sm text-slate-400 font-medium mb-4">Select every category you offer services in.</p>
             <div className="grid grid-cols-2 gap-4" role="group" aria-label="Vendor category">
               {CATEGORY_OPTIONS.map((opt) => {
                 const selected = types.includes(opt.id);
@@ -312,36 +297,30 @@ export default function VendorOnboardingPage() {
                     type="button"
                     onClick={() => toggleType(opt.id)}
                     aria-pressed={selected}
-                    className={`relative h-32 sm:h-44 rounded-[1.5rem] sm:rounded-[2.5rem] border-2 transition-all p-4 sm:p-8 text-left flex flex-col justify-end group active:scale-95 overflow-hidden ${
+                    className={`relative h-32 sm:h-40 rounded-[1.5rem] sm:rounded-[2rem] border-2 transition-all p-4 sm:p-6 text-left flex flex-col justify-end group active:scale-95 overflow-hidden ${
                       selected ? `${colors.border} ${colors.shadow} shadow-xl bg-white` : "border-slate-50 hover:border-slate-200 shadow-md shadow-slate-100/50 bg-white"
                     }`}
                   >
-                    <div className={`absolute -right-4 -top-4 w-24 sm:w-32 h-24 sm:h-32 rounded-full blur-2xl sm:blur-3xl opacity-10 transition-all duration-700 ${selected ? `${colors.bg} scale-150` : "bg-slate-200"}`} />
-                    <div className={`w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-[1.5rem] flex items-center justify-center mb-2 sm:mb-4 transition-all duration-500 relative z-10 ${
+                    <div className={`absolute -right-4 -top-4 w-24 sm:w-28 h-24 sm:h-28 rounded-full blur-2xl sm:blur-3xl opacity-10 transition-all duration-700 ${selected ? `${colors.bg} scale-150` : "bg-slate-200"}`} />
+                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center mb-2 sm:mb-3 transition-all duration-500 relative z-10 ${
                       selected ? `${colors.bg} text-white shadow-lg rotate-3` : "bg-slate-50 text-slate-400 group-hover:scale-110 group-hover:rotate-6"
                     }`}>
-                      {selected ? <Icon name="check" className="w-4 h-4 sm:w-6 sm:h-6" /> : <Icon name={opt.icon} className="w-5 h-5 sm:w-7 sm:h-7" />}
+                      {selected ? <Icon name="check" className="w-4 h-4 sm:w-5 sm:h-5" /> : <Icon name={opt.icon} className="w-5 h-5 sm:w-6 sm:h-6" />}
                     </div>
-                    <h3 className={`font-black text-sm sm:text-xl transition-colors z-10 leading-tight ${selected ? "text-slate-900" : "text-slate-600"}`}>
+                    <h3 className={`font-black text-sm sm:text-lg transition-colors z-10 leading-tight ${selected ? "text-slate-900" : "text-slate-600"}`}>
                       {opt.label}
                     </h3>
                   </button>
                 );
               })}
             </div>
-            {touched.types && errors.types && <p role="alert" className="text-xs text-red-500 pl-2 mt-3">{errors.types}</p>}
+            {touched.types && errors.types && <p role="alert" className="text-xs text-red-500 pl-2 mt-3 animate-fade-in">{errors.types}</p>}
           </div>
         );
       case 3: {
         const activeHints = CATEGORY_OPTIONS.filter((c) => types.includes(c.id)).map((c) => c.hint);
         return (
-          <div className="animate-fade-in">
-            <header className="mb-6 sm:mb-8">
-              <Typography variant="h1" className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
-                Tell travellers <span className="text-emerald-500">about it.</span>
-              </Typography>
-              <p className="text-slate-400 font-medium mt-1 text-xs sm:text-sm">What do you offer, and what makes it worth booking?</p>
-            </header>
+          <div key={step} className="animate-fade-in">
             <div className="p-4 sm:p-6 bg-white rounded-[2rem] shadow-sm border border-slate-100">
               <Textarea
                 label="Describe your business"
@@ -370,13 +349,8 @@ export default function VendorOnboardingPage() {
       }
       case 4:
         return (
-          <div className="animate-fade-in">
-            <header className="mb-6 sm:mb-8">
-              <Typography variant="h1" className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
-                Verify your <span className="text-emerald-500">business.</span>
-              </Typography>
-              <p className="text-slate-400 font-medium mt-1 text-xs sm:text-sm">Optional — you can add these later too.</p>
-            </header>
+          <div key={step} className="animate-fade-in">
+            <p className="text-xs sm:text-sm text-slate-400 font-medium mb-4">Optional — you can add these later too.</p>
             <input
               ref={fileInputRef}
               type="file"
@@ -395,12 +369,12 @@ export default function VendorOnboardingPage() {
               </span>
               <span className="text-xs font-bold uppercase tracking-widest">Upload ID proof or business licence (JPG, PNG, WebP)</span>
             </button>
-            {uploadError && <p role="alert" className="text-xs text-red-500 pl-2 mt-3">{uploadError}</p>}
+            {uploadError && <p role="alert" className="text-xs text-red-500 pl-2 mt-3 animate-fade-in">{uploadError}</p>}
 
             {documents.length > 0 && (
               <ul className="space-y-2 mt-4">
                 {documents.map((doc) => (
-                  <li key={doc.key} className="flex items-center gap-3 p-4 rounded-2xl border border-slate-100 bg-white shadow-sm">
+                  <li key={doc.key} className="flex items-center gap-3 p-4 rounded-2xl border border-slate-100 bg-white shadow-sm animate-fade-in">
                     <span className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {doc.url ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -425,13 +399,7 @@ export default function VendorOnboardingPage() {
         );
       case 5:
         return (
-          <div className="animate-fade-in">
-            <header className="mb-6 sm:mb-8">
-              <Typography variant="h1" className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
-                Ready to <span className="text-emerald-500">submit.</span>
-              </Typography>
-              <p className="text-slate-400 font-medium mt-1 text-xs sm:text-sm">Review before you send it in.</p>
-            </header>
+          <div key={step} className="animate-fade-in">
             <div className="rounded-[2rem] border border-slate-100 bg-white shadow-sm divide-y divide-slate-100 overflow-hidden">
               <ReviewRow icon="user" label="Contact" value={contactName} />
               <ReviewRow icon="home" label="Business" value={businessName} />
@@ -449,7 +417,7 @@ export default function VendorOnboardingPage() {
               <p className="text-sm text-slate-700 leading-relaxed line-clamp-4">{description}</p>
             </div>
             {submitError && (
-              <p role="alert" className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg py-2.5 px-3 mt-4">{submitError}</p>
+              <p role="alert" className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg py-2.5 px-3 mt-4 animate-fade-in">{submitError}</p>
             )}
           </div>
         );
@@ -458,45 +426,38 @@ export default function VendorOnboardingPage() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-      {/* Sidebar — same "Promise" pattern as the trip builder's left panel. */}
-      <div className="lg:col-span-4 hidden lg:block sticky top-28 space-y-6">
-        <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-500/20 rounded-full blur-[50px] pointer-events-none" />
-          <h3 className="text-2xl font-black mb-1">Why partner with us</h3>
-          <p className="text-slate-400 text-sm font-medium mb-6">Real bookings, real support.</p>
-          <ul className="space-y-5">
-            {[
-              { text: "Verified badge once approved", icon: "shield" as IconName },
-              { text: "Real support, not a call centre", icon: "clock" as IconName },
-              { text: "No commission on your first 3 bookings", icon: "coin" as IconName },
-            ].map((item) => (
-              <li key={item.text} className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-                  <Icon name={item.icon} className="w-4 h-4 text-emerald-400" />
-                </div>
-                <span className="font-bold text-sm tracking-wide">{item.text}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+    <div>
+      {/* Small page heading + one-line supporting text — stays constant across every step. */}
+      <header className="mb-6 sm:mb-8">
+        <Typography variant="h1" className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">
+          Join <span className="text-emerald-500">Free.</span>
+        </Typography>
+        <p className="text-slate-400 font-medium mt-1 text-xs sm:text-sm">5 quick steps to start receiving bookings.</p>
+      </header>
 
-      {/* Main content */}
-      <div className="lg:col-span-8">
-        {/* Progress bar — same segmented style as the builder */}
-        <div className="flex gap-1.5 sm:gap-2 mb-6 sm:mb-8">
+      {/* Step progress: number, title, and how many are left, above a segmented bar. */}
+      <div className="mb-6 sm:mb-8">
+        <div className="flex items-baseline justify-between mb-2">
+          <p className="text-xs sm:text-sm font-black text-slate-900">
+            Step {step}<span className="text-slate-300 font-bold"> / {TOTAL_STEPS}</span>
+            <span className="ml-2 text-slate-500 font-bold">{STEP_LABELS[step - 1]}</span>
+          </p>
+          <p className="text-[10px] sm:text-xs font-bold text-slate-300 uppercase tracking-widest">
+            {step === TOTAL_STEPS ? "Last step" : `${TOTAL_STEPS - step} left`}
+          </p>
+        </div>
+        <div className="flex gap-1.5 sm:gap-2">
           {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
             <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${i + 1 <= step ? "bg-slate-900" : "bg-slate-200"}`} />
           ))}
         </div>
-
-        {renderStep()}
       </div>
+
+      {renderStep()}
 
       {isMounted && createPortal(
         <div className="builder-footer-safe-area fixed bottom-0 left-0 right-0 px-3 sm:px-6 pt-3 sm:pt-6 bg-white/90 backdrop-blur-xl border-t border-slate-100 z-50">
-          <div className="max-w-6xl mx-auto px-2 sm:px-4 flex items-center justify-between gap-3 sm:gap-4">
+          <div className="max-w-2xl mx-auto px-2 sm:px-4 flex items-center justify-between gap-3 sm:gap-4">
             <Button variant="ghost" onClick={handleBack} className="w-fit px-6 sm:px-8 h-12 sm:h-16 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:bg-slate-100 text-[9px] sm:text-xs">
               {step === 1 ? "Exit" : "Back"}
             </Button>
