@@ -36,13 +36,16 @@ export class ApiClientError extends Error {
   readonly statusCode: number;
   readonly code: string;
   readonly retryAfterSeconds?: number;
+  /** Flat class-validator messages (no field association) when the backend sent `details`. */
+  readonly details?: string[];
 
-  constructor(message: string, statusCode: number, code?: string, retryAfterSeconds?: number) {
+  constructor(message: string, statusCode: number, code?: string, retryAfterSeconds?: number, details?: string[]) {
     super(message);
     this.name = 'ApiClientError';
     this.statusCode = statusCode;
     this.code = code || `HTTP_${statusCode}`;
     this.retryAfterSeconds = retryAfterSeconds;
+    this.details = details;
   }
 }
 
@@ -131,6 +134,7 @@ class ApiClient {
       response.status,
       typeof body.error === 'string' ? body.error : undefined,
       typeof body.retryAfterSeconds === 'number' ? body.retryAfterSeconds : undefined,
+      Array.isArray(body.details) ? body.details.filter((d: unknown) => typeof d === 'string') : undefined,
     );
   }
 
