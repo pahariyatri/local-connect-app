@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { sanitizePhone, isValidPhone, PHONE_LENGTH } from "@/utils/validation";
 import { toApiUiError } from "@/utils/apiErrors";
-import { createVendor, createPointOfContact } from "@/services/vendorService";
+import { createVendor, createPointOfContact, getMyVendor } from "@/services/vendorService";
 import { uploadMedia, deleteMedia, validateImage, type UploadedMedia } from "@/services/mediaService";
 import Typography from "../../components/atoms/Typography";
 import Button from "../../components/atoms/Button";
@@ -76,6 +76,28 @@ export default function VendorOnboardingPage() {
   const [step, setStep] = useState(1);
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => setIsMounted(true), []);
+
+  // A user who already has a vendor shouldn't see the onboarding form
+  // again — send them straight to their dashboard instead.
+  const [onboardCheck, setOnboardCheck] = useState<"checking" | "needed" | "redirecting">("checking");
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const existing = await getMyVendor();
+        if (cancelled) return;
+        if (existing) {
+          setOnboardCheck("redirecting");
+          router.replace(`/${lang}/vendor/dashboard`);
+        } else {
+          setOnboardCheck("needed");
+        }
+      } catch {
+        if (!cancelled) setOnboardCheck("needed");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [lang, router]);
 
   // Step 1 — basic info
   const [contactName, setContactName] = useState("");
@@ -424,6 +446,14 @@ export default function VendorOnboardingPage() {
       default: return null;
     }
   };
+
+  if (onboardCheck !== "needed") {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div>
