@@ -7,11 +7,12 @@ import Typography from "../../../../components/atoms/Typography";
 import Button from "../../../../components/atoms/Button";
 import Textarea from "../../../../components/atoms/Textarea";
 import Input from "../../../../components/atoms/Input";
-import { getServiceById, updateService } from "@/services/catalogService";
+import { getServiceById, updateService, getCategories, getSubcategories } from "@/services/catalogService";
 import { toApiUiError } from "@/utils/apiErrors";
 import Loading from "@/app/loading";
 
-type Tab = "details" | "pricing" | "description";
+type Tab = "details" | "location" | "pricing" | "description";
+type Category = { id: number; name: string };
 
 export default function EditServicePage() {
   const router = useRouter();
@@ -30,6 +31,18 @@ export default function EditServicePage() {
   const [weekdayPrice, setWeekdayPrice] = useState("");
   const [weekendPrice, setWeekendPrice] = useState("");
   const [isAvailable, setIsAvailable] = useState(true);
+  const [street, setStreet] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [subcategoryId, setSubcategoryId] = useState<number | null>(null);
+  const [subcategoryName, setSubcategoryName] = useState<string | null>(null);
+
+  // Category/subcategory picker — only fetched if the vendor opens it to change category.
+  const [changingCategory, setChangingCategory] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryId, setCategoryId] = useState<number | null>(null);
+  const [subcategories, setSubcategories] = useState<Category[]>([]);
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -45,6 +58,13 @@ export default function EditServicePage() {
       setCapacity(data.capacity || 1);
       setDescription(data.description || "");
       setIsAvailable(data.isAvailable ?? true);
+      setSubcategoryId(data.subcategory?.id ?? null);
+      setSubcategoryName(data.subcategory?.name ?? null);
+      const primaryAddress = data.addresses?.find((a: any) => a.isPrimary) || data.addresses?.[0];
+      setStreet(primaryAddress?.street || "");
+      setCity(primaryAddress?.city || "");
+      setState(primaryAddress?.state || "");
+      setPostalCode(primaryAddress?.postalCode || "");
       const weekday = data.prices?.find((p: any) => p.dayType === "weekday" || p.dayType === "both");
       const weekend = data.prices?.find((p: any) => p.dayType === "weekend");
       setWeekdayPrice(weekday ? String(weekday.price) : "");
@@ -58,6 +78,16 @@ export default function EditServicePage() {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    if (!changingCategory || categories.length > 0) return;
+    getCategories().then((cats) => setCategories(Array.isArray(cats) ? cats : [])).catch(() => setCategories([]));
+  }, [changingCategory, categories.length]);
+
+  useEffect(() => {
+    if (!categoryId) { setSubcategories([]); return; }
+    getSubcategories(categoryId).then((subs) => setSubcategories(Array.isArray(subs) ? subs : [])).catch(() => setSubcategories([]));
+  }, [categoryId]);
+
   const handleSave = async () => {
     if (!service) return;
     setSaving(true);
@@ -68,6 +98,12 @@ export default function EditServicePage() {
         description: description.trim(),
         capacity: Number(capacity),
         isAvailable,
+        ...(subcategoryId ? { subcategoryId } : {}),
+        // Only send addresses if location was actually filled in — CreateAddressDto
+        // requires city/state/street/postalCode, so a half-empty address would fail.
+        ...(city.trim() && state.trim() && street.trim() && postalCode.trim()
+          ? { addresses: [{ street: street.trim(), city: city.trim(), state: state.trim(), postalCode: postalCode.trim(), country: "India", isPrimary: true }] }
+          : {}),
         prices: [
           { price: Number(weekdayPrice), dayType: "weekday" },
           ...(weekendPrice ? [{ price: Number(weekendPrice), dayType: "weekend" }] : []),
@@ -96,32 +132,33 @@ export default function EditServicePage() {
 
   return (
     <div className="min-h-screen bg-white pb-32">
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-3xl border-b border-slate-50 px-6 sm:px-8 h-20 flex items-center justify-between">
-        <button onClick={() => router.back()} className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">
+      <main className="max-w-2xl mx-auto px-6 pt-8">
+        <button onClick={() => router.back()} className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors mb-6">
           ← Back
         </button>
-        <div className="flex gap-2">
-          {(["details", "pricing", "description"] as Tab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`px-5 py-2 rounded-full text-xs font-bold capitalize transition-all border-2 ${
-                tab === t ? "bg-slate-900 border-slate-900 text-white" : "bg-white border-slate-100 text-slate-400"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-        <div className="w-16 hidden md:block" />
-      </header>
 
-      <main className="max-w-2xl mx-auto px-6 pt-32">
+        {/* Sticky (not fixed) so it never fights the global site header's stacking. */}
+        <div className="sticky top-0 z-10 -mx-6 px-6 py-3 mb-6 bg-white/90 backdrop-blur-xl border-b border-slate-50">
+          <div className="flex gap-2 overflow-x-auto no-scrollbar">
+            {(["details", "location", "pricing", "description"] as Tab[]).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`flex-shrink-0 px-5 py-2 rounded-full text-xs font-bold capitalize transition-all border-2 ${
+                  tab === t ? "bg-slate-900 border-slate-900 text-white" : "bg-white border-slate-100 text-slate-400"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="mb-10">
           <h1 className="text-3xl sm:text-4xl font-black text-slate-900 leading-tight mb-3">{service.name}</h1>
           <div className="flex flex-wrap gap-2">
-            {service.subcategory && (
-              <span className="px-3 py-1.5 bg-slate-100 text-slate-500 text-xs font-bold rounded-full">{service.subcategory.name}</span>
+            {subcategoryName && (
+              <span className="px-3 py-1.5 bg-slate-100 text-slate-500 text-xs font-bold rounded-full">{subcategoryName}</span>
             )}
             <button
               onClick={() => setIsAvailable((v) => !v)}
@@ -156,6 +193,63 @@ export default function EditServicePage() {
                   ))}
                 </div>
               </div>
+
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Category</label>
+                {!changingCategory ? (
+                  <button
+                    type="button"
+                    onClick={() => setChangingCategory(true)}
+                    className="text-sm font-bold text-emerald-600 hover:text-emerald-700 transition-colors"
+                  >
+                    {subcategoryName ? `${subcategoryName} — change` : "Choose a category"}
+                  </button>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      {categories.map((cat) => (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => setCategoryId(cat.id)}
+                          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 ${
+                            categoryId === cat.id ? "bg-slate-900 text-white" : "bg-slate-50 text-slate-500 hover:bg-slate-100"
+                          }`}
+                        >
+                          {cat.name}
+                        </button>
+                      ))}
+                    </div>
+                    {subcategories.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {subcategories.map((sub) => (
+                          <button
+                            key={sub.id}
+                            type="button"
+                            onClick={() => { setSubcategoryId(sub.id); setSubcategoryName(sub.name); setChangingCategory(false); }}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 ${
+                              subcategoryId === sub.id ? "bg-emerald-500 text-white" : "bg-white border-2 border-slate-100 text-slate-500 hover:border-emerald-300"
+                            }`}
+                          >
+                            {sub.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {tab === "location" && (
+            <div className="space-y-6 animate-fade-in">
+              <Input label="Street / area" name="street" value={street} onChange={(e) => setStreet(e.target.value)} />
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="City" name="city" value={city} onChange={(e) => setCity(e.target.value)} />
+                <Input label="State" name="state" value={state} onChange={(e) => setState(e.target.value)} />
+              </div>
+              <Input label="Postal code" name="postalCode" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
             </div>
           )}
 
