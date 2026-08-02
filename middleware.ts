@@ -35,8 +35,9 @@ export function middleware(request: NextRequest) {
         reservedVendorSubroutes.some(sub => pathname.startsWith(`/${locale}/vendor/${sub}`))
     );
 
-    const isProtected = pathname.startsWith(`/${locale}/profile`) || 
-                        pathname.startsWith(`/${locale}/dashboard`) || 
+    const isProtected = pathname.startsWith(`/${locale}/profile`) ||
+                        pathname.startsWith(`/${locale}/dashboard`) ||
+                        pathname.startsWith(`/${locale}/admin`) ||
                         isProtectedVendorRoute;
 
     // Check if the user is trying to access a protected route

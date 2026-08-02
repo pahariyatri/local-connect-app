@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
-import { loginWithPin, setupPin, signupWithPin, resetPin, forgotPinRequest } from '@/services/authService';
+import { loginWithPin, setupPin, signupWithPin, resetPin, forgotPinRequest, requestOtp } from '@/services/authService';
 import { ApiClientError } from '@/lib/apiClient';
 import { toAuthUiError } from '@/utils/authErrors';
 import { fetchCurrentUser } from '@/services/userService';
@@ -102,6 +102,10 @@ export default function PinPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Shown after a failed PIN login — a wrong PIN and "no account yet" look
+  // identical from the backend (by design, to avoid leaking which one it
+  // is), so rather than guess, offer the OTP path either way.
+  const [showOtpOffer, setShowOtpOffer] = useState(false);
 
   const goHome = () => router.push(redirectTo ? decodeURIComponent(redirectTo) : '/');
 
@@ -184,12 +188,29 @@ export default function PinPage() {
     if (pinStr.length < PIN_LENGTH) { setError(`Enter your ${PIN_LENGTH}-digit PIN.`); return; }
     setBusy(true);
     setError(null);
+    setShowOtpOffer(false);
     try {
       await loginWithPin(phoneNumber, pinStr);
       await completeLogin('Welcome back! Redirecting...');
     } catch (err) {
       failWith(err);
       setPinDigits(empty());
+      if (err instanceof ApiClientError && err.code === 'AUTH_INVALID_CREDENTIALS') {
+        setShowOtpOffer(true);
+      }
+    }
+  };
+
+  const handleTryOtpInstead = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const challenge = await requestOtp(phoneNumber);
+      router.push(
+        `/${lang}/auth/verify-otp?phone=${phoneNumber}&challengeId=${encodeURIComponent(challenge.challengeId)}&resendAfter=${challenge.resendAfterSeconds}${redirectSuffix}`,
+      );
+    } catch (err) {
+      failWith(err);
     }
   };
 
@@ -287,6 +308,19 @@ export default function PinPage() {
           >
             {isTwoStage ? (stage === 'confirm' ? 'Confirm PIN' : 'Continue') : 'Sign in'}
           </Button>
+
+          {mode === 'login' && showOtpOffer && (
+            <div className="text-center animate-fade-in">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={handleTryOtpInstead}
+                className="text-xs text-slate-500 hover:text-slate-900 transition-colors disabled:opacity-50"
+              >
+                New here? <span className="text-emerald-600 underline underline-offset-2 font-semibold">Verify with OTP instead</span>
+              </button>
+            </div>
+          )}
 
           {mode === 'login' && (
             <div className="text-center">
