@@ -171,9 +171,14 @@ export default function ProfilePage() {
                         <Typography variant="h2" className="text-xl font-black text-slate-900 uppercase tracking-tighter italic">
                             Recent Journeys
                         </Typography>
-                        <Link href={`/${lang}/bookings`} className="text-[10px] font-black text-emerald-500 uppercase tracking-widest underline underline-offset-4">
-                            All Trips
-                        </Link>
+                        <div className="flex items-center gap-3">
+                            <Link href={`/${lang}/journeys`} className="text-[10px] font-black text-indigo-500 uppercase tracking-widest underline underline-offset-4">
+                                My Journeys
+                            </Link>
+                            <Link href={`/${lang}/bookings`} className="text-[10px] font-black text-emerald-500 uppercase tracking-widest underline underline-offset-4">
+                                All Trips
+                            </Link>
+                        </div>
                     </div>
 
                     {bookings.length === 0 ? (
