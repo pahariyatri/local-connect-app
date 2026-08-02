@@ -25,20 +25,27 @@ export const useLocalizationContext = () => {
 
 interface LocalizationProviderProps {
     children: React.ReactNode;
+    // Server-loaded (RootLayout already resolves `lang` from the URL param),
+    // so first paint — both SSR and hydration — has real content instead of
+    // gating everything behind a client-only fetch. See LangLayout/RootLayout.
+    initialDict?: { [key: string]: any } | null;
+    initialLang?: Locale;
 }
 
 const SUPPORTED_LOCALES: Locale[] = ['en', 'hi', 'he', 'fr', 'es', 'de'];
 
-export const LocalizationProvider: React.FC<LocalizationProviderProps> = ({ children }) => {
-    const [dict, setDict] = useState<{ [key: string]: string } | null>(null);
-    const [lang, setLang] = useState<Locale>("en");
-    const [loading, setLoading] = useState<boolean>(true);
+export const LocalizationProvider: React.FC<LocalizationProviderProps> = ({ children, initialDict, initialLang }) => {
+    const [dict, setDict] = useState<{ [key: string]: string } | null>(initialDict ?? null);
+    const [lang, setLang] = useState<Locale>(initialLang ?? "en");
+    const [loading, setLoading] = useState<boolean>(!initialDict);
     const [mounted, setMounted] = useState(false);
     const router = useRouter();
     const pathname = usePathname();
 
     // Cache for dictionaries to avoid refetching
-    const [dictCache, setDictCache] = useState<Record<Locale, any>>({} as Record<Locale, any>);
+    const [dictCache, setDictCache] = useState<Record<Locale, any>>(
+        (initialDict && initialLang ? { [initialLang]: initialDict } : {}) as Record<Locale, any>,
+    );
 
     // Initialize language from localStorage on mount
     useEffect(() => {
@@ -100,14 +107,6 @@ export const LocalizationProvider: React.FC<LocalizationProviderProps> = ({ chil
         const currentPath = pathname.replace(/^\/(en|hi|he|fr|es|de)/, "");
         router.push(`/${newLang}${currentPath || ""}`);
     }, [pathname, router]);
-
-    if (!mounted) {
-        return (
-            <LocalizationContext.Provider value={{ dict: null, lang: "en", setLang, loading: true, switchLanguage }}>
-                {children}
-            </LocalizationContext.Provider>
-        );
-    }
 
     return (
         <LocalizationContext.Provider value={{ dict, lang, setLang, loading, switchLanguage }}>

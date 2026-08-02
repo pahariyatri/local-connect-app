@@ -1,28 +1,30 @@
 import { MetadataRoute } from 'next'
 
+// Must match metadataBase in app/layout.tsx — the live production frontend.
+const BASE_URL = 'https://app.pahariyatri.com';
 
 export default function sitemap(): MetadataRoute.Sitemap {
     return [
         {
-            url: 'https://pahariyatri.com/',
+            url: `${BASE_URL}/en`,
             lastModified: new Date(),
             changeFrequency: 'monthly',
             priority: 1,
         },
         {
-            url: 'https://pahariyatri.com/package',
+            url: `${BASE_URL}/en/builder`,
             lastModified: new Date(),
             changeFrequency: 'monthly',
             priority: 0.8,
         },
         {
-            url: 'https://pahariyatri.com/blog',
+            url: `${BASE_URL}/en/blog`,
             lastModified: new Date(),
             changeFrequency: 'weekly',
             priority: 0.5,
         },
         {
-            url: 'https://pahariyatri.com/about',
+            url: `${BASE_URL}/en/about`,
             lastModified: new Date(),
             changeFrequency: 'yearly',
             priority: 0.5,
