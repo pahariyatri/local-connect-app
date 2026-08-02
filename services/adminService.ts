@@ -6,7 +6,8 @@ import { api } from '@/lib/apiClient';
 // ═══════════════════ DASHBOARD ═══════════════════
 
 export const getDashboard = async () => {
-  return api.get('/admin/dashboard', { skipCache: true });
+  const raw = await api.get('/admin/dashboard', { skipCache: true });
+  return (raw as any)?.data ?? raw;
 };
 
 // ═══════════════════ BOOKINGS ═══════════════════
@@ -21,11 +22,13 @@ export const getAdminBookings = async (status?: string, page = 1, limit = 20) =>
 
 export const getAdminVendors = async (page = 1, limit = 20) => {
   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
-  return api.get(`/admin/vendors?${params.toString()}`, { skipCache: true });
+  const raw = await api.get(`/admin/vendors?${params.toString()}`, { skipCache: true });
+  return (raw as any)?.data ?? raw;
 };
 
 export const verifyVendor = async (vendorId: string) => {
-  return api.patch(`/admin/vendor/${vendorId}/verify`);
+  const raw = await api.patch(`/admin/vendor/${vendorId}/verify`);
+  return (raw as any)?.data ?? raw;
 };
 
 // ═══════════════════ REVENUE ═══════════════════
