@@ -53,7 +53,7 @@ export default async function DocDetailPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-32">
-      <main className="max-w-4xl mx-auto px-6 pt-12">
+      <main className="max-w-4xl mx-auto px-6 pt-28 sm:pt-36">
         {/* Navigation Breadcrumb */}
         <div className="flex items-center gap-2 mb-8 text-xs font-bold text-slate-400 uppercase tracking-widest">
           <Link href={`/${lang}`} className="hover:text-slate-600 transition-colors">Home</Link>

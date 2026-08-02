@@ -110,7 +110,7 @@ export default async function DestinationActivityPage({ params }: PageProps) {
 
       <main className="min-h-screen bg-white">
         {/* Hero Section */}
-        <section className="bg-slate-900 text-white px-6 pt-24 pb-16">
+        <section className="bg-slate-900 text-white px-6 pt-28 sm:pt-36 pb-16">
           <div className="max-w-2xl mx-auto">
             <p className="text-emerald-400 text-xs font-black uppercase tracking-widest mb-3">
               {dest.state}

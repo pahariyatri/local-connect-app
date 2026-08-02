@@ -47,7 +47,7 @@ export default async function DocsPage({ params }: PageProps) {
   return (
     <div className="min-h-screen bg-slate-50 pb-32">
       {/* Hero Header */}
-      <div className="relative overflow-hidden bg-slate-900 py-20 text-center">
+      <div className="relative overflow-hidden bg-slate-900 pt-28 sm:pt-36 pb-20 text-center">
         <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-emerald-500 via-slate-900 to-slate-950"></div>
         <div className="relative z-10 max-w-4xl mx-auto px-6">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 mb-4">

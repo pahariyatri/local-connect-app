@@ -127,7 +127,7 @@ export default function CheckoutPage() {
   const isPaying = state === 'paying' || state === 'verifying';
 
   return (
-    <main className="min-h-screen bg-white flex flex-col items-center justify-center px-6 pt-28 sm:pt-32 pb-12">
+    <main className="min-h-screen bg-white flex flex-col items-center justify-center px-6 pt-28 sm:pt-36 pb-12">
       <div className="w-full max-w-md">
 
         {/* Header */}

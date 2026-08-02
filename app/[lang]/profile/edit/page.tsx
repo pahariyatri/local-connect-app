@@ -104,7 +104,7 @@ export default function EditProfilePage() {
     }
 
     return (
-        <div className="min-h-screen bg-white py-8 px-4">
+        <div className="min-h-screen bg-white pt-28 sm:pt-36 pb-8 px-4">
             <div className="max-w-2xl mx-auto bg-white shadow-md rounded-2xl overflow-hidden">
                 <div className="flex flex-col items-center py-6">
                     {/* Profile Picture — real upload to object storage (R2) */}
