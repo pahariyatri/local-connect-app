@@ -41,7 +41,7 @@ export default function robots(): MetadataRoute.Robots {
                 '/*/journey/view',
             ],
         },
-        sitemap: `https://pahariyatri.com/sitemap.xml`,
-        host: 'https://pahariyatri.com',
+        sitemap: `https://app.pahariyatri.com/sitemap.xml`,
+        host: 'https://app.pahariyatri.com',
     }
 }

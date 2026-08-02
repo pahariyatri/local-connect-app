@@ -41,12 +41,25 @@ export const getServices = async () => {
   return (raw as any)?.data ?? raw;
 };
 
+/** A vendor's own services (Control Center / service list). Requires auth + ownership. */
+export const getServicesByVendor = async (vendorId: string) => {
+  const raw = await api.get(`/service/vendor/${vendorId}`);
+  return (raw as any)?.data ?? raw;
+};
+
 export const getServiceById = async (id: number | string) => {
   sessionTracker.track('service_viewed', {
     entityType: 'service',
     entityId: String(id),
   });
-  return api.get(`/service/${id}`, { skipAuth: true });
+  const raw = await api.get(`/service/${id}`, { skipAuth: true });
+  return (raw as any)?.data ?? raw;
+};
+
+export const updateService = async (id: number | string, serviceData: any) => {
+  const raw = await api.put(`/service/${id}`, serviceData);
+  api.invalidateCache('/service');
+  return (raw as any)?.data ?? raw;
 };
 
 export const filterServices = async (filters: {
@@ -71,17 +84,19 @@ export const filterServices = async (filters: {
 export const createService = async (vendorId: string, serviceData: any) => {
   const result = await api.post(`/service/${vendorId}`, serviceData);
   api.invalidateCache('/service');
-  return result;
+  return (result as any)?.data ?? result;
 };
 
 // ═══════════════════ CATEGORIES ═══════════════════
 
 export const getCategories = async () => {
-  return api.get('/categories', { skipAuth: true });
+  const raw = await api.get('/categories', { skipAuth: true });
+  return (raw as any)?.data ?? raw;
 };
 
 export const getSubcategories = async (categoryId: number | string) => {
-  return api.get(`/categories/${categoryId}/subcategories`, { skipAuth: true });
+  const raw = await api.get(`/categories/${categoryId}/subcategories`, { skipAuth: true });
+  return (raw as any)?.data ?? raw;
 };
 
 // ═══════════════════ ITINERARY ═══════════════════

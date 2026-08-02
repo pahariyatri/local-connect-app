@@ -27,6 +27,8 @@ function CategoryIcon({ category, className = "" }: { category: string; classNam
 interface DayItineraryProps {
   day: number;
   title?: string;
+  /** Route/stop context for this day (e.g. "Manali → Kasol") — shown next to the day title. */
+  subtitle?: string;
   selections: {
     category: string;
     selectedVendorId?: string | null;
@@ -42,6 +44,7 @@ interface DayItineraryProps {
 export default function DayItinerary({
   day,
   title,
+  subtitle,
   selections,
   onVendorChange,
   onRemove,
@@ -53,11 +56,15 @@ export default function DayItinerary({
     <div className="relative pl-12 pb-12 last:pb-0 group">
       {/* Vertical Time Line */}
       <div className="absolute left-[19px] top-10 bottom-0 w-[2px] bg-indigo-100 group-last:hidden" />
-      
+
       {/* Day Bubble */}
       <div className="absolute left-0 top-0 w-10 h-10 rounded-2xl bg-white border-2 border-indigo-500 shadow-xl shadow-indigo-100 flex items-center justify-center z-10">
         <span className="text-[10px] font-black text-indigo-600 uppercase">{title || `D${day}`}</span>
       </div>
+
+      {subtitle && (
+        <p className="text-sm font-bold text-slate-500 mb-6 -mt-1">{subtitle}</p>
+      )}
 
       <div className="space-y-10">
         {selections.length === 0 && (

@@ -4,7 +4,6 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation";
 import Typography from "../../components/atoms/Typography";
 import DayItinerary from "../../results/components/DayItinerary";
-import PlanPreview from "./PlanPreview";
 import DiscoveryDrawer from "../../components/molecules/DiscoveryDrawer";
 import { TripStop } from "@/types/tripBuilder";
 import { Vendor } from "../../results/components/VendorSelectionCard";
@@ -268,20 +267,19 @@ export default function PackageBuilderStep({
         </p>
       </div>
 
-      {/* Day-wise plan preview from the structured stops chosen in Step 5 */}
-      {tripStops && tripStops.length > 0 && (
-        <div className="mb-6">
-          <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-3">Your day-by-day plan</h3>
-          <PlanPreview origin={origin} destinationLabels={destinations || []} stops={tripStops} compact />
-        </div>
-      )}
-
       <div className="space-y-12">
-        {itineraryDays.map((day) => (
+        {itineraryDays.map((day) => {
+          // Stop names chosen for this day in the previous step, if any — folded
+          // in here instead of repeating a separate "day-by-day plan" summary.
+          const dayStopNames = (tripStops || [])
+            .filter((s) => s.day === `day-${day}`)
+            .map((s) => s.name);
+          return (
           <DayItinerary
             key={day}
             day={day}
             title={(res?.itinerary?.day ?? "Day {day}").replace("{day}", String(day))}
+            subtitle={dayStopNames.length > 0 ? dayStopNames.join(" · ") : undefined}
             onVendorChange={(cat, id) => handleVendorChange(day, cat, id)}
             onRemove={(cat) => handleRemove(day, cat)}
             onAdd={(cat) => setDiscoveryState({ isOpen: true, category: cat, day })}
@@ -294,7 +292,8 @@ export default function PackageBuilderStep({
                 options: liveVendors[c.key] || [],
               }))}
           />
-        ))}
+          );
+        })}
       </div>
 
       <DiscoveryDrawer

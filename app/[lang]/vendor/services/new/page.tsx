@@ -1,284 +1,392 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { useParams, useRouter } from "next/navigation";
 import Typography from "../../../components/atoms/Typography";
 import Button from "../../../components/atoms/Button";
 import Input from "../../../components/atoms/Input";
 import Textarea from "../../../components/atoms/Textarea";
-import { useNotification } from "@/contexts/NotificationContext";
+import { getMyVendor } from "@/services/vendorService";
+import { getCategories, getSubcategories, createService } from "@/services/catalogService";
+import { toApiUiError } from "@/utils/apiErrors";
+import Loading from "@/app/loading";
 
-const categories = [
-    { label: "Accommodation", icon: "🏨", value: "Accommodation" },
-    { label: "Transportation", icon: "🚙", value: "Transportation" },
-    { label: "Tours", icon: "🏔️", value: "Tours" },
-    { label: "Dining", icon: "🍱", value: "Dining" }
-];
+// ─── Icon system — same inline-stroke-SVG convention used across the app ───
 
-const subcategories: Record<string, string[]> = {
-    Accommodation: ["Homestays", "Resorts", "Campsites", "Heritage"],
-    Transportation: ["Private Cabs", "Bikes", "Shuttles"],
-    Tours: ["Treks", "Sightseeing", "Cultural"],
-    Dining: ["Local Kitchens", "Cafes", "Fine Dining"]
+type IconName = "check" | "map-pin" | "users" | "tag";
+
+const ICON_PATHS: Record<IconName, React.ReactNode> = {
+  check: <path d="M20 6 9 17l-5-5" />,
+  "map-pin": <><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></>,
+  users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,
+  tag: <><path d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.42 0l8.58-8.58a1 1 0 0 0 0-1.42Z" /><circle cx="7" cy="7" r="1" /></>,
 };
 
-export default function NewServiceSeasonalBuilder() {
-    const router = useRouter();
-    const { lang } = useParams();
-    const { showNotification } = useNotification();
-    
-    // Step state: 1: DNA, 2: Economics, 3: Vision
-    const [step, setStep] = useState(1);
-    const [form, setForm] = useState({
-        name: "",
-        category: "",
-        subcategory: "",
-        weekday_off: "",
-        weekend_off: "",
-        weekday_peak: "",
-        weekend_peak: "",
-        peak_start: "",
-        peak_end: "",
-        capacity: "1",
-        description: ""
-    });
+function Icon({ name, className = "" }: { name: IconName; className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true" focusable="false">
+      {ICON_PATHS[name]}
+    </svg>
+  );
+}
 
-    const canProceedStep1 = form.name && form.category && form.subcategory;
-    const canProceedStep2 = form.weekday_off && form.weekend_off && form.capacity;
-    const canProceedStep3 = form.description;
+type Category = { id: number; name: string };
 
-    const handleNext = () => {
-        if (step < 3) setStep(step + 1);
-        else {
-            showNotification("Anchoring Asset on Global Plane...", "success");
-            setTimeout(() => {
-                router.push(`/${lang}/vendor/services`);
-            }, 1000);
-        }
-    };
+const TOTAL_STEPS = 4;
+const STEP_LABELS = ["Basics", "Location", "Pricing", "Review"];
 
+export default function NewServicePage() {
+  const router = useRouter();
+  const { lang } = useParams();
+
+  // Vendor resolution — same pattern as the services list page.
+  const [vendorId, setVendorId] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    try { return window.localStorage.getItem("vendorId"); } catch { return null; }
+  });
+  const [resolvingVendor, setResolvingVendor] = useState(() => {
+    if (typeof window === "undefined") return true;
+    try { return !window.localStorage.getItem("vendorId"); } catch { return true; }
+  });
+
+  useEffect(() => {
+    if (vendorId) return;
+    let cancelled = false;
+    getMyVendor()
+      .then((vendor) => {
+        if (cancelled || !vendor?.id) return;
+        setVendorId(vendor.id);
+        try { window.localStorage.setItem("vendorId", vendor.id); } catch { /* non-fatal */ }
+      })
+      .finally(() => { if (!cancelled) setResolvingVendor(false); });
+    return () => { cancelled = true; };
+  }, [vendorId]);
+
+  const [step, setStep] = useState(1);
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => setIsMounted(true), []);
+
+  // Categories — backend-driven, not invented.
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [subcategories, setSubcategories] = useState<Category[]>([]);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getCategories()
+      .then((cats) => setCategories(Array.isArray(cats) ? cats : []))
+      .catch(() => setCategoriesError("We could not load categories."));
+  }, []);
+
+  // Step 1 — basics
+  const [name, setName] = useState("");
+  const [categoryId, setCategoryId] = useState<number | null>(null);
+  const [subcategoryId, setSubcategoryId] = useState<number | null>(null);
+  const [description, setDescription] = useState("");
+
+  useEffect(() => {
+    if (!categoryId) { setSubcategories([]); setSubcategoryId(null); return; }
+    getSubcategories(categoryId)
+      .then((subs) => setSubcategories(Array.isArray(subs) ? subs : []))
+      .catch(() => setSubcategories([]));
+  }, [categoryId]);
+
+  // Step 2 — location
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [street, setStreet] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+
+  // Step 3 — pricing & capacity
+  const [weekdayPrice, setWeekdayPrice] = useState("");
+  const [weekendPrice, setWeekendPrice] = useState("");
+  const [capacity, setCapacity] = useState("2");
+
+  // Submission
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const isSubmittingRef = useRef(false);
+
+  const markTouched = (field: string) => setTouched((t) => ({ ...t, [field]: true }));
+
+  const errors = {
+    name: name.trim().length < 3 ? "Give this service a clear name (at least 3 characters)." : undefined,
+    subcategoryId: !subcategoryId ? "Choose a category and sub-category." : undefined,
+    description: description.trim().length < 10 ? "Add a few more words (at least 10 characters)." : undefined,
+    city: city.trim().length < 1 ? "City is required." : undefined,
+    state: state.trim().length < 1 ? "State is required." : undefined,
+    street: street.trim().length < 1 ? "Street or area is required." : undefined,
+    postalCode: postalCode.trim().length < 1 ? "Postal code is required." : undefined,
+    weekdayPrice: !weekdayPrice || Number(weekdayPrice) <= 0 ? "Enter a base price." : undefined,
+    capacity: !capacity || Number(capacity) <= 0 ? "Enter a valid capacity." : undefined,
+  };
+
+  const isStepValid = (s: number) => {
+    switch (s) {
+      case 1: return !errors.name && !errors.subcategoryId && !errors.description;
+      case 2: return !errors.city && !errors.state && !errors.street && !errors.postalCode;
+      case 3: return !errors.weekdayPrice && !errors.capacity;
+      case 4: return true;
+      default: return false;
+    }
+  };
+
+  const handleNext = () => {
+    if (step === 1) setTouched((t) => ({ ...t, name: true, subcategoryId: true, description: true }));
+    if (step === 2) setTouched((t) => ({ ...t, city: true, state: true, street: true, postalCode: true }));
+    if (step === 3) setTouched((t) => ({ ...t, weekdayPrice: true, capacity: true }));
+    if (!isStepValid(step)) return;
+    if (step < TOTAL_STEPS) setStep(step + 1);
+  };
+
+  const handleBack = () => {
+    if (step > 1) setStep(step - 1);
+    else router.back();
+  };
+
+  const handleSubmit = useCallback(async () => {
+    if (isSubmittingRef.current || !vendorId || !subcategoryId) return;
+    isSubmittingRef.current = true;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const prices = [
+        { price: Number(weekdayPrice), dayType: "weekday" as const },
+        ...(weekendPrice ? [{ price: Number(weekendPrice), dayType: "weekend" as const }] : []),
+      ];
+      await createService(vendorId, {
+        name: name.trim(),
+        description: description.trim(),
+        isAvailable: true,
+        subcategoryId,
+        capacity: Number(capacity),
+        addresses: [{ city: city.trim(), state: state.trim(), street: street.trim(), postalCode: postalCode.trim(), country: "India", isPrimary: true }],
+        prices,
+      });
+      router.replace(`/${lang}/vendor/services`);
+    } catch (err) {
+      const ui = toApiUiError(err, "We could not save this service. Review the highlighted fields and try again.");
+      setSubmitError(ui.message);
+    } finally {
+      isSubmittingRef.current = false;
+      setSubmitting(false);
+    }
+  }, [vendorId, subcategoryId, name, description, capacity, city, state, street, postalCode, weekdayPrice, weekendPrice, lang, router]);
+
+  if (resolvingVendor) return <Loading />;
+
+  if (vendorId === null) {
     return (
-        <div className="min-h-screen bg-white pb-40">
-            {/* Header / Pipeline Progress */}
-            <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-3xl border-b border-slate-50 px-8 h-24 flex items-center justify-between">
-                <button onClick={() => router.back()} className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">
-                    ← ABORT
-                </button>
-                <div className="flex gap-2">
-                    {[1, 2, 3].map(s => (
-                        <div key={s} className={`h-1.5 w-16 rounded-full transition-all duration-[1.5s] ${s <= step ? 'bg-slate-900 shadow-2xl shadow-indigo-100' : 'bg-slate-100'}`} />
-                    ))}
-                </div>
-                <div className="w-20 hidden md:block" />
-            </header>
-
-            <main className="max-w-3xl mx-auto px-6 pt-40">
-                {/* Tactical Title */}
-                <div className="mb-16 animate-in fade-in slide-in-from-bottom-5 duration-1000">
-                    <Typography variant="h1" className="text-6xl font-black text-slate-900 leading-[1] uppercase tracking-tighter italic">
-                        {step === 1 ? 'Asset DNA.' : step === 2 ? 'Yield Matrix.' : 'The Vision.'}
-                    </Typography>
-                    <p className="text-slate-400 text-[10px] font-black mt-6 uppercase tracking-[0.6em] leading-relaxed max-w-lg">
-                        {step === 1 ? 'Establish the core structural identity of your local legend.' : 
-                         step === 2 ? 'Calibrate dual-layer revenue matrices for maximum seasonal yield.' : 
-                         'Inject the narrative payload that connects your asset to the world.'}
-                    </p>
-                </div>
-
-                <div className="space-y-20">
-                    {step === 1 && (
-                        <div className="space-y-16 animate-in fade-in slide-in-from-right-10 duration-700">
-                            <div className="group">
-                                <label className="text-[11px] font-black text-indigo-500 uppercase tracking-[0.4em] mb-4 block ml-4 italic">Asset Signature (Name)</label>
-                                <input 
-                                    className="w-full bg-slate-50 border-none rounded-[2.5rem] h-24 px-10 text-3xl font-black italic text-slate-900 outline-none focus:ring-4 focus:ring-indigo-50 transition-all placeholder:text-slate-200 shadow-inner"
-                                    placeholder="e.g. EVEREST CABIN"
-                                    value={form.name}
-                                    onChange={(e) => setForm({...form, name: e.target.value.toUpperCase()})}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="text-[11px] font-black text-indigo-500 uppercase tracking-[0.4em] mb-8 block ml-4 italic">Primary Sector (Static DNA)</label>
-                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                    {categories.map((cat) => (
-                                        <button 
-                                            key={cat.value}
-                                            onClick={() => setForm({...form, category: cat.value, subcategory: ""})}
-                                            className={`h-36 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 transition-all duration-700 border-2 ${
-                                                form.category === cat.value ? 'bg-slate-900 border-slate-900 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.2)] scale-105' : 'bg-slate-50 border-transparent text-slate-300 hover:border-slate-200'
-                                            }`}
-                                        >
-                                            <span className="text-4xl">{cat.icon}</span>
-                                            <span className={`text-[9px] font-black uppercase tracking-widest ${form.category === cat.value ? 'text-white' : 'text-slate-500'}`}>{cat.label}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {form.category && (
-                                <div className="animate-in fade-in zoom-in-95 duration-1000">
-                                    <label className="text-[11px] font-black text-indigo-500 uppercase tracking-[0.4em] mb-8 block ml-4 italic">Domain Specialization</label>
-                                    <div className="flex flex-wrap gap-4">
-                                        {subcategories[form.category]?.map((sub) => (
-                                            <button 
-                                                key={sub}
-                                                onClick={() => setForm({...form, subcategory: sub})}
-                                                className={`px-10 py-6 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all duration-500 ${
-                                                    form.subcategory === sub ? 'bg-indigo-600 text-white shadow-2xl shadow-indigo-100' : 'bg-white border-2 border-slate-100 text-slate-400 hover:border-indigo-500 hover:text-indigo-600'
-                                                }`}
-                                            >
-                                                {sub}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                             <div className="group">
-                                <label className="text-[11px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-6 block ml-4 italic">Pax Load Capacity</label>
-                                <div className="flex flex-wrap gap-4">
-                                    {[1, 2, 4, 6, 8, 12, 16, 24].map(num => (
-                                        <button 
-                                            key={num}
-                                            onClick={() => setForm({...form, capacity: String(num)})}
-                                            className={`w-20 h-20 rounded-3xl text-xl font-black italic transition-all duration-500 ${
-                                                form.capacity === String(num) ? 'bg-slate-900 text-white shadow-2xl scale-110' : 'bg-slate-50 text-slate-300'
-                                            }`}
-                                        >
-                                            {num}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {step === 2 && (
-                        <div className="space-y-20 animate-in fade-in slide-in-from-right-10 duration-700">
-                            {/* Standard Economics Matrix (Off-Season) */}
-                            <div>
-                                <h4 className="text-[12px] font-black text-indigo-600 uppercase tracking-[0.5em] mb-10 ml-4 italic">Standard Economics (Off-Season)</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div className="space-y-4">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Weekday Base</label>
-                                        <input 
-                                            type="number"
-                                            value={form.weekday_off}
-                                            onChange={(e) => setForm({...form, weekday_off: e.target.value})}
-                                            placeholder="0"
-                                            className="w-full h-24 bg-slate-50 rounded-[2.5rem] px-10 text-4xl font-black italic text-slate-900 outline-none focus:bg-white focus:ring-4 focus:ring-indigo-50 transition-all shadow-inner"
-                                        />
-                                    </div>
-                                    <div className="space-y-4">
-                                        <label className="text-[10px] font-black text-indigo-500 uppercase tracking-widest ml-4">Weekend Peak</label>
-                                        <input 
-                                            type="number"
-                                            value={form.weekend_off}
-                                            onChange={(e) => setForm({...form, weekend_off: e.target.value})}
-                                            placeholder="0"
-                                            className="w-full h-24 bg-slate-50 rounded-[2.5rem] px-10 text-4xl font-black italic text-indigo-600 outline-none focus:bg-white focus:ring-4 focus:ring-indigo-50 transition-all shadow-inner"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Peak Seasonal Matrix (On-Season) */}
-                            <div>
-                                <div className="flex items-center justify-between mb-10 ml-4">
-                                    <h4 className="text-[12px] font-black text-rose-500 uppercase tracking-[0.5em] italic">Peak Operational Layer</h4>
-                                    <span className="px-4 py-1.5 bg-rose-50 text-rose-500 text-[8px] font-black uppercase tracking-widest rounded-full italic border border-rose-100">Optional Surge</span>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-                                    <div className="space-y-4 text-rose-500">
-                                        <label className="text-[10px] font-black uppercase tracking-widest ml-4 opacity-50">Peak Weekday</label>
-                                        <input 
-                                            type="number"
-                                            value={form.weekday_peak}
-                                            onChange={(e) => setForm({...form, weekday_peak: e.target.value})}
-                                            placeholder="0"
-                                            className="w-full h-24 bg-rose-50/20 border-2 border-rose-100/50 focus:border-rose-500 rounded-[2.5rem] px-10 text-4xl font-black italic text-rose-900 outline-none transition-all shadow-sm"
-                                        />
-                                    </div>
-                                    <div className="space-y-4 text-rose-600">
-                                        <label className="text-[10px] font-black uppercase tracking-widest ml-4 opacity-50">Peak Weekend</label>
-                                        <input 
-                                            type="number"
-                                            value={form.weekend_peak}
-                                            onChange={(e) => setForm({...form, weekend_peak: e.target.value})}
-                                            placeholder="0"
-                                            className="w-full h-24 bg-rose-50/20 border-2 border-rose-100/50 focus:border-rose-600 rounded-[2.5rem] px-10 text-4xl font-black italic text-rose-600 outline-none transition-all shadow-sm"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="p-10 bg-slate-900 rounded-[3.5rem] shadow-2xl space-y-8 relative overflow-hidden group">
-                                    <div className="flex flex-col md:flex-row gap-8 relative z-10 transition-transform group-hover:scale-[1.01] duration-700">
-                                        <div className="flex-1 space-y-4">
-                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4 block italic">Peak Activation</label>
-                                            <input 
-                                                type="date" 
-                                                value={form.peak_start}
-                                                onChange={(e) => setForm({...form, peak_start: e.target.value})}
-                                                className="w-full h-18 bg-white/5 border-none rounded-2xl px-6 text-white font-black italic outline-none focus:bg-white/10" 
-                                            />
-                                        </div>
-                                        <div className="flex-1 space-y-4">
-                                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4 block italic">Peak Termination</label>
-                                            <input 
-                                                type="date" 
-                                                value={form.peak_end}
-                                                onChange={(e) => setForm({...form, peak_end: e.target.value})}
-                                                className="w-full h-18 bg-white/5 border-none rounded-2xl px-6 text-white font-black italic outline-none focus:bg-white/10" 
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-500/10 rounded-full blur-[60px] -mr-20 -mt-20" />
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {step === 3 && (
-                        <div className="space-y-12 animate-in fade-in slide-in-from-right-10 duration-700">
-                            <Textarea 
-                                label="The Narrative Payload"
-                                name="description"
-                                value={form.description}
-                                onChange={(e) => setForm({...form, description: e.target.value})}
-                                placeholder="Details about this local experience..."
-                                className="min-h-[450px] border-none rounded-[3.5rem] p-12 text-xl font-medium text-slate-600 leading-[1.7] bg-slate-50/50 focus:bg-white transition-all shadow-inner"
-                            />
-                            <div className="p-14 border-2 border-dashed border-slate-100 rounded-[4rem] text-center bg-white group hover:border-indigo-500 transition-all duration-700 cursor-pointer">
-                                <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-6 group-hover:rotate-12 transition-transform shadow-inner">📸</div>
-                                <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.5em] mb-3">Immersive Gallery Hub</p>
-                                <p className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.3em]">Synchronized with Cloud Cluster v.5.0</p>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Progress Orchestration */}
-                    <div className="pt-24 border-t border-slate-50">
-                        {((step === 1 && canProceedStep1) || (step === 2 && canProceedStep2) || (step === 3 && canProceedStep3)) && (
-                            <div className="animate-in fade-in slide-in-from-bottom-5 duration-1000">
-                                <Button 
-                                    onClick={handleNext}
-                                    className="w-full h-28 rounded-[3.5rem] bg-indigo-600 text-white font-black text-[14px] uppercase tracking-[0.5em] shadow-[0_40px_80px_-20px_rgba(79,70,229,0.5)] active:scale-95 transition-all duration-700 hover:bg-slate-900 group"
-                                >
-                                    <span className="group-hover:translate-x-2 transition-transform inline-block">
-                                        {step === 3 ? 'COMMIT TO GLOBAL GRID 🌎' : 'FINALIZE PHASE & ADVANCE →'}
-                                    </span>
-                                </Button>
-                            </div>
-                        )}
-                        
-                        {step > 1 && (
-                            <button onClick={() => setStep(step - 1)} className="w-full mt-10 text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] hover:text-slate-900 transition-all">
-                                REVERT PARAMETERS
-                            </button>
-                        )}
-                    </div>
-                </div>
-            </main>
-        </div>
+      <div className="max-w-md mx-auto text-center py-20 px-4">
+        <Typography variant="h1" className="text-2xl font-black text-slate-900 mb-2">No vendor profile yet</Typography>
+        <p className="text-slate-400 text-sm mb-8">Complete vendor onboarding before adding services.</p>
+        <Button onClick={() => router.push(`/${lang}/vendor/onboarding`)} className="h-14 px-8 rounded-2xl bg-slate-900 text-white font-bold text-sm">Start onboarding</Button>
+      </div>
     );
+  }
+
+  const renderStep = () => {
+    switch (step) {
+      case 1:
+        return (
+          <div key={step} className="animate-fade-in space-y-5">
+            <Input
+              label="Service name"
+              name="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onBlur={() => markTouched("name")}
+              placeholder="e.g. Deluxe Room with Mountain View"
+              autoFocus
+              error={touched.name ? errors.name : undefined}
+            />
+
+            {categoriesError && <p className="text-xs text-red-500">{categoriesError}</p>}
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2 mb-2">Category</label>
+              <div className="grid grid-cols-2 gap-3" role="group" aria-label="Category">
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setCategoryId(cat.id)}
+                    aria-pressed={categoryId === cat.id}
+                    className={`h-14 rounded-2xl border-2 text-sm font-bold transition-all active:scale-95 ${
+                      categoryId === cat.id ? "border-slate-900 bg-slate-900 text-white" : "border-slate-100 bg-slate-50/50 text-slate-600 hover:border-slate-200"
+                    }`}
+                  >
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {categoryId && subcategories.length > 0 && (
+              <div className="animate-fade-in">
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2 mb-2">Sub-category</label>
+                <div className="flex flex-wrap gap-2">
+                  {subcategories.map((sub) => (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      onClick={() => setSubcategoryId(sub.id)}
+                      aria-pressed={subcategoryId === sub.id}
+                      className={`px-5 py-3 rounded-xl text-sm font-bold transition-all active:scale-95 ${
+                        subcategoryId === sub.id ? "bg-emerald-500 text-white" : "bg-white border-2 border-slate-100 text-slate-500 hover:border-emerald-300"
+                      }`}
+                    >
+                      {sub.name}
+                    </button>
+                  ))}
+                </div>
+                {touched.subcategoryId && errors.subcategoryId && <p role="alert" className="text-xs text-red-500 mt-2 pl-2">{errors.subcategoryId}</p>}
+              </div>
+            )}
+
+            <Textarea
+              label="Description"
+              name="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              onBlur={() => markTouched("description")}
+              placeholder="What does a traveler get with this service?"
+              rows={4}
+              error={touched.description ? errors.description : undefined}
+            />
+          </div>
+        );
+      case 2:
+        return (
+          <div key={step} className="animate-fade-in space-y-5">
+            <p className="text-xs text-slate-400 font-medium flex items-center gap-2">
+              <Icon name="map-pin" className="w-4 h-4" /> Where can travelers find this service?
+            </p>
+            <Input label="Street / area" name="street" value={street} onChange={(e) => setStreet(e.target.value)} onBlur={() => markTouched("street")} placeholder="e.g. Old Manali Road" autoFocus error={touched.street ? errors.street : undefined} />
+            <div className="grid grid-cols-2 gap-4">
+              <Input label="City" name="city" value={city} onChange={(e) => setCity(e.target.value)} onBlur={() => markTouched("city")} placeholder="e.g. Manali" error={touched.city ? errors.city : undefined} />
+              <Input label="State" name="state" value={state} onChange={(e) => setState(e.target.value)} onBlur={() => markTouched("state")} placeholder="e.g. Himachal Pradesh" error={touched.state ? errors.state : undefined} />
+            </div>
+            <Input label="Postal code" name="postalCode" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} onBlur={() => markTouched("postalCode")} placeholder="e.g. 175131" error={touched.postalCode ? errors.postalCode : undefined} />
+          </div>
+        );
+      case 3:
+        return (
+          <div key={step} className="animate-fade-in space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <Input label="Weekday price (₹)" name="weekdayPrice" type="number" value={weekdayPrice} onChange={(e) => setWeekdayPrice(e.target.value)} onBlur={() => markTouched("weekdayPrice")} placeholder="0" autoFocus error={touched.weekdayPrice ? errors.weekdayPrice : undefined} />
+              <Input label="Weekend price (₹, optional)" name="weekendPrice" type="number" value={weekendPrice} onChange={(e) => setWeekendPrice(e.target.value)} placeholder="Same as weekday" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2 mb-2 flex items-center gap-2">
+                <Icon name="users" className="w-3.5 h-3.5" /> Capacity (guests)
+              </label>
+              <div className="flex flex-wrap gap-3">
+                {[1, 2, 4, 6, 8, 12].map((num) => (
+                  <button
+                    key={num}
+                    type="button"
+                    onClick={() => setCapacity(String(num))}
+                    className={`w-14 h-14 rounded-2xl text-base font-black transition-all active:scale-95 ${
+                      capacity === String(num) ? "bg-slate-900 text-white" : "bg-slate-50 text-slate-400 hover:bg-slate-100"
+                    }`}
+                  >
+                    {num}
+                  </button>
+                ))}
+              </div>
+              {touched.capacity && errors.capacity && <p role="alert" className="text-xs text-red-500 mt-2 pl-2">{errors.capacity}</p>}
+            </div>
+          </div>
+        );
+      case 4: {
+        const category = categories.find((c) => c.id === categoryId);
+        const subcategory = subcategories.find((s) => s.id === subcategoryId);
+        return (
+          <div key={step} className="animate-fade-in space-y-2 bg-white rounded-[1.5rem] border border-slate-100 divide-y divide-slate-50 overflow-hidden">
+            <ReviewRow icon="tag" label="Name" value={name} />
+            <ReviewRow icon="tag" label="Category" value={`${category?.name || "—"} › ${subcategory?.name || "—"}`} />
+            <ReviewRow icon="map-pin" label="Location" value={`${city}, ${state}`} />
+            <ReviewRow icon="users" label="Capacity" value={`${capacity} guests`} />
+            <ReviewRow icon="tag" label="Price" value={`₹${weekdayPrice}${weekendPrice ? ` weekday · ₹${weekendPrice} weekend` : ""}`} />
+          </div>
+        );
+      }
+      default: return null;
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 pt-8 pb-40">
+      <div className="mb-10">
+        <div className="flex items-baseline justify-between mb-2">
+          <p className="text-sm font-black text-slate-900">
+            Step {step}<span className="text-slate-300 font-bold"> / {TOTAL_STEPS}</span>
+            <span className="ml-2 text-slate-500 font-bold">{STEP_LABELS[step - 1]}</span>
+          </p>
+          <p className="text-xs font-bold text-slate-300 uppercase tracking-widest">
+            {step === TOTAL_STEPS ? "Last step" : `${TOTAL_STEPS - step} left`}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+            <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${i + 1 <= step ? "bg-slate-900" : "bg-slate-200"}`} />
+          ))}
+        </div>
+      </div>
+
+      <Typography variant="h1" className="text-2xl font-black text-slate-900 mb-6">
+        {STEP_LABELS[step - 1]}
+      </Typography>
+
+      {submitError && <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl p-3 mb-6">{submitError}</p>}
+
+      {renderStep()}
+
+      {isMounted && createPortal(
+        <div className="fixed bottom-0 left-0 right-0 px-4 sm:px-6 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] bg-white/90 backdrop-blur-xl border-t border-slate-100 z-50">
+          <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
+            <Button variant="ghost" onClick={handleBack} className="w-fit px-6 h-14 rounded-2xl font-bold text-slate-400 hover:text-slate-900 hover:bg-slate-100 text-sm">
+              {step === 1 ? "Cancel" : "Back"}
+            </Button>
+            {step === TOTAL_STEPS ? (
+              <Button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="flex-1 h-14 rounded-2xl text-base font-black transition-all bg-slate-900 hover:bg-black text-white shadow-lg active:scale-[0.98] disabled:opacity-50"
+              >
+                {submitting ? (
+                  <div className="flex items-center justify-center gap-3">
+                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    <span>Saving…</span>
+                  </div>
+                ) : "Add service"}
+              </Button>
+            ) : (
+              <Button
+                onClick={handleNext}
+                disabled={!isStepValid(step)}
+                className="flex-1 h-14 rounded-2xl text-base font-black transition-all bg-slate-900 hover:bg-black text-white shadow-lg active:scale-[0.98] disabled:opacity-40"
+              >
+                Continue
+              </Button>
+            )}
+          </div>
+        </div>,
+        document.body,
+      )}
+    </div>
+  );
+}
+
+function ReviewRow({ icon, label, value }: { icon: IconName; label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-3 p-4">
+      <span className="w-9 h-9 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center flex-shrink-0">
+        <Icon name={icon} className="w-4 h-4" />
+      </span>
+      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest w-20 flex-shrink-0">{label}</span>
+      <span className="text-sm font-medium text-slate-900 truncate">{value}</span>
+    </div>
+  );
 }

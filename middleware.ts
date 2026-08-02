@@ -19,7 +19,7 @@ function getLocale(request: NextRequest): string | undefined {
 export function middleware(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
 
-    if (/\.(?:png|jpg|jpeg|svg|webp|ico|json|css|js|txt)(?:\?.*)?$/.test(pathname)) {
+    if (/\.(?:png|jpg|jpeg|svg|webp|ico|json|css|js|txt|xml|webmanifest)(?:\?.*)?$/.test(pathname)) {
         return;
     }
 

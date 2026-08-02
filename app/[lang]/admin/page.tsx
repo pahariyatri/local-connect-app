@@ -1,107 +1,147 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Typography from "../components/atoms/Typography";
 import Button from "../components/atoms/Button";
 import TopNavigation from "../components/organisms/TopNavigation";
 import BottomNavigation from "../components/organisms/BottomNavigation";
 import MetricsCard from "../components/organisms/MetricsCard";
+import { getAdminVendors, verifyVendor, getDashboard } from "@/services/adminService";
+import { toApiUiError } from "@/utils/apiErrors";
 
+// ─── Icon system — same inline-stroke-SVG convention used across the app ───
+
+type IconName = "home" | "check" | "shield";
+
+const ICON_PATHS: Record<IconName, React.ReactNode> = {
+    home: <><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><path d="M9 22V12h6v10" /></>,
+    check: <path d="M20 6 9 17l-5-5" />,
+    shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />,
+};
+
+function Icon({ name, className = "" }: { name: IconName; className?: string }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true" focusable="false">
+            {ICON_PATHS[name]}
+        </svg>
+    );
+}
+
+type Vendor = { id: string; businessName: string; type: string; isVerified: boolean; createdAt: string };
+type Dashboard = { revenue: { total: number; currency: string }; users: { total: number }; vendors: { pendingVerification: number } };
 
 export default function AdminDashboard() {
-    useEffect(() => {
-        // Platform init logs
+    const [vendors, setVendors] = useState<Vendor[]>([]);
+    const [dashboard, setDashboard] = useState<Dashboard | null>(null);
+    const [state, setState] = useState<"loading" | "error" | "ready">("loading");
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [approvingId, setApprovingId] = useState<string | null>(null);
+
+    const load = useCallback(async () => {
+        setState("loading");
+        setErrorMessage(null);
+        try {
+            const [vendorResult, dashboardResult] = await Promise.all([
+                getAdminVendors(1, 50),
+                getDashboard(),
+            ]);
+            setVendors(Array.isArray(vendorResult?.data) ? vendorResult.data : []);
+            setDashboard(dashboardResult);
+            setState("ready");
+        } catch (err) {
+            setErrorMessage(toApiUiError(err, "We could not load the dashboard.").message);
+            setState("error");
+        }
     }, []);
 
-    const verificationQueue = [
-        { id: "v1", name: "Himalayan Treks & Co", type: "Vendor", date: "2h ago", proofStatus: "Ready" },
-        { id: "v2", name: "Rajesh Kumar", type: "Broker", date: "5h ago", proofStatus: "Pending" },
-        { id: "v3", name: "Alpine Homestays", type: "Vendor", date: "1d ago", proofStatus: "Ready" },
-    ];
+    useEffect(() => { load(); }, [load]);
+
+    const handleApprove = async (vendorId: string) => {
+        setApprovingId(vendorId);
+        try {
+            await verifyVendor(vendorId);
+            setVendors((prev) => prev.map((v) => (v.id === vendorId ? { ...v, isVerified: true } : v)));
+        } catch (err) {
+            setErrorMessage(toApiUiError(err, "We could not approve this vendor.").message);
+        } finally {
+            setApprovingId(null);
+        }
+    };
+
+    const pendingVendors = vendors.filter((v) => !v.isVerified);
 
     return (
         <div className="min-h-screen bg-slate-50 pb-32">
             <TopNavigation title="Admin Control" />
-            
+
             <main className="max-w-md mx-auto px-6 pt-24">
-                {/* 🛡️ Admin Header */}
                 <header className="mb-10">
                     <div className="flex justify-between items-start">
                         <div>
                             <Typography variant="h1" className="text-3xl font-black text-indigo-900 leading-tight">
-                                Platform Health
+                                Platform Overview
                             </Typography>
-                            <p className="text-slate-500 font-bold flex items-center gap-1">
-                                System Status: <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Optimal
-                            </p>
+                            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Vendor approvals &amp; key metrics</p>
                         </div>
                         <div className="w-14 h-14 rounded-2xl bg-slate-900 flex items-center justify-center text-white shadow-xl shadow-slate-200">
-                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            <Icon name="shield" className="w-6 h-6" />
                         </div>
                     </div>
                 </header>
 
-                {/* 📊 Vital Stats */}
+                {errorMessage && (
+                    <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl p-3 mb-6">{errorMessage}</p>
+                )}
+
                 <div className="grid grid-cols-2 gap-4 mb-8">
-                    <MetricsCard label="Total GMV" value="₹1.2M" icon="📈" />
-                    <MetricsCard label="New Signups" value="84" icon="👥" />
+                    <MetricsCard label="Total revenue" value={dashboard ? `₹${dashboard.revenue.total.toLocaleString()}` : "—"} icon={<Icon name="check" className="w-5 h-5" />} />
+                    <MetricsCard label="Total users" value={dashboard ? dashboard.users.total : "—"} icon={<Icon name="home" className="w-5 h-5" />} />
                 </div>
 
-                {/* 🚨 Immediate Attention */}
                 <section className="mb-10">
-                    <Typography variant="h3" className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">Verification Queue</Typography>
-                    
-                    <div className="space-y-4">
-                        {verificationQueue.map((item) => (
-                            <div key={item.id} className="glass border-white/50 p-5 rounded-3xl flex justify-between items-center hover:bg-white/80 transition-all cursor-pointer group">
-                                <div className="flex gap-4 items-center">
-                                    <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-xl grayscale group-hover:grayscale-0 transition-all">
-                                        {item.type === "Vendor" ? "🏠" : "🤵"}
-                                    </div>
-                                    <div>
-                                        <h4 className="font-black text-slate-900 text-sm">{item.name}</h4>
-                                        <p className="text-[10px] font-bold text-slate-400">{item.type} • Applied {item.date}</p>
-                                    </div>
-                                </div>
-                                <div className="flex flex-col items-end gap-2">
-                                    <span className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-tighter ${
-                                        item.proofStatus === "Ready" ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-600"
-                                    }`}>
-                                        {item.proofStatus}
-                                    </span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-slate-300 group-hover:text-emerald-500 transition-colors"><path d="m9 18 6-6-6-6"/></svg>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
+                    <Typography variant="h3" className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">
+                        Vendor applications {pendingVendors.length > 0 && `(${pendingVendors.length})`}
+                    </Typography>
 
-                {/* ⚡ Platform Actions */}
-                <section className="mb-10">
-                    <Typography variant="h3" className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">Quick Actions</Typography>
-                    <div className="grid grid-cols-2 gap-4">
-                        {[
-                            { label: "Disputes", icon: "⚖️", count: "3", color: "bg-red-50 text-red-600" },
-                            { label: "Withdrawals", icon: "💰", count: "12", color: "bg-emerald-50 text-emerald-600" },
-                            { label: "Flagged", icon: "🚩", count: "0", color: "bg-amber-50 text-amber-600" },
-                            { label: "Promotions", icon: "🎟️", count: "5", color: "bg-indigo-50 text-indigo-600" },
-                        ].map((action, idx) => (
-                            <button key={idx} className="glass p-5 rounded-3xl border-transparent hover:border-white/50 hover:bg-white/80 transition-all text-left">
-                                <div className={`w-10 h-10 rounded-2xl ${action.color} flex items-center justify-center text-xl mb-4`}>
-                                    {action.icon}
-                                </div>
-                                <div className="flex justify-between items-end">
-                                    <p className="font-black text-slate-900 text-sm">{action.label}</p>
-                                    <span className="text-xs font-black opacity-50">{action.count}</span>
-                                </div>
-                            </button>
-                        ))}
-                    </div>
-                </section>
+                    {state === "loading" && (
+                        <div className="space-y-3">
+                            {[0, 1].map((i) => (
+                                <div key={i} className="p-5 rounded-3xl bg-white border border-slate-100 animate-pulse h-20" />
+                            ))}
+                        </div>
+                    )}
 
-                <Button className="w-full bg-slate-900 text-white h-16 rounded-[2rem] shadow-xl shadow-slate-200 font-black">
-                    Go to Global Analytics Console
-                </Button>
+                    {state === "ready" && pendingVendors.length === 0 && (
+                        <div className="text-center py-12 bg-white rounded-3xl border border-dashed border-slate-200">
+                            <p className="text-sm text-slate-400 font-medium">No applications waiting for review.</p>
+                        </div>
+                    )}
+
+                    {state === "ready" && (
+                        <div className="space-y-4">
+                            {pendingVendors.map((vendor) => (
+                                <div key={vendor.id} className="bg-white border border-slate-100 p-5 rounded-3xl flex justify-between items-center">
+                                    <div className="flex gap-4 items-center min-w-0">
+                                        <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 flex-shrink-0">
+                                            <Icon name="home" className="w-5 h-5" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <h4 className="font-black text-slate-900 text-sm truncate">{vendor.businessName}</h4>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{vendor.type} · Applied {new Date(vendor.createdAt).toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        onClick={() => handleApprove(vendor.id)}
+                                        disabled={approvingId === vendor.id}
+                                        className="h-10 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold flex-shrink-0 disabled:opacity-50"
+                                    >
+                                        {approvingId === vendor.id ? "Approving…" : "Approve"}
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </section>
             </main>
 
             <BottomNavigation />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Typography from "@/app/[lang]/components/atoms/Typography";
 import LocalImage from "@/app/[lang]/components/atoms/Image";
 import Button from "@/app/[lang]/components/atoms/Button";
@@ -9,8 +9,29 @@ import Link from "next/link";
 import { fetchCurrentUser } from "@/services/userService";
 import { getUserBookings } from "@/services/bookingService";
 import { logout } from "@/services/authService";
+import { getMyVendor } from "@/services/vendorService";
 import { User } from "@/types/userTypes";
 import VerifiedBadge from "../components/atoms/VerifiedBadge";
+
+// ─── Icon system — same inline-stroke-SVG convention used across the app ───
+
+type IconName = "edit" | "help" | "briefcase" | "compass" | "mountain";
+
+const ICON_PATHS: Record<IconName, ReactNode> = {
+    edit: <><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></>,
+    help: <><path d="M7.9 7.9a4 4 0 1 1 4.51 4.6c-1.13.32-2.41 1.3-2.41 2.5" /><circle cx="12" cy="17" r=".5" fill="currentColor" /><circle cx="12" cy="12" r="10" /></>,
+    briefcase: <><rect width="20" height="14" x="2" y="7" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></>,
+    compass: <><circle cx="12" cy="12" r="10" /><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" /></>,
+    mountain: <path d="m8 3 4 8 5-5 5 15H2L8 3z" />,
+};
+
+function Icon({ name, className = "" }: { name: IconName; className?: string }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true" focusable="false">
+            {ICON_PATHS[name]}
+        </svg>
+    );
+}
 
 type BookingStatus = "CONFIRMED" | "VENDOR_ACCEPTED" | "COMPLETED" | "PAYMENT_PENDING" | "CREATED" | "CANCELLED" | "REFUNDED" | "ABANDONED";
 
@@ -72,6 +93,11 @@ export default function ProfilePage() {
     const [user, setUser] = useState<User | null>(null);
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
+    const [vendorId, setVendorId] = useState<string | null>(null);
+
+    useEffect(() => {
+        getMyVendor().then((vendor) => { if (vendor?.id) setVendorId(vendor.id); }).catch(() => { /* no vendor for this account */ });
+    }, []);
 
     useEffect(() => {
         Promise.all([
@@ -152,7 +178,7 @@ export default function ProfilePage() {
 
                     {bookings.length === 0 ? (
                         <div className="py-10 text-center rounded-[2.5rem] bg-slate-50 border border-slate-100">
-                            <p className="text-4xl mb-4">🏔️</p>
+                            <Icon name="mountain" className="w-9 h-9 mx-auto mb-4 text-slate-300" />
                             <p className="text-slate-400 font-medium text-sm">No journeys yet.</p>
                             <button
                                 onClick={() => router.push(`/${lang}/builder`)}
@@ -205,18 +231,37 @@ export default function ProfilePage() {
                     )}
                 </section>
 
+                {/* Switch to vendor dashboard — only shown when this account actually owns a vendor */}
+                {vendorId && (
+                    <button
+                        onClick={() => router.push(`/${lang}/vendor/dashboard`)}
+                        className="w-full flex items-center gap-4 p-5 rounded-[2rem] bg-slate-900 hover:bg-black text-white transition-all group animate-in fade-in slide-in-from-bottom-3 duration-700 delay-200"
+                    >
+                        <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                            <Icon name="briefcase" className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 text-left">
+                            <p className="font-black text-sm">Switch to vendor dashboard</p>
+                            <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest mt-0.5">Manage services &amp; bookings</p>
+                        </div>
+                        <Icon name="compass" className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" />
+                    </button>
+                )}
+
                 {/* Quick Actions */}
                 <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-3 duration-700 delay-300">
                     {[
-                        { label: "Edit Profile", icon: "✏️", route: `/${lang}/profile/edit` },
-                        { label: "Help & Support", icon: "💬", route: `/${lang}/about` },
+                        { label: "Edit Profile", icon: "edit" as IconName, route: `/${lang}/profile/edit` },
+                        { label: "Help & Support", icon: "help" as IconName, route: `/${lang}/about` },
                     ].map((act) => (
                         <button
                             key={act.label}
                             onClick={() => router.push(act.route)}
                             className="flex flex-col items-center gap-4 p-7 rounded-[2.5rem] bg-white border border-slate-100 hover:border-emerald-100 hover:shadow-xl hover:shadow-emerald-50 transition-all group"
                         >
-                            <span className="text-3xl group-hover:scale-125 transition-transform">{act.icon}</span>
+                            <span className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-emerald-500 group-hover:scale-110 transition-all">
+                                <Icon name={act.icon} className="w-5 h-5" />
+                            </span>
                             <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest text-center">{act.label}</span>
                         </button>
                     ))}

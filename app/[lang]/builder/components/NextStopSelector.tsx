@@ -32,6 +32,14 @@ function CategoryIcon({ category, className = "" }: { category: string; classNam
   );
 }
 
+function MapPinIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" />
+    </svg>
+  );
+}
+
 function titleCase(s: string): string {
   return (s || "")
     .replace(/[-_]/g, " ")
@@ -279,7 +287,7 @@ export default function NextStopSelector({
         </div>
       ) : places.length === 0 ? (
         <div className="text-center py-12 rounded-[1.75rem] border-2 border-dashed border-slate-200 bg-slate-50/60">
-          <div className="text-3xl mb-2">🗺️</div>
+          <MapPinIcon className="w-8 h-8 mx-auto mb-2 text-slate-300" />
           <p className="text-slate-900 font-bold text-sm">{b.empty_title || "No stops found on this route yet."}</p>
           <p className="text-slate-400 text-xs mt-1">{b.empty_sub || "You can continue and we'll build your plan from your destinations."}</p>
         </div>
@@ -302,7 +310,7 @@ export default function NextStopSelector({
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-lg">📍</span>
+                      <MapPinIcon className="w-4 h-4 text-slate-400 flex-shrink-0" />
                       <h4 className="font-black text-slate-900 text-base truncate">{place.name}</h4>
                     </div>
                     <p className="text-[11px] font-bold text-slate-400 mt-1 ml-1">

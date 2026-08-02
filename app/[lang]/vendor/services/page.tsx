@@ -1,152 +1,233 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { Service } from "./types";
 import Typography from "../../components/atoms/Typography";
 import Button from "../../components/atoms/Button";
-import LocalImage from "../../components/atoms/Image";
-import { useLocalizationContext } from "@/contexts/LocalizationContext";
+import { getMyVendor } from "@/services/vendorService";
+import { getServicesByVendor } from "@/services/catalogService";
+import { toApiUiError } from "@/utils/apiErrors";
 import Loading from "@/app/loading";
+
+// ─── Icon system — same inline-stroke-SVG convention used across the app ───
+
+type IconName = "plus" | "map-pin" | "users" | "package" | "image-off";
+
+const ICON_PATHS: Record<IconName, React.ReactNode> = {
+  plus: <path d="M12 5v14M5 12h14" />,
+  "map-pin": <><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></>,
+  users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,
+  package: <><path d="m7.5 4.27 9 5.15" /><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" /><path d="m3.3 7 8.7 5 8.7-5" /><path d="M12 22V12" /></>,
+  "image-off": <><path d="M10.41 10.41a2 2 0 1 1-2.83-2.83" /><path d="m13.5 13.5-1.5-1.5" /><path d="M2 2l20 20" /><path d="M21 15V6a2 2 0 0 0-2-2H9" /><path d="M3.59 3.59A2 2 0 0 0 3 5v14a2 2 0 0 0 2 2h14a2 2 0 0 0 1.41-.59" /></>,
+};
+
+function Icon({ name, className = "" }: { name: IconName; className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true" focusable="false">
+      {ICON_PATHS[name]}
+    </svg>
+  );
+}
+
+function basePrice(service: Service): number | null {
+  const prices = service.prices || [];
+  if (prices.length === 0) return null;
+  return Math.min(...prices.map((p) => Number(p.price)));
+}
+
+function ServiceCardSkeleton() {
+  return (
+    <div className="rounded-[2.5rem] border border-slate-100 bg-white overflow-hidden animate-pulse">
+      <div className="h-56 bg-slate-100" />
+      <div className="p-8 flex justify-between">
+        <div className="space-y-2">
+          <div className="h-3 w-24 bg-slate-100 rounded" />
+          <div className="h-4 w-16 bg-slate-100 rounded" />
+        </div>
+        <div className="h-3 w-20 bg-slate-100 rounded self-end" />
+      </div>
+    </div>
+  );
+}
 
 export default function ServiceListPage() {
   const router = useRouter();
-  const { lang, dict, loading } = useLocalizationContext();
-  
-  const [services] = useState<Service[]>([
-    {
-      id: 1,
-      name: "Luxury Mountain Retreat",
-      prices: { weekday: 4200, weekend: 5500 },
-      availability: "Weekends Only",
-      status: "active",
-      category: "Stay",
-      subLocation: "Old Manali",
-      image: "https://images.unsplash.com/photo-1651319485646-f0f30e46b761?q=80&w=800",
-      hasActiveBookings: true,
-      capacity: 4
-    },
-    {
-      id: 2,
-      name: "4x4 Mountain Safari",
-      prices: { weekday: 2800, weekend: 3200 },
-      availability: "Daily",
-      status: "active",
-      category: "Transportation",
-      subLocation: "Rohtang Pass",
-      image: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?q=80&w=800",
-      hasActiveBookings: false,
-      capacity: 6
-    }
-  ]);
+  const { lang } = useParams();
 
-  if (loading || !dict) return <Loading />;
+  const [vendorId, setVendorId] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    try { return window.localStorage.getItem("vendorId"); } catch { return null; }
+  });
+  const [resolvingVendor, setResolvingVendor] = useState(() => {
+    if (typeof window === "undefined") return true;
+    try { return !window.localStorage.getItem("vendorId"); } catch { return true; }
+  });
+
+  useEffect(() => {
+    if (vendorId) return;
+    let cancelled = false;
+    getMyVendor()
+      .then((vendor) => {
+        if (cancelled || !vendor?.id) return;
+        setVendorId(vendor.id);
+        try { window.localStorage.setItem("vendorId", vendor.id); } catch { /* non-fatal */ }
+      })
+      .catch(() => { /* no vendor for this user — handled by the empty state below */ })
+      .finally(() => { if (!cancelled) setResolvingVendor(false); });
+    return () => { cancelled = true; };
+  }, [vendorId]);
+
+  const [services, setServices] = useState<Service[]>([]);
+  const [state, setState] = useState<"idle" | "loading" | "error" | "ready">("idle");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!vendorId) return;
+    setState("loading");
+    setErrorMessage(null);
+    try {
+      const result = await getServicesByVendor(vendorId);
+      setServices(Array.isArray(result) ? result : []);
+      setState("ready");
+    } catch (err) {
+      setErrorMessage(toApiUiError(err, "We could not load your services.").message);
+      setState("error");
+    }
+  }, [vendorId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (resolvingVendor) return <Loading />;
+
+  if (vendorId === null) {
+    return (
+      <div className="max-w-md mx-auto text-center py-20 px-4">
+        <Typography variant="h1" className="text-2xl font-black text-slate-900 mb-2">No vendor profile yet</Typography>
+        <p className="text-slate-400 text-sm mb-8">Complete vendor onboarding to start adding services.</p>
+        <Link href={`/${lang}/vendor/onboarding`}>
+          <Button className="h-14 px-8 rounded-2xl bg-slate-900 text-white font-bold text-sm">Start onboarding</Button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6">
-        {/* Minimalist Header */}
-        <header className="pt-8 pb-12 animate-in fade-in slide-in-from-top-4 duration-1000">
-            <div className="flex justify-between items-start mb-4">
-                <div>
-                   <Typography variant="h1" className="text-5xl font-black text-slate-900 tracking-tight leading-none italic">
-                        Inventory.
-                    </Typography>
-                    <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.4em] mt-3">Live Fleet & Assets</p>
-                </div>
-                <button 
-                    onClick={() => router.push(`/${lang}/vendor/services/new`)}
-                    className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center text-white shadow-2xl active:scale-95 transition-all text-2xl group"
-                >
-                    <span className="group-hover:rotate-90 transition-transform duration-500">＋</span>
-                </button>
-            </div>
-        </header>
+      <header className="pt-8 pb-10 flex justify-between items-start">
+        <div>
+          <Typography variant="h1" className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+            Your services
+          </Typography>
+          <p className="text-slate-400 font-semibold text-xs mt-2">{services.length} listed</p>
+        </div>
+        <button
+          onClick={() => router.push(`/${lang}/vendor/services/new`)}
+          aria-label="Add a service"
+          className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center text-white shadow-lg active:scale-95 transition-transform hover:bg-black"
+        >
+          <Icon name="plus" className="w-6 h-6" />
+        </button>
+      </header>
 
-        {/* High-End Card Grid */}
-        <div className="space-y-10">
-            {services.map((service, idx) => (
-                <div 
-                    key={service.id} 
-                    className="group relative animate-in fade-in slide-in-from-bottom-8 duration-1000 fill-mode-forwards"
-                    style={{ animationDelay: `${idx * 200}ms` }}
-                >
-                    <div 
-                        onClick={() => router.push(`/${lang}/vendor/services/${service.id}/edit`)}
-                        className="bg-white rounded-[3.5rem] overflow-hidden border border-slate-100 shadow-[0_30px_70px_-20px_rgba(0,0,0,0.08)] hover:shadow-2xl hover:shadow-indigo-50 transition-all duration-700 cursor-pointer"
-                    >
-                        {/* Immersive Image Header */}
-                        <div className="relative h-80 w-full overflow-hidden">
-                            <LocalImage src={service.image || ""} alt={service.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2000ms]" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                            
-                            {/* Status Floats */}
-                            <div className="absolute top-8 left-8 flex flex-col gap-2">
-                                <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md border border-white/20 shadow-2xl ${
-                                    service.status === 'active' ? 'bg-emerald-500/90 text-white' : 'bg-slate-900/90 text-white'
-                                }`}>
-                                    {service.status === 'active' ? '✓ Online' : '• Draft'}
-                                </div>
-                                {service.hasActiveBookings && (
-                                    <div className="px-4 py-1.5 rounded-full text-[9px] font-black bg-white/90 backdrop-blur-md text-slate-900 uppercase tracking-widest shadow-2xl flex items-center gap-2">
-                                        <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></span>
-                                        Locked
-                                    </div>
-                                )}
-                            </div>
+      {state === "loading" && (
+        <div className="space-y-6">
+          <ServiceCardSkeleton />
+          <ServiceCardSkeleton />
+        </div>
+      )}
 
-                            {/* Tactical Bottom Info */}
-                            <div className="absolute bottom-8 left-8 right-8 flex justify-between items-end">
-                                <div>
-                                    <h3 className="text-3xl font-black text-white leading-none uppercase tracking-tighter italic">{service.name}</h3>
-                                    <div className="flex items-center gap-2 text-white/60 mt-3 text-[10px] font-bold uppercase tracking-widest leading-none">
-                                        <span>{service.subLocation}</span>
-                                        <span className="w-1 h-1 bg-white/20 rounded-full" />
-                                        <span>{service.category}</span>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1 leading-none italic">Base Rate</p>
-                                    <p className="text-3xl font-black text-white italic tracking-tighter leading-none">₹{service.prices.weekday}</p>
-                                </div>
-                            </div>
-                        </div>
+      {state === "error" && (
+        <div className="text-center py-16 bg-white rounded-[2.5rem] border border-red-100">
+          <p className="text-sm text-red-600 mb-4">{errorMessage}</p>
+          <Button onClick={load} variant="outline" className="h-11 px-6 rounded-xl text-xs font-bold">Try again</Button>
+        </div>
+      )}
 
-                        {/* Card Footer Metrics */}
-                        <div className="px-10 py-8 flex justify-between items-center bg-slate-50/30">
-                            <div className="flex gap-10">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-lg">⚡</div>
-                                    <div>
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5 leading-none">Yield Index</p>
-                                        <p className="text-xs font-black text-slate-900 italic tracking-tighter leading-none">Premium</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-lg">👥</div>
-                                    <div>
-                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5 leading-none">Capacity</p>
-                                        <p className="text-xs font-black text-slate-900 italic tracking-tighter leading-none">{service.capacity} Guests</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2 text-slate-300 font-bold text-[10px] uppercase tracking-widest">
-                                Configure →
-                            </div>
-                        </div>
+      {state === "ready" && services.length === 0 && (
+        <div className="text-center py-20 bg-slate-50 rounded-[3rem] border border-dashed border-slate-200">
+          <Typography variant="h3" className="text-xl font-black text-slate-900 mb-2">No services yet</Typography>
+          <p className="text-slate-400 text-sm mb-8">Add your first service so travelers can find and book it.</p>
+          <Button onClick={() => router.push(`/${lang}/vendor/services/new`)} className="h-12 px-6 rounded-xl bg-slate-900 text-white font-bold text-sm">
+            Add a service
+          </Button>
+        </div>
+      )}
+
+      {state === "ready" && services.length > 0 && (
+        <div className="space-y-8 pb-16">
+          {services.map((service) => {
+            const image = service.additionalData?.images?.[0];
+            const primaryAddress = service.addresses?.find((a) => a.isPrimary) || service.addresses?.[0];
+            const price = basePrice(service);
+            return (
+              <div
+                key={service.id}
+                onClick={() => router.push(`/${lang}/vendor/services/${service.id}/edit`)}
+                className="group bg-white rounded-[2.5rem] overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-shadow duration-500 cursor-pointer"
+              >
+                <div className="relative h-56 w-full overflow-hidden bg-slate-50">
+                  {image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={image} alt={service.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-300">
+                      <Icon name="image-off" className="w-8 h-8 mb-2" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest">No image yet</span>
                     </div>
+                  )}
+                  <div className="absolute top-5 left-5">
+                    <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide shadow-sm ${
+                      service.isAvailable ? "bg-emerald-500 text-white" : "bg-slate-900/80 text-white"
+                    }`}>
+                      {service.isAvailable ? "Active" : "Inactive"}
+                    </span>
+                  </div>
                 </div>
-            ))}
-        </div>
 
-        {/* Global Hub Metric */}
-        <div className="mt-20 p-12 bg-white rounded-[3.5rem] border border-slate-100 shadow-[0_40px_100px_-40px_rgba(0,0,0,0.06)] text-center animate-in zoom-in-95 duration-1000 delay-500">
-            <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.6em] mb-4">Inventory Operations v.4.0</p>
-            <div className="h-[2px] w-24 bg-slate-100 mx-auto" />
-        </div>
+                <div className="p-6 sm:p-8">
+                  <div className="flex justify-between items-start gap-4 mb-4">
+                    <div className="min-w-0">
+                      <h3 className="text-xl font-black text-slate-900 leading-tight truncate">{service.name}</h3>
+                      <div className="flex items-center gap-2 text-slate-400 mt-1.5 text-xs font-semibold">
+                        {primaryAddress && (
+                          <span className="flex items-center gap-1">
+                            <Icon name="map-pin" className="w-3.5 h-3.5" />
+                            {primaryAddress.city}
+                          </span>
+                        )}
+                        {service.subcategory && (
+                          <>
+                            {primaryAddress && <span className="w-1 h-1 bg-slate-200 rounded-full" />}
+                            <span>{service.subcategory.name}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    {price !== null && (
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-0.5">From</p>
+                        <p className="text-lg font-black text-slate-900">₹{price.toLocaleString()}</p>
+                      </div>
+                    )}
+                  </div>
 
-        <div className="pb-24 text-center mt-12 opacity-10">
-            <p className="text-[8px] font-black text-slate-400 uppercase tracking-[1em]">LocalConnect Cloud Relay</p>
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                    <span className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+                      <Icon name="users" className="w-4 h-4" />
+                      {service.capacity} guest{service.capacity === 1 ? "" : "s"} capacity
+                    </span>
+                    <span className="text-xs font-bold text-slate-400 group-hover:text-slate-900 transition-colors">
+                      Edit →
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
+      )}
     </div>
   );
 }
