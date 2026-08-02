@@ -43,6 +43,15 @@ export function toAuthUiError(err: unknown): AuthUiError {
     if (err.statusCode === 503) {
       return { message: CODE_MESSAGES.AUTH_PROVIDER_UNAVAILABLE };
     }
+    // Unmapped code: this is deliberately NOT the anti-enumeration path above
+    // (those known codes always keep their generic copy). Everything else —
+    // validation errors, unexpected 500s, edge cases we haven't named yet —
+    // shows the backend's own message instead of a vague catch-all, so a
+    // real failure is diagnosable instead of hidden. The backend's global
+    // exception filter (http-exception.filter.ts) already collapses truly
+    // unexpected exceptions to a safe "Internal server error" string, so
+    // this never leaks stack traces or internals.
+    if (err.message) return { message: err.message, retryAfterSeconds: err.retryAfterSeconds };
   }
   return { message: 'Something went wrong. Please try again.' };
 }

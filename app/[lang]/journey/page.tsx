@@ -5,6 +5,8 @@ import { useRouter, useParams } from "next/navigation";
 import { useCart } from "@/contexts/CartContext";
 import { useNotification } from "@/contexts/NotificationContext";
 import { useTripPlanner, ItineraryStop } from "@/contexts/TripPlannerContext";
+import { saveDraftTrip } from "@/services/tripService";
+import { toApiUiError } from "@/utils/apiErrors";
 import Typography from "../components/atoms/Typography";
 import Button from "../components/atoms/Button";
 import TopNavigation from "../components/organisms/TopNavigation";
@@ -51,6 +53,7 @@ export default function JourneyPage() {
     const [bookingSuccess] = useState(false);
     const [isAddingStop, setIsAddingStop] = useState(false);
     const [isEditingDates, setIsEditingDates] = useState(false);
+    const [isSavingDraft, setIsSavingDraft] = useState(false);
     const [newStop, setNewStop] = useState<Omit<ItineraryStop, "id">>({ activity: "", time: "12:00 PM", day: 1, type: "food" });
 
     const journey = dict?.page?.journey || {};
@@ -86,6 +89,27 @@ export default function JourneyPage() {
         ...stops.map(stop => ({ ...stop, isService: false }))
     ] as RoadMapItem[]).filter(item => item.day === activeDay)
      .sort((a, b) => a.time.localeCompare(b.time));
+
+    const handleSaveDraft = async () => {
+        setIsSavingDraft(true);
+        try {
+            const serviceIds = cart
+                .map((item) => Number(item.id))
+                .filter((id) => Number.isFinite(id));
+            await saveDraftTrip({
+                name: `${origin || "Chandigarh"} to Manali`,
+                serviceIds,
+                totalPrice,
+                startDate: startDate || new Date().toISOString().split("T")[0],
+                endDate: endDate || new Date().toISOString().split("T")[0],
+            });
+            showNotification("Trip saved — find it under My Journeys.", "success");
+        } catch (err) {
+            showNotification(toApiUiError(err, "We could not save this trip. Please try again.").message, "error");
+        } finally {
+            setIsSavingDraft(false);
+        }
+    };
 
     const copyShareLink = () => {
         const shareUrl = `${window.location.origin}/${pathLang}/journey/view?tripId=hp-road-trip-123`;
@@ -136,8 +160,17 @@ export default function JourneyPage() {
                                 {origin || "Chandigarh"} → {"Manali"}
                             </Typography>
                         </div>
-                        <button className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-slate-100 text-indigo-600 flex items-center justify-center hover:bg-indigo-50 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+                        <button
+                            onClick={handleSaveDraft}
+                            disabled={isSavingDraft}
+                            aria-label="Save this trip as a draft"
+                            className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-slate-100 text-indigo-600 flex items-center justify-center hover:bg-indigo-50 transition-colors disabled:opacity-50"
+                        >
+                            {isSavingDraft ? (
+                                <div className="w-4 h-4 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+                            )}
                         </button>
                     </div>
                 </header>
