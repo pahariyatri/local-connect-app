@@ -16,10 +16,16 @@ export default function LangLayout({
   // the marketing site chrome (nav links, language switcher, "Login" button
   // sitting on the login page itself) doesn't belong there.
   const isAuthRoute = /^\/[^/]+\/auth(\/|$)/.test(pathname || "");
-  // Bookings and Admin each render their own customized TopNavigation
-  // (title, back button) — rendering the default one here too stacked a
-  // second <nav> exactly on top of it at the same fixed position.
-  const hasOwnTopNav = /^\/[^/]+\/(bookings|admin)(\/|$)/.test(pathname || "");
+  // These routes each render their own customized TopNavigation (title,
+  // back button) — rendering the default one here too stacked a second
+  // <nav> exactly on top of it at the same fixed position. The vendor
+  // public-profile page (/vendor/[id]) is the same case, but nested under
+  // /vendor alongside dashboard/services/etc. which rely on the default
+  // nav — so it needs its own pattern rather than a plain segment match.
+  const hasOwnTopNav = /^\/[^/]+\/(bookings|admin|privacy-policy|sitemap|results|discover|journey|terms-conditions)(\/|$)/.test(pathname || "")
+    || /^\/[^/]+\/vendor\/(?!dashboard|bookings|calendar|community|contracts|onboarding|partnerships|payouts|services)[^/]+(\/|$)/.test(pathname || "");
+  // Discover and Journey also render their own BottomNavigation.
+  const hasOwnBottomNav = /^\/[^/]+\/(discover|journey)(\/|$)/.test(pathname || "");
 
   return (
     <div className="bg-white min-h-screen overflow-x-hidden">
@@ -27,7 +33,7 @@ export default function LangLayout({
       <div className="page-fade-in">
         {children}
       </div>
-      {!isAuthRoute && <BottomNavigation onToggleLanguage={(l) => switchLanguage(l as any)} />}
+      {!isAuthRoute && !hasOwnBottomNav && <BottomNavigation onToggleLanguage={(l) => switchLanguage(l as any)} />}
     </div>
   );
 }
