@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useState } from "react";
 import Typography from "../components/atoms/Typography";
 import Button from "../components/atoms/Button";
 import TopNavigation from "../components/organisms/TopNavigation";
-import BottomNavigation from "../components/organisms/BottomNavigation";
 import MetricsCard from "../components/organisms/MetricsCard";
 import { getAdminVendors, verifyVendor, getDashboard } from "@/services/adminService";
 import { toApiUiError } from "@/utils/apiErrors";
@@ -143,8 +142,6 @@ export default function AdminDashboard() {
                     )}
                 </section>
             </main>
-
-            <BottomNavigation />
         </div>
     );
 }

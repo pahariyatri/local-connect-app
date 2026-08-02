@@ -4,7 +4,7 @@
  * Tracks every visitor action → powers the conversion engine.
  * Works WITHOUT login. Auto-starts on first page load.
  */
-import { api } from '@/lib/apiClient';
+import { api, ApiClientError } from '@/lib/apiClient';
 
 export type SessionEventType =
   | 'page_view'
@@ -56,6 +56,18 @@ class SessionTracker {
     }
 
     return this.initPromise;
+  }
+
+  /**
+   * The cached session id can outlive the server-side record (e.g. it
+   * naturally expired, or — in dev — the database was reset). Clear the
+   * cache so the next getSessionId() call starts a fresh session instead
+   * of repeating the same 404 forever.
+   */
+  private forgetSession(): void {
+    this.sessionId = null;
+    this.initPromise = null;
+    if (typeof window !== 'undefined') localStorage.removeItem(SESSION_KEY);
   }
 
   private async startSession(): Promise<string> {
@@ -121,7 +133,11 @@ class SessionTracker {
         metadata: options?.metadata,
         durationMs: options?.durationMs,
       }, { skipAuth: true });
-    } catch {
+    } catch (err) {
+      // A 404 here means the server no longer has this session (expired or,
+      // in dev, the database was reset) — drop the stale cached id so the
+      // *next* tracked event starts a fresh session instead of 404ing forever.
+      if (err instanceof ApiClientError && err.statusCode === 404) this.forgetSession();
       // Never let tracking errors break the app
     }
   }
@@ -135,7 +151,8 @@ class SessionTracker {
       if (sessionId.startsWith('local-')) return;
 
       await api.post(`/sessions/${sessionId}/link-user/${userId}`, undefined, { skipAuth: true });
-    } catch {
+    } catch (err) {
+      if (err instanceof ApiClientError && err.statusCode === 404) this.forgetSession();
       // Silent fail
     }
   }
