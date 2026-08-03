@@ -21,6 +21,10 @@ COPY . .
 # override with --build-arg for staging/local image builds.
 ARG NEXT_PUBLIC_API_BASE_URL=https://api.pahariyatri.com
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+# 'otp' | 'pin' — see utils/constants.ts. Defaults to 'otp' (unchanged
+# behavior) unless explicitly overridden at build time.
+ARG NEXT_PUBLIC_AUTH_MODE=otp
+ENV NEXT_PUBLIC_AUTH_MODE=$NEXT_PUBLIC_AUTH_MODE
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
