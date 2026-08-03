@@ -238,7 +238,7 @@ export default function PinPage() {
         // Direct signup isn't enabled in this environment — OTP is the only path.
         setOfferCreate(false);
         setShowOtpOffer(true);
-        setError(null);
+        setError("We couldn't create an account that way here — verify with OTP instead.");
         setBusy(false);
         return;
       }
