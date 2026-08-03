@@ -24,6 +24,10 @@ export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || DEFAULT_API
  *           Both routes are always enabled in production.
  * OTP screens/services stay in the codebase either way — this flag only
  * decides which flow the login entry point routes into.
+ *
+ * 2026-08-03: enabled in production (NEXT_PUBLIC_AUTH_MODE=pin,
+ * AUTH_DIRECT_PIN_SIGNUP=true) as a temporary bridge while a real OTP
+ * provider is provisioned. Revert both once MSG91/DLT is live.
  */
 export const AUTH_MODE: 'pin' | 'otp' =
   process.env.NEXT_PUBLIC_AUTH_MODE === 'pin' ? 'pin' : 'otp';
