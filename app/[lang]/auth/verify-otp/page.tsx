@@ -72,7 +72,7 @@ export default function VerifyOtpPage() {
       const result = await verifyOtp(challengeId, otpString);
       if (result.nextStep === 'pin_setup' && result.setupTicket) {
         setSuccess('Verified! Create your PIN...');
-        router.push(`/${lang}/auth/pin?mode=create&ticket=${encodeURIComponent(result.setupTicket)}${redirectSuffix}`);
+        router.push(`/${lang}/auth/pin?mode=signup&ticket=${encodeURIComponent(result.setupTicket)}${redirectSuffix}`);
       } else {
         // Existing account — phone ownership proven, continue with PIN login.
         setSuccess('Verified! Sign in with your PIN...');

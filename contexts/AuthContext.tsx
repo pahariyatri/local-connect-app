@@ -11,8 +11,13 @@ interface User {
   role: string;
 }
 
+type AuthStatus = 'hydrating' | 'authenticated' | 'unauthenticated';
+
 interface AuthContextType {
   user: User | null;
+  /** Explicit tri-state — consumers must not treat `user === null` during
+   * 'hydrating' as "logged out"; the session check is still in flight. */
+  authStatus: AuthStatus;
   login: (userData: User) => void;
   logout: () => void;
 }
@@ -22,6 +27,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const authStatus: AuthStatus = isLoading ? 'hydrating' : user ? 'authenticated' : 'unauthenticated';
 
   useEffect(() => {
     const checkUser = async () => {
@@ -83,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, authStatus, login, logout }}>
       {!isLoading && children}
     </AuthContext.Provider>
   );
