@@ -25,6 +25,11 @@ interface PackageBuilderStepProps {
   stopServicesByDay?: Record<number, string[]>;
   onCreatingChange?: (creating: boolean) => void;
   onStep5Footer?: (data: { totalPrice: number; onCreatePackage: () => Promise<void> }) => void;
+  // Lifted to the parent (like every other step's state) so vendor picks
+  // survive navigating back to an earlier step and forward again — this
+  // component used to own `selections` locally and lost it on remount.
+  selections: Record<number, Record<string, string | null>>;
+  onSelectionsChange: (next: Record<number, Record<string, string | null>>) => void;
 }
 
 export default function PackageBuilderStep({
@@ -41,10 +46,11 @@ export default function PackageBuilderStep({
   stopServicesByDay,
   onCreatingChange,
   onStep5Footer,
+  selections,
+  onSelectionsChange,
 }: PackageBuilderStepProps) {
   const router = useRouter();
   const [liveVendors, setLiveVendors] = useState<Record<string, Vendor[]>>(EMPTY_VENDORS);
-  const [selections, setSelections] = useState<Record<number, Record<string, string | null>>>({});
   const [discoveryState, setDiscoveryState] = useState<{ isOpen: boolean; category: string; day: number }>({ isOpen: false, category: "", day: 0 });
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -128,32 +134,32 @@ export default function PackageBuilderStep({
     const firstTaxi = liveVendors.Taxi?.[0]?.id ?? null;
     const firstAdventure = liveVendors.Adventure?.[0]?.id ?? null;
     const firstMeals = liveVendors.Meals?.[0]?.id ?? null;
-    setSelections((prev) => {
-      const next: Record<number, Record<string, string | null>> = {};
-      itineraryDays.forEach((day) => {
-        next[day] = {
-          Stay: dayWants(day, "Stay", wantsStay) ? (prev[day]?.Stay ?? firstStay) : null,
-          Taxi: dayWants(day, "Taxi", wantsTaxi) ? (prev[day]?.Taxi ?? firstTaxi) : null,
-          Adventure: dayWants(day, "Adventure", wantsAdventure) ? (prev[day]?.Adventure ?? firstAdventure) : null,
-          Meals: dayWants(day, "Meals", wantsMeals) ? (prev[day]?.Meals ?? firstMeals) : null,
-        };
-      });
-      return next;
+    const prev = selections;
+    const next: Record<number, Record<string, string | null>> = {};
+    itineraryDays.forEach((day) => {
+      next[day] = {
+        Stay: dayWants(day, "Stay", wantsStay) ? (prev[day]?.Stay ?? firstStay) : null,
+        Taxi: dayWants(day, "Taxi", wantsTaxi) ? (prev[day]?.Taxi ?? firstTaxi) : null,
+        Adventure: dayWants(day, "Adventure", wantsAdventure) ? (prev[day]?.Adventure ?? firstAdventure) : null,
+        Meals: dayWants(day, "Meals", wantsMeals) ? (prev[day]?.Meals ?? firstMeals) : null,
+      };
     });
-  }, [itineraryDays, wantsStay, wantsTaxi, wantsAdventure, wantsMeals, liveVendors, dayWants]); // eslint-disable-line react-hooks/exhaustive-deps
+    onSelectionsChange(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itineraryDays, wantsStay, wantsTaxi, wantsAdventure, wantsMeals, liveVendors, dayWants]);
 
   const handleVendorChange = (day: number, category: string, vendorId: string) => {
-    setSelections((prev) => ({
-      ...prev,
-      [day]: { ...prev[day], [category]: vendorId },
-    }));
+    onSelectionsChange({
+      ...selections,
+      [day]: { ...selections[day], [category]: vendorId },
+    });
   };
 
   const handleRemove = (day: number, category: string) => {
-    setSelections((prev) => ({
-      ...prev,
-      [day]: { ...prev[day], [category]: null },
-    }));
+    onSelectionsChange({
+      ...selections,
+      [day]: { ...selections[day], [category]: null },
+    });
     setDiscoveryState({ isOpen: true, category, day });
   };
 
