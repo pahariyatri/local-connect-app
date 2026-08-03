@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
-import { loginWithPin, setupPin, signupWithPin, resetPin, forgotPinRequest, requestOtp } from '@/services/authService';
+import { loginWithPin, setupPin, signupWithPin, resetPin, forgotPinRequest, checkPhoneExists } from '@/services/authService';
 import { ApiClientError } from '@/lib/apiClient';
 import { toAuthUiError } from '@/utils/authErrors';
 import { fetchCurrentUser } from '@/services/userService';
@@ -11,19 +11,32 @@ import { PIN_LENGTH, isWeakPin } from '@/utils/validation';
 import Button from '../../components/atoms/Button';
 import AuthShell from '../components/AuthShell';
 
-type Mode = 'create' | 'login' | 'reset';
+/**
+ * Explicit state machine — the backend's phone/check result (or an OTP-
+ * issued ticket, which already proves phone ownership) is the ONLY thing
+ * that decides login vs. signup. The URL's `mode` param is a hint for the
+ * initial render only; it is corrected via router.replace() once resolved,
+ * never trusted for the actual submit behavior.
+ */
+type FlowState =
+  | 'CHECKING_PHONE'
+  | 'EXISTING_USER_PIN'
+  | 'NEW_USER_PIN'
+  | 'RESET_PIN'
+  | 'SUBMITTING'
+  | 'ERROR';
 
 function PinBoxes({
   value,
   onChange,
   autoFocus,
-  mask = true,
+  autoComplete,
   label,
 }: {
   value: string[];
   onChange: (next: string[]) => void;
   autoFocus?: boolean;
-  mask?: boolean;
+  autoComplete: 'current-password' | 'new-password';
   label: string;
 }) {
   const refs = useRef<(HTMLInputElement | null)[]>([]);
@@ -59,9 +72,9 @@ function PinBoxes({
         <input
           key={i}
           ref={(el) => { refs.current[i] = el; }}
-          type={mask ? 'password' : 'text'}
+          type="password"
           inputMode="numeric"
-          autoComplete="off"
+          autoComplete={autoComplete}
           aria-label={`${label} digit ${i + 1} of ${PIN_LENGTH}`}
           maxLength={1}
           value={value[i] || ''}
@@ -82,6 +95,14 @@ const empty = () => Array(PIN_LENGTH).fill('');
 /** Mask all but the last 4 digits for display. */
 const maskPhone = (p: string) => (p.length > 4 ? '•'.repeat(p.length - 4) + p.slice(-4) : p);
 
+/** Only ever follow a same-site relative path — never an absolute/external URL. */
+const safeRedirect = (raw: string | null): string => {
+  if (!raw) return '/';
+  const decoded = decodeURIComponent(raw);
+  if (!decoded.startsWith('/') || decoded.startsWith('//')) return '/';
+  return decoded;
+};
+
 export default function PinPage() {
   const router = useRouter();
   const { lang } = useParams() as { lang: string };
@@ -89,32 +110,38 @@ export default function PinPage() {
   const { login } = useAuth();
 
   const rawMode = searchParams.get('mode');
-  const mode: Mode = rawMode === 'create' || rawMode === 'reset' ? rawMode : 'login';
   const phoneNumber = searchParams.get('phone') || '';
   const ticket = searchParams.get('ticket') || '';
   const redirectTo = searchParams.get('redirectTo');
   const redirectSuffix = redirectTo ? `&redirectTo=${encodeURIComponent(redirectTo)}` : '';
+  const isTicketReset = rawMode === 'reset';
+  const isTicketSignup = rawMode === 'signup' && !!ticket;
 
-  // create/reset modes have two stages: enter → confirm
-  const [stage, setStage] = useState<'enter' | 'confirm'>('enter');
+  const [flow, setFlow] = useState<FlowState>(() => {
+    if (isTicketReset) return 'RESET_PIN';
+    if (isTicketSignup) return 'NEW_USER_PIN';
+    return 'CHECKING_PHONE'; // phone/check decides login vs. signup — always
+  });
   const [pin, setPinDigits] = useState<string[]>(empty());
   const [confirm, setConfirm] = useState<string[]>(empty());
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  // Shown after a failed PIN login, as a last-resort fallback if account
-  // creation itself isn't available (AUTH_DIRECT_PIN_SIGNUP off).
-  const [showOtpOffer, setShowOtpOffer] = useState(false);
-  // A wrong PIN and "no account yet" look identical from the backend (by
-  // design, to avoid leaking which one it is) — rather than guess, offer to
-  // create an account with this same PIN. If one already exists, pin/signup
-  // itself says so (AUTH_USER_EXISTS) and we know it really was a wrong PIN.
-  const [offerCreate, setOfferCreate] = useState(false);
+  const submitLockRef = useRef(false); // belt-and-braces duplicate-submit guard
 
-  const goHome = () => router.push(redirectTo ? decodeURIComponent(redirectTo) : '/');
+  const clearPinState = () => {
+    setPinDigits(empty());
+    setConfirm(empty());
+  };
 
-  const completeLogin = async (welcome: string) => {
+  const goToDestination = () => router.replace(safeRedirect(redirectTo));
+
+  const completeAuth = async (welcome: string) => {
     const profile = await fetchCurrentUser();
+    if (!profile?.id) {
+      // Login/signup reported success but /auth/me came back without a
+      // usable profile — a controlled error, never a silent redirect.
+      throw new Error('Signed in, but your profile could not be loaded. Please try again.');
+    }
     login({
       id: profile.id,
       name: profile.name || `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'User',
@@ -122,151 +149,122 @@ export default function PinPage() {
       phone: profile.phone || '',
       role: profile.role || 'User',
     });
+    clearPinState();
     setSuccess(welcome);
-    setTimeout(goHome, 800);
+    setTimeout(goToDestination, 700);
   };
 
-  const failWith = (err: unknown) => {
+  const failWith = (err: unknown, fallbackFlow: FlowState) => {
     const ui = toAuthUiError(err);
     setError(ui.retryAfterSeconds ? `${ui.message} (wait ~${ui.retryAfterSeconds}s)` : ui.message);
-    setBusy(false);
+    setFlow(fallbackFlow);
+    submitLockRef.current = false;
   };
 
-  const handleCreateOrReset = async () => {
-    const pinStr = pin.join('');
-    if (stage === 'enter') {
-      if (pinStr.length < PIN_LENGTH) { setError(`Enter a ${PIN_LENGTH}-digit PIN.`); return; }
-      // UX-only pre-check; the backend policy is authoritative.
-      if (isWeakPin(pinStr)) {
-        setError('That PIN is too easy to guess. Please choose a different one.');
-        setPinDigits(empty());
-        return;
+  // ── Phone-check: the single source of truth for login vs. signup ────────
+  useEffect(() => {
+    if (isTicketReset || isTicketSignup) return; // ownership already proven via OTP ticket
+    if (!phoneNumber) return; // handled by the guard render below
+    let cancelled = false;
+    (async () => {
+      try {
+        const exists = await checkPhoneExists(phoneNumber);
+        if (cancelled) return;
+        const resolvedMode = exists ? 'login' : 'signup';
+        setFlow(exists ? 'EXISTING_USER_PIN' : 'NEW_USER_PIN');
+        // Correct the URL if it disagreed with the backend, without adding
+        // a history entry (back button shouldn't bounce through both).
+        if (rawMode !== resolvedMode) {
+          router.replace(`/${lang}/auth/pin?mode=${resolvedMode}&phone=${phoneNumber}${redirectSuffix}`);
+        }
+      } catch (err) {
+        if (!cancelled) failWith(err, 'ERROR');
       }
-      setError(null);
-      setStage('confirm');
-      return;
-    }
-    // confirm stage
-    const confirmStr = confirm.join('');
-    if (confirmStr.length < PIN_LENGTH) { setError('Re-enter your PIN to confirm.'); return; }
-    if (pinStr !== confirmStr) {
-      setError('PINs do not match. Try again.');
-      setConfirm(empty());
-      setStage('enter');
-      setPinDigits(empty());
-      return;
-    }
-    setBusy(true);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phoneNumber]);
+
+  const handleLogin = async () => {
+    if (submitLockRef.current) return;
+    const pinStr = pin.join('');
+    if (pinStr.length < PIN_LENGTH) { setError(`Enter your ${PIN_LENGTH}-digit PIN.`); return; }
+    submitLockRef.current = true;
+    setFlow('SUBMITTING');
     setError(null);
     try {
-      if (mode === 'reset') {
-        await resetPin(ticket, pinStr, confirmStr);
-        // Reset revokes every session server-side — the user signs in fresh.
-        setSuccess('PIN reset! Sign in with your new PIN...');
-        setTimeout(() => router.push(`/${lang}/auth/login`), 900);
-        return;
-      }
-      // AUTH_MODE='pin' testing flow: no OTP ticket, phone-based signup.
+      await loginWithPin(phoneNumber, pinStr);
+      await completeAuth('Welcome back! Redirecting...');
+    } catch (err) {
+      setPinDigits(empty());
+      failWith(err, 'EXISTING_USER_PIN');
+    }
+  };
+
+  const validateNewPin = (): string | null => {
+    const pinStr = pin.join('');
+    const confirmStr = confirm.join('');
+    if (pinStr.length < PIN_LENGTH || confirmStr.length < PIN_LENGTH) return `Enter and confirm a ${PIN_LENGTH}-digit PIN.`;
+    if (pinStr !== confirmStr) return 'PINs do not match. Try again.';
+    if (isWeakPin(pinStr)) return 'That PIN is too easy to guess. Please choose a different one.'; // UX pre-check; backend policy is authoritative
+    return null;
+  };
+
+  const handleSignup = async () => {
+    if (submitLockRef.current) return;
+    const validationError = validateNewPin();
+    if (validationError) { setError(validationError); return; }
+    submitLockRef.current = true;
+    setFlow('SUBMITTING');
+    setError(null);
+    const pinStr = pin.join('');
+    const confirmStr = confirm.join('');
+    try {
       if (ticket) {
         await setupPin(ticket, pinStr, confirmStr);
       } else {
         await signupWithPin(phoneNumber, pinStr, confirmStr);
       }
-      await completeLogin('PIN created! Redirecting...');
-    } catch (err) {
-      failWith(err);
-      if (err instanceof ApiClientError && err.code === 'AUTH_USER_EXISTS') {
-        // Race: account was created between the phone check and this submit.
-        setTimeout(() => router.push(`/${lang}/auth/login`), 1200);
-        return;
-      }
-      // A consumed/expired ticket cannot be retried — restart the flow.
-      setConfirm(empty());
-      setStage('enter');
-      setPinDigits(empty());
-    }
-  };
-
-  const handleLogin = async () => {
-    const pinStr = pin.join('');
-    if (pinStr.length < PIN_LENGTH) { setError(`Enter your ${PIN_LENGTH}-digit PIN.`); return; }
-    setBusy(true);
-    setError(null);
-    setShowOtpOffer(false);
-    try {
-      await loginWithPin(phoneNumber, pinStr);
-      await completeLogin('Welcome back! Redirecting...');
-    } catch (err) {
-      if (err instanceof ApiClientError && err.code === 'AUTH_INVALID_CREDENTIALS') {
-        // Don't clear the PIN or show an error yet — ask them to confirm it
-        // once more so we can try creating an account with it directly.
-        setError(null);
-        setOfferCreate(true);
-        setBusy(false);
-        return;
-      }
-      failWith(err);
-      setPinDigits(empty());
-    }
-  };
-
-  const handleConfirmCreate = async () => {
-    const pinStr = pin.join('');
-    const confirmStr = confirm.join('');
-    if (confirmStr.length < PIN_LENGTH) { setError('Re-enter your PIN to confirm.'); return; }
-    if (pinStr !== confirmStr) {
-      setError('PINs do not match. Try again.');
-      setConfirm(empty());
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      await signupWithPin(phoneNumber, pinStr, confirmStr);
-      await completeLogin('Account created! Redirecting...');
+      await completeAuth('Account created! Redirecting...');
     } catch (err) {
       if (err instanceof ApiClientError && err.code === 'AUTH_USER_EXISTS') {
-        // Not a new number after all — this really was a wrong PIN.
-        setOfferCreate(false);
-        setPinDigits(empty());
-        setConfirm(empty());
-        setError('Incorrect PIN for this number. Please try again.');
-        setBusy(false);
+        // Race: registered by someone/something else between phone/check and
+        // this submit. The backend is authoritative — switch to login.
+        clearPinState();
+        setFlow('EXISTING_USER_PIN');
+        setError('This number was just registered. Please sign in with your PIN.');
+        submitLockRef.current = false;
+        if (rawMode !== 'login') {
+          router.replace(`/${lang}/auth/pin?mode=login&phone=${phoneNumber}${redirectSuffix}`);
+        }
         return;
       }
-      if (err instanceof ApiClientError && err.code === 'AUTH_FEATURE_DISABLED') {
-        // Direct signup isn't enabled in this environment — OTP is the only path.
-        setOfferCreate(false);
-        setShowOtpOffer(true);
-        setError("We couldn't create an account that way here — verify with OTP instead.");
-        setBusy(false);
-        return;
-      }
-      failWith(err);
+      failWith(err, 'NEW_USER_PIN');
     }
   };
 
-  const handleBackToLogin = () => {
-    setOfferCreate(false);
-    setConfirm(empty());
-    setError(null);
-  };
-
-  const handleTryOtpInstead = async () => {
-    setBusy(true);
+  const handleResetPin = async () => {
+    if (submitLockRef.current) return;
+    const validationError = validateNewPin();
+    if (validationError) { setError(validationError); return; }
+    submitLockRef.current = true;
+    setFlow('SUBMITTING');
     setError(null);
     try {
-      const challenge = await requestOtp(phoneNumber);
-      router.push(
-        `/${lang}/auth/verify-otp?phone=${phoneNumber}&challengeId=${encodeURIComponent(challenge.challengeId)}&resendAfter=${challenge.resendAfterSeconds}${redirectSuffix}`,
-      );
+      await resetPin(ticket, pin.join(''), confirm.join(''));
+      // Reset revokes every session server-side — sign in fresh rather than
+      // assuming this browser's session is still valid.
+      clearPinState();
+      setSuccess('PIN reset! Redirecting to sign in...');
+      setTimeout(() => router.replace(`/${lang}/auth/login`), 900);
     } catch (err) {
-      failWith(err);
+      failWith(err, 'RESET_PIN');
     }
   };
 
   const handleForgotPin = async () => {
-    setBusy(true);
+    if (submitLockRef.current) return;
+    submitLockRef.current = true;
     setError(null);
     try {
       const challenge = await forgotPinRequest(phoneNumber);
@@ -274,23 +272,27 @@ export default function PinPage() {
         `/${lang}/auth/verify-otp?purpose=forgot&phone=${phoneNumber}&challengeId=${encodeURIComponent(challenge.challengeId)}&resendAfter=${challenge.resendAfterSeconds}${redirectSuffix}`,
       );
     } catch (err) {
-      failWith(err);
+      const ui = toAuthUiError(err);
+      setError(ui.message);
+      submitLockRef.current = false;
     }
   };
 
-  const isTwoStage = mode === 'create' || mode === 'reset';
-  const submit = () => {
-    if (isTwoStage) return handleCreateOrReset();
-    if (offerCreate) return handleConfirmCreate();
-    return handleLogin();
-  };
+  const changeNumber = () => router.push(`/${lang}/auth/login`);
 
-  // Guard: login needs a phone; reset needs a ticket; create needs a ticket
-  // (OTP flow) OR a phone (AUTH_MODE='pin' direct-signup flow).
+  const submit = useCallback(() => {
+    if (flow === 'EXISTING_USER_PIN') return handleLogin();
+    if (flow === 'NEW_USER_PIN') return handleSignup();
+    if (flow === 'RESET_PIN') return handleResetPin();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flow, pin, confirm, phoneNumber, ticket]);
+
+  // Guard: login/signup need a phone; reset needs a ticket; signup needs a
+  // ticket (OTP-verified) OR a phone (direct phone-check path).
   if (
-    (mode === 'login' && !phoneNumber) ||
-    (mode === 'reset' && !ticket) ||
-    (mode === 'create' && !ticket && !phoneNumber)
+    (isTicketReset && !ticket) ||
+    (!isTicketReset && !isTicketSignup && !phoneNumber) ||
+    (isTicketSignup && !ticket)
   ) {
     return (
       <AuthShell lang={lang} title="Session expired" subtitle="This link is incomplete or has expired. Please start over.">
@@ -301,39 +303,49 @@ export default function PinPage() {
     );
   }
 
-  const activeValue = isTwoStage && stage === 'confirm' ? confirm : pin;
-  const setActiveValue = isTwoStage && stage === 'confirm' ? setConfirm : setPinDigits;
-  const filled = offerCreate
+  // Loading state while phone/check resolves — never the wrong form.
+  if (flow === 'CHECKING_PHONE') {
+    return (
+      <AuthShell lang={lang} title="One moment" subtitle="Checking your number...">
+        <div className="flex justify-center py-6">
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
+        </div>
+      </AuthShell>
+    );
+  }
+
+  if (flow === 'ERROR') {
+    return (
+      <AuthShell lang={lang} title="Something went wrong" subtitle={error || 'We could not check that number. Please try again.'}>
+        <Button onClick={() => router.push(`/${lang}/auth/login`)} className="w-full h-12 rounded-xl bg-slate-900 hover:bg-black text-white text-sm font-semibold transition-colors">
+          Go back
+        </Button>
+      </AuthShell>
+    );
+  }
+
+  const isNewPinFlow = flow === 'NEW_USER_PIN' || flow === 'RESET_PIN';
+  const busy = flow === 'SUBMITTING';
+  const filled = isNewPinFlow
     ? pin.join('').length === PIN_LENGTH && confirm.join('').length === PIN_LENGTH
-    : activeValue.join('').length === PIN_LENGTH;
+    : pin.join('').length === PIN_LENGTH;
 
-  const heading = offerCreate
-    ? 'Set your PIN'
-    : isTwoStage
-      ? (stage === 'confirm' ? 'Confirm your PIN' : (mode === 'reset' ? 'Choose a new PIN' : 'Create a PIN'))
-      : 'Enter your PIN';
-
-  const subtitle = offerCreate
-    ? "No account yet for this number — enter a 4-digit PIN and confirm it to create one."
-    : isTwoStage
-      ? (stage === 'confirm'
-          ? `Re-enter your ${PIN_LENGTH}-digit PIN to confirm.`
-          : mode === 'reset'
-            ? `Choose a new ${PIN_LENGTH}-digit PIN.`
-            : `Set a ${PIN_LENGTH}-digit PIN to log in faster next time.`)
-      : `Enter your ${PIN_LENGTH}-digit PIN to continue.`;
+  const heading = flow === 'RESET_PIN' ? 'Choose a new PIN' : isNewPinFlow ? 'Set your PIN' : 'Enter your PIN';
+  const subtitle = flow === 'RESET_PIN'
+    ? `Choose a new ${PIN_LENGTH}-digit PIN.`
+    : isNewPinFlow
+      ? `Create a ${PIN_LENGTH}-digit PIN for`
+      : `Enter the ${PIN_LENGTH}-digit PIN for`;
 
   return (
     <AuthShell
       lang={lang}
-      eyebrow={mode === 'reset' ? 'Reset PIN' : mode === 'create' ? 'Set PIN' : 'PIN login'}
+      eyebrow={flow === 'RESET_PIN' ? 'Reset PIN' : isNewPinFlow ? 'Set PIN' : 'PIN login'}
       title={heading}
       subtitle={
         <>
           {subtitle}{' '}
-          {(mode === 'login' || (mode === 'create' && phoneNumber)) && (
-            <span className="text-slate-900 font-medium">+91 {maskPhone(phoneNumber)}</span>
-          )}
+          {phoneNumber && <span className="text-slate-900 font-medium">+91 {maskPhone(phoneNumber)}</span>}
         </>
       }
       onBack={() => router.push(`/${lang}/auth/login`)}
@@ -352,64 +364,32 @@ export default function PinPage() {
           )}
         </div>
 
-        {offerCreate ? (
+        {isNewPinFlow ? (
           <div className="space-y-5">
             <div className="space-y-2">
               <p className="text-xs font-medium text-slate-500 text-center">Enter PIN</p>
-              <PinBoxes value={pin} onChange={setPinDigits} autoFocus label="PIN" />
+              <PinBoxes value={pin} onChange={setPinDigits} autoFocus autoComplete="new-password" label="PIN" />
             </div>
             <div className="space-y-2">
               <p className="text-xs font-medium text-slate-500 text-center">Confirm PIN</p>
-              <PinBoxes value={confirm} onChange={setConfirm} label="Confirm PIN" />
+              <PinBoxes value={confirm} onChange={setConfirm} autoComplete="new-password" label="Confirm PIN" />
             </div>
           </div>
         ) : (
-          <PinBoxes
-            key={isTwoStage ? stage : 'login'}
-            value={activeValue}
-            onChange={setActiveValue}
-            autoFocus
-            label={stage === 'confirm' ? 'Confirm PIN' : 'PIN'}
-          />
+          <PinBoxes value={pin} onChange={setPinDigits} autoFocus autoComplete="current-password" label="PIN" />
         )}
 
         <div className="space-y-3">
           <Button
             onClick={submit}
-            disabled={!filled}
+            disabled={!filled || busy}
             isLoading={busy}
             className="w-full h-12 rounded-xl bg-slate-900 hover:bg-black text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            {offerCreate ? 'Create account' : isTwoStage ? (stage === 'confirm' ? 'Confirm PIN' : 'Continue') : 'Sign in'}
+            {flow === 'RESET_PIN' ? 'Save new PIN' : flow === 'NEW_USER_PIN' ? 'Create account' : 'Sign in'}
           </Button>
 
-          {mode === 'login' && offerCreate && (
-            <div className="text-center animate-fade-in">
-              <button
-                type="button"
-                disabled={busy}
-                onClick={handleBackToLogin}
-                className="text-xs text-slate-400 hover:text-slate-900 transition-colors disabled:opacity-50"
-              >
-                Not you? <span className="underline underline-offset-2">Try a different PIN</span>
-              </button>
-            </div>
-          )}
-
-          {mode === 'login' && showOtpOffer && (
-            <div className="text-center animate-fade-in">
-              <button
-                type="button"
-                disabled={busy}
-                onClick={handleTryOtpInstead}
-                className="text-xs text-slate-500 hover:text-slate-900 transition-colors disabled:opacity-50"
-              >
-                New here? <span className="text-emerald-600 underline underline-offset-2 font-semibold">Verify with OTP instead</span>
-              </button>
-            </div>
-          )}
-
-          {mode === 'login' && !offerCreate && (
+          {flow === 'EXISTING_USER_PIN' && (
             <div className="text-center">
               <button
                 type="button"
@@ -418,6 +398,19 @@ export default function PinPage() {
                 className="text-xs text-slate-400 hover:text-slate-900 transition-colors disabled:opacity-50"
               >
                 Forgot PIN? <span className="text-emerald-600 underline underline-offset-2">Recover with OTP</span>
+              </button>
+            </div>
+          )}
+
+          {(flow === 'EXISTING_USER_PIN' || flow === 'NEW_USER_PIN') && (
+            <div className="text-center">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={changeNumber}
+                className="text-xs text-slate-400 hover:text-slate-900 transition-colors disabled:opacity-50"
+              >
+                Not your number? <span className="underline underline-offset-2">Change it</span>
               </button>
             </div>
           )}
