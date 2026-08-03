@@ -102,10 +102,14 @@ export default function PinPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  // Shown after a failed PIN login — a wrong PIN and "no account yet" look
-  // identical from the backend (by design, to avoid leaking which one it
-  // is), so rather than guess, offer the OTP path either way.
+  // Shown after a failed PIN login, as a last-resort fallback if account
+  // creation itself isn't available (AUTH_DIRECT_PIN_SIGNUP off).
   const [showOtpOffer, setShowOtpOffer] = useState(false);
+  // A wrong PIN and "no account yet" look identical from the backend (by
+  // design, to avoid leaking which one it is) — rather than guess, offer to
+  // create an account with this same PIN. If one already exists, pin/signup
+  // itself says so (AUTH_USER_EXISTS) and we know it really was a wrong PIN.
+  const [offerCreate, setOfferCreate] = useState(false);
 
   const goHome = () => router.push(redirectTo ? decodeURIComponent(redirectTo) : '/');
 
@@ -193,12 +197,59 @@ export default function PinPage() {
       await loginWithPin(phoneNumber, pinStr);
       await completeLogin('Welcome back! Redirecting...');
     } catch (err) {
+      if (err instanceof ApiClientError && err.code === 'AUTH_INVALID_CREDENTIALS') {
+        // Don't clear the PIN or show an error yet — ask them to confirm it
+        // once more so we can try creating an account with it directly.
+        setError(null);
+        setOfferCreate(true);
+        setBusy(false);
+        return;
+      }
       failWith(err);
       setPinDigits(empty());
-      if (err instanceof ApiClientError && err.code === 'AUTH_INVALID_CREDENTIALS') {
-        setShowOtpOffer(true);
-      }
     }
+  };
+
+  const handleConfirmCreate = async () => {
+    const pinStr = pin.join('');
+    const confirmStr = confirm.join('');
+    if (confirmStr.length < PIN_LENGTH) { setError('Re-enter your PIN to confirm.'); return; }
+    if (pinStr !== confirmStr) {
+      setError('PINs do not match. Try again.');
+      setConfirm(empty());
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await signupWithPin(phoneNumber, pinStr, confirmStr);
+      await completeLogin('Account created! Redirecting...');
+    } catch (err) {
+      if (err instanceof ApiClientError && err.code === 'AUTH_USER_EXISTS') {
+        // Not a new number after all — this really was a wrong PIN.
+        setOfferCreate(false);
+        setPinDigits(empty());
+        setConfirm(empty());
+        setError('Incorrect PIN for this number. Please try again.');
+        setBusy(false);
+        return;
+      }
+      if (err instanceof ApiClientError && err.code === 'AUTH_FEATURE_DISABLED') {
+        // Direct signup isn't enabled in this environment — OTP is the only path.
+        setOfferCreate(false);
+        setShowOtpOffer(true);
+        setError(null);
+        setBusy(false);
+        return;
+      }
+      failWith(err);
+    }
+  };
+
+  const handleBackToLogin = () => {
+    setOfferCreate(false);
+    setConfirm(empty());
+    setError(null);
   };
 
   const handleTryOtpInstead = async () => {
@@ -228,7 +279,11 @@ export default function PinPage() {
   };
 
   const isTwoStage = mode === 'create' || mode === 'reset';
-  const submit = () => (isTwoStage ? handleCreateOrReset() : handleLogin());
+  const submit = () => {
+    if (isTwoStage) return handleCreateOrReset();
+    if (offerCreate) return handleConfirmCreate();
+    return handleLogin();
+  };
 
   // Guard: login needs a phone; reset needs a ticket; create needs a ticket
   // (OTP flow) OR a phone (AUTH_MODE='pin' direct-signup flow).
@@ -246,21 +301,25 @@ export default function PinPage() {
     );
   }
 
-  const activeValue = isTwoStage && stage === 'confirm' ? confirm : pin;
-  const setActiveValue = isTwoStage && stage === 'confirm' ? setConfirm : setPinDigits;
+  const activeValue = (isTwoStage && stage === 'confirm') || offerCreate ? confirm : pin;
+  const setActiveValue = (isTwoStage && stage === 'confirm') || offerCreate ? setConfirm : setPinDigits;
   const filled = activeValue.join('').length === PIN_LENGTH;
 
-  const heading = isTwoStage
-    ? (stage === 'confirm' ? 'Confirm your PIN' : (mode === 'reset' ? 'Choose a new PIN' : 'Create a PIN'))
-    : 'Enter your PIN';
+  const heading = offerCreate
+    ? 'Confirm your PIN'
+    : isTwoStage
+      ? (stage === 'confirm' ? 'Confirm your PIN' : (mode === 'reset' ? 'Choose a new PIN' : 'Create a PIN'))
+      : 'Enter your PIN';
 
-  const subtitle = isTwoStage
-    ? (stage === 'confirm'
-        ? `Re-enter your ${PIN_LENGTH}-digit PIN to confirm.`
-        : mode === 'reset'
-          ? `Choose a new ${PIN_LENGTH}-digit PIN.`
-          : `Set a ${PIN_LENGTH}-digit PIN to log in faster next time.`)
-    : `Enter your ${PIN_LENGTH}-digit PIN to continue.`;
+  const subtitle = offerCreate
+    ? "We don't have an account for this number yet — enter your PIN once more to create one."
+    : isTwoStage
+      ? (stage === 'confirm'
+          ? `Re-enter your ${PIN_LENGTH}-digit PIN to confirm.`
+          : mode === 'reset'
+            ? `Choose a new ${PIN_LENGTH}-digit PIN.`
+            : `Set a ${PIN_LENGTH}-digit PIN to log in faster next time.`)
+      : `Enter your ${PIN_LENGTH}-digit PIN to continue.`;
 
   return (
     <AuthShell
@@ -292,11 +351,11 @@ export default function PinPage() {
         </div>
 
         <PinBoxes
-          key={isTwoStage ? stage : 'login'}
+          key={offerCreate ? 'offer-create' : isTwoStage ? stage : 'login'}
           value={activeValue}
           onChange={setActiveValue}
           autoFocus
-          label={stage === 'confirm' ? 'Confirm PIN' : 'PIN'}
+          label={stage === 'confirm' || offerCreate ? 'Confirm PIN' : 'PIN'}
         />
 
         <div className="space-y-3">
@@ -306,8 +365,21 @@ export default function PinPage() {
             isLoading={busy}
             className="w-full h-12 rounded-xl bg-slate-900 hover:bg-black text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            {isTwoStage ? (stage === 'confirm' ? 'Confirm PIN' : 'Continue') : 'Sign in'}
+            {offerCreate ? 'Create account' : isTwoStage ? (stage === 'confirm' ? 'Confirm PIN' : 'Continue') : 'Sign in'}
           </Button>
+
+          {mode === 'login' && offerCreate && (
+            <div className="text-center animate-fade-in">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={handleBackToLogin}
+                className="text-xs text-slate-400 hover:text-slate-900 transition-colors disabled:opacity-50"
+              >
+                Not you? <span className="underline underline-offset-2">Try a different PIN</span>
+              </button>
+            </div>
+          )}
 
           {mode === 'login' && showOtpOffer && (
             <div className="text-center animate-fade-in">
@@ -322,7 +394,7 @@ export default function PinPage() {
             </div>
           )}
 
-          {mode === 'login' && (
+          {mode === 'login' && !offerCreate && (
             <div className="text-center">
               <button
                 type="button"
