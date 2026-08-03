@@ -39,6 +39,10 @@ export default function TripBuilderPage() {
   // Names derived from structured stops keep the existing package/discovery pipeline working.
   const localRouteStops = localTripStops.map((s) => s.name);
   const [localStopServices, setLocalStopServices] = useState<Record<number, string[]>>(stopServicesByDay || {});
+  // Step 6's vendor picks, lifted here so they survive navigating back to an
+  // earlier step and forward again (PackageBuilderStep used to own this
+  // locally and lose it on remount).
+  const [localSelections, setLocalSelections] = useState<Record<number, Record<string, string | null>>>({});
   const [isGenerating, setIsGenerating] = useState(false);
   const [step5Footer, setStep5Footer] = useState<{ totalPrice: number; onCreatePackage: () => Promise<void> } | null>(null);
   // The action bar is portaled to <body> so it stays fixed to the viewport
@@ -239,6 +243,8 @@ export default function TripBuilderPage() {
             dict={dict}
             onCreatingChange={setIsGenerating}
             onStep5Footer={setStep5Footer}
+            selections={localSelections}
+            onSelectionsChange={setLocalSelections}
           />
         );
       default: return null;
@@ -288,13 +294,25 @@ export default function TripBuilderPage() {
             </div>
         </div>
   
-        {/* Sticky Bottom Action — one Back + one primary Continue/Create on every step,
-            with the live package total folded into the primary button's own label.
+        {/* Sticky Bottom Action — one Back + one primary Continue/Create on every step.
+            Step 6 additionally shows the live total as its own line, separate from
+            the button label (the button says only "Create My Package").
             Portaled to <body>: the page wrapper animates `transform` on mount, which
             would otherwise turn `position: fixed` into "fixed to the page". */}
         {isMounted && createPortal(
           <div className="builder-footer-safe-area fixed bottom-0 left-0 right-0 px-3 sm:px-6 pt-3 sm:pt-6 bg-white/90 backdrop-blur-xl border-t border-slate-100 z-50">
-            <div className="max-w-6xl mx-auto px-2 sm:px-4 flex items-center justify-between gap-3 sm:gap-4">
+            <div className="max-w-6xl mx-auto px-2 sm:px-4">
+              {currentStep === 6 && step5Footer && (
+                <div className="flex items-baseline justify-between mb-2 sm:mb-3 px-1">
+                  <span className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-widest">
+                    {builder.buttons.total ?? "Total"}
+                  </span>
+                  <span className="text-lg sm:text-2xl font-black text-slate-900 tabular-nums">
+                    ₹{step5Footer.totalPrice.toLocaleString()}
+                  </span>
+                </div>
+              )}
+              <div className="flex items-center justify-between gap-3 sm:gap-4">
                 {currentStep > 1 && (
                     <Button variant="ghost" onClick={handleBack} className="w-fit px-6 sm:px-8 h-12 sm:h-16 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:bg-slate-100 text-[9px] sm:text-xs">
                         {builder.buttons.back}
@@ -304,8 +322,8 @@ export default function TripBuilderPage() {
                   step5Footer && (
                     <Button
                       onClick={() => step5Footer.onCreatePackage()}
-                      disabled={isGenerating}
-                      className="flex-1 h-12 sm:h-16 rounded-xl sm:rounded-2xl text-sm sm:text-lg font-black tracking-[0.15em] sm:tracking-[0.2em] transition-all uppercase bg-emerald-500 hover:bg-emerald-600 text-white shadow-2xl active:scale-[0.98]"
+                      disabled={isGenerating || step5Footer.totalPrice <= 0}
+                      className="flex-1 h-12 sm:h-16 rounded-xl sm:rounded-2xl text-sm sm:text-lg font-black tracking-[0.15em] sm:tracking-[0.2em] transition-all uppercase bg-emerald-500 hover:bg-emerald-600 text-white shadow-2xl active:scale-[0.98] disabled:opacity-50"
                     >
                       {isGenerating ? (
                         <div className="flex items-center justify-center gap-3">
@@ -313,7 +331,7 @@ export default function TripBuilderPage() {
                           <span className="text-xs md:text-sm tracking-widest">{builder.buttons.building}</span>
                         </div>
                       ) : (
-                        `${builder.buttons.createPackage ?? "Create my package"} · ₹${step5Footer.totalPrice.toLocaleString()}`
+                        builder.buttons.createPackage ?? "Create My Package"
                       )}
                     </Button>
                   )
@@ -331,6 +349,7 @@ export default function TripBuilderPage() {
                   ) : currentStep === 5 ? (builder.buttons.seePlan ?? "See My Plan") : builder.buttons.continue}
                 </Button>
                 )}
+              </div>
             </div>
           </div>,
           document.body
