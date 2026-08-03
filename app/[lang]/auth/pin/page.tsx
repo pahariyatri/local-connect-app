@@ -301,18 +301,20 @@ export default function PinPage() {
     );
   }
 
-  const activeValue = (isTwoStage && stage === 'confirm') || offerCreate ? confirm : pin;
-  const setActiveValue = (isTwoStage && stage === 'confirm') || offerCreate ? setConfirm : setPinDigits;
-  const filled = activeValue.join('').length === PIN_LENGTH;
+  const activeValue = isTwoStage && stage === 'confirm' ? confirm : pin;
+  const setActiveValue = isTwoStage && stage === 'confirm' ? setConfirm : setPinDigits;
+  const filled = offerCreate
+    ? pin.join('').length === PIN_LENGTH && confirm.join('').length === PIN_LENGTH
+    : activeValue.join('').length === PIN_LENGTH;
 
   const heading = offerCreate
-    ? 'Confirm your PIN'
+    ? 'Set your PIN'
     : isTwoStage
       ? (stage === 'confirm' ? 'Confirm your PIN' : (mode === 'reset' ? 'Choose a new PIN' : 'Create a PIN'))
       : 'Enter your PIN';
 
   const subtitle = offerCreate
-    ? "We don't have an account for this number yet — enter your PIN once more to create one."
+    ? "No account yet for this number — enter a 4-digit PIN and confirm it to create one."
     : isTwoStage
       ? (stage === 'confirm'
           ? `Re-enter your ${PIN_LENGTH}-digit PIN to confirm.`
@@ -350,13 +352,26 @@ export default function PinPage() {
           )}
         </div>
 
-        <PinBoxes
-          key={offerCreate ? 'offer-create' : isTwoStage ? stage : 'login'}
-          value={activeValue}
-          onChange={setActiveValue}
-          autoFocus
-          label={stage === 'confirm' || offerCreate ? 'Confirm PIN' : 'PIN'}
-        />
+        {offerCreate ? (
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-slate-500 text-center">Enter PIN</p>
+              <PinBoxes value={pin} onChange={setPinDigits} autoFocus label="PIN" />
+            </div>
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-slate-500 text-center">Confirm PIN</p>
+              <PinBoxes value={confirm} onChange={setConfirm} label="Confirm PIN" />
+            </div>
+          </div>
+        ) : (
+          <PinBoxes
+            key={isTwoStage ? stage : 'login'}
+            value={activeValue}
+            onChange={setActiveValue}
+            autoFocus
+            label={stage === 'confirm' ? 'Confirm PIN' : 'PIN'}
+          />
+        )}
 
         <div className="space-y-3">
           <Button
