@@ -23,15 +23,17 @@ export const createBooking = async (bookingData: {
   });
 
   const raw = await api.post('/booking', bookingData);
-  // Unwrap standardized API envelope { data: { bookingId, orderId, ... } }
+  // Unwrap standardized API envelope. Reservation-fee model: this no longer
+  // creates a Razorpay order — { bookingId, status, totalAmount,
+  // reservationFeeAmount, itemCount, message }. Payment happens later, once
+  // vendors confirm (see reserveBooking()).
   const result = (raw as any)?.data ?? raw;
 
-  // Track booking completed
   if (result?.bookingId) {
     sessionTracker.track('booking_completed', {
       entityType: 'booking',
       entityId: String(result.bookingId),
-      metadata: { amount: result.amount, currency: result.currency },
+      metadata: { reservationFeeAmount: result.reservationFeeAmount, currency: result.currency },
     });
   }
 
@@ -122,4 +124,47 @@ export const getVendorBookings = async (
     limit: result?.limit ?? 20,
     pages: result?.pages ?? 0,
   };
+};
+
+// ─── Vendor confirmation workflow ──────────────────────────────────────
+
+/** A vendor's booking-item request inbox. See `GET /api/v1/booking/vendor/:vendorId/items`. */
+export const getVendorItems = async (vendorId: string, status?: string): Promise<any[]> => {
+  const qs = status ? `?status=${encodeURIComponent(status)}` : '';
+  const raw = await api.get(`/booking/vendor/${vendorId}/items${qs}`, { skipCache: true });
+  const result = (raw as any)?.data ?? raw;
+  return Array.isArray(result) ? result : [];
+};
+
+/** Vendor accepts or rejects one line item. See `PATCH /api/v1/booking/items/:itemId/respond`. */
+export const respondToBookingItem = async (itemId: number, decision: 'accept' | 'reject', reason?: string) => {
+  const raw = await api.patch(`/booking/items/${itemId}/respond`, { decision, reason });
+  api.invalidateCache('/booking');
+  return (raw as any)?.data ?? raw;
+};
+
+/** Traveler swaps a rejected item for a different service. See `PATCH /api/v1/booking/:id/items/:itemId/replace`. */
+export const replaceBookingItem = async (bookingId: number, itemId: number, serviceId: number) => {
+  const raw = await api.patch(`/booking/${bookingId}/items/${itemId}/replace`, { serviceId });
+  api.invalidateCache('/booking');
+  return (raw as any)?.data ?? raw;
+};
+
+/** Traveler drops a rejected item without replacing it. See `PATCH /api/v1/booking/:id/items/:itemId/remove`. */
+export const removeBookingItem = async (bookingId: number, itemId: number) => {
+  const raw = await api.patch(`/booking/${bookingId}/items/${itemId}/remove`, {});
+  api.invalidateCache('/booking');
+  return (raw as any)?.data ?? raw;
+};
+
+/** Creates the Razorpay order for the reservation fee — only once every vendor has confirmed. See `POST /api/v1/booking/:id/reserve`. */
+export const reserveBooking = async (bookingId: number): Promise<{ bookingId: number; orderId: string; amount: number; currency: string }> => {
+  const raw = await api.post(`/booking/${bookingId}/reserve`, {});
+  return ((raw as any)?.data ?? raw) as any;
+};
+
+/** Vendor contact details — only returns data once the booking is RESERVED (fee paid). See `GET /api/v1/booking/:id/vendor-contacts`. */
+export const getBookingVendorContacts = async (bookingId: number): Promise<{ items: any[] }> => {
+  const raw = await api.get(`/booking/${bookingId}/vendor-contacts`, { skipCache: true });
+  return ((raw as any)?.data ?? raw) as any;
 };

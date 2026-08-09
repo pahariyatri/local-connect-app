@@ -4,13 +4,21 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter, useParams } from "next/navigation";
 import { prepTracker } from "@/lib/prepTracker";
 import { initRazorpayCheckout, verifyPayment } from "@/services/paymentService";
+import { reserveBooking } from "@/services/bookingService";
 import { useAuth } from "@/contexts/AuthContext";
 
-// Slot lock duration: 15 minutes = 900 seconds
-const LOCK_DURATION_SECONDS = 14 * 60; // 14 min countdown (backend gives 15 min, we show 14)
 const RAZORPAY_KEY_ID = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '';
 
-type CheckoutState = 'idle' | 'paying' | 'verifying' | 'success' | 'error';
+// Reservation-fee model: this page only ever charges the platform fee, never
+// the vendors' services total (that's paid directly, in person / per vendor
+// terms). It's reached with just a bookingId — the Razorpay order for the
+// fee is created here, on mount, via reserveBooking(), which the backend
+// only allows once every required vendor has confirmed (status
+// VENDOR_ACCEPTED). There is no slot-lock countdown on this page: by the
+// time a booking reaches VENDOR_ACCEPTED, vendors have already committed —
+// the urgency window that mattered was the earlier confirmation wait, not
+// this final payment step.
+type CheckoutState = 'preparing' | 'idle' | 'paying' | 'verifying' | 'success' | 'error' | 'not-ready';
 
 export default function CheckoutPage() {
   const searchParams = useSearchParams();
@@ -18,53 +26,54 @@ export default function CheckoutPage() {
   const { lang } = useParams();
 
   const bookingId = searchParams.get('bookingId');
-  const orderId = searchParams.get('orderId');
-  const amount = parseFloat(searchParams.get('amount') || '0');
-  const currency = searchParams.get('currency') || 'INR';
 
-  const [state, setState] = useState<CheckoutState>('idle');
+  const [state, setState] = useState<CheckoutState>('preparing');
   const [errorMsg, setErrorMsg] = useState('');
-  const [secondsLeft, setSecondsLeft] = useState(LOCK_DURATION_SECONDS);
-  const [expired, setExpired] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [amount, setAmount] = useState(0);
+  const [currency, setCurrency] = useState('INR');
 
   const { user } = useAuth();
 
-  // Guard: redirect if missing required params (never open payment without bookingId)
+  // Guard: no bookingId at all → nothing to pay for.
   useEffect(() => {
-    if (!bookingId || !orderId || !amount) {
-      router.replace(`/${lang}/builder`);
+    if (!bookingId) {
+      router.replace(`/${lang}/journeys`);
     }
-  }, [bookingId, orderId, amount, lang, router]);
+  }, [bookingId, lang, router]);
 
-  // Slot lock countdown
+  // Create the reservation-fee order on mount.
   useEffect(() => {
-    if (state === 'success') return;
-    const interval = setInterval(() => {
-      setSecondsLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          setExpired(true);
-          return 0;
+    if (!bookingId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await reserveBooking(parseInt(bookingId, 10));
+        if (cancelled) return;
+        setOrderId(result.orderId);
+        setAmount(Number(result.amount));
+        setCurrency(result.currency || 'INR');
+        setState('idle');
+      } catch (err: any) {
+        if (cancelled) return;
+        const msg = err?.message || '';
+        if (msg.toLowerCase().includes('not ready')) {
+          setState('not-ready');
+        } else {
+          setErrorMsg(msg || 'Could not prepare your reservation. Please try again.');
+          setState('error');
         }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [state]);
-
-  const formatTime = (secs: number) => {
-    const m = Math.floor(secs / 60).toString().padStart(2, '0');
-    const s = (secs % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-  };
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [bookingId]);
 
   const handlePay = useCallback(async () => {
-    if (!bookingId || !orderId || expired) return;
+    if (!bookingId || !orderId) return;
     setState('paying');
     setErrorMsg('');
     let keyId = RAZORPAY_KEY_ID;
 
-    // Fallback: Fetch from backend if env variable missed the build
     if (!keyId) {
       try {
         const { api } = await import('@/lib/apiClient');
@@ -82,7 +91,6 @@ export default function CheckoutPage() {
     }
 
     try {
-      // Open Razorpay — inventory already locked server-side
       const paymentResult = await initRazorpayCheckout({
         orderId,
         amount,
@@ -94,14 +102,12 @@ export default function CheckoutPage() {
         prefillEmail: user?.email || '',
       });
 
-      // Step 2: Verify with backend — NEVER trust redirect alone
       setState('verifying');
       const verified = await verifyPayment(paymentResult);
 
       if (verified) {
         prepTracker.paymentCompleted(parseInt(bookingId, 10), amount);
         setState('success');
-        // Small pause for UX, then go to booking confirmation (which polls status)
         setTimeout(() => {
           router.push(`/${lang}/bookings/${bookingId}`);
         }, 1500);
@@ -113,18 +119,49 @@ export default function CheckoutPage() {
       const msg = err?.message || 'Payment failed. Please try again.';
       setErrorMsg(msg);
       prepTracker.paymentFailed(parseInt(bookingId || '0', 10), msg);
-      // Cancelled by user is not an error — go back to idle
       if (msg.includes('cancelled')) {
         setState('idle');
       } else {
         setState('error');
       }
     }
-  }, [bookingId, orderId, amount, currency, expired, lang, router]);
+  }, [bookingId, orderId, amount, currency, lang, router, user]);
 
-  if (!bookingId || !orderId) return null;
+  if (!bookingId) return null;
 
   const isPaying = state === 'paying' || state === 'verifying';
+
+  if (state === 'preparing') {
+    return (
+      <main className="min-h-screen bg-white flex items-center justify-center px-6">
+        <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      </main>
+    );
+  }
+
+  if (state === 'not-ready') {
+    return (
+      <main className="min-h-screen bg-white flex flex-col items-center justify-center px-6 pt-28 pb-12">
+        <div className="w-full max-w-md text-center">
+          <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center mx-auto mb-4 border border-amber-100">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600">
+              <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+            </svg>
+          </div>
+          <h1 className="text-xl font-black text-slate-900">Not ready to pay yet</h1>
+          <p className="text-slate-400 text-sm mt-2 font-medium">
+            This booking isn't confirmed by every local partner yet. You'll be able to pay the reservation fee as soon as they accept.
+          </p>
+          <button
+            onClick={() => router.push(`/${lang}/bookings/${bookingId}`)}
+            className="mt-6 w-full h-14 bg-slate-900 text-white font-black text-sm uppercase tracking-widest rounded-2xl active:scale-95 transition-all"
+          >
+            View booking status
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-white flex flex-col items-center justify-center px-6 pt-28 sm:pt-36 pb-12">
@@ -137,53 +174,28 @@ export default function CheckoutPage() {
               <rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" />
             </svg>
           </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Complete Your Booking</h1>
-          <p className="text-slate-400 text-sm mt-1 font-medium">Booking #{bookingId} · Slots reserved for you</p>
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Reserve Your Booking</h1>
+          <p className="text-slate-400 text-sm mt-1 font-medium">Booking #{bookingId} · Every local partner has confirmed</p>
         </div>
 
-        {/* Slot Lock Timer */}
-        {!expired && state !== 'success' && (
-          <div className={`mb-6 p-4 rounded-2xl border flex items-center gap-4 ${secondsLeft < 120 ? 'bg-red-50 border-red-100' : 'bg-amber-50 border-amber-100'}`}>
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${secondsLeft < 120 ? 'bg-red-100' : 'bg-amber-100'}`}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={secondsLeft < 120 ? 'text-red-600' : 'text-amber-600'}>
-                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-              </svg>
-            </div>
-            <div>
-              <p className={`text-xs font-black uppercase tracking-widest ${secondsLeft < 120 ? 'text-red-600' : 'text-amber-700'}`}>Slots locked for</p>
-              <p className={`text-2xl font-black tabular-nums ${secondsLeft < 120 ? 'text-red-700' : 'text-amber-800'}`}>{formatTime(secondsLeft)}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Expired State */}
-        {expired && state !== 'success' && (
-          <div className="mb-6 p-4 rounded-2xl border bg-red-50 border-red-100 text-center">
-            <p className="text-red-700 font-black text-sm">Session expired. Slots released.</p>
-            <button
-              onClick={() => router.push(`/${lang}/results`)}
-              className="mt-3 text-xs font-bold text-red-600 underline underline-offset-2"
-            >
-              Go back and try again
-            </button>
-          </div>
-        )}
-
-        {/* Amount Card */}
-        <div className="mb-6 p-6 bg-slate-900 rounded-3xl text-white">
-          <p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-2">Total Amount</p>
+        {/* Amount Card — explicit this is the FEE, not the trip total */}
+        <div className="mb-3 p-6 bg-slate-900 rounded-3xl text-white">
+          <p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-2">Platform Reservation Fee</p>
           <p className="text-4xl font-black italic tracking-tighter">
             ₹{amount.toLocaleString('en-IN')}
           </p>
-          <p className="text-slate-500 text-xs mt-2 font-medium">Taxes & fees included · {currency}</p>
+          <p className="text-slate-500 text-xs mt-2 font-medium">Pay now · {currency}</p>
         </div>
+        <p className="text-center text-xs text-slate-400 font-medium mb-6 px-2">
+          This confirms and manages your reservation through the platform. The rest of your trip is paid directly to each local partner.
+        </p>
 
         {/* Trust Signals */}
         <div className="mb-6 grid grid-cols-3 gap-3">
           {[
             { icon: '🔒', label: 'Secure', sub: '256-bit SSL' },
-            { icon: '✅', label: 'Verified', sub: 'Local vendors' },
-            { icon: '💰', label: 'Refundable', sub: '24hr policy' },
+            { icon: '✅', label: 'Verified', sub: 'Local partners' },
+            { icon: '💬', label: 'Support', sub: 'If a partner falls through' },
           ].map(t => (
             <div key={t.label} className="text-center p-3 bg-slate-50 rounded-2xl border border-slate-100">
               <div className="text-xl mb-1">{t.icon}</div>
@@ -203,7 +215,7 @@ export default function CheckoutPage() {
         {/* Success */}
         {state === 'success' && (
           <div className="mb-4 p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-center">
-            <p className="text-emerald-700 font-black text-sm">✓ Payment verified! Redirecting...</p>
+            <p className="text-emerald-700 font-black text-sm">✓ Reserved! Redirecting...</p>
           </div>
         )}
 
@@ -216,11 +228,11 @@ export default function CheckoutPage() {
         )}
 
         {/* Pay Button */}
-        {state !== 'success' && (
+        {state !== 'success' && orderId && (
           <button
             id="checkout-pay-btn"
             onClick={handlePay}
-            disabled={isPaying || expired}
+            disabled={isPaying}
             className="w-full h-16 bg-emerald-500 text-white font-black text-base uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-500/20 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-3"
           >
             {isPaying ? (
@@ -228,14 +240,12 @@ export default function CheckoutPage() {
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 <span className="text-sm">{state === 'verifying' ? 'Verifying...' : 'Opening payment...'}</span>
               </>
-            ) : expired ? (
-              'Session Expired'
             ) : (
               <>
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" />
                 </svg>
-                Pay ₹{amount.toLocaleString('en-IN')}
+                Pay Reservation Fee ₹{amount.toLocaleString('en-IN')}
               </>
             )}
           </button>
@@ -244,14 +254,13 @@ export default function CheckoutPage() {
         {/* Back link */}
         {!isPaying && state !== 'success' && (
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push(`/${lang}/bookings/${bookingId}`)}
             className="w-full mt-4 text-xs text-slate-400 font-bold uppercase tracking-widest hover:text-slate-600 transition-colors"
           >
-            ← Go back
+            ← Back to booking
           </button>
         )}
 
-        {/* Razorpay note */}
         <p className="text-center text-[10px] text-slate-300 font-medium mt-6">
           Powered by Razorpay · RBI compliant · PCI DSS Level 1
         </p>

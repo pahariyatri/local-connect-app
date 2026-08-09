@@ -319,9 +319,9 @@
         "near_origin": "Loading more dhabas & adventure spots near {origin}"
       },
       "footer": {
-        "total": "Estimated Total",
-        "escrow": "ESCROW PROTECTED",
-        "book_now": "BOOK NOW"
+        "total": "Estimated Services Total",
+        "escrow": "PLATFORM-MANAGED RESERVATION",
+        "book_now": "REQUEST BOOKING"
       }
     },
     "about": {
