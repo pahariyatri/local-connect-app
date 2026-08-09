@@ -7,15 +7,78 @@
 import { api, ApiClientError } from '@/lib/apiClient';
 
 export type SessionEventType =
+  // Acquisition
   | 'page_view'
+  | 'landing_view'
+  | 'cta_clicked'
+  | 'start_planning'
+  | 'signup_started'
+  | 'signup_completed'
+  | 'login_completed'
+
+  // Trip Builder
+  | 'trip_builder_started'
+  | 'origin_selected'
+  | 'destination_selected'
+  | 'dates_selected'
+  | 'traveler_count_selected'
+  | 'interest_selected'
+  | 'route_generated'
+  | 'stop_added'
+  | 'stop_removed'
+  | 'trip_builder_completed'
+
+  // Vendor Discovery
+  | 'vendor_list_viewed'
+  | 'vendor_viewed'
+  | 'service_viewed'
+  | 'service_filtered'
+  | 'service_added_to_trip'
+  | 'service_removed_from_trip'
+  | 'service_replaced'
+
+  // Trip
+  | 'trip_created'
+  | 'trip_saved'
+  | 'trip_updated'
+  | 'trip_shared'
+  | 'shared_trip_viewed'
+  | 'trip_duplicated'
+  | 'plan_similar_trip_clicked'
+
+  // Booking
+  | 'booking_request_started'
+  | 'booking_request_submitted'
+  | 'vendor_request_received'
+  | 'vendor_request_accepted'
+  | 'vendor_request_rejected'
+  | 'alternative_vendor_requested'
+  | 'booking_cancelled'
+  | 'booking_completed'
+
+  // Vendor
+  | 'vendor_signup_started'
+  | 'vendor_signup_completed'
+  | 'vendor_onboarding_started'
+  | 'vendor_onboarding_completed'
+  | 'vendor_service_created'
+  | 'vendor_service_published'
+  | 'vendor_service_updated'
+  | 'vendor_booking_viewed'
+
+  // Retention
+  | 'returning_user'
+  | 'journey_reopened'
+  | 'repeat_trip_started'
+  | 'repeat_booking_request'
+
+  // Legacy / other
   | 'destination_view'
   | 'planner_started'
   | 'planner_completed'
   | 'vendor_clicked'
-  | 'service_viewed'
   | 'price_checked'
   | 'booking_started'
-  | 'booking_completed'
   | 'payment_started'
   | 'payment_completed'
   | 'payment_failed'
@@ -23,13 +86,12 @@ export type SessionEventType =
   | 'filter_applied'
   | 'share_itinerary'
   | 'login_started'
-  | 'login_completed'
-  | 'signup_completed'
   | 'review_submitted'
   | 'whatsapp_clicked'
   | 'call_clicked';
 
 const SESSION_KEY = 'lc_session_id';
+const ANONYMOUS_ID_KEY = 'lc_anon_id';
 
 class SessionTracker {
   private sessionId: string | null = null;
@@ -59,10 +121,7 @@ class SessionTracker {
   }
 
   /**
-   * The cached session id can outlive the server-side record (e.g. it
-   * naturally expired, or — in dev — the database was reset). Clear the
-   * cache so the next getSessionId() call starts a fresh session instead
-   * of repeating the same 404 forever.
+   * Forget session to trigger reset
    */
   private forgetSession(): void {
     this.sessionId = null;
@@ -77,16 +136,23 @@ class SessionTracker {
         ? new URLSearchParams(window.location.search)
         : null;
 
+      const anonId = this.getOrGenerateAnonymousId();
+
       const response = await api.post('/sessions/start', {
         fingerprint: this.generateFingerprint(),
         userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
         platform: this.detectPlatform(),
         browser: this.detectBrowser(),
-        referrer: typeof document !== 'undefined' ? document.referrer : undefined,
+        referrer: typeof document !== 'undefined' ? (document.referrer || 'none') : 'none',
         landingPage: typeof window !== 'undefined' ? window.location.pathname : undefined,
         utmSource: urlParams?.get('utm_source') || undefined,
         utmMedium: urlParams?.get('utm_medium') || undefined,
         utmCampaign: urlParams?.get('utm_campaign') || undefined,
+        utmContent: urlParams?.get('utm_content') || undefined,
+        utmTerm: urlParams?.get('utm_term') || undefined,
+        anonymousVisitorId: anonId,
+        initialReferrer: typeof document !== 'undefined' ? (document.referrer || 'none') : 'none',
+        referralCode: urlParams?.get('ref') || undefined,
       }, { skipAuth: true });
 
       const data = response?.data || response;
@@ -100,7 +166,6 @@ class SessionTracker {
       throw new Error('Invalid session start response');
     } catch (error) {
       console.warn('Session tracking failed:', error);
-      // Generate a local fallback ID so tracking doesn't break the app
       const fallbackId = `local-${Date.now()}`;
       this.sessionId = fallbackId;
       return fallbackId;
@@ -122,7 +187,11 @@ class SessionTracker {
   ): Promise<void> {
     try {
       const sessionId = await this.getSessionId();
-      if (sessionId.startsWith('local-')) return; // Skip for fallback sessions
+      
+      // Push to GTM/GA4/Meta Pixel if configured
+      this.pushToThirdParty(eventType, options?.metadata);
+
+      if (sessionId.startsWith('local-')) return; // Skip API log for fallback sessions
 
       await api.post('/sessions/event', {
         sessionId,
@@ -134,11 +203,7 @@ class SessionTracker {
         durationMs: options?.durationMs,
       }, { skipAuth: true });
     } catch (err) {
-      // A 404 here means the server no longer has this session (expired or,
-      // in dev, the database was reset) — drop the stale cached id so the
-      // *next* tracked event starts a fresh session instead of 404ing forever.
       if (err instanceof ApiClientError && err.statusCode === 404) this.forgetSession();
-      // Never let tracking errors break the app
     }
   }
 
@@ -153,11 +218,42 @@ class SessionTracker {
       await api.post(`/sessions/${sessionId}/link-user/${userId}`, undefined, { skipAuth: true });
     } catch (err) {
       if (err instanceof ApiClientError && err.statusCode === 404) this.forgetSession();
-      // Silent fail
     }
   }
 
   // ═══════════════════ HELPERS ═══════════════════
+
+  private getOrGenerateAnonymousId(): string {
+    if (typeof window === 'undefined') return 'ssr-anon';
+    let anonId = localStorage.getItem(ANONYMOUS_ID_KEY);
+    if (!anonId) {
+      anonId = 'anon-' + Math.random().toString(36).substring(2, 15) + '-' + Date.now();
+      localStorage.setItem(ANONYMOUS_ID_KEY, anonId);
+    }
+    return anonId;
+  }
+
+  private pushToThirdParty(eventType: SessionEventType, metadata?: Record<string, any>): void {
+    if (typeof window === 'undefined') return;
+
+    // GA4 Gtag
+    if (process.env.NEXT_PUBLIC_GA4_ID && (window as any).gtag) {
+      (window as any).gtag('event', eventType, metadata || {});
+    }
+
+    // Meta Pixel
+    if (process.env.NEXT_PUBLIC_META_PIXEL_ID && (window as any).fbq) {
+      (window as any).fbq('track', eventType, metadata || {});
+    }
+
+    // GTM DataLayer
+    if (process.env.NEXT_PUBLIC_GTM_ID && (window as any).dataLayer) {
+      (window as any).dataLayer.push({
+        event: eventType,
+        ...metadata,
+      });
+    }
+  }
 
   private generateFingerprint(): string {
     if (typeof window === 'undefined') return 'ssr';

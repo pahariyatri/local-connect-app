@@ -78,3 +78,31 @@ export const getAbandonedBookings = async (hoursAgo = 24) => {
 export const getVendorAnalytics = async () => {
   return api.get('/admin/vendor-analytics', { skipCache: true });
 };
+
+export const getZeroResultSearches = async (limit = 20) => {
+  return api.get(`/sessions/analytics/zero-results?limit=${limit}`, { skipCache: true });
+};
+
+export const getSupplyDemandReport = async () => {
+  return api.get('/sessions/analytics/supply-demand', { skipCache: true });
+};
+
+export const getVendorsPerformanceReport = async () => {
+  return api.get('/sessions/analytics/vendor-performance', { skipCache: true });
+};
+
+export const getReferralReport = async () => {
+  return api.get('/sessions/analytics/referrals', { skipCache: true });
+};
+
+export const createCampaign = async (data: any) => {
+  return api.post('/sessions/campaigns', data);
+};
+
+export const getCampaigns = async () => {
+  return api.get('/sessions/campaigns', { skipCache: true });
+};
+
+export const getCampaignRoiReport = async () => {
+  return api.get('/sessions/campaigns/roi', { skipCache: true });
+};
