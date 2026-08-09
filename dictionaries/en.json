@@ -3,8 +3,8 @@
     "home": {
       "badge": "Local Connect Network",
       "hero": {
-        "title": "Meet the <span class=\"text-emerald-600\">Real Locals</span><br />of the Himalayas",
-        "subtitle": "Connect directly with verified guides, hosts & operators. No packages. No agencies. Just authentic local service.",
+        "title": "Build your journey with<br /><span class=\"text-emerald-600\">trusted local partners</span>",
+        "subtitle": "Plan the whole journey and reserve it in one place. Pay your local partners directly, on your terms.",
         "cta_plan": "Plan My Trip",
         "cta_explore": "Explore Locals",
         "vendor_link": "Are you a local? List your service",
@@ -64,9 +64,9 @@
       },
       "providers": {
         "eyebrow": "Verified Locals",
-        "title": "People, Not Packages",
+        "title": "Trusted Local Partners",
         "view_all": "View All",
-        "connect": "Connect"
+        "connect": "View Profile"
       },
       "how": {
         "eyebrow": "Simple Process",
@@ -74,15 +74,15 @@
         "steps": [
           {
             "title": "Browse Locals",
-            "desc": "Search verified guides, hosts, and operators near your destination."
+            "desc": "Search verified guides, hosts, and operators along your route."
           },
           {
-            "title": "Chat Direct",
-            "desc": "Message providers in real-time — no middlemen, no call centres."
+            "title": "Build & Request",
+            "desc": "Build your day-by-day trip and send it — local partners confirm what's available."
           },
           {
-            "title": "Book & Go",
-            "desc": "Pay securely via escrow. Your money releases only after service."
+            "title": "Reserve & Go",
+            "desc": "Pay a small reservation fee to lock it in. The rest is settled directly with each local partner."
           }
         ],
         "step_label": "Step"
@@ -93,12 +93,12 @@
         "subtitle": "List your service — free to join. Get discovered by thousands of travellers looking for real, local experiences.",
         "cta_join": "Join Free",
         "cta_learn": "Learn More",
-        "note": "Free listing · No commission on first 3 bookings · Cancel anytime"
+        "note": "Free listing · Cancel anytime"
       },
       "trust": {
         "verified": "Verified Providers",
-        "escrow": "Escrow Payments",
-        "messaging": "Direct Messaging",
+        "escrow": "Platform-Managed Reservations",
+        "messaging": "Request-Based Booking",
         "reviews": "Rated Reviews"
       }
     },
@@ -353,7 +353,7 @@
         "local": "Authored by Locals",
         "local_sub": "Every route is human-verified",
         "trust": "Trust as Core",
-        "trust_sub": "Direct-to-vendor escrow system"
+        "trust_sub": "Reservations managed through the platform"
       },
       "cta": {
         "title": "Join the Movement",
