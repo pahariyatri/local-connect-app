@@ -55,6 +55,16 @@ export interface InitCheckoutOptions {
  */
 export function initRazorpayCheckout(opts: InitCheckoutOptions): Promise<RazorpayResult> {
   return new Promise(async (resolve, reject) => {
+    if (opts.orderId?.startsWith('order_mock_')) {
+      console.warn('Mock order detected — bypassing Razorpay widget and simulating payment success.');
+      resolve({
+        razorpay_order_id: opts.orderId,
+        razorpay_payment_id: `pay_mock_${opts.bookingId}_${Date.now()}`,
+        razorpay_signature: `sig_mock_${opts.orderId}_${Date.now()}`,
+      });
+      return;
+    }
+
     try {
       await loadRazorpayScript();
     } catch {

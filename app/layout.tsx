@@ -35,9 +35,9 @@ function resolveLang(paramsLang: string | undefined): Locale {
 const SITE_URL = 'https://app.pahariyatri.com';
 
 export async function generateMetadata(props: {
-  params: Promise<{ lang: Locale }>;
+  params?: Promise<{ lang?: Locale }>;
 }): Promise<Metadata> {
-  const params = await props.params;
+  const params = props.params ? await props.params : undefined;
   const lang = resolveLang(params?.lang);
 
   return {
@@ -73,9 +73,9 @@ export async function generateStaticParams() {
 
 export default async function RootLayout(props: {
   children: React.ReactNode;
-  params: Promise<{ lang: Locale }>;
+  params?: Promise<{ lang?: Locale }>;
 }) {
-  const params = await props.params;
+  const params = props.params ? await props.params : undefined;
   const lang = resolveLang(params?.lang);
   const dict = await getDictionary(lang);
 

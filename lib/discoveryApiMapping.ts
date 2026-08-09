@@ -92,7 +92,7 @@ export function buildDiscoveryParams(plan: TripPlanForApi): DiscoveryParamsForAp
   const vendorTypes =
     servicePreferences.length > 0
       ? servicePreferences
-          .map((p) => PREFERENCE_TO_VENDOR_TYPE[p])
+          .map((p) => PREFERENCE_TO_VENDOR_TYPE[p as ServicePreferenceId])
           .filter((t): t is string => Boolean(t))
       : [...ALL_VENDOR_TYPES];
 

@@ -6,7 +6,7 @@ import Textarea from "@/app/[lang]/components/atoms/Textarea";
 import Typography from "@/app/[lang]/components/atoms/Typography";
 import ImageUploader from "@/app/[lang]/components/molecules/ImageUploader";
 import React, { useState, useEffect } from "react";
-import { sanitizePhone, PHONE_LENGTH } from "@/utils/validation";
+import { sanitizePhone, PHONE_LENGTH, toNationalDigits } from "@/utils/validation";
 import { fetchCurrentUser, updateUser } from "@/services/userService";
 
 interface ProfileForm {
@@ -42,7 +42,7 @@ export default function EditProfilePage() {
                     name: u.name || `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim(),
                     location: u.location ?? "",
                     email: u.email ?? "",
-                    phone: u.phone ?? "",
+                    phone: toNationalDigits(u.phone ?? ""),
                     bio: u.bio ?? "",
                     profilePic: u.profilePic ?? "",
                 });
