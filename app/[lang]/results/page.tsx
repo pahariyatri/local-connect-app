@@ -367,20 +367,16 @@ export default function ResultsPage() {
       const { createBooking } = await import("@/services/bookingService");
       const result = await createBooking(bookingData);
 
-      // result = { bookingId, orderId, amount, currency }
-      if (!result?.bookingId || !result?.orderId) {
-        throw new Error('Booking creation did not return valid booking/order IDs');
+      // Reservation-fee model: creating a booking only sends the request to
+      // each local partner — it no longer creates a payment order. { bookingId,
+      // status, totalAmount, reservationFeeAmount, itemCount, message }.
+      if (!result?.bookingId) {
+        throw new Error('Booking creation did not return a valid booking ID');
       }
 
-      // Step 2: Navigate to checkout with booking details
-      // Checkout page handles Razorpay — never open payment without a bookingId
-      const checkoutParams = new URLSearchParams({
-        bookingId: String(result.bookingId),
-        orderId: result.orderId,
-        amount: String(result.amount),
-        currency: result.currency || 'INR',
-      });
-      router.push(`/${lang}/checkout?${checkoutParams.toString()}`);
+      // Step 2: go to the booking's status page — it shows vendor-confirmation
+      // progress and only offers "Reserve" (-> /checkout) once every partner accepts.
+      router.push(`/${lang}/bookings/${result.bookingId}`);
 
     } catch (error: any) {
       showNotification(error?.message || "Booking creation failed. Please try again.", "error");
@@ -489,13 +485,14 @@ export default function ResultsPage() {
                 <span className="text-3xl font-black text-white italic tracking-tighter">₹{totalPrice.toLocaleString()}</span>
               </div>
               <p className="text-[9px] text-slate-500 mt-1">Based on {itineraryDays.length} {itineraryDays.length === 1 ? "day" : "days"} · {guestCount || 2} guests</p>
+              <p className="text-[8px] text-slate-600 mt-1 font-medium">Paid directly to local partners — not charged now</p>
             </div>
             <button
               onClick={handleBookNow}
               disabled={isBooking}
               className="h-16 px-10 rounded-[2rem] bg-emerald-500 text-white font-black text-sm uppercase tracking-widest shadow-2xl shadow-emerald-500/20 active:scale-95 transition-all disabled:opacity-50"
             >
-              {isBooking ? "HOLDING SLOTS..." : res.footer.book_now}
+              {isBooking ? "SENDING REQUEST..." : res.footer.book_now}
             </button>
           </div>
         </div>

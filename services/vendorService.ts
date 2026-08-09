@@ -36,6 +36,8 @@ export function mapServicesToVendors(services: any[]): Record<string, Vendor[]> 
       price: priceVal,
       category: type,
       description: s.description,
+      city: Array.isArray(s.addresses) && s.addresses.length > 0 ? s.addresses[0]?.city : undefined,
+      verified: s.vendor?.verificationStatus === 'VERIFIED',
     };
     if (categorized[type]) categorized[type].push(mapped);
   });
@@ -142,7 +144,10 @@ export const getVendors = async () => {
  */
 export const getMyVendor = async () => {
   const raw = await api.get('/vendors/mine');
-  return (raw as any)?.data ?? raw;
+  // `data: null` is the valid "no vendor yet" response — `?? raw` would treat
+  // that null as "missing" and fall back to the truthy envelope object,
+  // making this never actually return null. Use `in` to unwrap correctly.
+  return raw && typeof raw === 'object' && 'data' in raw ? (raw as any).data : raw;
 };
 
 export const getVendorById = async (id: string) => {

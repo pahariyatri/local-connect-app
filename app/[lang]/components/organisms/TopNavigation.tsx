@@ -148,23 +148,37 @@ export default function TopNavigation({
 
                         {rightButtons.length > 0 ? (
                             rightButtons.map((button, index) => (
-                                <button 
-                                    key={index} 
-                                    className="h-10 sm:h-12 px-4 sm:px-6 rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] transition-all hover:bg-slate-900 hover:text-white text-slate-500 border border-transparent active:scale-95" 
+                                <button
+                                    key={index}
+                                    className="h-10 sm:h-12 px-4 sm:px-6 rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] transition-all hover:bg-slate-900 hover:text-white text-slate-500 border border-transparent active:scale-95"
                                     onClick={button.onClick}
                                 >
                                     {button.label}
                                 </button>
                             ))
                         ) : user ? (
-                            <Link 
-                                href={`/${lang}/profile`}
-                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-lg sm:text-xl hover:bg-white hover:shadow-xl hover:shadow-slate-100 transition-all group active:scale-90"
-                            >
-                                <span className="group-hover:scale-110 transition-transform">👤</span>
-                            </Link>
+                            <>
+                                {/* /vendor/onboarding self-resolves to the dashboard for an
+                                    existing vendor, or the wizard for a traveler-only account —
+                                    this is the one persistent, app-wide entry point into the
+                                    vendor side (previously only reachable from the landing page). */}
+                                <Link
+                                    href={`/${lang}/vendor/onboarding`}
+                                    className={`h-10 sm:h-12 px-4 sm:px-6 rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] transition-all hover:bg-slate-900 hover:text-white flex items-center ${
+                                        (transparent && !scrolled) ? "text-white/80" : "text-slate-500"
+                                    }`}
+                                >
+                                    For Vendors
+                                </Link>
+                                <Link
+                                    href={`/${lang}/profile`}
+                                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-lg sm:text-xl hover:bg-white hover:shadow-xl hover:shadow-slate-100 transition-all group active:scale-90"
+                                >
+                                    <span className="group-hover:scale-110 transition-transform">👤</span>
+                                </Link>
+                            </>
                         ) : (
-                            <Link 
+                            <Link
                                 href={`/${lang}/auth/login`}
                                 className={`h-10 sm:h-12 px-5 sm:px-8 rounded-xl sm:rounded-2xl font-black text-[9px] sm:text-[10px] uppercase tracking-[0.15em] flex items-center justify-center transition-all ${
                                     (transparent && !scrolled) 

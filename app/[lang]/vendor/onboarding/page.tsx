@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { sanitizePhone, isValidPhone, PHONE_LENGTH } from "@/utils/validation";
+import { sanitizePhone, isValidPhone, PHONE_LENGTH, toNationalDigits } from "@/utils/validation";
 import { toApiUiError } from "@/utils/apiErrors";
 import { createVendor, createPointOfContact, getMyVendor } from "@/services/vendorService";
 import { uploadMedia, deleteMedia, validateImage, type UploadedMedia } from "@/services/mediaService";
@@ -102,7 +102,7 @@ export default function VendorOnboardingPage() {
   // Step 1 — basic info
   const [contactName, setContactName] = useState("");
   const [businessName, setBusinessName] = useState("");
-  const [phone, setPhone] = useState(user?.phone || "");
+  const [phone, setPhone] = useState(user?.phone ? toNationalDigits(user.phone) : "");
   const [email, setEmail] = useState(user?.email || "");
 
   // Step 2 — category
@@ -124,7 +124,7 @@ export default function VendorOnboardingPage() {
   const isSubmittingRef = useRef(false);
 
   useEffect(() => {
-    if (user?.phone && !phone) setPhone(user.phone);
+    if (user?.phone && !phone) setPhone(toNationalDigits(user.phone));
     if (user?.email && !email) setEmail(user.email);
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 

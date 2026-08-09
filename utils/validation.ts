@@ -11,6 +11,20 @@ export function sanitizePhone(value: string): string {
   return (value || "").replace(/\D/g, "").slice(0, PHONE_LENGTH);
 }
 
+/**
+ * Recover the bare 10-digit national number from a value that might already
+ * be backend-normalized E.164 (e.g. "+919001122335") — every stored
+ * `user.phone` is. Any UI that prefills a bare-digits field or prepends its
+ * own "+91 " from `user.phone` directly (instead of through this) risks
+ * the "+91 +919001122335" duplicate-prefix bug: sanitizePhone's slice(0, 10)
+ * would keep the leading "91" from the country code instead of dropping it.
+ * Indian mobile numbers are always exactly 10 digits, so taking the last 10
+ * digits is correct whether the input was E.164, bare, or had stray spaces.
+ */
+export function toNationalDigits(phone: string): string {
+  return (phone || "").replace(/\D/g, "").slice(-PHONE_LENGTH);
+}
+
 /** True when the value is exactly a 10-digit mobile number. */
 export function isValidPhone(value: string): boolean {
   return new RegExp(`^\\d{${PHONE_LENGTH}}$`).test(value || "");

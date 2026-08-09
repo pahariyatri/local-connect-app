@@ -26,7 +26,10 @@ function Icon({ name, className = "" }: { name: IconName; className?: string }) 
     );
 }
 
-type BookingStatus = "CONFIRMED" | "VENDOR_ACCEPTED" | "COMPLETED" | "PAYMENT_PENDING" | "CREATED" | "CANCELLED" | "REFUNDED" | "ABANDONED";
+type BookingStatus =
+  | "CONFIRMED" | "VENDOR_ACCEPTED" | "COMPLETED" | "PAYMENT_PENDING" | "CREATED"
+  | "CANCELLED" | "REFUNDED" | "ABANDONED"
+  | "REPLACEMENT_REQUIRED" | "VENDOR_REJECTED" | "PAYMENT_FAILED" | "TRAVEL_IN_PROGRESS" | "EXPIRED";
 
 interface Booking {
     id: number;
@@ -38,11 +41,16 @@ interface Booking {
 }
 
 const STATUS_LABEL: Record<string, string> = {
-    CONFIRMED: "Confirmed",
-    VENDOR_ACCEPTED: "Accepted",
+    CONFIRMED: "Reserved",
+    VENDOR_ACCEPTED: "Ready to reserve",
     COMPLETED: "Completed",
-    PAYMENT_PENDING: "Pending",
-    CREATED: "Processing",
+    PAYMENT_PENDING: "Processing payment",
+    CREATED: "Awaiting confirmation",
+    REPLACEMENT_REQUIRED: "Action needed",
+    VENDOR_REJECTED: "Declined",
+    PAYMENT_FAILED: "Payment failed",
+    TRAVEL_IN_PROGRESS: "In progress",
+    EXPIRED: "Expired",
     CANCELLED: "Cancelled",
     REFUNDED: "Refunded",
     ABANDONED: "Expired",
@@ -54,6 +62,11 @@ const STATUS_STYLE: Record<string, string> = {
     COMPLETED: "bg-slate-100 text-slate-500",
     PAYMENT_PENDING: "bg-amber-50 text-amber-600",
     CREATED: "bg-amber-50 text-amber-600",
+    REPLACEMENT_REQUIRED: "bg-orange-50 text-orange-600",
+    VENDOR_REJECTED: "bg-red-50 text-red-500",
+    PAYMENT_FAILED: "bg-red-50 text-red-500",
+    TRAVEL_IN_PROGRESS: "bg-indigo-50 text-indigo-600",
+    EXPIRED: "bg-slate-100 text-slate-400",
     CANCELLED: "bg-red-50 text-red-500",
     REFUNDED: "bg-slate-100 text-slate-500",
     ABANDONED: "bg-slate-100 text-slate-400",

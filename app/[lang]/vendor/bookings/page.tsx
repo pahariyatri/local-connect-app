@@ -7,11 +7,11 @@ import Typography from "../../components/atoms/Typography";
 import Button from "../../components/atoms/Button";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import Loading from "@/app/loading";
-import { getVendorBookings } from "@/services/bookingService";
+import { getVendorBookings, getVendorItems, respondToBookingItem } from "@/services/bookingService";
 import { getMyVendor } from "@/services/vendorService";
 import { toApiUiError } from "@/utils/apiErrors";
 
-type FilterKey = "all" | "pending" | "confirmed" | "completed" | "cancelled";
+type FilterKey = "requests" | "all" | "pending" | "confirmed" | "completed" | "cancelled";
 
 // Backend BookingStatus (backend/src/feature/booking/entities/booking.entity.ts)
 // collapsed into the four buckets the existing UI/translations already use.
@@ -27,6 +27,7 @@ const STATUS_TO_FILTER: Record<string, FilterKey> = {
 };
 
 const STATUS_BADGE: Record<FilterKey, string> = {
+  requests: "bg-orange-100 text-orange-700",
   all: "bg-slate-100 text-slate-700",
   pending: "bg-amber-100 text-amber-700",
   confirmed: "bg-emerald-500 text-white",
@@ -128,12 +129,45 @@ export default function ManageBookingsPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Pending request inbox — separate data source (BookingItem, not Booking):
+  // one row per day+category+service, so a vendor can accept/reject a
+  // specific line without touching a traveler's whole multi-vendor trip.
+  const [pendingItems, setPendingItems] = useState<any[]>([]);
+  const [itemsState, setItemsState] = useState<"idle" | "loading" | "error" | "ready">("idle");
+  const [respondingId, setRespondingId] = useState<number | null>(null);
+
+  const loadItems = useCallback(async () => {
+    if (!vendorId) return;
+    setItemsState("loading");
+    try {
+      const items = await getVendorItems(vendorId, "PENDING");
+      setPendingItems(items);
+      setItemsState("ready");
+    } catch {
+      setItemsState("error");
+    }
+  }, [vendorId]);
+
+  useEffect(() => { loadItems(); }, [loadItems]);
+
+  const handleRespond = async (itemId: number, decision: "accept" | "reject") => {
+    setRespondingId(itemId);
+    try {
+      await respondToBookingItem(itemId, decision, decision === "reject" ? "Unable to accommodate this request" : undefined);
+      setPendingItems((prev) => prev.filter((i) => i.id !== itemId));
+    } catch {
+      // Leave the item in the list — the vendor can retry the same button.
+    } finally {
+      setRespondingId(null);
+    }
+  };
+
   if (dictLoading || !dict) return <Loading />;
 
   const res = dict.page.vendor_onboarding.guest_assists;
   const bookingRes = dict.page.vendor_dashboard.bookings;
 
-  const filterCounts: Record<FilterKey, number> = { all: bookings.length, pending: 0, confirmed: 0, completed: 0, cancelled: 0 };
+  const filterCounts: Record<FilterKey, number> = { requests: pendingItems.length, all: bookings.length, pending: 0, confirmed: 0, completed: 0, cancelled: 0 };
   bookings.forEach((b) => { filterCounts[STATUS_TO_FILTER[b.status] || "pending"]++; });
 
   const filtered = filter === "all" ? bookings : bookings.filter((b) => STATUS_TO_FILTER[b.status] === filter);
@@ -177,6 +211,14 @@ export default function ManageBookingsPage() {
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-2 mb-8 no-scrollbar">
+        <button
+          onClick={() => setFilter("requests")}
+          className={`px-5 py-2.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${
+            filter === "requests" ? "bg-slate-900 text-white" : "bg-orange-50 text-orange-600 border border-orange-100 hover:bg-orange-100"
+          }`}
+        >
+          Requests <span className="ml-1 opacity-70">[{filterCounts.requests}]</span>
+        </button>
         {(["all", "pending", "confirmed", "completed", "cancelled"] as FilterKey[]).map((key) => (
           <button
             key={key}
@@ -190,21 +232,79 @@ export default function ManageBookingsPage() {
         ))}
       </div>
 
-      {state === "loading" && (
+      {/* Requests tab: per-item accept/reject inbox */}
+      {filter === "requests" && (
+        <div className="space-y-4">
+          {itemsState === "loading" && (
+            <div className="space-y-4">
+              <div className="h-28 rounded-3xl bg-slate-50 border border-slate-100 animate-pulse" />
+              <div className="h-28 rounded-3xl bg-slate-50 border border-slate-100 animate-pulse" />
+            </div>
+          )}
+          {itemsState === "error" && (
+            <div className="text-center py-16 bg-white rounded-[2.5rem] border border-red-100">
+              <p className="text-sm text-red-600 mb-4">Could not load requests.</p>
+              <Button onClick={loadItems} variant="outline" className="h-11 px-6 rounded-xl text-xs font-bold">Try again</Button>
+            </div>
+          )}
+          {itemsState === "ready" && pendingItems.length === 0 && (
+            <div className="text-center py-20 bg-slate-50 rounded-[3rem] border border-dashed border-slate-200">
+              <Typography variant="h3" className="text-xl font-black text-slate-900 uppercase tracking-tighter italic mb-2">
+                All caught up
+              </Typography>
+              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">No pending requests right now.</p>
+            </div>
+          )}
+          {itemsState === "ready" && pendingItems.map((item) => {
+            const guestName = [item.booking?.user?.firstName, item.booking?.user?.lastName].filter(Boolean).join(" ") || "Guest";
+            const busy = respondingId === item.id;
+            return (
+              <div key={item.id} className="premium-card p-6 bg-white">
+                <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1">Day {item.day} · {item.category}</p>
+                <h3 className="text-base font-black text-slate-900">{item.service?.name || "Service"}</h3>
+                <p className="text-xs text-slate-400 font-medium mt-1">
+                  {guestName} · {item.booking?.guestCount} guest{item.booking?.guestCount === 1 ? "" : "s"} · {item.booking?.travelDate ? new Date(item.booking.travelDate).toLocaleDateString() : "—"}
+                </p>
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-50">
+                  <span className="text-lg font-black text-emerald-600">₹{Number(item.vendorPrice || 0).toLocaleString()}</span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleRespond(item.id, "reject")}
+                      disabled={busy}
+                      className="h-10 px-4 rounded-xl bg-slate-50 text-slate-500 text-xs font-black uppercase tracking-widest disabled:opacity-50"
+                    >
+                      Decline
+                    </button>
+                    <button
+                      onClick={() => handleRespond(item.id, "accept")}
+                      disabled={busy}
+                      className="h-10 px-5 rounded-xl bg-emerald-500 text-white text-xs font-black uppercase tracking-widest disabled:opacity-50"
+                    >
+                      {busy ? "..." : "Accept"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {filter !== "requests" && state === "loading" && (
         <div className="space-y-6">
           <BookingCardSkeleton />
           <BookingCardSkeleton />
         </div>
       )}
 
-      {state === "error" && (
+      {filter !== "requests" && state === "error" && (
         <div className="text-center py-16 bg-white rounded-[2.5rem] border border-red-100">
           <p className="text-sm text-red-600 mb-4">{errorMessage}</p>
           <Button onClick={load} variant="outline" className="h-11 px-6 rounded-xl text-xs font-bold">Try again</Button>
         </div>
       )}
 
-      {state === "ready" && (
+      {filter !== "requests" && state === "ready" && (
         <div className="space-y-6">
           {filtered.map((booking, idx) => {
             const filterKey = STATUS_TO_FILTER[booking.status] || "pending";

@@ -129,24 +129,49 @@ export default function PackageBuilderStep({
     [stopServicesByDay]
   );
 
+  // Which town a given day is actually in: the stop(s) picked for that day in
+  // the route step, or — for a single-destination trip with no stops tuned —
+  // the destination itself. Days with no resolvable town (multi-destination
+  // trips with untuned days) fall back to the nearest-overall pick below,
+  // same graceful-degradation the backend's own discovery endpoint uses.
+  const townForDay = useCallback(
+    (day: number): string | undefined => {
+      const stopName = (tripStops || []).find((s) => s.day === `day-${day}`)?.name;
+      if (stopName) return stopName;
+      return destinations?.length === 1 ? destinations[0] : undefined;
+    },
+    [tripStops, destinations]
+  );
+
+  // Prefer a vendor whose service address matches this day's town — without
+  // this, every day defaulted to the exact same "first" vendor overall,
+  // showing e.g. a Manali-titled stay on a day actually spent in Kasol.
+  const pickForDay = useCallback(
+    (day: number, options: Vendor[]): string | null => {
+      const town = townForDay(day)?.trim().toLowerCase();
+      if (town) {
+        const match = options.find((v) => v.city?.trim().toLowerCase() === town);
+        if (match) return match.id;
+      }
+      return options[0]?.id ?? null;
+    },
+    [townForDay]
+  );
+
   useEffect(() => {
-    const firstStay = liveVendors.Stay?.[0]?.id ?? null;
-    const firstTaxi = liveVendors.Taxi?.[0]?.id ?? null;
-    const firstAdventure = liveVendors.Adventure?.[0]?.id ?? null;
-    const firstMeals = liveVendors.Meals?.[0]?.id ?? null;
     const prev = selections;
     const next: Record<number, Record<string, string | null>> = {};
     itineraryDays.forEach((day) => {
       next[day] = {
-        Stay: dayWants(day, "Stay", wantsStay) ? (prev[day]?.Stay ?? firstStay) : null,
-        Taxi: dayWants(day, "Taxi", wantsTaxi) ? (prev[day]?.Taxi ?? firstTaxi) : null,
-        Adventure: dayWants(day, "Adventure", wantsAdventure) ? (prev[day]?.Adventure ?? firstAdventure) : null,
-        Meals: dayWants(day, "Meals", wantsMeals) ? (prev[day]?.Meals ?? firstMeals) : null,
+        Stay: dayWants(day, "Stay", wantsStay) ? (prev[day]?.Stay ?? pickForDay(day, liveVendors.Stay || [])) : null,
+        Taxi: dayWants(day, "Taxi", wantsTaxi) ? (prev[day]?.Taxi ?? pickForDay(day, liveVendors.Taxi || [])) : null,
+        Adventure: dayWants(day, "Adventure", wantsAdventure) ? (prev[day]?.Adventure ?? pickForDay(day, liveVendors.Adventure || [])) : null,
+        Meals: dayWants(day, "Meals", wantsMeals) ? (prev[day]?.Meals ?? pickForDay(day, liveVendors.Meals || [])) : null,
       };
     });
     onSelectionsChange(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [itineraryDays, wantsStay, wantsTaxi, wantsAdventure, wantsMeals, liveVendors, dayWants]);
+  }, [itineraryDays, wantsStay, wantsTaxi, wantsAdventure, wantsMeals, liveVendors, dayWants, pickForDay]);
 
   const handleVendorChange = (day: number, category: string, vendorId: string) => {
     onSelectionsChange({
