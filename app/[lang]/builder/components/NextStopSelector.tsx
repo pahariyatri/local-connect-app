@@ -75,6 +75,28 @@ interface StopPlace {
 // navigating back and forth between builder steps shouldn't refetch it.
 const regionalCatalogueCache = new Map<string, any[]>();
 
+// Deterministic corridor grouping for the routes we actually have inventory
+// on — NOT geo-distance (Address.latitude/longitude exist on the schema but
+// are unpopulated in current data) and not an AI/ML router, just a small,
+// reviewable table of which towns plausibly sit on the way to which
+// destinations. Without this, every catalogue city outside the exact
+// origin/destination pair was suggested as a "stop" regardless of direction
+// — e.g. Spiti and Dharamshala (different valleys, opposite directions)
+// showing up for a Chandigarh -> Manali trip. Extend this table as real
+// vendor coverage grows; a destination not listed here falls back to the
+// previous "show everything" behavior rather than showing nothing.
+const CORRIDOR_GROUPS: string[][] = [
+  ["kullu", "manali", "kasol", "tirthan", "mandi", "bilaspur", "kullu manali"], // Kullu-Manali valley
+  ["shimla", "kufri", "narkanda", "solan"], // Shimla corridor
+  ["dharamshala", "mcleodganj", "kangra", "palampur"], // Kangra valley
+  ["spiti", "kaza", "kinnaur", "reckong peo", "sarahan"], // Spiti/Kinnaur — its own long corridor, not a Manali-trip detour
+];
+
+function corridorFor(city: string): string[] | null {
+  const key = city.trim().toLowerCase();
+  return CORRIDOR_GROUPS.find((g) => g.includes(key)) || null;
+}
+
 // We intentionally don't constrain the discover request by destination/category
 // so that *intermediate* towns on the corridor surface; then we drop the origin
 // and the final destinations here, client-side, leaving genuine stop options.
@@ -83,6 +105,16 @@ function buildPlacesFrom(services: any[], origin: string, destinations: string[]
     origin.trim().toLowerCase(),
     ...destinations.map((d) => d.trim().toLowerCase()),
   ]);
+
+  // Union of every known corridor that any destination belongs to. A
+  // destination with no known corridor contributes nothing here, and the
+  // final fallback below shows every city rather than none.
+  const destinationCorridors = new Set<string>();
+  destinations.forEach((d) => {
+    const corridor = corridorFor(d);
+    corridor?.forEach((c) => destinationCorridors.add(c));
+  });
+
   const byCity: Record<string, StopPlace> = {};
   services.forEach((s: any) => {
     const addr = (s.addresses || []).find((a: any) => a?.city) || (s.addresses || [])[0];
@@ -96,7 +128,11 @@ function buildPlacesFrom(services: any[], origin: string, destinations: string[]
     byCity[key].total += 1;
     byCity[key].categories[categoryOf(s)] += 1;
   });
-  return Object.values(byCity).sort((a, b) => b.total - a.total);
+
+  const all = Object.values(byCity).sort((a, b) => b.total - a.total);
+  if (destinationCorridors.size === 0) return all; // no known corridor for this destination — graceful fallback to full catalogue
+  const onCorridor = all.filter((p) => destinationCorridors.has(p.key));
+  return onCorridor.length > 0 ? onCorridor : all; // corridor known but nothing in inventory on it — still show something rather than an empty step
 }
 
 interface RouteStopsSelectorProps {
