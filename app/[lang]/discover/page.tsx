@@ -10,8 +10,20 @@ import { useParams, useRouter } from "next/navigation";
 import Loading from "@/app/loading";
 import { getVendors } from "@/services/vendorService";
 
+interface DiscoverVendor {
+    id: string;
+    name: string;
+    category: string;
+    location: string;
+    rating: number;
+    reviews?: number;
+    priceRange: string;
+    image: string;
+    tags: string[];
+}
+
 // Mock Data for Discover matching details page profiles
-const VENDORS = [
+const VENDORS: DiscoverVendor[] = [
     { 
         id: "p1", 
         name: "Tenzing Sherpa", 
@@ -80,7 +92,7 @@ const VENDORS = [
     }
 ];
 
-const mapBackendVendor = (v: any) => {
+const mapBackendVendor = (v: any): DiscoverVendor => {
     const type = v.types?.[0] || "Guides";
     const categoryMap: Record<string, string> = {
         "hotel": "Homestays",
@@ -134,7 +146,7 @@ export default function DiscoverPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedLocation, setSelectedLocation] = useState("All");
     const [dict, setDict] = useState<any>(null);
-    const [vendors, setVendors] = useState<any[]>([]);
+    const [vendors, setVendors] = useState<DiscoverVendor[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const categories = ["All", "Guides", "Homestays", "Transport", "Food", "Wellness", "Adventures"];

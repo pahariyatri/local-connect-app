@@ -34,7 +34,7 @@ function Icon({ name, className = "" }: { name: IconName; className?: string }) 
 function basePrice(service: Service): number | null {
   const prices = service.prices || [];
   if (prices.length === 0) return null;
-  return Math.min(...prices.map((p) => Number(p.price)));
+  return Math.min(...prices.map((p: any) => Number(p.price)));
 }
 
 function ServiceCardSkeleton() {

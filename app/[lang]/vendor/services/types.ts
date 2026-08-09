@@ -1,13 +1,17 @@
-// Mirrors backend/src/feature/service/entities/service.entity.ts (+ Address, Price).
-// No `image` field exists on the entity — a real image lives at
-// additionalData.images[0] by convention (see services/vendorService.ts).
+export type SeasonalPrice = {
+  id: string;
+  seasonName: string;
+  startDate: string;
+  endDate: string;
+  price: number;
+};
 
 export type ServicePrice = {
-  id: number;
+  id?: number;
   price: number;
-  dayType: "weekday" | "weekend" | "both";
-  isPeakSeason: boolean;
-  discount: number | null;
+  dayType?: "weekday" | "weekend" | "both";
+  isPeakSeason?: boolean;
+  discount?: number | null;
 };
 
 export type ServiceAddress = {
@@ -27,11 +31,17 @@ export type Service = {
   id: number;
   name: string;
   description: string;
-  isAvailable: boolean;
+  isAvailable?: boolean;
   capacity: number;
-  createdAt: string;
+  createdAt?: string;
+  category?: string;
+  subcategory?: any;
+  prices?: any;
+  seasonalPrices?: SeasonalPrice[];
+  dynamicPricingEnabled?: boolean;
+  hasActiveBookings?: boolean;
+  availability?: string;
+  status?: string;
   additionalData?: { images?: string[]; [key: string]: any } | null;
-  subcategory?: { id: number; name: string } | null;
   addresses?: ServiceAddress[];
-  prices?: ServicePrice[];
 };

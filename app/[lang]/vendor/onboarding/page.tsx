@@ -425,7 +425,7 @@ export default function VendorOnboardingPage() {
             <div className="rounded-[2rem] border border-slate-100 bg-white shadow-sm divide-y divide-slate-100 overflow-hidden">
               <ReviewRow icon="user" label="Contact" value={contactName} />
               <ReviewRow icon="home" label="Business" value={businessName} />
-              <ReviewRow icon="phone" label="Phone" value={`+91 ${phone}`} />
+              <ReviewRow icon="phone" label="Phone" value={`+91 ${toNationalDigits(phone)}`} />
               {email && <ReviewRow icon="mail" label="Email" value={email} />}
               <ReviewRow
                 icon="check"
