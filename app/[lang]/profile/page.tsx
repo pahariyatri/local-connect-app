@@ -12,6 +12,7 @@ import { logout } from "@/services/authService";
 import { getMyVendor } from "@/services/vendorService";
 import { User } from "@/types/userTypes";
 import VerifiedBadge from "../components/atoms/VerifiedBadge";
+import { toNationalDigits } from "@/utils/validation";
 
 // ─── Icon system — same inline-stroke-SVG convention used across the app ───
 
@@ -146,7 +147,7 @@ export default function ProfilePage() {
                         </Typography>
                         <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] mt-2">Verified Explorer</p>
                         {user?.phone && (
-                            <p className="text-slate-400 font-medium text-sm mt-1">+91 {user.phone}</p>
+                            <p className="text-slate-400 font-medium text-sm mt-1">+91 {toNationalDigits(user.phone)}</p>
                         )}
                     </div>
                 </section>

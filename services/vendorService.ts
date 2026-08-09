@@ -37,6 +37,7 @@ export function mapServicesToVendors(services: any[]): Record<string, Vendor[]> 
       category: type,
       description: s.description,
       city: Array.isArray(s.addresses) && s.addresses.length > 0 ? s.addresses[0]?.city : undefined,
+      verified: s.vendor?.verificationStatus === 'VERIFIED',
     };
     if (categorized[type]) categorized[type].push(mapped);
   });

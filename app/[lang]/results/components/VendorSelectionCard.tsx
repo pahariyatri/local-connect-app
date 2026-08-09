@@ -2,6 +2,7 @@
 
 import React from "react";
 import LocalImage from "../../components/atoms/Image";
+import VerifiedBadge from "../../components/atoms/VerifiedBadge";
 
 export interface Vendor {
   id: string;
@@ -17,6 +18,9 @@ export interface Vendor {
   // known — lets the day-wise builder prefer a vendor actually near that
   // day's stop instead of defaulting every day to the same nearest vendor.
   city?: string;
+  // vendor.verificationStatus === 'VERIFIED', admin-controlled (see backend
+  // VendorService.setVerificationStatus) — never inferred client-side.
+  verified?: boolean;
 }
 
 
@@ -67,9 +71,14 @@ export default function VendorSelectionCard({
           {/* Info */}
           <div className="flex-1 min-w-0">
             <div className="flex justify-between items-start mb-1">
-              <h4 className={`font-black text-slate-900 truncate uppercase tracking-tight ${isAlternative ? "text-[10px]" : "text-sm"}`}>
-                {vendor.name}
-              </h4>
+              <div className="min-w-0">
+                <h4 className={`font-black text-slate-900 truncate uppercase tracking-tight ${isAlternative ? "text-[10px]" : "text-sm"}`}>
+                  {vendor.name}
+                </h4>
+                {vendor.verified && !isAlternative && (
+                  <VerifiedBadge className="mt-1" label="Verified Local Partner" />
+                )}
+              </div>
               {isSelected && !isAlternative && (
                   <div className="bg-emerald-500 text-white p-1 rounded-full">
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
