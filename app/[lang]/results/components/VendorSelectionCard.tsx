@@ -13,6 +13,10 @@ export interface Vendor {
   price: number;
   category: string;
   description?: string;
+  // The service's address city (backend: service.addresses[0].city), when
+  // known — lets the day-wise builder prefer a vendor actually near that
+  // day's stop instead of defaulting every day to the same nearest vendor.
+  city?: string;
 }
 
 
