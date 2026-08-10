@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const act = ACTIVITY_MAP[params.activity];
   if (!dest || !act) return {};
 
-  const title = `${act.display} in ${dest.display} | Book Instantly | Local Connect`;
+  const title = `${act.display} in ${dest.display} | Book Instantly | Pahari Yatri`;
   const description =
     `Find and book verified ${act.keyword} in ${dest.display}, ${dest.state}. ` +
     `Instant booking, transparent prices, local experts. No advance planning needed.`;

@@ -2,13 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import Typography from "../components/atoms/Typography";
-import TopNavigation from "../components/organisms/TopNavigation";
 import BottomNavigation from "../components/organisms/BottomNavigation";
 import Button from "../components/atoms/Button";
 import LocalImage from "../components/atoms/Image";
 import { useParams, useRouter } from "next/navigation";
 import Loading from "@/app/loading";
 import { getVendors } from "@/services/vendorService";
+import { Icon } from "../components/atoms/Icon";
+import PublicFooter from "../components/organisms/PublicFooter";
 
 interface DiscoverVendor {
     id: string;
@@ -218,16 +219,19 @@ export default function DiscoverPage() {
 
     return (
         <div className="min-h-screen bg-white pb-32">
-            <TopNavigation title={discover.title} />
+            {/* ── DISCOVER HERO ─────────────────────────────────────────────── */}
+            <section className="bg-slate-900 text-white py-16 px-6">
+              <div className="max-w-6xl mx-auto">
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-400 mb-3">Verified Locals</p>
+                <h1 className="text-4xl sm:text-5xl font-black tracking-tight leading-none mb-4">
+                  Discover<br /><span className="italic text-slate-400">your guides.</span>
+                </h1>
+                <p className="text-slate-400 text-sm max-w-sm leading-relaxed">{discover.header.subtitle}</p>
+              </div>
+            </section>
             
-            <main className="max-w-6xl mx-auto px-6 pt-24">
-                <header className="mb-10 text-center animate-in fade-in slide-in-from-bottom-5 duration-700">
-                    <Typography variant="h1" className="text-4xl font-black text-slate-900 leading-tight uppercase italic"
-                        dangerouslySetInnerHTML={{ __html: discover.header.title }} />
-                    <p className="text-slate-500 font-medium mt-2 text-sm uppercase tracking-widest">{discover.header.subtitle}</p>
-                </header>
-
-                {/* 🔍 Unified Search Bar */}
+            <main className="max-w-6xl mx-auto px-6 pt-8">
+                {/* 🔍 Search */}
                 <div className="mb-12 relative max-w-xl mx-auto">
                     <input
                         type="text"
@@ -236,8 +240,8 @@ export default function DiscoverPage() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full pl-12 pr-6 py-4 rounded-3xl bg-slate-50 border border-slate-200/80 text-xs font-semibold text-slate-800 focus:outline-none focus:border-slate-900 focus:bg-white focus:shadow-2xl focus:shadow-slate-100/50 transition-all placeholder:text-slate-400"
                     />
-                    <span className="absolute left-4.5 top-1/2 -translate-y-1/2 text-slate-450">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                        <Icon name="search" className="w-4 h-4" />
                     </span>
                 </div>
 
@@ -255,8 +259,15 @@ export default function DiscoverPage() {
                             </div>
                         ))
                     ) : filteredVendors.length === 0 ? (
-                        <div className="col-span-full text-center py-12 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                            No verified vendors found matching filters.
+                        <div className="col-span-full text-center py-20">
+                            <p className="text-slate-400 text-sm mb-2">No locals found matching your search.</p>
+                            <p className="text-slate-300 text-xs mb-6">Try a different name, location, or category.</p>
+                            <button
+                              onClick={() => setSearchQuery("")}
+                              className="text-emerald-600 text-xs font-black uppercase tracking-wider hover:text-emerald-700 transition-colors"
+                            >
+                              Clear search
+                            </button>
                         </div>
                     ) : (
                         filteredVendors.map((vendor, i) => (
@@ -328,6 +339,7 @@ export default function DiscoverPage() {
                 </div>
             </main>
 
+            <PublicFooter />
             <BottomNavigation />
         </div>
     );

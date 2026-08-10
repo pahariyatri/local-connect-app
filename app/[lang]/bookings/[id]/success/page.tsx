@@ -73,7 +73,7 @@ export default function BookingSuccessPage() {
             </div>
 
              <div className="mt-12 text-white/80 text-[10px] font-bold uppercase tracking-widest animate-fade-in delay-1000">
-                Crafted with love by Local Connect
+                Made for the mountains by Pahari Yatri
             </div>
 
         </div>

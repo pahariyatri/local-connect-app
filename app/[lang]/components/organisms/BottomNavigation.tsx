@@ -6,6 +6,7 @@ import { fetchCurrentUser } from "@/services/userService";
 import { User } from "@/types/userTypes";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { Locale } from "@/i18n-config";
+import { Icon } from "../atoms/Icon";
 
 type Tab = {
     id: string;

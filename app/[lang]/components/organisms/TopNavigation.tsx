@@ -16,7 +16,7 @@ interface TopNavigationProps {
 }
 
 export default function TopNavigation({
-    title = "Local Connect",
+    title = "Pahari Yatri",
     leftButton,
     rightButtons = [],
     transparent = false,

@@ -58,6 +58,9 @@
 
   /* Elevation */
   --shadow-card: 0 10px 40px -10px rgba(0, 0, 0, 0.04), 0 0 1px rgba(0, 0, 0, 0.1);
+
+  /* Header height — used by sticky child elements to avoid magic offsets */
+  --header-height: 57px;
   --shadow-float: 0 25px 50px -12px rgba(15, 23, 42, 0.15);
 }
 
@@ -109,7 +112,27 @@ body {
   .btn-secondary {
     @apply btn-premium bg-white text-slate-900 border border-slate-100 hover:bg-slate-50 shadow-sm;
   }
+
+  /* ── Inputs ────────────────────────── */
+  .input-base {
+    @apply w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 focus:bg-white transition-all;
+  }
+
+  /* ── Service card ──────────────────── */
+  .service-card {
+    @apply bg-white rounded-3xl border border-slate-100 overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-200/40;
+  }
+
+  /* ── Page wrapper ──────────────────── */
+  .page-section {
+    @apply max-w-6xl mx-auto px-5 sm:px-6;
+  }
 }
+
+/* scrollbar-hide — used in horizontal pill/tab rows */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {

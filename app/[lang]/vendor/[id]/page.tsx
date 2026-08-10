@@ -197,7 +197,7 @@ const DEFAULT_PROFILE = {
     category: "Stay",
     isSecretGroupMember: true,
     isMock: true,
-    description: "Nestled in the heart of Old Manali, Himalayan Retreat offers a sanctuary for those seeking peace and authentic hospitality. As a Local Connect Legend, this property is part of our invitation-only Secret Group.",
+    description: "Nestled in the heart of Old Manali, Himalayan Retreat offers a sanctuary for those seeking peace and authentic hospitality. As a Pahari Yatri Verified Partner, this property is part of our invitation-only partner network.",
     features: ["Panoramic Peak Views", "Organic Kitchen garden", "Traditional Mud-walled Rooms", "Guided Meditation sessions"],
     services: [
         { id: "s1", name: "Premium Suite", price: 4500, unit: "night", description: "Luxury double room." },

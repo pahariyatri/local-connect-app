@@ -80,7 +80,7 @@ export default function SitemapPage() {
                     <Typography variant="h1" className="text-4xl font-black text-slate-900 leading-tight">
                         Navigation <span className="text-emerald-500">Peak</span>.
                     </Typography>
-                    <p className="text-slate-500 font-medium mt-2">Every trail in the Local Connect ecosystem.</p>
+                    <p className="text-slate-500 font-medium mt-2">Every trail in the Pahari Yatri ecosystem.</p>
                 </header>
 
                 <div className="space-y-10">

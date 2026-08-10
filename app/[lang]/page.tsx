@@ -9,34 +9,16 @@ import VerifiedBadge from "./components/atoms/VerifiedBadge";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import Loading from "../loading";
 import { getVendors } from "@/services/vendorService";
+import { Icon, type IconName } from "./components/atoms/Icon";
+import PublicFooter from "./components/organisms/PublicFooter";
+import HeroSection from "./components/hero/HeroSection";
 
 type HomeProps = {
   params: Promise<{ lang: Locale }>;
 };
 
-// ─── Icon system — inline stroke SVGs, no external requests ──────────────────
 
-type IconName = "map-pin" | "flag" | "home" | "car" | "utensils" | "mountain" | "compass" | "check" | "arrow-right";
 
-const ICON_PATHS: Record<IconName, React.ReactNode> = {
-  "map-pin": <><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></>,
-  flag: <><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" x2="4" y1="22" y2="15" /></>,
-  home: <><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><path d="M9 22V12h6v10" /></>,
-  car: <><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2" /><circle cx="6.5" cy="16.5" r="2.5" /><circle cx="16.5" cy="16.5" r="2.5" /></>,
-  utensils: <><path d="M3 2v7c0 1.1.9 2 2 2s2-.9 2-2V2" /><path d="M7 2v20" /><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" /></>,
-  mountain: <path d="m8 3 4 8 5-5 5 15H2L8 3z" />,
-  compass: <><circle cx="12" cy="12" r="10" /><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" /></>,
-  check: <path d="M20 6 9 17l-5-5" />,
-  "arrow-right": <path d="M5 12h14M12 5l7 7-7 7" />,
-};
-
-function Icon({ name, className = "" }: { name: IconName; className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true" focusable="false">
-      {ICON_PATHS[name]}
-    </svg>
-  );
-}
 
 // ─── Scroll-reveal animation wrapper (IntersectionObserver + CSS transition) ─
 
@@ -230,25 +212,6 @@ function SectionHeading({ eyebrow, title, subtitle, center = false, dark = false
   );
 }
 
-// ─── Footer link column ──────────────────────────────────────────────────────
-
-function FooterColumn({ title, links }: { title: string; links: { label: string; onClick: () => void }[] }) {
-  return (
-    <div>
-      <h3 className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-4">{title}</h3>
-      <ul className="space-y-3">
-        {links.map((l) => (
-          <li key={l.label}>
-            <button onClick={l.onClick} className="text-slate-300 text-sm font-medium hover:text-white transition-colors">
-              {l.label}
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function Home({ params }: HomeProps) { // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -302,6 +265,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
     <main className="bg-white min-h-screen antialiased selection:bg-emerald-500/30 selection:text-emerald-900 overflow-x-hidden">
       {/* ── 1 · HERO ─────────────────────────────────────────────────────── */}
       <section className="relative px-6 pt-36 md:pt-48 pb-20 md:pb-28 border-b border-slate-100">
+        <HeroSection onSearch={() => router.push(discoverHref)} onPlan={() => router.push(builderHref)} />
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-14 lg:gap-20 items-center">
           <div>
             {pageDict?.badge && (
@@ -526,47 +490,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
         </Reveal>
       </section>
 
-      {/* ── FOOTER ────────────────────────────────────────────────────────── */}
-      <footer className="px-6 pt-20 pb-10 bg-slate-900">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-x-6 gap-y-12 pb-14">
-            <div className="col-span-2">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="w-8 h-8 rounded-xl bg-white text-slate-900 flex items-center justify-center font-black text-xs flex-shrink-0">LC</span>
-                <span className="text-white font-black text-xs uppercase tracking-[0.2em] italic">Local Connect</span>
-              </div>
-              <p className="text-slate-400 text-sm leading-relaxed max-w-[240px]">
-                One route, planned end to end, with local support at every stop.
-              </p>
-            </div>
-            <FooterColumn
-              title="Explore"
-              links={[
-                { label: "Start Planning", onClick: () => router.push(builderHref) },
-                { label: "Discover Locals", onClick: () => router.push(discoverHref) },
-                { label: "Community", onClick: () => router.push(communityHref) },
-              ]}
-            />
-            <FooterColumn
-              title="Company"
-              links={[
-                { label: "About", onClick: () => router.push(aboutHref) },
-                { label: "Terms", onClick: () => router.push(termsHref) },
-                { label: "Privacy", onClick: () => router.push(privacyHref) },
-              ]}
-            />
-            <FooterColumn
-              title="For Locals"
-              links={[
-                { label: "Become a Vendor", onClick: () => router.push(vendorHref) },
-              ]}
-            />
-          </div>
-          <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-slate-500 text-[10px] font-medium">© 2026 Local Connect Portal. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </main>
   );
 }

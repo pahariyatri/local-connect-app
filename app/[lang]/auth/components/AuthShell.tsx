@@ -28,8 +28,8 @@ export default function AuthShell({ lang, eyebrow, title, subtitle, onBack, chil
         <div className="w-full max-w-sm">
           <div className="flex items-center gap-3 mb-10">
             {onBack && <BackButton onClick={onBack} />}
-            <Link href={`/${lang}`} className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-xs flex-shrink-0">
-              LC
+            <Link href={`/${lang}`} className="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-black text-xs flex-shrink-0">
+              PY
             </Link>
           </div>
 

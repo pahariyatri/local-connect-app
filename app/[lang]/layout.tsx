@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
-import TopNavigation from "./components/organisms/TopNavigation";
+import Header from "./components/header/Header";
 import BottomNavigation from "./components/organisms/BottomNavigation";
 
 export default function LangLayout({
@@ -10,7 +10,7 @@ export default function LangLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { switchLanguage } = useLocalizationContext();
+  const { switchLanguage, lang } = useLocalizationContext();
   const pathname = usePathname();
   // Auth screens (login/pin/verify-otp) are a focused, standalone flow —
   // the marketing site chrome (nav links, language switcher, "Login" button
@@ -22,14 +22,14 @@ export default function LangLayout({
   // public-profile page (/vendor/[id]) is the same case, but nested under
   // /vendor alongside dashboard/services/etc. which rely on the default
   // nav — so it needs its own pattern rather than a plain segment match.
-  const hasOwnTopNav = /^\/[^/]+\/(bookings|admin|privacy-policy|sitemap|results|discover|journey|terms-conditions)(\/|$)/.test(pathname || "")
+  const hasOwnTopNav = /^\/[^/]+\/(bookings|admin|privacy-policy|sitemap|results|journey|terms-conditions)(\/|$)/.test(pathname || "")
     || /^\/[^/]+\/vendor\/(?!dashboard|bookings|calendar|community|contracts|onboarding|partnerships|payouts|services)[^/]+(\/|$)/.test(pathname || "");
   // Discover and Journey also render their own BottomNavigation.
   const hasOwnBottomNav = /^\/[^/]+\/(discover|journey)(\/|$)/.test(pathname || "");
 
   return (
     <div className="bg-white min-h-screen overflow-x-hidden">
-      {!isAuthRoute && !hasOwnTopNav && <TopNavigation onToggleLanguage={(l) => switchLanguage(l as any)} />}
+      {!isAuthRoute && !hasOwnTopNav && <Header />}
       <div className="page-fade-in">
         {children}
       </div>

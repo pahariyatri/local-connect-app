@@ -85,7 +85,7 @@ export default function PaymentPage() {
             // Sent verbatim from the backend order — never a client-side figure.
             amount: orderData.amount,
             currency: orderData.currency,
-            name: "Local Connect",
+            name: "Pahari Yatri",
             description: `Booking #${id}`,
             order_id: orderData.id,
             handler: async (response: any) => {
@@ -176,7 +176,7 @@ export default function PaymentPage() {
                     <p className="text-sm font-bold text-slate-900 mb-1">Pay securely via Razorpay</p>
                     <p className="text-xs text-slate-500 leading-relaxed">
                         You&apos;ll choose UPI, card, or net banking in Razorpay&apos;s secure
-                        window. Local Connect never sees or stores your card details.
+                        Pahari Yatri never sees or stores your card details.
                     </p>
                 </div>
 

@@ -32,7 +32,7 @@ export default function ContractsPage() {
                 <Typography variant="h1" className="text-4xl font-black text-slate-900 leading-tight">
                     Legal <span className="text-indigo-600">&</span> Contracts.
                 </Typography>
-                <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em] mt-2">Your bridge to the Local Connect network</p>
+                <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em] mt-2">Your bridge to the Pahari Yatri network</p>
             </header>
 
             <div className="space-y-6">
