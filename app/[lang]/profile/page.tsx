@@ -11,7 +11,6 @@ import { getUserBookings } from "@/services/bookingService";
 import { getMyVendor } from "@/services/vendorService";
 import { useAuth } from "@/contexts/AuthContext";
 import { User } from "@/types/userTypes";
-import VerifiedBadge from "../components/atoms/VerifiedBadge";
 import { toNationalDigits } from "@/utils/validation";
 
 // ─── Icon system — same inline-stroke-SVG convention used across the app ───
@@ -141,16 +140,19 @@ export default function ProfilePage() {
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                             />
                         </div>
-                        <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
-                            <VerifiedBadge showText={false} className="scale-90" />
-                        </div>
+                        {/* No verified badge or "Verified Explorer" label here: nothing
+                            about this account has actually been verified. Phone ownership
+                            isn't checked at signup yet (PY-011 — no OTP provider is
+                            configured), and the API doesn't expose a verification state to
+                            render against, so both were unconditional decoration that
+                            asserted a trust signal the platform hasn't earned. Reinstate
+                            them driven by real verification state once OTP is live. */}
                     </div>
 
                     <div className="mt-4">
                         <Typography variant="h1" className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">
                             {user?.name || "Yatri"}
                         </Typography>
-                        <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] mt-2">Verified Explorer</p>
                         {user?.phone && (
                             <p className="text-slate-400 font-medium text-sm mt-1">+91 {toNationalDigits(user.phone)}</p>
                         )}
