@@ -366,7 +366,7 @@
       "title": "מתכנן אגדות",
       "loading_title": "ממפה את השביל שלך",
       "step1": {
-        "title": "לאן ה<span class=\"text-indigo-600\">סיפור</span> שלכם הולך?",
+        "title": "לאן ה<span class=\"text-emerald-600\">סיפור</span> שלכם הולך?",
         "subtitle": "התחילו בנקודת מוצא ובחרו את תחנות החלום שלכם.",
         "route_title": "נקודת התחלה",
         "origin_placeholder": "איפה אתם מתחילים? (למשל דלהי)",

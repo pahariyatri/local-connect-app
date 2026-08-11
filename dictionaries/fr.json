@@ -366,7 +366,7 @@
       "title": "Planificateur de légende",
       "loading_title": "Tracer votre chemin",
       "step1": {
-        "title": "Où va votre <span class=\"text-indigo-600\">histoire</span> ?",
+        "title": "Où va votre <span class=\"text-emerald-600\">histoire</span> ?",
         "subtitle": "Commencez par un point de départ et choisissez vos arrêts de rêve.",
         "route_title": "Point de départ",
         "origin_placeholder": "D'où partez-vous ? (ex. Delhi)",

@@ -366,7 +366,7 @@
       "title": "Legend Planner",
       "loading_title": "Mapping your Path",
       "step1": {
-        "title": "Where is your <span class=\"text-indigo-600\">story</span> going?",
+        "title": "Where is your <span class=\"text-emerald-600\">story</span> going?",
         "subtitle": "Start with an origin and pick your dream stops.",
         "route_title": "Starting Point",
         "origin_placeholder": "Where are you starting? (e.g. Delhi)",

@@ -366,7 +366,7 @@
       "title": "Legenden-Planer",
       "loading_title": "Pfad wird kartiert",
       "step1": {
-        "title": "Wohin führt deine <span class=\"text-indigo-600\">Geschichte</span>?",
+        "title": "Wohin führt deine <span class=\"text-emerald-600\">Geschichte</span>?",
         "subtitle": "Beginne mit einem Startpunkt und wähle deine Traumstopps.",
         "route_title": "Startpunkt",
         "origin_placeholder": "Wo beginnen Sie? (z.B. Delhi)",
