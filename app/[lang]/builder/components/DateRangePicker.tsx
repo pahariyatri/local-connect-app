@@ -16,6 +16,22 @@ interface DatePreset {
   getDateRange: () => { start: string; end: string };
 }
 
+/**
+ * Formats a Date as YYYY-MM-DD in the *user's own* timezone.
+ *
+ * `toISOString()` converts to UTC first, which silently shifts the date back a
+ * day for every user east of UTC — India (UTC+5:30) included. That made a
+ * calendar cell for the 14th resolve to the 13th (local midnight is 18:30 UTC
+ * the previous day), and the "This Weekend" preset hand back Thu–Sat under a
+ * "Fri - Sun" label. These strings are travel dates, not timestamps: the day
+ * the traveller tapped is the day we must send.
+ */
+const toLocalDateString = (date: Date): string => {
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+};
+
 const DATE_PRESETS = (dict: any): DatePreset[] => { // eslint-disable-line @typescript-eslint/no-explicit-any
   const p = dict?.page?.common?.date_picker || {};
   return [
@@ -34,7 +50,7 @@ const DATE_PRESETS = (dict: any): DatePreset[] => { // eslint-disable-line @type
         friday.setDate(today.getDate() + (daysUntilFriday === 0 ? 0 : daysUntilFriday));
         const sunday = new Date(friday);
         sunday.setDate(friday.getDate() + 2);
-        return { start: friday.toISOString().split('T')[0], end: sunday.toISOString().split('T')[0] };
+        return { start: toLocalDateString(friday), end: toLocalDateString(sunday) };
       },
     },
     {
@@ -52,7 +68,7 @@ const DATE_PRESETS = (dict: any): DatePreset[] => { // eslint-disable-line @type
         friday.setDate(today.getDate() + daysUntilNextFriday);
         const sunday = new Date(friday);
         sunday.setDate(friday.getDate() + 2);
-        return { start: friday.toISOString().split('T')[0], end: sunday.toISOString().split('T')[0] };
+        return { start: toLocalDateString(friday), end: toLocalDateString(sunday) };
       },
     },
   ];
@@ -75,7 +91,7 @@ export default function DateRangePicker({
 
   const handleDateClick = (day: number) => {
     const clickedDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-    const dateStr = clickedDate.toISOString().split('T')[0];
+    const dateStr = toLocalDateString(clickedDate);
 
     if (!startDate || (startDate && endDate)) {
       onDateChange(dateStr, "");
@@ -91,12 +107,12 @@ export default function DateRangePicker({
 
   const isBetween = (day: number) => {
     if (!startDate || !endDate) return false;
-    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day).toISOString().split('T')[0];
+    const date = toLocalDateString(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day));
     return date > startDate && date < endDate;
   };
 
   const isSelected = (day: number) => {
-    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day).toISOString().split('T')[0];
+    const date = toLocalDateString(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day));
     return date === startDate || date === endDate;
   };
 
@@ -110,10 +126,10 @@ export default function DateRangePicker({
         days.push(<div key={`empty-${i}`} className="h-12 w-full" />);
     }
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = toLocalDateString(new Date());
 
     for (let d = 1; d <= totalDays; d++) {
-      const dateStr = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), d).toISOString().split('T')[0];
+      const dateStr = toLocalDateString(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), d));
       const selected = isSelected(d);
       const between = isBetween(d);
       const isPast = dateStr < todayStr;
