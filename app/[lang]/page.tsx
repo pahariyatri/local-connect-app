@@ -262,7 +262,10 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
   return (
     <main className="bg-white min-h-screen antialiased selection:bg-emerald-500/30 selection:text-emerald-900 overflow-x-hidden">
       {/* ── 1 · HERO ─────────────────────────────────────────────────────── */}
-      <HeroSection onSearch={() => router.push(exploreHref)} onPlan={() => router.push(builderHref)} />
+      <HeroSection
+        onSearch={(query) => router.push(query ? `${exploreHref}?q=${encodeURIComponent(query)}` : exploreHref)}
+        onPlan={() => router.push(builderHref)}
+      />
 
       {/* ── 2 · ROUTE, DAY BY DAY ────────────────────────────────────────── */}
       <section className="px-6 py-24 md:py-32 bg-slate-50">

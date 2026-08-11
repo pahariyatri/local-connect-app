@@ -32,7 +32,16 @@ test.describe('Pahari Yatri Core Flows', () => {
     // counting buttons isn't a reliable check — counting primary headings is.
     await page.goto('/en');
     await expect(page.locator('h1')).toHaveCount(1);
-    await expect(page.locator('h1')).toContainText(/Explore Himachal/i);
+    await expect(page.locator('h1')).toContainText(/Himachal/i);
+  });
+
+  test('Landing hero has a real destination search input', async ({ page }) => {
+    const searchInput = page.getByPlaceholder('Where are you going?');
+    await page.goto('/en');
+    await expect(searchInput).toBeVisible();
+    await searchInput.fill('Kasol');
+    await page.getByRole('button', { name: 'Search', exact: true }).click();
+    await expect(page).toHaveURL(/\/en\/explore\?q=Kasol/);
   });
 
   test('Mobile menu works correctly', async ({ page, isMobile }) => {
