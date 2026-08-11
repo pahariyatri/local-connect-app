@@ -238,7 +238,9 @@ export default function ResultsPage() {
     const byCat: Record<string, Vendor[]> = { Stay: [], Taxi: [], Adventure: [], Meals: [] };
     Object.values(vd).forEach((v) => {
       const cat = v.category || "Stay";
-      if (byCat[cat]) byCat[cat].push({ ...v, rating: 4.5 });
+      // No rating field exists on package vendorDetails — omit rather than
+      // attach a fabricated number to a real vendor's card.
+      if (byCat[cat]) byCat[cat].push({ ...v });
     });
     setLiveVendors(byCat);
   }, [packageData?.vendorDetails]);

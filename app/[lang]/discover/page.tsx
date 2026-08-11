@@ -1,144 +1,27 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Typography from "../components/atoms/Typography";
+import React, { useState, useEffect, useRef } from "react";
 import BottomNavigation from "../components/organisms/BottomNavigation";
 import Button from "../components/atoms/Button";
 import LocalImage from "../components/atoms/Image";
+import Typography from "../components/atoms/Typography";
 import { useParams, useRouter } from "next/navigation";
 import Loading from "@/app/loading";
-import { getVendors } from "@/services/vendorService";
 import { Icon } from "../components/atoms/Icon";
 import PublicFooter from "../components/organisms/PublicFooter";
+import { searchDiscoveryServices, DiscoveryService } from "@/services/searchService";
+import { sessionTracker } from "@/services/sessionService";
 
-interface DiscoverVendor {
-    id: string;
-    name: string;
-    category: string;
-    location: string;
-    rating: number;
-    reviews?: number;
-    priceRange: string;
-    image: string;
-    tags: string[];
-}
-
-// Mock Data for Discover matching details page profiles
-const VENDORS: DiscoverVendor[] = [
-    { 
-        id: "p1", 
-        name: "Tenzing Sherpa", 
-        category: "Guides", 
-        location: "Manali", 
-        rating: 4.9, 
-        reviews: 142, 
-        priceRange: "₹3,500/day", 
-        image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=800", 
-        tags: ["Peak Trekking", "Alpine Guide", "First-Aid"] 
-    },
-    { 
-        id: "p2", 
-        name: "Priya Homestay", 
-        category: "Homestays", 
-        location: "Manali", 
-        rating: 4.8, 
-        reviews: 89, 
-        priceRange: "₹2,200/night", 
-        image: "https://images.unsplash.com/photo-1651319485646-f0f30e46b761?q=80&w=800", 
-        tags: ["Orchard View", "Organic Food", "Wifi"] 
-    },
-    { 
-        id: "p3", 
-        name: "Arjun Thakur", 
-        category: "Food", 
-        location: "Shimla", 
-        rating: 4.7, 
-        reviews: 63, 
-        priceRange: "₹900/person", 
-        image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=800", 
-        tags: ["Food Walks", "Traditional Dham", "Shimla Alleys"] 
-    },
-    { 
-        id: "p4", 
-        name: "Sonam Wangchuk", 
-        category: "Transport", 
-        location: "Leh", 
-        rating: 4.9, 
-        reviews: 211, 
-        priceRange: "₹2,500/day", 
-        image: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=800", 
-        tags: ["4x4 SUV Cab", "Inner Permits", "Oxygen Onboard"] 
-    },
-    { 
-        id: "p5", 
-        name: "Kavya Nair", 
-        category: "Wellness", 
-        location: "Rishikesh", 
-        rating: 5.0, 
-        reviews: 47, 
-        priceRange: "₹1,500/session", 
-        image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=800", 
-        tags: ["Yoga Alliance", "Sound Healing", "Sunrise Meditation"] 
-    },
-    { 
-        id: "p6", 
-        name: "Rajan Chauhan", 
-        category: "Adventures", 
-        location: "Manali", 
-        rating: 4.8, 
-        reviews: 178, 
-        priceRange: "₹1,200/person", 
-        image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=800", 
-        tags: ["Beas Rafting", "Action Cam HD", "Lifeguard Cert"] 
-    }
-];
-
-const mapBackendVendor = (v: any): DiscoverVendor => {
-    const type = v.types?.[0] || "Guides";
-    const categoryMap: Record<string, string> = {
-        "hotel": "Homestays",
-        "adventure": "Adventures",
-        "transport": "Transport",
-        "restaurant": "Food",
-        "guide": "Guides",
-        "wellness": "Wellness"
-    };
-    const category = categoryMap[type.toLowerCase()] || "Guides";
-
-    const categoryImages: Record<string, string> = {
-        "Homestays": "https://images.unsplash.com/photo-1651319485646-f0f30e46b761?q=80&w=800",
-        "Adventures": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=800",
-        "Transport": "https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=800",
-        "Food": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=800",
-        "Guides": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=800",
-        "Wellness": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=800"
-    };
-
-    let location = "Manali";
-    const lowerName = v.businessName.toLowerCase();
-    if (lowerName.includes("dharamshala")) location = "Dharamshala";
-    else if (lowerName.includes("tirthan")) location = "Tirthan";
-    else if (lowerName.includes("spiti")) location = "Spiti";
-    else if (lowerName.includes("goa")) location = "Goa";
-    else if (lowerName.includes("leh")) location = "Leh";
-    else if (lowerName.includes("rishikesh")) location = "Rishikesh";
-    else if (lowerName.includes("shimla")) location = "Shimla";
-
-    let cleanName = v.businessName.replace(/\s*\(.*?\)\s*/g, "").trim();
-
-    return {
-        id: v.id,
-        name: cleanName,
-        category,
-        location,
-        // Real field only — no fabricated review count exists on the backend
-        // (no review entity at all), so we don't invent one.
-        rating: v.trustScore,
-        priceRange: v.services?.[0] ? `₹${v.services[0].price}/${v.services[0].unit || "day"}` : "Price on request",
-        image: categoryImages[category] || categoryImages["Guides"],
-        tags: v.services?.map((s: any) => s.name).slice(0, 3) || ["Verified Local", "Premium Partner"]
-    };
+const CATEGORY_TO_BACKEND: Record<string, string> = {
+    Guides: "guide",
+    Homestays: "hotel",
+    Transport: "transport",
+    Food: "restaurant",
+    Wellness: "wellness",
+    Adventures: "adventure",
 };
+
+const SEARCH_DEBOUNCE_MS = 350;
 
 export default function DiscoverPage() {
     const { lang } = useParams();
@@ -147,8 +30,10 @@ export default function DiscoverPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedLocation, setSelectedLocation] = useState("All");
     const [dict, setDict] = useState<any>(null);
-    const [vendors, setVendors] = useState<DiscoverVendor[]>([]);
+    const [services, setServices] = useState<DiscoveryService[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const categories = ["All", "Guides", "Homestays", "Transport", "Food", "Wellness", "Adventures"];
 
@@ -161,39 +46,65 @@ export default function DiscoverPage() {
     }, [lang]);
 
     useEffect(() => {
-        if (!dict) return;
-        const fetchVendors = async () => {
-            try {
-                const response = await getVendors();
-                if (response && Array.isArray(response)) {
-                    setVendors(response.map(mapBackendVendor));
-                } else {
-                    setVendors(VENDORS);
-                }
-            } catch (err) {
-                console.error("Error fetching vendors:", err);
-                setVendors(VENDORS);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchVendors();
-    }, [dict]);
-
-    useEffect(() => {
         if (typeof window !== "undefined" && dict) {
             const params = new URLSearchParams(window.location.search);
             const catParam = params.get("category");
             const locParam = params.get("location");
+            const qParam = params.get("q");
             if (catParam) {
                 const matched = categories.find(c => c.toLowerCase() === catParam.toLowerCase());
                 if (matched) setActiveTab(matched);
             }
-            if (locParam) {
-                setSelectedLocation(locParam);
-            }
+            if (locParam) setSelectedLocation(locParam);
+            if (qParam) setSearchQuery(qParam);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dict]);
+
+    // Real search against the backend discovery API. No client-side location
+    // guessing: the backend matches against real Address records.
+    const runSearch = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const sessionId = await sessionTracker.getSessionId().catch(() => undefined);
+            const result = await searchDiscoveryServices({
+                q: searchQuery || undefined,
+                location: selectedLocation !== "All" ? selectedLocation : undefined,
+                category: activeTab !== "All" ? CATEGORY_TO_BACKEND[activeTab] : undefined,
+                limit: 24,
+                sessionId,
+            });
+            setServices(result.services);
+            sessionTracker.track("search_performed", {
+                metadata: {
+                    q: searchQuery || undefined,
+                    location: selectedLocation !== "All" ? selectedLocation : undefined,
+                    category: activeTab !== "All" ? activeTab : undefined,
+                    resultsCount: result.services.length,
+                },
+            });
+        } catch (err) {
+            console.error("Discovery search failed:", err);
+            // Never substitute fake inventory on failure — show a real,
+            // recoverable error state instead.
+            setServices([]);
+            setError("We couldn't load local services right now.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Debounced so typing "Kasol" doesn't fire a request per keystroke.
+    useEffect(() => {
+        if (!dict) return;
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(runSearch, SEARCH_DEBOUNCE_MS);
+        return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dict, searchQuery, selectedLocation, activeTab]);
 
     if (!dict) return <Loading />;
 
@@ -208,14 +119,18 @@ export default function DiscoverPage() {
         "Adventures": "Adventures"
     };
 
-    const filteredVendors = vendors.filter(v => {
-        const q = searchQuery.toLowerCase();
-        return !q || 
-            v.name.toLowerCase().includes(q) || 
-            v.category.toLowerCase().includes(q) ||
-            v.location.toLowerCase().includes(q) ||
-            v.tags.some(tag => tag.toLowerCase().includes(q));
-    });
+    const hasActiveSearch = Boolean(searchQuery) || selectedLocation !== "All" || activeTab !== "All";
+    const searchedFor = [searchQuery, selectedLocation !== "All" ? selectedLocation : null, activeTab !== "All" ? activeTab : null]
+        .filter(Boolean)
+        .join(" · ");
+
+    const clearSearch = () => {
+        setSearchQuery("");
+        setSelectedLocation("All");
+        setActiveTab("All");
+    };
+
+    const retry = () => { runSearch(); };
 
     return (
         <div className="min-h-screen bg-white pb-32">
@@ -224,18 +139,19 @@ export default function DiscoverPage() {
               <div className="max-w-6xl mx-auto">
                 <p className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-400 mb-3">Verified Locals</p>
                 <h1 className="text-4xl sm:text-5xl font-black tracking-tight leading-none mb-4">
-                  Discover<br /><span className="italic text-slate-400">your guides.</span>
+                  Discover<br /><span className="italic text-slate-400">local services.</span>
                 </h1>
                 <p className="text-slate-400 text-sm max-w-sm leading-relaxed">{discover.header.subtitle}</p>
               </div>
             </section>
-            
+
             <main className="max-w-6xl mx-auto px-6 pt-8">
                 {/* 🔍 Search */}
                 <div className="mb-12 relative max-w-xl mx-auto">
                     <input
+                        id="discover-search"
                         type="text"
-                        placeholder="Search guide, stay, transport, region..."
+                        placeholder="Search a place, stay, taxi, guide…"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full pl-12 pr-6 py-4 rounded-3xl bg-slate-50 border border-slate-200/80 text-xs font-semibold text-slate-800 focus:outline-none focus:border-slate-900 focus:bg-white focus:shadow-2xl focus:shadow-slate-100/50 transition-all placeholder:text-slate-400"
@@ -245,7 +161,7 @@ export default function DiscoverPage() {
                     </span>
                 </div>
 
-                {/* 📋 Vendor Grid */}
+                {/* 📋 Service Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {isLoading ? (
                         Array.from({ length: 6 }).map((_, idx) => (
@@ -258,65 +174,95 @@ export default function DiscoverPage() {
                                 </div>
                             </div>
                         ))
-                    ) : filteredVendors.length === 0 ? (
-                        <div className="col-span-full text-center py-20">
-                            <p className="text-slate-400 text-sm mb-2">No locals found matching your search.</p>
-                            <p className="text-slate-300 text-xs mb-6">Try a different name, location, or category.</p>
+                    ) : error ? (
+                        <div className="col-span-full text-center py-20" data-testid="discover-error-state">
+                            <p className="text-slate-700 text-sm font-bold mb-2">{error}</p>
+                            <p className="text-slate-400 text-xs mb-6">Check your connection and try again.</p>
                             <button
-                              onClick={() => setSearchQuery("")}
+                              onClick={retry}
                               className="text-emerald-600 text-xs font-black uppercase tracking-wider hover:text-emerald-700 transition-colors"
                             >
-                              Clear search
+                              Try again
                             </button>
                         </div>
+                    ) : services.length === 0 ? (
+                        <div className="col-span-full text-center py-20" data-testid="discover-zero-result">
+                            {hasActiveSearch ? (
+                                <>
+                                    <p className="text-slate-700 text-sm font-bold mb-1">
+                                        No verified locals for &ldquo;{searchedFor}&rdquo; yet.
+                                    </p>
+                                    <p className="text-slate-400 text-xs mb-6">We&apos;re still growing this circuit — try a nearby destination, or let us plan the route for you.</p>
+                                    <div className="flex items-center justify-center gap-4">
+                                        <button
+                                          onClick={clearSearch}
+                                          className="text-slate-500 text-xs font-black uppercase tracking-wider hover:text-slate-700 transition-colors"
+                                        >
+                                          Clear search
+                                        </button>
+                                        <button
+                                          onClick={() => router.push(`/${lang}/builder`)}
+                                          className="text-emerald-600 text-xs font-black uppercase tracking-wider hover:text-emerald-700 transition-colors"
+                                        >
+                                          Plan a trip instead →
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <p className="text-slate-400 text-sm">No local services published yet.</p>
+                            )}
+                        </div>
                     ) : (
-                        filteredVendors.map((vendor, i) => (
-                            <div 
-                                key={vendor.id} 
-                                onClick={() => router.push(`/${lang}/vendor/${vendor.id}`)}
+                        services.map((service, i) => (
+                            <div
+                                key={service.id}
+                                data-testid="discover-result-card"
+                                onClick={() => router.push(`/${lang}/vendor/${service.vendor.id}`)}
                                 className="premium-card group overflow-hidden cursor-pointer active:scale-[0.98] transition-all animate-in fade-in slide-in-from-bottom-5 duration-700 border border-slate-100 rounded-3xl"
                                 style={{ animationDelay: `${i * 100}ms` }}
                             >
                                 <div className="h-48 w-full relative">
-                                    <LocalImage src={vendor.image} alt={vendor.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                                    <div className="absolute top-4 left-4 flex gap-1.5 animate-pulse-slow">
+                                    <LocalImage src={service.thumbnail} alt={service.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                    <div className="absolute top-4 left-4 flex gap-1.5">
                                         <span className="px-3 py-1 bg-white/95 backdrop-blur rounded-full text-[9px] font-black uppercase tracking-widest text-slate-900 shadow-sm border border-slate-200/50">
-                                            {catLabels[vendor.category] || vendor.category}
+                                            {catLabels[service.category] || service.category}
                                         </span>
-                                        <span className="px-3 py-1 bg-slate-900/95 text-white backdrop-blur rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1">
-                                            <svg xmlns="http://www.w3.org/2500/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                                            {vendor.location}
+                                        <span data-testid="discover-result-location" className="px-3 py-1 bg-slate-900/95 text-white backdrop-blur rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                                            {service.location.city}
                                         </span>
                                     </div>
-                                    <div className="absolute top-4 right-4">
-                                        <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg border border-white/20">
-                                            ✓
+                                    {service.vendor.verified && (
+                                        <div className="absolute top-4 right-4">
+                                            <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg border border-white/20">
+                                                ✓
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                                     <div className="absolute bottom-4 left-4 right-4 text-white">
-                                        <h3 className="text-xl font-black uppercase tracking-tight italic">{vendor.name}</h3>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <span className="text-amber-400 text-[10px]">★</span>
-                                            <p className="text-[10px] font-bold text-white/70 uppercase">
-                                                {typeof vendor.rating === "number" ? vendor.rating.toFixed(1) : vendor.rating}
-                                                {vendor.reviews != null ? ` • ${vendor.reviews} ${discover.vendor_card?.reviews ?? "reviews"}` : ""}
-                                            </p>
-                                        </div>
+                                        <h3 className="text-xl font-black uppercase tracking-tight italic">{service.vendor.publicName}</h3>
+                                        {/* Real trustScore only — hidden entirely when the vendor has no
+                                            rating, rather than showing an invented number. */}
+                                        {service.vendor.rating != null && (
+                                            <div className="flex items-center gap-2 mt-1" data-testid="discover-result-rating">
+                                                <span className="text-amber-400 text-[10px]">★</span>
+                                                <p className="text-[10px] font-bold text-white/70 uppercase">
+                                                    {service.vendor.rating.toFixed(1)}
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-                                
+
                                 <div className="p-5 flex justify-between items-center bg-white border-x border-b border-slate-50 rounded-b-3xl">
-                                    <div className="flex gap-2">
-                                        {vendor.tags.map(tag => (
-                                            <span key={tag} className="px-2 py-0.5 bg-slate-50 text-[8px] font-black text-slate-400 uppercase rounded-md">
-                                                {tag}
-                                            </span>
-                                        ))}
-                                    </div>
+                                    <p className="text-xs font-bold text-slate-500 truncate max-w-[55%]">{service.name}</p>
                                     <div className="text-right">
                                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">{discover.vendor_card?.starts_from ?? "starts from"}</p>
-                                        <p className="text-sm font-black text-slate-900 italic">{vendor.priceRange}</p>
+                                        <p className="text-sm font-black text-slate-900 italic">
+                                            {service.pricing.currency === "INR" ? "₹" : `${service.pricing.currency} `}
+                                            {Math.round(service.pricing.unitPrice).toLocaleString("en-IN")}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -330,7 +276,7 @@ export default function DiscoverPage() {
                     <div className="w-16 h-16 rounded-[2rem] bg-white/10 flex items-center justify-center text-3xl mb-6 relative z-10">🤝</div>
                     <Typography variant="h3" className="text-lg font-black text-white uppercase tracking-tight mb-2 relative z-10 italic">{discover.partner_cta.title}</Typography>
                     <p className="text-indigo-300 text-[10px] font-bold uppercase tracking-widest mb-8 relative z-10">{discover.partner_cta.subtitle}</p>
-                    <Button 
+                    <Button
                         onClick={() => router.push(`/${lang}/vendor/onboarding`)}
                         className="w-full h-14 bg-white text-indigo-950 rounded-2xl text-[10px] font-black uppercase tracking-widest relative z-10 hover:scale-105 active:scale-95 transition-all shadow-xl"
                     >

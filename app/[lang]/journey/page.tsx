@@ -308,19 +308,6 @@ export default function JourneyPage() {
                                         </div>
                                     </div>
                                     
-                                    {/* Smart Suggestion Logic */}
-                                    {item.type === 'activity' && (
-                                        <div className="mt-3 ml-2 p-3 rounded-2xl bg-indigo-50/50 border border-indigo-100 flex items-center justify-between animate-pulse">
-                                            <div className="flex items-center gap-3">
-                                                <div className="text-lg">🤝</div>
-                                                <div>
-                                                    <p className="text-[9px] font-black text-indigo-900 uppercase">{journey.broker_rec}</p>
-                                                    <p className="text-[10px] font-bold text-indigo-600">Local Guide: Rakesh (4.9★)</p>
-                                                </div>
-                                            </div>
-                                            <Button size="small" variant="ghost" className="text-indigo-600 h-6 px-3 text-[9px] font-black">{journey.hire}</Button>
-                                        </div>
-                                    )}
                                 </div>
                             );
                         })

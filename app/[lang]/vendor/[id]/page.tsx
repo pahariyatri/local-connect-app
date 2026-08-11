@@ -9,254 +9,47 @@ import { useNotification } from "@/contexts/NotificationContext";
 import TopNavigation from "../../components/organisms/TopNavigation";
 import VendorQRCode from "../../components/molecules/VendorQRCode";
 import { getVendorById } from "@/services/vendorService";
+import { ApiClientError } from "@/lib/apiClient";
+import { searchDiscoveryServices, DiscoveryService } from "@/services/searchService";
 
-// Rich, structured mock data representing various Himalayan locals and guides.
-// `isMock: true` gates the illustrative-only sections (fake portfolio images,
-// fake background-check line) so they never render for a real vendor record.
-const VENDOR_PROFILES: Record<string, {
-    id: string;
-    name: string;
-    image: string;
-    rating: number;
-    reviews: number;
-    priceRange: string;
-    category: string;
-    isSecretGroupMember: boolean;
-    isMock: true;
-    description: string;
-    features: string[];
-    services: { id: string; name: string; price: number; unit: string; description: string }[];
-    languages?: string[];
-    experienceYears?: number;
-    hometown?: string;
-    story?: string;
-    faq?: { q: string; a: string }[];
-}> = {
-    p1: {
-        id: "p1",
-        name: "Tenzing Sherpa",
-        image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=800",
-        rating: 4.9,
-        reviews: 142,
-        priceRange: "₹₹₹",
-        category: "Guides",
-        isSecretGroupMember: true,
-        isMock: true,
-        description: "Tenzing is an elite, UIAGM-certified mountain guide with over 15 years of experience leading expeditions across the Himalayas. Renowned for mountaineering safety and deep local knowledge.",
-        features: ["Expedition Leadership", "First-Aid Certified", "High-Altitude Gear Included", "Hidden Trail Expert"],
-        services: [
-            { id: "s1", name: "Full Day Peak Trek", price: 3500, unit: "day", description: "A high-altitude guided day hike featuring local peaks and glacier views." },
-            { id: "s2", name: "Overnight Alpine Camping", price: 5000, unit: "night", description: "Stay under the stars in premium tents with local sherpa cuisine cooked fresh." },
-            { id: "s3", name: "Safety & Rope Technique Crash Course", price: 1500, unit: "session", description: "Master mountain navigation, ropes, and safety standards." }
-        ],
-        languages: ["English", "Hindi", "Nepali", "Sherpa"],
-        experienceYears: 15,
-        hometown: "Khumbu Valley",
-        story: "Born in the high hills of Mount Everest, Tenzing was trained by veteran alpinists from a young age. He believes that climbing is not just about reaching the summit, but respecting the divine spirit of the peaks and sharing the authentic lifestyle of the high-altitude locals with travellers.",
-        faq: [
-            { q: "Is high-altitude experience required?", a: "No, we adapt our routes based on your fitness level. Acclimatization walks are conducted." },
-            { q: "What gear is included in the package?", a: "We provide high-quality harnesses, helmets, ropes, and cold-weather camping equipment." }
-        ]
-    },
-    p2: {
-        id: "p2",
-        name: "Priya Homestay",
-        image: "https://images.unsplash.com/photo-1651319485646-f0f30e46b761?q=80&w=800",
-        rating: 4.8,
-        reviews: 89,
-        priceRange: "₹₹",
-        category: "Homestays",
-        isSecretGroupMember: false,
-        isMock: true,
-        description: "Nestled in the quiet apple orchards of Old Manali, Priya Homestay offers traditional wooden rooms with modern amenities, organic home-cooked meals, and high-speed Wi-Fi.",
-        features: ["Panoramic Peak Views", "Organic Kitchen Garden", "Traditional Wooden Architecture", "High-speed Wi-Fi"],
-        services: [
-            { id: "s1", name: "Deluxe Orchard Room", price: 2200, unit: "night", description: "Spacious wooden room with double bed and sweeping views." },
-            { id: "s2", name: "Traditional Attic Suite", price: 3200, unit: "night", description: "Rustic top-floor attic experience with direct peak vistas." },
-            { id: "s3", name: "Organic Cooking Class", price: 600, unit: "person", description: "Learn how to prepare authentic local Himachali cuisine." }
-        ],
-        languages: ["Hindi", "English", "Pahari"],
-        experienceYears: 8,
-        hometown: "Old Manali",
-        story: "Priya's family has lived in Manali for generations, farming heritage apple orchards. They opened their traditional wooden home to travelers to share their organic garden meals, local stories around the tandoor heater, and pure mountain tranquility.",
-        faq: [
-            { q: "Is breakfast included in the stay?", a: "Yes, a hearty organic home-cooked traditional breakfast is included in the room price." },
-            { q: "How is the internet connectivity?", a: "We have fiber broadband Wi-Fi (up to 100 Mbps), which is highly stable for remote work." }
-        ]
-    },
-    p3: {
-        id: "p3",
-        name: "Arjun Thakur",
-        image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=800",
-        rating: 4.7,
-        reviews: 63,
-        priceRange: "₹",
-        category: "Food",
-        isSecretGroupMember: false,
-        isMock: true,
-        description: "A local culinary historian and chef, Arjun hosts walking food tours through Shimla's ancient alleys, sharing traditional stories and delicious Himachali Dham delicacies.",
-        features: ["Local Delicacies Tasting", "Historical Walk", "English Speaking Guide", "Vegetarian Friendly"],
-        services: [
-            { id: "s1", name: "Heritage Street Food Walk", price: 900, unit: "person", description: "A tasting tour through the city's oldest local sweet and spice stalls." },
-            { id: "s2", name: "Traditional Himachali Dham Feast", price: 1200, unit: "person", description: "Experience a full festive sit-down banquet cooked by a traditional chef." }
-        ],
-        languages: ["English", "Hindi", "Punjabi"],
-        experienceYears: 10,
-        hometown: "Shimla Hills",
-        story: "Arjun spent a decade researching vanishing recipes of the Himachali valleys. His food walks combine culinary history with local legends, allowing travelers to taste centuries of cultural heritage.",
-        faq: [
-            { q: "Are vegan options available?", a: "Yes, many of our traditional dishes are naturally vegan or can be modified on request." },
-            { q: "What should I wear for the walk?", a: "Comfortable walking shoes are recommended as Shimla's lanes are steep and cobbled." }
-        ]
-    },
-    p4: {
-        id: "p4",
-        name: "Sonam Wangchuk",
-        image: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=800",
-        rating: 4.9,
-        reviews: 211,
-        priceRange: "₹₹₹₹",
-        category: "Transport",
-        isSecretGroupMember: true,
-        isMock: true,
-        description: "Sonam is a veteran driver based in Leh, operating robust 4x4 vehicles. He helps arrange inner-line permits and specializes in navigating the challenging mountain passes.",
-        features: ["4x4 Custom SUV", "Permit Facilitation", "Oxygen Cylinder Onboard", "Pangong & Nubra Specialist"],
-        services: [
-            { id: "s1", name: "Leh Airport Pick-up & Tour", price: 2500, unit: "day", description: "Comfortable pickup and acclimatization sightseeing tour." },
-            { id: "s2", name: "3-Day Private Circuit Tour", price: 14000, unit: "tour", description: "Full drive package to Nubra Valley and Pangong Tso Lake." }
-        ],
-        languages: ["Ladakhi", "Tibetan", "English", "Hindi"],
-        experienceYears: 18,
-        hometown: "Leh Old Town",
-        story: "Navigating high altitude mountain passes like Khardung La is an art. Sonam has driven these extreme routes for 18 years, guaranteeing not just safe journeys but also connecting travelers to local monastery monks and hidden homestays.",
-        faq: [
-            { q: "Do you provide emergency oxygen?", a: "Yes, a professional 5L oxygen cylinder is always fitted in our SUV for safety." },
-            { q: "Who handles the Inner Line Permits?", a: "We take care of all document submissions and permit approvals ahead of your trip." }
-        ]
-    },
-    p5: {
-        id: "p5",
-        name: "Kavya Nair",
-        image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=800",
-        rating: 5.0,
-        reviews: 47,
-        priceRange: "₹₹",
-        category: "Wellness",
-        isSecretGroupMember: false,
-        isMock: true,
-        description: "Certified Yoga Alliance instructor offering meditation, sound healing, and custom wellness sessions along the quiet banks of the Ganges in Rishikesh.",
-        features: ["Sound Healing Instruments", "Hatha & Ashtanga Specialty", "Sunrise Meditation Sessions", "Private Riverside Deck"],
-        services: [
-            { id: "s1", name: "Private Sunrise Yoga & Sound Session", price: 1500, unit: "person", description: "One-on-one session at sunrise including mindfulness exercises." },
-            { id: "s2", name: "3-Day Wellness & Sound Healing Program", price: 4000, unit: "person", description: "Immersive program targeting stress relief and alignment." }
-        ],
-        languages: ["English", "Hindi", "Malayalam"],
-        experienceYears: 6,
-        hometown: "Rishikesh",
-        story: "Kavya moved to Rishikesh to connect with ancient sound therapies. She blends classical Hatha teachings with Tibetan singing bowl therapy, creating restorative sessions that align physical and mental energy.",
-        faq: [
-            { q: "What should I bring to the class?", a: "Just comfortable clothes. Premium yoga mats and sound props are provided at the deck." },
-            { q: "Is the deck private?", a: "Yes, our wellness deck is completely private and overlooks a quiet stretch of the river." }
-        ]
-    },
-    p6: {
-        id: "p6",
-        name: "Rajan Chauhan",
-        image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=800",
-        rating: 4.8,
-        reviews: 178,
-        priceRange: "₹₹",
-        category: "Adventures",
-        isSecretGroupMember: false,
-        isMock: true,
-        description: "National rafting athlete offering high-adrenaline river rafting and kayaking lessons on the Beas and Sutlej rivers, with international safety gear standards.",
-        features: ["Rafting Gear Included", "HD Action Cam Footage", "Safety Kayaker Backup", "Certified Lifeguard"],
-        services: [
-            { id: "s1", name: "Standard 14km Rafting Stretch", price: 1200, unit: "person", description: "Classic Class II-III rapids stretch with experienced guides." },
-            { id: "s2", name: "Full-Day Extreme Rapids Expedition", price: 3000, unit: "person", description: "Heavy Class IV rapid expedition for thrill-seekers." },
-            { id: "s3", name: "Introductory Kayak Course", price: 2500, unit: "day", description: "Learn paddle strokes, rolling, and basic river reading." }
-        ],
-        languages: ["Hindi", "English", "Pahari"],
-        experienceYears: 12,
-        hometown: "Kullu Valley",
-        story: "Rajan is a former competitive kayak racer who returned to Kullu to promote eco-adventure tourism. He believes river reading is a dialogue with nature, prioritizing strict international safety procedures above all else.",
-        faq: [
-            { q: "Is swimming knowledge mandatory?", a: "No, our international-standard high-float lifejackets and helmets keep you perfectly safe. Our guides stay with you." },
-            { q: "Are videos included in the price?", a: "Yes, HD action-cam footages of the rapids are included in all standard packages." }
-        ]
-    }
+const CATEGORY_IMAGES: Record<string, string> = {
+    "Homestays": "https://images.unsplash.com/photo-1651319485646-f0f30e46b761?q=80&w=800",
+    "Adventures": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=800",
+    "Transport": "https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=800",
+    "Food": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=800",
+    "Guides": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=800",
+    "Wellness": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=800"
 };
 
-const DEFAULT_PROFILE = {
-    id: "default",
-    name: "Himalayan Retreat",
-    image: "https://images.unsplash.com/photo-1651319485646-f0f30e46b761?q=80&w=800",
-    rating: 4.8,
-    reviews: 124,
-    priceRange: "₹₹₹",
-    category: "Stay",
-    isSecretGroupMember: true,
-    isMock: true,
-    description: "Nestled in the heart of Old Manali, Himalayan Retreat offers a sanctuary for those seeking peace and authentic hospitality. As a Pahari Yatri Verified Partner, this property is part of our invitation-only partner network.",
-    features: ["Panoramic Peak Views", "Organic Kitchen garden", "Traditional Mud-walled Rooms", "Guided Meditation sessions"],
-    services: [
-        { id: "s1", name: "Premium Suite", price: 4500, unit: "night", description: "Luxury double room." },
-        { id: "s2", name: "Riverside Cottage", price: 6500, unit: "night", description: "Charming cottage near stream." },
-        { id: "s3", name: "Local Thali Experience", price: 800, unit: "person", description: "Authentic local flavors." }
-    ],
-    languages: ["English", "Hindi"],
-    experienceYears: 7,
-    hometown: "Old Manali",
-    story: "Dedicated to providing unforgettable Himalayan journeys, showing you the side of our home that standard travel operators miss entirely.",
-    faq: [
-        { q: "What is your check-in time?", a: "Standard check-in is at 12:00 PM and check-out is at 10:00 AM." }
-    ]
+const VENDOR_TYPE_TO_CATEGORY: Record<string, string> = {
+    "hotel": "Homestays",
+    "adventure": "Adventures",
+    "transport": "Transport",
+    "restaurant": "Food",
+    "guide": "Guides",
+    "wellness": "Wellness"
 };
 
-const mapSingleVendor = (v: any) => {
-    const type = v.types?.[0] || "Guides";
-    const categoryMap: Record<string, string> = {
-        "hotel": "Homestays",
-        "adventure": "Adventures",
-        "transport": "Transport",
-        "restaurant": "Food",
-        "guide": "Guides",
-        "wellness": "Wellness"
-    };
-    const category = categoryMap[type.toLowerCase()] || "Guides";
+/**
+ * Combines the bare vendor record (`GET /vendors/:id` — no location, no
+ * services, no real price data) with that vendor's real listings from the
+ * public discovery search, filtered to this vendor's id. There is no
+ * location/services fallback: a vendor with nothing in discovery yet shows
+ * a real "no services published" state, never an invented one.
+ */
+const mapSingleVendor = (v: any, realServices: DiscoveryService[]) => {
+    const type = v.types?.[0] || "";
+    const category = VENDOR_TYPE_TO_CATEGORY[type.toLowerCase()] || realServices[0]?.category || "Guides";
+    const cleanName = v.businessName.replace(/\s*\(.*?\)\s*/g, "").trim();
 
-    const categoryImages: Record<string, string> = {
-        "Homestays": "https://images.unsplash.com/photo-1651319485646-f0f30e46b761?q=80&w=800",
-        "Adventures": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=800",
-        "Transport": "https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=800",
-        "Food": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=800",
-        "Guides": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=800",
-        "Wellness": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=800"
-    };
-
-    let location = "Manali";
-    const lowerName = v.businessName.toLowerCase();
-    if (lowerName.includes("dharamshala")) location = "Dharamshala";
-    else if (lowerName.includes("tirthan")) location = "Tirthan";
-    else if (lowerName.includes("spiti")) location = "Spiti";
-    else if (lowerName.includes("goa")) location = "Goa";
-    else if (lowerName.includes("leh")) location = "Leh";
-    else if (lowerName.includes("rishikesh")) location = "Rishikesh";
-    else if (lowerName.includes("shimla")) location = "Shimla";
-
-    let cleanName = v.businessName.replace(/\s*\(.*?\)\s*/g, "").trim();
-
-    const mappedServices = v.services && v.services.length > 0
-        ? v.services.map((s: any, idx: number) => ({
-            id: s.id || `s-${idx}`,
-            name: s.name,
-            price: s.price,
-            unit: s.unit || "day",
-            description: s.description || "Premium local service."
-          }))
-        : [
-            { id: "s1", name: "Standard Guided Tour", price: 2500, unit: "day", description: "All-inclusive guided tour showcasing the best local secrets." }
-          ];
+    const mappedServices = realServices.map((s) => ({
+        id: String(s.id),
+        name: s.name,
+        price: s.pricing.unitPrice,
+        currency: s.pricing.currency,
+        unit: s.pricing.nights ? "night" : "service",
+        description: s.shortDescription || s.description,
+    }));
 
     // Only real, backend-sourced facts — no invented credentials, languages,
     // years of experience, or policy claims for an actual vendor record.
@@ -266,18 +59,22 @@ const mapSingleVendor = (v: any) => {
         typeof v.acceptanceRate === "number" && `${v.acceptanceRate}% Acceptance Rate`,
     ].filter(Boolean) as string[];
 
+    const minPrice = mappedServices.length > 0 ? Math.min(...mappedServices.map((s) => s.price)) : null;
+
     return {
         id: v.id,
         name: cleanName,
-        image: categoryImages[category] || categoryImages["Guides"],
-        rating: v.trustScore,
-        priceRange: v.isInstantBooking ? "₹₹" : "₹₹₹",
+        image: realServices[0]?.thumbnail || CATEGORY_IMAGES[category] || CATEGORY_IMAGES["Guides"],
+        rating: v.trustScore ?? null,
+        // Real starting price from this vendor's own listed services — never
+        // an invented ₹/₹₹/₹₹₹ tier. Null when they have no priced services yet.
+        startingPrice: minPrice,
+        currency: mappedServices[0]?.currency || "INR",
         category,
-        isMock: false,
         description: v.description || "Authentic local connect partner.",
         features,
         services: mappedServices,
-        hometown: location,
+        hometown: realServices[0]?.location?.city || null,
     };
 };
 
@@ -289,28 +86,42 @@ export default function VendorProfilePage() {
     const [selectedService, setSelectedService] = useState<string | null>(null);
     const [profile, setProfile] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    // 'not_found' (real 404 — this vendor doesn't exist) vs 'error' (network/
+    // server failure — the vendor may well exist). Neither ever substitutes a
+    // fake profile; both render an explicit recoverable state below.
+    const [loadError, setLoadError] = useState<"not_found" | "error" | null>(null);
+
+    const fetchProfile = async () => {
+        setIsLoading(true);
+        setLoadError(null);
+        try {
+            const response = await getVendorById(id);
+            if (response && response.id) {
+                // The bare vendor record has no location/services/price data —
+                // pull this vendor's real listings from the public discovery
+                // search (filtered to this vendor id) rather than inventing any.
+                let realServices: DiscoveryService[] = [];
+                try {
+                    const searchResult = await searchDiscoveryServices({ q: response.businessName, limit: 50 });
+                    realServices = searchResult.services.filter((s) => s.vendor.id === response.id);
+                } catch (searchErr) {
+                    console.error("Error fetching vendor's services:", searchErr);
+                }
+                setProfile(mapSingleVendor(response, realServices));
+            } else {
+                setLoadError("not_found");
+            }
+        } catch (err) {
+            console.error("Error fetching vendor profile:", err);
+            setLoadError(err instanceof ApiClientError && err.statusCode === 404 ? "not_found" : "error");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                if (id && id.startsWith("p") && id.length <= 3) {
-                    setProfile(VENDOR_PROFILES[id] || DEFAULT_PROFILE);
-                } else {
-                    const response = await getVendorById(id);
-                    if (response && response.id) {
-                        setProfile(mapSingleVendor(response));
-                    } else {
-                        setProfile(VENDOR_PROFILES[id] || DEFAULT_PROFILE);
-                    }
-                }
-            } catch (err) {
-                console.error("Error fetching vendor profile:", err);
-                setProfile(VENDOR_PROFILES[id] || DEFAULT_PROFILE);
-            } finally {
-                setIsLoading(false);
-            }
-        };
         fetchProfile();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
     if (isLoading) {
@@ -335,7 +146,41 @@ export default function VendorProfilePage() {
         );
     }
 
-    if (!profile) return null;
+    if (loadError === "not_found") {
+        return (
+            <div className="min-h-screen bg-slate-50 pb-32">
+                <TopNavigation title="Vendor Profile" />
+                <main className="max-w-xl mx-auto px-4 pt-16 text-center">
+                    <p className="text-slate-800 text-sm font-bold mb-2">This local partner isn&apos;t available.</p>
+                    <p className="text-slate-400 text-xs mb-6">The listing may have been removed or the link is incorrect.</p>
+                    <Button
+                        onClick={() => router.push(`/${params.lang}/discover`)}
+                        className="h-12 px-6 rounded-2xl bg-slate-950 text-white font-black text-xs uppercase tracking-widest"
+                    >
+                        Browse local services
+                    </Button>
+                </main>
+            </div>
+        );
+    }
+
+    if (loadError === "error" || !profile) {
+        return (
+            <div className="min-h-screen bg-slate-50 pb-32">
+                <TopNavigation title="Vendor Profile" />
+                <main className="max-w-xl mx-auto px-4 pt-16 text-center">
+                    <p className="text-slate-800 text-sm font-bold mb-2">We couldn&apos;t load this profile right now.</p>
+                    <p className="text-slate-400 text-xs mb-6">Check your connection and try again.</p>
+                    <button
+                        onClick={fetchProfile}
+                        className="text-emerald-600 text-xs font-black uppercase tracking-wider hover:text-emerald-700 transition-colors"
+                    >
+                        Try again
+                    </button>
+                </main>
+            </div>
+        );
+    }
 
     const currentSelected = profile.services.find((s: any) => s.id === selectedService);
 
@@ -374,11 +219,6 @@ export default function VendorProfilePage() {
                         <span className="px-3 py-1 bg-emerald-500 text-white text-[9px] font-black uppercase rounded-md tracking-wider shadow-lg">
                             LOCALconnect LEGEND
                         </span>
-                        {profile.isSecretGroupMember && (
-                            <span className="px-3 py-1 bg-amber-400 text-slate-900 text-[9px] font-black uppercase rounded-md tracking-wider shadow-md">
-                                SECRET GROUP MEMBER
-                            </span>
-                        )}
                     </div>
                 </div>
             </div>
@@ -390,18 +230,26 @@ export default function VendorProfilePage() {
                             <Typography variant="h1" className="text-3xl font-black text-slate-950 mb-1.5 uppercase italic">
                                 {profile.name}
                             </Typography>
-                            <div className="flex items-center gap-2">
-                                <span className="text-amber-500 font-bold text-sm">★ {typeof profile.rating === "number" ? profile.rating.toFixed(1) : profile.rating}</span>
-                                {profile.reviews != null && (
-                                    <span className="text-slate-400 text-[10px] font-black uppercase tracking-wider">({profile.reviews} reviews)</span>
-                                )}
-                            </div>
+                            {/* Real trustScore only — the whole row is omitted when the
+                                vendor genuinely has no rating, rather than showing a
+                                star next to an invented number. */}
+                            {profile.rating != null && (
+                                <div className="flex items-center gap-2">
+                                    <span className="text-amber-500 font-bold text-sm">★ {profile.rating.toFixed(1)}</span>
+                                </div>
+                            )}
                         </div>
                         <div className="flex flex-col gap-2 items-end shrink-0">
-                            <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-slate-900/10">
-                                 <span className="font-black text-sm">{profile.priceRange}</span>
-                            </div>
-                            <button 
+                            {profile.startingPrice != null && (
+                                <div className="px-3 h-12 min-w-12 bg-slate-900 text-white rounded-2xl flex flex-col items-center justify-center shadow-lg shadow-slate-900/10 leading-none">
+                                     <span className="text-[7px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">from</span>
+                                     <span className="font-black text-xs">
+                                        {profile.currency === "INR" ? "₹" : `${profile.currency} `}
+                                        {Math.round(profile.startingPrice).toLocaleString("en-IN")}
+                                     </span>
+                                </div>
+                            )}
+                            <button
                                 onClick={handleSharePortfolio}
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all duration-200 shadow-sm active:scale-95 touch-manipulation"
                             >
@@ -411,59 +259,20 @@ export default function VendorProfilePage() {
                         </div>
                     </div>
 
-                    {/* Host Quick Badges — only shown when the profile actually has the
-                        data (hometown is always present, experience/languages are
-                        illustrative-fixture-only, never fabricated for a real vendor). */}
-                    {(profile.hometown || profile.experienceYears || profile.languages) && (
-                        <div className={`grid gap-2.5 mb-6 border-b border-slate-100 pb-6 text-center ${
-                            [profile.hometown, profile.experienceYears, profile.languages].filter(Boolean).length === 1 ? "grid-cols-1" :
-                            [profile.hometown, profile.experienceYears, profile.languages].filter(Boolean).length === 2 ? "grid-cols-2" : "grid-cols-3"
-                        }`}>
-                            {profile.hometown && (
-                                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                                    <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">Hometown</p>
-                                    <p className="text-[10px] font-black text-slate-800 uppercase mt-1 truncate" title={profile.hometown}>{profile.hometown}</p>
-                                </div>
-                            )}
-                            {profile.experienceYears && (
-                                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                                    <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">Experience</p>
-                                    <p className="text-[10px] font-black text-slate-800 uppercase mt-1">{profile.experienceYears} Years</p>
-                                </div>
-                            )}
-                            {profile.languages && (
-                                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                                    <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">Languages</p>
-                                    <p className="text-[10px] font-black text-slate-800 uppercase mt-1 truncate" title={profile.languages.join(", ")}>
-                                        {profile.languages[0]}{profile.languages.length > 1 ? ` +${profile.languages.length - 1}` : ""}
-                                    </p>
-                                </div>
-                            )}
+                    {/* Real service-area city only — sourced from this vendor's actual
+                        listed services, not shown at all when they have none yet. */}
+                    {profile.hometown && (
+                        <div className="grid grid-cols-1 gap-2.5 mb-6 border-b border-slate-100 pb-6 text-center">
+                            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                                <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">Location</p>
+                                <p className="text-[10px] font-black text-slate-800 uppercase mt-1 truncate" title={profile.hometown}>{profile.hometown}</p>
+                            </div>
                         </div>
                     )}
 
                     <Typography variant="p" className="text-slate-500 text-xs font-semibold leading-relaxed mb-6">
                         {profile.description}
                     </Typography>
-
-                    {/* Story Section — illustrative fixtures only. Real vendors only ever
-                        have the one `description` field shown above; showing it a
-                        second time dressed as a first-person "story" (with an invented
-                        fallback quote if empty) would be redundant at best and
-                        fabricated at worst. */}
-                    {profile.isMock && profile.story && (
-                        <div className="mb-8">
-                            <Typography variant="h3" className="text-xs font-black text-slate-900 uppercase tracking-widest mb-3">
-                                Meet Your Local Host
-                            </Typography>
-                            <div className="p-5 rounded-3xl bg-slate-50 border border-slate-100/80 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
-                                <p className="text-[10px] text-slate-600 font-medium leading-relaxed italic">
-                                    "{profile.story}"
-                                </p>
-                            </div>
-                        </div>
-                    )}
 
                     {/* Features list */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-10 bg-slate-50 p-5 rounded-2xl border border-slate-100">
@@ -483,77 +292,39 @@ export default function VendorProfilePage() {
                     
                     {/* Services options with active select style */}
                     <div className="space-y-3.5 mb-10">
-                        {profile.services.map((service: { id: string; name: string; price: number; unit: string; description: string }) => (
-                            <button 
-                                key={service.id}
-                                onClick={() => setSelectedService(service.id)}
-                                className={`w-full p-5 rounded-2xl border-2 transition-all flex flex-col gap-2 group text-left ${
-                                    selectedService === service.id 
-                                        ? 'border-emerald-500 bg-emerald-50/50 shadow-md shadow-emerald-500/5' 
-                                        : 'border-slate-100 hover:border-slate-200 hover:-translate-y-0.5'
-                                }`}
-                            >
-                                <div className="flex items-center justify-between w-full">
-                                    <div>
-                                        <p className="font-black text-slate-950 leading-none uppercase text-[11px] tracking-wider">{service.name}</p>
-                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1">Acclaimed Local Specialty</p>
-                                    </div>
-                                    <div className="text-right shrink-0">
-                                        <p className="font-black text-emerald-600 text-sm">₹{service.price}</p>
-                                        <p className="text-[8px] text-slate-400 font-black uppercase tracking-widest">per {service.unit}</p>
-                                    </div>
-                                </div>
-                                <p className="text-[10px] text-slate-500 font-medium leading-relaxed mt-1 border-t border-slate-100/60 pt-2 w-full">
-                                    {service.description}
-                                </p>
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Public Portfolio Showcase — illustrative fixtures only. There is
-                        no real portfolio/gallery feature on the backend; showing
-                        stock photos as a real vendor's past work would be fabricated
-                        content, not a placeholder. */}
-                    {profile.isMock && (
-                        <div className="mt-8 border-t border-slate-100 pt-6">
-                            <Typography variant="h3" className="text-xs font-black text-slate-900 uppercase tracking-widest mb-4">
-                                Public Portfolio Showcase
-                            </Typography>
-                            <div className="grid grid-cols-2 gap-3.5 mb-8">
-                                {[
-                                    { title: "Peak Expedition 2025", role: "100% Safe Summits", img: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=250" },
-                                    { title: "Community Meet & Greet", role: "Local Culture Host", img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=250" }
-                                ].map((proj, idx) => (
-                                    <div key={idx} className="bg-slate-50 rounded-2xl border border-slate-100 p-2.5 flex flex-col gap-2 group/port">
-                                        <div className="h-24 w-full relative rounded-xl overflow-hidden bg-slate-200">
-                                            <NextImage src={proj.img} fill className="object-cover group-hover/port:scale-105 transition-transform duration-500" alt={proj.title} sizes="(max-width: 768px) 50vw, 33vw" />
-                                        </div>
+                        {profile.services.length === 0 ? (
+                            <div className="p-5 rounded-2xl border border-dashed border-slate-200 text-center">
+                                <p className="text-[11px] font-bold text-slate-500">This partner hasn&apos;t published bookable services yet.</p>
+                            </div>
+                        ) : (
+                            profile.services.map((service: { id: string; name: string; price: number; currency: string; unit: string; description: string }) => (
+                                <button
+                                    key={service.id}
+                                    onClick={() => setSelectedService(service.id)}
+                                    className={`w-full p-5 rounded-2xl border-2 transition-all flex flex-col gap-2 group text-left ${
+                                        selectedService === service.id
+                                            ? 'border-emerald-500 bg-emerald-50/50 shadow-md shadow-emerald-500/5'
+                                            : 'border-slate-100 hover:border-slate-200 hover:-translate-y-0.5'
+                                    }`}
+                                >
+                                    <div className="flex items-center justify-between w-full">
                                         <div>
-                                            <p className="text-[9px] font-black text-slate-950 uppercase tracking-tight truncate">{proj.title}</p>
-                                            <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{proj.role}</p>
+                                            <p className="font-black text-slate-950 leading-none uppercase text-[11px] tracking-wider">{service.name}</p>
+                                        </div>
+                                        <div className="text-right shrink-0">
+                                            <p className="font-black text-emerald-600 text-sm">
+                                                {service.currency === "INR" ? "₹" : `${service.currency} `}{Math.round(service.price).toLocaleString("en-IN")}
+                                            </p>
+                                            <p className="text-[8px] text-slate-400 font-black uppercase tracking-widest">per {service.unit}</p>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* FAQ & Travel Advisories */}
-                    {profile.faq && profile.faq.length > 0 && (
-                        <div className="mt-8 border-t border-slate-100 pt-6">
-                            <Typography variant="h3" className="text-xs font-black text-slate-900 uppercase tracking-widest mb-4">
-                                FAQs & Advisories
-                            </Typography>
-                            <div className="space-y-3">
-                                {profile.faq.map((item: { q: string; a: string }, idx: number) => (
-                                    <div key={idx} className="p-4 rounded-2xl border border-slate-100 bg-slate-50/50">
-                                        <p className="text-[10px] font-black text-slate-950 uppercase tracking-wide">{item.q}</p>
-                                        <p className="text-[10px] text-slate-500 font-semibold mt-1.5 leading-relaxed">{item.a}</p>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                                    <p className="text-[10px] text-slate-500 font-medium leading-relaxed mt-1 border-t border-slate-100/60 pt-2 w-full">
+                                        {service.description}
+                                    </p>
+                                </button>
+                            ))
+                        )}
+                    </div>
 
                     {/* A "Background Check: Pass" / "Fully Verified & Audited" block
                         used to render here unconditionally for every vendor, real or
