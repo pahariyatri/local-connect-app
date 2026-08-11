@@ -255,7 +255,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
 
   const builderHref = `/${lang}/builder`;
   const vendorHref = `/${lang}/vendor/onboarding`;
-  const discoverHref = `/${lang}/discover`;
+  const exploreHref = `/${lang}/explore`;
   const aboutHref = `/${lang}/about`;
   const communityHref = `/${lang}/community`;
   const termsHref = `/${lang}/terms-conditions`;
@@ -265,7 +265,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
     <main className="bg-white min-h-screen antialiased selection:bg-emerald-500/30 selection:text-emerald-900 overflow-x-hidden">
       {/* ── 1 · HERO ─────────────────────────────────────────────────────── */}
       <section className="relative px-6 pt-36 md:pt-48 pb-20 md:pb-28 border-b border-slate-100">
-        <HeroSection onSearch={() => router.push(discoverHref)} onPlan={() => router.push(builderHref)} />
+        <HeroSection onSearch={() => router.push(exploreHref)} onPlan={() => router.push(builderHref)} />
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-14 lg:gap-20 items-center">
           <div>
             {pageDict?.badge && (
@@ -284,7 +284,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
               <Button onClick={() => router.push(builderHref)} variant="primary" iconRight={<Icon name="arrow-right" className="w-4 h-4" />} className="group btn-primary rounded-full h-control px-9 text-xs">
                 {heroDict?.cta_plan || "Start Planning"}
               </Button>
-              <Button onClick={() => router.push(discoverHref)} className="bg-white border border-slate-200 text-slate-900 hover:bg-slate-50 shadow-none rounded-full h-control px-9 text-xs">
+              <Button onClick={() => router.push(exploreHref)} className="bg-white border border-slate-200 text-slate-900 hover:bg-slate-50 shadow-none rounded-full h-control px-9 text-xs">
                 {heroDict?.cta_explore || "Explore Locals"}
               </Button>
             </div>
@@ -379,7 +379,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
           <Reveal>
             <div className="flex items-end justify-between gap-4 mb-12">
               <SectionHeading eyebrow={providersDict?.eyebrow || "Verified locals"} title={providersDict?.title || "People, not packages."} />
-              <button onClick={() => router.push(discoverHref)} className="flex-shrink-0 text-[10px] font-black uppercase tracking-widest text-emerald-600 border-b-2 border-emerald-500/20 pb-1 hover:text-emerald-700 hover:border-emerald-700 transition-all">
+              <button onClick={() => router.push(exploreHref)} className="flex-shrink-0 text-[10px] font-black uppercase tracking-widest text-emerald-600 border-b-2 border-emerald-500/20 pb-1 hover:text-emerald-700 hover:border-emerald-700 transition-all">
                 {providersDict?.view_all || "View all"}
               </button>
             </div>

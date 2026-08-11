@@ -44,29 +44,32 @@ test.describe('Pahari Yatri Core Flows', () => {
 
   test('Explore page search and filters', async ({ page }) => {
     await page.goto('/en/explore');
-    
+
     // Check search input
     const searchInput = page.locator('input[id="explore-search"]');
     await expect(searchInput).toBeVisible();
-    
-    // Type and verify empty state or results
+
+    // Typing now searches real inventory (not just filtering the curated
+    // destination cards) — an unmatched query shows the real zero-result
+    // recovery state, not the old destination-only "no match" text.
     await searchInput.fill('UnknownLocation123');
-    await expect(page.locator('text=No destinations match')).toBeVisible();
-    
-    // Clear search
+    await expect(page.getByTestId('explore-zero-result')).toBeVisible({ timeout: 10_000 });
+
+    // Clear search returns to the curated destination grid
     await page.getByRole('button', { name: /Clear search/i }).click();
     await expect(searchInput).toHaveValue('');
-    
+
     // Check categories
     await expect(page.locator('button[id="explore-cat-all"]')).toBeVisible();
-    
-    // Click a destination card
+
+    // Click a destination card — this filters in place (one "Explore"
+    // concept, no more separate /discover page) rather than navigating away.
     const firstCard = page.locator('article[id^="explore-card-"]').first();
-    await expect(firstCard).toBeVisible();
+    const destinationLabel = await firstCard.locator('h2').innerText();
     await firstCard.click();
-    
-    // Should navigate to discover with location param
-    await expect(page).toHaveURL(/\/en\/discover\?location=/);
+
+    await expect(page).toHaveURL(/\/en\/explore$/);
+    await expect(page.getByText(destinationLabel, { exact: false }).first()).toBeVisible();
   });
 
   test('Auth redirects', async ({ page }) => {

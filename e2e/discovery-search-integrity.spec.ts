@@ -44,8 +44,8 @@ test.describe('Discovery search — real API wiring', () => {
       });
     });
 
-    await page.goto(`${PROD_URL}/en/discover`);
-    await page.locator('#discover-search').fill('Kasol');
+    await page.goto(`${PROD_URL}/en/explore`);
+    await page.locator('#explore-search').fill('Kasol');
     // Poll the variable the route handler sets, rather than layering a second
     // waitForRequest listener on the same request (the two can race on which
     // observes the request first).
@@ -85,15 +85,15 @@ test.describe('Discovery search — real API wiring', () => {
       });
     });
 
-    await page.goto(`${PROD_URL}/en/discover`);
-    await page.locator('#discover-search').fill('Manali');
+    await page.goto(`${PROD_URL}/en/explore`);
+    await page.locator('#explore-search').fill('Manali');
     await page.waitForTimeout(600);
 
-    const card = page.getByTestId('discover-result-card').first();
+    const card = page.getByTestId('explore-result-card').first();
     await expect(card).toBeVisible();
     // Must render the API's real city verbatim, not silently coerce it to
     // "Manali" (the old guess-heuristic's default fallback).
-    await expect(page.getByTestId('discover-result-location').first()).toContainText('Kasol');
+    await expect(page.getByTestId('explore-result-location').first()).toContainText('Kasol');
   });
 });
 
@@ -101,11 +101,11 @@ test.describe('No fabricated fallback data', () => {
   test('a discovery API failure shows a real error state, never fake vendors', async ({ page }) => {
     await page.route('**/api/v1/discovery/services**', (route) => route.abort('failed'));
 
-    await page.goto(`${PROD_URL}/en/discover`);
-    await page.locator('#discover-search').fill('anything');
+    await page.goto(`${PROD_URL}/en/explore`);
+    await page.locator('#explore-search').fill('anything');
     await page.waitForTimeout(600);
 
-    await expect(page.getByTestId('discover-error-state')).toBeVisible();
+    await expect(page.getByTestId('explore-error-state')).toBeVisible();
     const bodyText = await page.locator('body').innerText();
     for (const fixture of FABRICATED_FIXTURES) {
       expect(bodyText).not.toContain(fixture);
@@ -154,14 +154,14 @@ test.describe('No fabricated fallback data', () => {
       });
     });
 
-    await page.goto(`${PROD_URL}/en/discover`);
-    await page.locator('#discover-search').fill('Tosh');
+    await page.goto(`${PROD_URL}/en/explore`);
+    await page.locator('#explore-search').fill('Tosh');
     await page.waitForTimeout(600);
 
-    await expect(page.getByTestId('discover-result-card').first()).toBeVisible();
+    await expect(page.getByTestId('explore-result-card').first()).toBeVisible();
     // A null rating from the API must render as "no rating shown", not a
     // fallback star/number.
-    await expect(page.getByTestId('discover-result-rating')).toHaveCount(0);
+    await expect(page.getByTestId('explore-result-rating')).toHaveCount(0);
   });
 });
 
@@ -175,11 +175,11 @@ test.describe('Zero-result recovery', () => {
       });
     });
 
-    await page.goto(`${PROD_URL}/en/discover`);
-    await page.locator('#discover-search').fill('Kalga');
+    await page.goto(`${PROD_URL}/en/explore`);
+    await page.locator('#explore-search').fill('Kalga');
     await page.waitForTimeout(600);
 
-    const zeroState = page.getByTestId('discover-zero-result');
+    const zeroState = page.getByTestId('explore-zero-result');
     await expect(zeroState).toBeVisible();
     await expect(zeroState).toContainText('Kalga');
     await expect(zeroState.getByText(/Plan a trip instead/i)).toBeVisible();

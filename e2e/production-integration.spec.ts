@@ -17,28 +17,21 @@ test.describe('Production Integration & Market Readiness', () => {
     const response = await page.goto(PROD_URL);
     expect(response?.status()).toBe(200);
 
-    // 2. Real Destination Search
+    // 2. Real Destination Search — /explore is now the single "location +
+    // services discovery" surface (folded in what used to be /discover).
+    // Typing searches real inventory directly, in place — no navigation.
     await page.goto(`${PROD_URL}/en/explore`);
-    
-    // Perform search
+
     const searchInput = page.locator('input[id="explore-search"]');
     await expect(searchInput).toBeVisible();
     await searchInput.fill('Manali');
-    
-    // Click on Manali result
-    const manaliCard = page.locator('article', { hasText: 'Manali' }).first();
-    await expect(manaliCard).toBeVisible();
-    await manaliCard.click();
-    
-    // Should navigate to Discover
-    await expect(page).toHaveURL(/.*\/en\/discover\?location=manali/i);
-    
-    // Verify real inventory loads (wait for network to settle)
-    await page.waitForLoadState('networkidle');
-    
-    // Check that we see some vendor cards instead of empty state
-    const vendorCards = page.locator('.service-card'); // assuming we have a service-card class from earlier
-    // Just verifying it doesn't hard-crash
+
+    // Real result cards (or a real zero-result state) replace the curated
+    // destination grid — either is fine, both prove live inventory is
+    // actually being queried rather than a client-side guess.
+    const resultCard = page.getByTestId('explore-result-card').first();
+    const zeroState = page.getByTestId('explore-zero-result');
+    await expect(resultCard.or(zeroState)).toBeVisible({ timeout: 10_000 });
   });
 
   test('Trip Planner Flow - Server Side Verification', async ({ page }) => {
@@ -74,12 +67,12 @@ test.describe('Production Integration & Market Readiness', () => {
 
   test('Zero Result Analytics & Empty State', async ({ page }) => {
     await page.goto(`${PROD_URL}/en/explore`);
-    
-    // Search for non-existent place
+
+    // Search for a real place with no inventory yet — real zero-result
+    // recovery state (with a "plan a trip instead" path), not a dead end.
     const searchInput = page.locator('input[id="explore-search"]');
     await searchInput.fill('NowhereCityxyz999');
-    
-    // Wait for empty state
-    await expect(page.locator('text=No destinations match')).toBeVisible();
+
+    await expect(page.getByTestId('explore-zero-result')).toBeVisible({ timeout: 10_000 });
   });
 });

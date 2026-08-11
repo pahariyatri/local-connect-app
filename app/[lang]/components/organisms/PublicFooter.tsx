@@ -11,8 +11,7 @@ export default function PublicFooter() {
     {
       title: 'Explore',
       links: [
-        { label: 'Destinations', href: p('/explore') },
-        { label: 'Local Services', href: p('/discover') },
+        { label: 'Explore', href: p('/explore') },
         { label: 'Plan a Trip', href: p('/builder') },
         { label: 'Community', href: p('/community') },
       ],

@@ -13,7 +13,6 @@ export default function Header() {
 
   const navLinks = [
     { href: `/${lang}/explore`, label: 'Explore' },
-    { href: `/${lang}/discover`, label: 'Discover Locals' },
     { href: `/${lang}/builder`, label: 'Plan a Trip' },
     { href: `/${lang}/vendor/onboarding`, label: 'Become a Partner' },
   ];

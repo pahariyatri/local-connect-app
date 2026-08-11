@@ -154,7 +154,7 @@ export default function VendorProfilePage() {
                     <p className="text-slate-800 text-sm font-bold mb-2">This local partner isn&apos;t available.</p>
                     <p className="text-slate-400 text-xs mb-6">The listing may have been removed or the link is incorrect.</p>
                     <Button
-                        onClick={() => router.push(`/${params.lang}/discover`)}
+                        onClick={() => router.push(`/${params.lang}/explore`)}
                         className="h-12 px-6 rounded-2xl bg-slate-950 text-white font-black text-xs uppercase tracking-widest"
                     >
                         Browse local services
