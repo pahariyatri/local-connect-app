@@ -46,9 +46,11 @@ test.describe('Discovery search — real API wiring', () => {
 
     await page.goto(`${PROD_URL}/en/discover`);
     await page.locator('#discover-search').fill('Kasol');
-    await page.waitForTimeout(600); // clear the page's own debounce
-
-    expect(discoveryRequestUrl).not.toBeNull();
+    // Poll the variable the route handler sets, rather than layering a second
+    // waitForRequest listener on the same request (the two can race on which
+    // observes the request first).
+    await expect.poll(() => discoveryRequestUrl, { timeout: 10_000 }).not.toBeNull();
+    await expect.poll(() => discoveryRequestUrl, { timeout: 10_000 }).toContain('q=Kasol');
     const url = new URL(discoveryRequestUrl!);
     expect(url.pathname).toBe('/api/v1/discovery/services');
     expect(url.searchParams.get('q')).toBe('Kasol');
@@ -185,6 +187,14 @@ test.describe('Zero-result recovery', () => {
 });
 
 test.describe('Production data contract — live checks', () => {
+  // Serial + a small gap between requests: these hit the live production
+  // API's own ThrottlerGuard, so running them concurrently self-inflicts 429s
+  // unrelated to the thing under test.
+  test.describe.configure({ mode: 'serial' });
+  test.beforeEach(async () => {
+    await new Promise((r) => setTimeout(r, 1500));
+  });
+
   for (const location of ['Kasol', 'Manali', 'Tosh', 'Kalga', 'Pulga', 'Manikaran', 'Kheerganga', 'Malana']) {
     test(`GET /discovery/services?location=${location} — every result's city matches the query, no leaked contact info`, async ({ request }) => {
       const res = await request.get(`${API_URL}/api/v1/discovery/services`, {
