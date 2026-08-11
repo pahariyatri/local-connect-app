@@ -1,7 +1,7 @@
 {
   "page": {
     "home": {
-      "badge": "Local Connect Netzwerk",
+      "badge": "Pahari Yatri Netzwerk",
       "hero": {
         "title": "Triff die <span class=\"text-emerald-600\">echten Locals</span><br />des Himalaya",
         "subtitle": "Verbinde dich direkt mit geprüften Guides, Gastgebern und Anbietern. Keine Pauschalreisen. Keine Agenturen. Nur echter lokaler Service.",
@@ -70,7 +70,7 @@
       },
       "how": {
         "eyebrow": "Einfacher Ablauf",
-        "title": "So funktioniert Local Connect",
+        "title": "So funktioniert Pahari Yatri",
         "steps": [
           {
             "title": "Locals durchsuchen",
@@ -310,7 +310,7 @@
         "button": "REISE TEILEN",
         "success": "Link kopiert! Teile die Magie.",
         "title": "Mein Himachal Roadtrip",
-        "text": "Schau dir diese tolle Reise an, die ich auf Local Connect geplant habe!"
+        "text": "Schau dir diese tolle Reise an, die ich auf Pahari Yatri geplant habe!"
       },
       "itinerary": {
         "day": "Tag {day}",
@@ -332,7 +332,7 @@
       },
       "mission": {
         "title": "Unsere Mission",
-        "text": "Local Connect wurde im Herzen des Himalayas geboren. Wir sahen eine Lücke zwischen der unermesslichen Schönheit unserer Kultur und den digitalen Tools, die den Menschen zur Verfügung stehen, die sie bewahren.<br /><br />Unsere Plattform ist nicht nur eine Buchungsmaschine; sie ist eine Brücke. Wir vertreten die Homestay-Besitzer, die Bergführer und die Abenteuerspezialisten, die die wahren Kuratoren des Bergerlebnisses sind."
+        "text": "Pahari Yatri wurde im Herzen des Himalayas geboren. Wir sahen eine Lücke zwischen der unermesslichen Schönheit unserer Kultur und den digitalen Tools, die den Menschen zur Verfügung stehen, die sie bewahren.<br /><br />Unsere Plattform ist nicht nur eine Buchungsmaschine; sie ist eine Brücke. Wir vertreten die Homestay-Besitzer, die Bergführer und die Abenteuerspezialisten, die die wahren Kuratoren des Bergerlebnisses sind."
       },
       "markets": {
         "title": "Wichtigste internationale Quellmärkte",
@@ -567,7 +567,7 @@
         }
       ],
       "footer_q": "Fragen?",
-      "email": "privacy@localconnect.com"
+      "email": "support@pahariyatri.com"
     },
     "terms": {
       "title": "Allgemeine Geschäftsbedingungen",
@@ -575,11 +575,11 @@
       "sections": [
         {
           "title": "01. Akzeptanz",
-          "text": "Durch den Zugriff auf Local Connect erklären Sie sich mit diesen Bedingungen einverstanden. Unsere Plattform ist eine Brücke zwischen Bergreisenden und lokalen Legenden."
+          "text": "Durch den Zugriff auf Pahari Yatri erklären Sie sich mit diesen Bedingungen einverstanden. Unsere Plattform ist eine Brücke zwischen Bergreisenden und lokalen Legenden."
         },
         {
           "title": "02. Anbieterrollen",
-          "text": "Anbieter und Agenturen (Broker) sind unabhängige Einheiten. Local Connect stellt die Technologie zur Verfügung, um diese Partnerschaften und Buchungen zu verwalten."
+          "text": "Anbieter und Agenturen (Broker) sind unabhängige Einheiten. Pahari Yatri stellt die Technologie zur Verfügung, um diese Partnerschaften und Buchungen zu verwalten."
         },
         {
           "title": "03. Buchung & Zahlungen",
@@ -590,7 +590,7 @@
           "text": "Wir fördern verantwortungsbewusstes Bergreisen. Respektieren Sie lokale Kulturen und halten Sie die Pfade sauber."
         }
       ],
-      "footer": "Local Connect Tech (P) Ltd."
+      "footer": "Pahari Yatri wird betrieben von Local Connect Tech (P) Ltd."
     },
     "vendor_dashboard": {
       "welcome": "Willkommen zurück, {name}! 👋",

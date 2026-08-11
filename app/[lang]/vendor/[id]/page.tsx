@@ -71,7 +71,7 @@ const mapSingleVendor = (v: any, realServices: DiscoveryService[]) => {
         startingPrice: minPrice,
         currency: mappedServices[0]?.currency || "INR",
         category,
-        description: v.description || "Authentic local connect partner.",
+        description: v.description || "Authentic local partner.",
         features,
         services: mappedServices,
         hometown: realServices[0]?.location?.city || null,
@@ -217,7 +217,7 @@ export default function VendorProfilePage() {
                 <div className="absolute bottom-16 left-6 right-6">
                     <div className="flex items-center gap-2 mb-2">
                         <span className="px-3 py-1 bg-emerald-500 text-white text-[9px] font-black uppercase rounded-md tracking-wider shadow-lg">
-                            LOCALconnect LEGEND
+                            PAHARI YATRI LEGEND
                         </span>
                     </div>
                 </div>

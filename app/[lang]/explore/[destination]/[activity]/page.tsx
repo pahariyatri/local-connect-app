@@ -51,7 +51,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       type: 'website',
     },
     alternates: {
-      canonical: `https://localconnect.in/${params.lang}/explore/${params.destination}/${params.activity}`,
+      canonical: `https://app.pahariyatri.com/${params.lang}/explore/${params.destination}/${params.activity}`,
     },
   };
 }

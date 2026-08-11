@@ -9,8 +9,8 @@ interface PageSEOProps {
 }
 
 const defaultSEO = {
-    title: 'LocalConnect',
-    description: 'Connecting travelers with local vendors seamlessly.',
+    title: 'Pahari Yatri',
+    description: 'Build your whole Himachal journey — stays, transport, food, activities and trusted local services.',
 };
 
 export async function genPageMetadata({

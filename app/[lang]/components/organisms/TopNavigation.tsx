@@ -76,8 +76,18 @@ export default function TopNavigation({
                             </button>
                         ) : (
                             <div className="flex items-center gap-4 group">
-                                <Link href={`/${lang}`} className="w-10 h-10 rounded-2xl bg-slate-900 flex items-center justify-center font-black text-white text-xs shadow-2xl rotate-[12deg] group-hover:rotate-0 transition-all duration-500 active:scale-90">
-                                    LC
+                                {/* Brand mark. "PY" = Pahari Yatri — must stay in sync with
+                                    Header.tsx / PublicFooter.tsx / AuthShell.tsx, which all use
+                                    the same initials. (Used to read "LC" for the pre-rebrand
+                                    "Local Connect" name, so the checkout/review flow showed a
+                                    different company than the rest of the site.) */}
+                                <Link
+                                    href={`/${lang}`}
+                                    aria-label="Pahari Yatri — home"
+                                    title="Pahari Yatri"
+                                    className="w-10 h-10 rounded-2xl bg-slate-900 flex items-center justify-center font-black text-white text-xs shadow-2xl rotate-[12deg] group-hover:rotate-0 transition-all duration-500 active:scale-90"
+                                >
+                                    PY
                                 </Link>
                                 <div className="flex flex-col">
                                     <span className={`text-[11px] sm:text-xs font-black uppercase tracking-[0.3em] italic leading-none ${(transparent && !scrolled) ? "text-white" : "text-slate-900"}`}>
