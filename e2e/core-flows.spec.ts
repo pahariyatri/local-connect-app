@@ -22,6 +22,19 @@ test.describe('Pahari Yatri Core Flows', () => {
     await expect(page).toHaveURL(/\/en\/builder/);
   });
 
+  test('Landing page has exactly one hero — regression for the 2026-08-11 duplicate-hero bug', async ({ page }) => {
+    // page.tsx used to render <HeroSection> AND a second, separate inline
+    // hero block (its own headline, subtitle, CTA pair, and route-preview
+    // card) stacked immediately below it in the same wrapping <section> —
+    // two competing full "hero" moments on first load. Exactly one <h1> is
+    // the precise signal: real landing pages legitimately repeat CTA text
+    // like "Plan My Trip" further down (a closing CTA strip, etc.), so
+    // counting buttons isn't a reliable check — counting primary headings is.
+    await page.goto('/en');
+    await expect(page.locator('h1')).toHaveCount(1);
+    await expect(page.locator('h1')).toContainText(/Explore Himachal/i);
+  });
+
   test('Mobile menu works correctly', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'Mobile only test');
     

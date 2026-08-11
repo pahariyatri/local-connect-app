@@ -245,8 +245,6 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
 
   const pageDict = (dict as any)?.page?.home || {};
   const heroDict = pageDict?.hero || {};
-  const categoriesDict = pageDict?.categories || {};
-  const categoryItems: Record<string, string> = categoriesDict?.items || {};
   const providersDict = pageDict?.providers || {};
   const joinDict = pageDict?.join || {};
   const trustDict = pageDict?.trust || {};
@@ -264,69 +262,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
   return (
     <main className="bg-white min-h-screen antialiased selection:bg-emerald-500/30 selection:text-emerald-900 overflow-x-hidden">
       {/* ── 1 · HERO ─────────────────────────────────────────────────────── */}
-      <section className="relative px-6 pt-36 md:pt-48 pb-20 md:pb-28 border-b border-slate-100">
-        <HeroSection onSearch={() => router.push(exploreHref)} onPlan={() => router.push(builderHref)} />
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-14 lg:gap-20 items-center">
-          <div>
-            {pageDict?.badge && (
-              <span className="text-emerald-600 text-[10px] font-black uppercase tracking-[0.25em] block mb-5 animate-fade-in">
-                {pageDict.badge}
-              </span>
-            )}
-            <h1
-              className="text-5xl md:text-7xl font-black leading-[0.98] tracking-tight text-slate-900 animate-fade-in [text-wrap:balance]"
-              dangerouslySetInnerHTML={{ __html: heroDict?.title || "Plan the whole <span class=\"text-emerald-600\">journey</span>." }}
-            />
-            <p className="mt-6 text-slate-500 font-normal text-base md:text-lg leading-relaxed max-w-md animate-fade-in" style={{ animationDelay: "80ms" }}>
-              {heroDict?.subtitle || "One package for stays, food, transport and activities — planned stop by stop."}
-            </p>
-            <div className="mt-10 flex flex-col sm:flex-row gap-3 animate-fade-in" style={{ animationDelay: "160ms" }}>
-              <Button onClick={() => router.push(builderHref)} variant="primary" iconRight={<Icon name="arrow-right" className="w-4 h-4" />} className="group btn-primary rounded-full h-control px-9 text-xs">
-                {heroDict?.cta_plan || "Start Planning"}
-              </Button>
-              <Button onClick={() => router.push(exploreHref)} className="bg-white border border-slate-200 text-slate-900 hover:bg-slate-50 shadow-none rounded-full h-control px-9 text-xs">
-                {heroDict?.cta_explore || "Explore Locals"}
-              </Button>
-            </div>
-          </div>
-
-          {/* Product visual: the route itself, not a stock photo. Markers pop in,
-              the route line draws to connect them, then the services settle in —
-              one purposeful sequence, not a loop. */}
-          <div className="hidden sm:block relative animate-fade-in" style={{ animationDelay: "120ms" }}>
-            <div className="relative rounded-panel border border-slate-100 shadow-float bg-white p-8 sm:p-10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 animate-scale-in" style={{ animationDelay: "260ms", animationFillMode: "both" }}>
-                  <span className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center flex-shrink-0"><Icon name="map-pin" className="w-4 h-4" /></span>
-                  <span className="text-slate-900 text-xs font-black uppercase tracking-tight">Chandigarh</span>
-                </div>
-                <div className="flex items-center gap-3 animate-scale-in" style={{ animationDelay: "340ms", animationFillMode: "both" }}>
-                  <span className="text-slate-900 text-xs font-black uppercase tracking-tight">Manali</span>
-                  <span className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center flex-shrink-0"><Icon name="flag" className="w-4 h-4" /></span>
-                </div>
-              </div>
-
-              <RouteLine className="w-full h-2 text-emerald-300 my-8" delayMs={420} />
-
-              <div className="flex items-center gap-2 flex-wrap">
-                {[
-                  { icon: "home" as IconName, label: categoryItems.homestays || "Stay" },
-                  { icon: "utensils" as IconName, label: categoryItems.food || "Food" },
-                  { icon: "car" as IconName, label: categoryItems.transport || "Transport" },
-                ].map((s, i) => (
-                  <span
-                    key={s.label}
-                    className="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-600 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2.5 animate-fade-in"
-                    style={{ animationDelay: `${1500 + i * 100}ms`, animationFillMode: "both" }}
-                  >
-                    <Icon name={s.icon} className="w-3.5 h-3.5 text-emerald-500" />{s.label}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <HeroSection onSearch={() => router.push(exploreHref)} onPlan={() => router.push(builderHref)} />
 
       {/* ── 2 · ROUTE, DAY BY DAY ────────────────────────────────────────── */}
       <section className="px-6 py-24 md:py-32 bg-slate-50">
