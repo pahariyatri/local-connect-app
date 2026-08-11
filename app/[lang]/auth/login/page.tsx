@@ -1,19 +1,35 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Button from "../../components/atoms/Button";
 import { sanitizePhone, isValidPhone, PHONE_LENGTH } from "@/utils/validation";
+import { useAuth } from "@/contexts/AuthContext";
 import AuthShell from "../components/AuthShell";
+
+/** Only ever follow a same-site relative path — never an absolute/external URL. */
+const safeRedirect = (raw: string | null, lang: string): string => {
+    if (!raw) return `/${lang}`;
+    const decoded = decodeURIComponent(raw);
+    if (!decoded.startsWith("/") || decoded.startsWith("//")) return `/${lang}`;
+    return decoded;
+};
 
 export default function LoginPage() {
     const router = useRouter();
     const { lang } = useParams();
     const searchParams = useSearchParams();
     const redirectTo = searchParams.get("redirectTo");
+    const { user } = useAuth();
     const [phone, setPhone] = useState("");
     const [touched, setTouched] = useState(false);
+
+    // Already signed in (e.g. straight after signup, where the session is
+    // established by /auth/pin/signup): don't ask for the PIN a second time.
+    useEffect(() => {
+        if (user) router.replace(safeRedirect(redirectTo, String(lang)));
+    }, [user, redirectTo, lang, router]);
 
     const phoneValid = isValidPhone(phone);
     // Only nudge the user once they've started typing and moved on, never while empty.

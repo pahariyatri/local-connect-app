@@ -8,8 +8,8 @@ import Button from "@/app/[lang]/components/atoms/Button";
 import Link from "next/link";
 import { fetchCurrentUser } from "@/services/userService";
 import { getUserBookings } from "@/services/bookingService";
-import { logout } from "@/services/authService";
 import { getMyVendor } from "@/services/vendorService";
+import { useAuth } from "@/contexts/AuthContext";
 import { User } from "@/types/userTypes";
 import VerifiedBadge from "../components/atoms/VerifiedBadge";
 import { toNationalDigits } from "@/utils/validation";
@@ -90,6 +90,7 @@ export default function ProfilePage() {
     const router = useRouter();
     const params = useParams() as { lang: string };
     const lang = params.lang || "en";
+    const { logout: authLogout } = useAuth();
 
     const [user, setUser] = useState<User | null>(null);
     const [bookings, setBookings] = useState<Booking[]>([]);
@@ -113,7 +114,11 @@ export default function ProfilePage() {
     }, [router, lang]);
 
     const handleLogout = () => {
-        logout();
+        // Go through AuthContext so the in-memory user + localStorage `user_meta`
+        // are cleared too — calling authService.logout() directly only revoked
+        // the server session, leaving the app-wide header still showing an
+        // authenticated account.
+        authLogout();
         router.push(`/${lang}/auth/login`);
     };
 
