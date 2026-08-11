@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import SupportContact from '../molecules/SupportContact';
 
 export default function PublicFooter() {
   const params = useParams<{ lang?: string }>();
@@ -59,7 +60,10 @@ export default function PublicFooter() {
           </div>
 
           {/* Nav columns */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-8 gap-y-8">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-x-8 gap-y-8">
+            {/* PY-004: the site had no contact channel anywhere. Renders only the
+                channels the business has actually configured (lib/supportConfig). */}
+            <SupportContact variant="footer" />
             {columns.map((col) => (
               <div key={col.title}>
                 <p className="text-[9px] font-black uppercase tracking-[0.25em] text-slate-500 mb-3">

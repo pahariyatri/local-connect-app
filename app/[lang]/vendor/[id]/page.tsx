@@ -8,6 +8,7 @@ import Button from "../../components/atoms/Button";
 import { useNotification } from "@/contexts/NotificationContext";
 import TopNavigation from "../../components/organisms/TopNavigation";
 import VendorQRCode from "../../components/molecules/VendorQRCode";
+import SupportContact from "../../components/molecules/SupportContact";
 import { getVendorById } from "@/services/vendorService";
 import { ApiClientError } from "@/lib/apiClient";
 import { searchDiscoveryServices, DiscoveryService } from "@/services/searchService";
@@ -356,6 +357,15 @@ export default function VendorProfilePage() {
                             Add to Trip Package
                         </Button>
                     </div>
+
+                    {/* PY-004 — a traveler deciding on a partner had no way to reach
+                        a human. Config-driven: renders nothing when no channel is set. */}
+                    <SupportContact
+                        variant="bar"
+                        className="mt-6"
+                        reference={`vendor ${profile.name}`}
+                        heading="Questions about this partner?"
+                    />
                 </div>
             </main>
         </div>

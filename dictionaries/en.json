@@ -475,6 +475,13 @@
       }
     },
     "common": {
+      "support": {
+        "title": "Support",
+        "need_help": "Need help?",
+        "whatsapp": "Chat on WhatsApp",
+        "call": "Call support",
+        "email": "Email support"
+      },
       "date_picker": {
         "this_weekend": "This Weekend",
         "next_weekend": "Next Weekend",

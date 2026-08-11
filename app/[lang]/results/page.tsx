@@ -14,6 +14,7 @@ import Typography from "../components/atoms/Typography";
 import DayItinerary from "./components/DayItinerary";
 import { Vendor } from "./components/VendorSelectionCard";
 import DiscoveryDrawer from "../components/molecules/DiscoveryDrawer";
+import SupportContact from "../components/molecules/SupportContact";
 
 import {
   discoverServices,
@@ -478,6 +479,14 @@ export default function ResultsPage() {
             )}
           </>
         )}
+
+        {/* PY-004 — trip review is the moment a traveler commits to a multi-day,
+            multi-thousand-rupee plan; until now there was no one to ask. */}
+        <SupportContact
+          variant="bar"
+          className="mt-12 mb-24"
+          heading="Questions before you send the request?"
+        />
 
         <div className="fixed bottom-24 left-0 right-0 px-6 z-50 animate-slide-up">
           <div className="max-w-md mx-auto p-4 bg-slate-900 rounded-[3rem] shadow-[0_30px_60px_rgba(0,0,0,0.4)] flex items-center justify-between border border-white/10 backdrop-blur-xl">

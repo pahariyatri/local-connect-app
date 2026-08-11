@@ -446,6 +446,13 @@
       }
     },
     "common": {
+      "support": {
+        "title": "Soporte",
+        "need_help": "¿Necesitas ayuda?",
+        "whatsapp": "Chatear por WhatsApp",
+        "call": "Llamar a soporte",
+        "email": "Enviar correo a soporte"
+      },
       "actions": {
         "login": "Iniciar sesión",
         "register": "Unirse al Hub",
