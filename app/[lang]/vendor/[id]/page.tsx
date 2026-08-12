@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import NextImage from "next/image";
+import { priceUnitLabel } from "@/utils/price";
 import Typography from "../../components/atoms/Typography";
 import Button from "../../components/atoms/Button";
 import { useNotification } from "@/contexts/NotificationContext";
@@ -48,7 +49,12 @@ const mapSingleVendor = (v: any, realServices: DiscoveryService[]) => {
         name: s.name,
         price: s.pricing.unitPrice,
         currency: s.pricing.currency,
-        unit: s.pricing.nights ? "night" : "service",
+        // Unit comes from the service's own category tree (backend
+        // `pricing.priceUnit`), not from the quote's date span — the old
+        // `nights ? "night" : "service"` was always truthy, so a single-day
+        // rafting run was priced "PER NIGHT" (PY-036). Null = the data model
+        // genuinely carries no unit for this service, so none is shown.
+        unit: priceUnitLabel(s.pricing?.priceUnit),
         description: s.shortDescription || s.description,
     }));
 
@@ -91,6 +97,7 @@ export default function VendorProfilePage() {
     // server failure — the vendor may well exist). Neither ever substitutes a
     // fake profile; both render an explicit recoverable state below.
     const [loadError, setLoadError] = useState<"not_found" | "error" | null>(null);
+    const [heroFailed, setHeroFailed] = useState(false);
 
     const fetchProfile = async () => {
         setIsLoading(true);
@@ -207,13 +214,21 @@ export default function VendorProfilePage() {
             
             {/* Hero Image */}
             <div className="h-96 w-full relative">
-                <NextImage 
-                    src={profile.image} 
-                    fill 
-                    className="object-cover" 
-                    alt={profile.name} 
-                    priority
-                />
+                {/* Branded fallback sits underneath, so a missing or failing
+                    hero photo degrades to a designed banner instead of a
+                    broken-image icon with floating alt text (PY-025). */}
+                <div className="absolute inset-0 bg-gradient-to-b from-emerald-100 to-emerald-200" aria-hidden="true" />
+                {profile.image && !heroFailed && (
+                    <NextImage
+                        src={profile.image}
+                        fill
+                        className="object-cover"
+                        alt={profile.name}
+                        priority
+                        unoptimized={profile.image.startsWith("http")}
+                        onError={() => setHeroFailed(true)}
+                    />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-50 via-slate-900/20 to-transparent" />
                 <div className="absolute bottom-16 left-6 right-6">
                     <div className="flex items-center gap-2 mb-2">
@@ -298,7 +313,7 @@ export default function VendorProfilePage() {
                                 <p className="text-[11px] font-bold text-slate-500">This partner hasn&apos;t published bookable services yet.</p>
                             </div>
                         ) : (
-                            profile.services.map((service: { id: string; name: string; price: number; currency: string; unit: string; description: string }) => (
+                            profile.services.map((service: { id: string; name: string; price: number; currency: string; unit: string | null; description: string }) => (
                                 <button
                                     key={service.id}
                                     onClick={() => setSelectedService(service.id)}
@@ -316,7 +331,9 @@ export default function VendorProfilePage() {
                                             <p className="font-black text-emerald-600 text-sm">
                                                 {service.currency === "INR" ? "₹" : `${service.currency} `}{Math.round(service.price).toLocaleString("en-IN")}
                                             </p>
-                                            <p className="text-[8px] text-slate-400 font-black uppercase tracking-widest">per {service.unit}</p>
+                                            {service.unit && (
+                                                <p className="text-[8px] text-slate-400 font-black uppercase tracking-widest">{service.unit}</p>
+                                            )}
                                         </div>
                                     </div>
                                     <p className="text-[10px] text-slate-500 font-medium leading-relaxed mt-1 border-t border-slate-100/60 pt-2 w-full">
