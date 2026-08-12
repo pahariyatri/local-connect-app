@@ -32,7 +32,10 @@ const DESTINATIONS = [
   },
   {
     slug: "dharamshala", label: "Dharamshala", region: "Himachal Pradesh", elevation: "1,457 m", season: "Year round",
-    image: "https://images.unsplash.com/photo-1548013146-72479768bada?q=80&w=800",
+    // Was photo-1548013146-72479768bada — a photo of the Taj Mahal in Agra,
+    // ~1,450km away (PY-014). Replaced with the HPCA stadium under the
+    // Dhauladhar range, an unambiguous Dharamshala landmark.
+    image: "https://images.unsplash.com/photo-1653853572809-ea537274c7f5?q=80&w=800",
     tags: ["Buddhism", "Cricket", "Tea Gardens"], description: "Home of the Dalai Lama and Tibetan culture.",
   },
   {
@@ -50,7 +53,13 @@ const DESTINATIONS = [
 const CATEGORIES: { id: string; label: string; icon: "compass" | "mountain" | "home" | "car" | "utensils"; backendCategory?: string }[] = [
   { id: "all", label: "All", icon: "compass" },
   { id: "trek", label: "Treks", icon: "mountain", backendCategory: "trek" },
-  { id: "stay", label: "Homestays", icon: "home", backendCategory: "hotel" },
+  // Label matches what the filter actually returns: the whole Accommodation
+  // branch of the category tree (homestays, hotels, resorts, camps, heritage
+  // stays), the same root-level granularity as the Transport chip beside it.
+  // It was labelled "Homestays" while returning every stay type *and*
+  // non-stay services from stay-typed vendors, which read as unfiltered
+  // (PY-018). Backend now resolves this token against the category subtree.
+  { id: "stay", label: "Stays", icon: "home", backendCategory: "stay" },
   { id: "transport", label: "Transport", icon: "car", backendCategory: "transport" },
   { id: "food", label: "Food Trails", icon: "utensils", backendCategory: "restaurant" },
 ];
