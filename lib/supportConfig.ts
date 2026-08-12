@@ -3,10 +3,11 @@
  *
  * PY-004: the site had no phone, WhatsApp or chat contact anywhere, and the
  * only email on it (privacy@localconnect.com) was on a domain that doesn't
- * match the live product. The UI below is built and wired in, but every live
- * channel is read from env: if the business hasn't supplied a real number, the
- * affordance simply doesn't render. A placeholder number that looks real is
- * worse than no number at all, so there are no fallback digits here.
+ * match the live product. Email is now a real, approved channel (see
+ * DEFAULT_SUPPORT_EMAIL below), so there IS a way to reach a human.
+ * Phone/WhatsApp remain env-driven: no approved number exists yet, and a
+ * placeholder number that looks real is worse than no number at all, so there
+ * are no fallback digits here — those affordances simply don't render.
  *
  * Set these as NEXT_PUBLIC_* build-time env vars (see .env.example):
  *   NEXT_PUBLIC_SUPPORT_WHATSAPP  full international number, digits only
@@ -18,18 +19,18 @@
  *                                 it gates the "24/7 On-Trip Support" promise.
  */
 
+import { BRAND_CONFIG } from "@/config/brandConfig";
+
 const clean = (value: string | undefined): string | null => {
   const trimmed = (value ?? '').trim();
   return trimmed.length > 0 ? trimmed : null;
 };
 
 /**
- * Only the email has a default, and only because this exact address is already
- * declared as the platform's support contact in the backend API spec
- * (backend/src/core/swagger/swagger.module.ts) on the live product domain.
- * Override it with NEXT_PUBLIC_SUPPORT_EMAIL if the business uses another one.
+ * Default support email is sourced from centralized BRAND_CONFIG.
+ * Override it with NEXT_PUBLIC_SUPPORT_EMAIL if needed.
  */
-const DEFAULT_SUPPORT_EMAIL = 'support@pahariyatri.com';
+const DEFAULT_SUPPORT_EMAIL = BRAND_CONFIG.supportEmail;
 
 /** Digits only, so a value pasted as "+91 98765 43210" still builds a valid wa.me link. */
 const whatsappDigits = (() => {

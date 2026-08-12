@@ -83,8 +83,8 @@ export default function BookingsListPage() {
     const res = dict.page.bookings;
 
     return (
-        <div className="min-h-screen bg-white pb-32">
-            <main className="max-w-md mx-auto px-6 pt-24">
+        <div className="min-h-screen bg-white pb-20 sm:pb-28">
+            <main className="max-w-md mx-auto px-4 sm:px-6 pt-6 sm:pt-10">
                 <header className="mb-10 animate-in fade-in slide-in-from-bottom-5 duration-700">
                     <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] mb-2 block">Your Journeys</span>
                     <Typography variant="h1" className="text-4xl font-black text-slate-900 leading-tight uppercase italic tracking-tighter">

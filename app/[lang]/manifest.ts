@@ -1,10 +1,11 @@
 import type { MetadataRoute } from 'next';
+import { BRAND_CONFIG } from '@/config/brandConfig';
 
 export default function manifest(): MetadataRoute.Manifest {
     return {
-        name: 'Pahari Yatri',
-        short_name: 'Pahari Yatri',
-        description: 'Build your whole Himachal journey — stays, transport, food, activities and trusted local services.',
+        name: BRAND_CONFIG.fullProductName,
+        short_name: BRAND_CONFIG.compactProductName,
+        description: 'Plan stays, transport, food, activities and trusted local services across your complete Himachal route.',
         start_url: '/',
         display: 'standalone',
         background_color: '#ffffff',

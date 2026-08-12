@@ -255,7 +255,7 @@ export default function TripBuilderPage() {
   };
 
   return (
-      <main className="max-w-6xl mx-auto px-4 pt-28 sm:pt-36 pb-32 sm:pb-40">
+      <main className="max-w-6xl mx-auto px-4 pt-6 sm:pt-10 pb-24 sm:pb-32">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
             {/* Sidebar - Premium Promise */}
@@ -270,10 +270,14 @@ export default function TripBuilderPage() {
                            { text: builder.promise.verified, icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
                            ...(hasLiveSupportChannel ? [{ text: builder.promise.support, icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> }] : []),
                            // ^ PY-004: "24/7 On-Trip Support" is only claimed when a real
-                           // live channel (WhatsApp / phone) is configured in
-                           // lib/supportConfig. An unstaffed 24/7 promise on a
-                           // ₹10k-30k booking is itself a trust defect, so the line is
-                           // dropped rather than shown with nothing behind it.
+                           // LIVE channel (WhatsApp / phone) is configured in
+                           // lib/supportConfig — deliberately hasLiveSupportChannel, not
+                           // hasAnySupportChannel. Support email is now real and reachable
+                           // (see SupportContact below), but email is asynchronous: it
+                           // cannot back a "24/7 on-trip" promise to someone stranded on a
+                           // road at 2am. An unstaffed 24/7 promise on a ₹10k-30k booking
+                           // is itself a trust defect, so the line stays dropped until a
+                           // phone/WhatsApp channel exists behind it.
                            { text: builder.promise.price, icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> }
                        ].map((item, i) => (
                            <li key={i} className="flex items-center gap-3">

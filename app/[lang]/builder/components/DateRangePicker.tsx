@@ -1,6 +1,11 @@
 "use client";
 
 import React from "react";
+// Travel dates are formatted in the user's own timezone, never via
+// toISOString(). Shared with every other call site in lib/travelDate.ts —
+// keeping it module-private here is exactly how the results share-URL builder
+// ended up reintroducing the UTC day-shift after this was fixed once.
+import { toLocalDateString } from "@/lib/travelDate";
 
 interface DateRangePickerProps {
   startDate: string | null;
@@ -16,21 +21,6 @@ interface DatePreset {
   getDateRange: () => { start: string; end: string };
 }
 
-/**
- * Formats a Date as YYYY-MM-DD in the *user's own* timezone.
- *
- * `toISOString()` converts to UTC first, which silently shifts the date back a
- * day for every user east of UTC — India (UTC+5:30) included. That made a
- * calendar cell for the 14th resolve to the 13th (local midnight is 18:30 UTC
- * the previous day), and the "This Weekend" preset hand back Thu–Sat under a
- * "Fri - Sun" label. These strings are travel dates, not timestamps: the day
- * the traveller tapped is the day we must send.
- */
-const toLocalDateString = (date: Date): string => {
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getDate()}`.padStart(2, '0');
-  return `${date.getFullYear()}-${month}-${day}`;
-};
 
 const DATE_PRESETS = (dict: any): DatePreset[] => { // eslint-disable-line @typescript-eslint/no-explicit-any
   const p = dict?.page?.common?.date_picker || {};

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'localconnect-v1';
+const CACHE_NAME = 'pahariyatri-v1';
 const CACHE_ASSETS = [
     '/',
     '/offline.html',

@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { BRAND_CONFIG } from '@/config/brandConfig';
 
 interface PageSEOProps {
     title: string;
@@ -9,7 +10,7 @@ interface PageSEOProps {
 }
 
 const defaultSEO = {
-    title: 'Pahari Yatri',
+    title: `${BRAND_CONFIG.productDisplayName} by ${BRAND_CONFIG.parentBrandName}`,
     description: 'Build your whole Himachal journey — stays, transport, food, activities and trusted local services.',
 };
 
@@ -20,24 +21,24 @@ export async function genPageMetadata({
     ...rest
 }: PageSEOProps): Promise<Metadata> {
     return {
-        title,
+        title: `${title} | ${BRAND_CONFIG.compactProductName}`,
         description: description || defaultSEO.description,
         openGraph: {
-            title: `${title} | ${defaultSEO.title}`,
+            title: `${title} | ${BRAND_CONFIG.compactProductName}`,
             description: description || defaultSEO.description,
             url: './',
-            siteName: defaultSEO.title,
+            siteName: BRAND_CONFIG.fullProductName,
             images: [
-                image || 'https://i.pinimg.com/736x/63/27/9d/63279d93bdd63862256bb4c7e500e10b.jpg',
+                image || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=1200',
             ],
             locale: 'en-US',
             type: 'website',
         },
         twitter: {
-            title: `${title} | ${defaultSEO.title}`,
+            title: `${title} | ${BRAND_CONFIG.compactProductName}`,
             card: 'summary_large_image',
             images: [
-                image || 'https://i.pinimg.com/736x/63/27/9d/63279d93bdd63862256bb4c7e500e10b.jpg',
+                image || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=1200',
             ],
         },
         ...rest,

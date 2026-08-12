@@ -9,9 +9,10 @@ import VerifiedBadge from "./components/atoms/VerifiedBadge";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import Loading from "../loading";
 import { getVendors } from "@/services/vendorService";
-import { Icon, type IconName } from "./components/atoms/Icon";
+import { Icon } from "./components/atoms/Icon";
 import PublicFooter from "./components/organisms/PublicFooter";
 import HeroSection from "./components/hero/HeroSection";
+import InteractiveRouteSection from "./components/home/InteractiveRouteSection";
 
 type HomeProps = {
   params: Promise<{ lang: Locale }>;
@@ -53,119 +54,6 @@ function Reveal({ children, className = "", delayMs = 0 }: { children: React.Rea
   );
 }
 
-/** A route line that draws in once when scrolled into view, then stays put — no looping motion. */
-function RouteLine({ className = "", delayMs = 0 }: { className?: string; delayMs?: number }) {
-  const ref = useRef<SVGSVGElement>(null);
-  const [drawn, setDrawn] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setDrawn(true);
-          io.disconnect();
-        }
-      },
-      { threshold: 0.4 }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
-  return (
-    <svg ref={ref} className={className} viewBox="0 0 100 2" preserveAspectRatio="none" aria-hidden="true">
-      <line
-        x1="0" y1="1" x2="100" y2="1"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeDasharray="100"
-        strokeDashoffset={drawn ? 0 : 100}
-        style={{ transition: `stroke-dashoffset 1.1s ease-out ${drawn ? delayMs : 0}ms` }}
-      />
-    </svg>
-  );
-}
-
-/**
- * The day-by-day route timeline: icon markers pop in and the connecting
- * line grows to meet them, staggered top to bottom — a single, purposeful
- * reveal (not a loop) once the section enters view.
- */
-function RouteTimeline({ days }: { days: typeof ROUTE_DAYS }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          io.disconnect();
-        }
-      },
-      { threshold: 0.2 }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
-  return (
-    <div ref={ref}>
-      {days.map((d, i) => (
-        <div key={d.day} className="flex gap-6">
-          <div className="flex flex-col items-center flex-shrink-0">
-            <span className="relative">
-              <span
-                className={`absolute inset-0 rounded-full ${ROUTE_DAY_COLORS[i % ROUTE_DAY_COLORS.length]} blur-lg transition-opacity duration-700 ease-out ${visible ? "opacity-30" : "opacity-0"}`}
-                style={{ transitionDelay: visible ? `${i * 180 + 100}ms` : "0ms" }}
-                aria-hidden="true"
-              />
-              <span
-                className={`relative w-9 h-9 rounded-full ${ROUTE_DAY_COLORS[i % ROUTE_DAY_COLORS.length]} text-white flex items-center justify-center transition-all duration-500 ease-out shadow-lg ${visible ? "scale-100 opacity-100" : "scale-50 opacity-0"}`}
-                style={{ transitionDelay: visible ? `${i * 180}ms` : "0ms" }}
-              >
-                <Icon name={d.icon} className="w-4 h-4" />
-              </span>
-            </span>
-            {i < days.length - 1 && (
-              <span className="w-0.5 flex-1 bg-slate-100 my-1 relative overflow-hidden">
-                <span
-                  className={`absolute inset-x-0 top-0 w-full bg-emerald-400 transition-all ease-out ${visible ? "h-full" : "h-0"}`}
-                  style={{ transitionDuration: "600ms", transitionDelay: visible ? `${i * 180 + 150}ms` : "0ms" }}
-                />
-              </span>
-            )}
-          </div>
-          <div
-            className={`transition-all duration-500 ease-out ${i < days.length - 1 ? "pb-12" : ""} ${visible ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"}`}
-            style={{ transitionDelay: visible ? `${i * 180 + 80}ms` : "0ms" }}
-          >
-            <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Day {d.day}</span>
-            <p className="text-slate-900 font-black text-2xl sm:text-3xl mt-1.5 tracking-tight">{d.from} <span className="text-slate-300">&rarr;</span> {d.to}</p>
-            <p className="text-slate-400 text-sm mt-1.5">{d.note}</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ─── Illustrative example content (labelled "Example" wherever shown) ───────
-
-const ROUTE_DAYS: { day: number; from: string; to: string; note: string; icon: IconName }[] = [
-  { day: 1, from: "Chandigarh", to: "Kasol", note: "Lunch stop", icon: "utensils" },
-  { day: 2, from: "Kasol", to: "Kullu", note: "Local activity", icon: "mountain" },
-  { day: 3, from: "Kullu", to: "Manali", note: "Stay", icon: "home" },
-];
-
-// Per-day accent colours for the route timeline — cycles through the same
-// small palette used for category selection elsewhere in the app (indigo /
-// emerald / blue / amber), so a 3-5 day route doesn't read as monotone.
-const ROUTE_DAY_COLORS = ["bg-indigo-500", "bg-emerald-500", "bg-blue-500", "bg-amber-500"];
 
 // ─── Vendor mapping — mirrors the shape already used across the app; no
 // fabricated ratings or review counts. ───────────────────────────────────────
@@ -267,56 +155,14 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
         onPlan={() => router.push(builderHref)}
       />
 
-      {/* ── 2 · ROUTE, DAY BY DAY ────────────────────────────────────────── */}
-      <section className="px-6 py-24 md:py-32 bg-slate-50">
-        <div className="max-w-3xl mx-auto">
-          <Reveal>
-            <div className="flex items-end justify-between gap-4 mb-12">
-              <SectionHeading eyebrow="Your route" title="The journey, day by day." subtitle="Every stop planned in advance, not figured out on arrival." />
-              <span className="hidden sm:inline-block flex-shrink-0 text-[9px] font-black uppercase tracking-widest text-slate-300">Example</span>
-            </div>
-          </Reveal>
-          <Reveal delayMs={80}>
-            <div className="bg-white rounded-panel border border-slate-100 shadow-float overflow-hidden">
-              {/* Route overview strip: origin → destination, with the day/stop
-                  count derived from the itinerary itself, not fabricated. */}
-              <div className="relative bg-slate-50/80 bg-grid-pattern border-b border-slate-100 px-8 sm:px-10 py-8">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center flex-shrink-0"><Icon name="map-pin" className="w-4 h-4" /></span>
-                    <span className="text-slate-900 text-xs font-black uppercase tracking-tight">{ROUTE_DAYS[0].from}</span>
-                  </div>
-                  <RouteLine className="flex-1 h-2 text-emerald-300" delayMs={200} />
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className="text-slate-900 text-xs font-black uppercase tracking-tight">{ROUTE_DAYS[ROUTE_DAYS.length - 1].to}</span>
-                    <span className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center flex-shrink-0"><Icon name="flag" className="w-4 h-4" /></span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 mt-6">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{ROUTE_DAYS.length} Days</span>
-                  <span className="w-1 h-1 rounded-full bg-slate-300" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{ROUTE_DAYS.length - 1} Stops</span>
-                </div>
-              </div>
-
-              <div className="p-8 sm:p-10">
-                <RouteTimeline days={ROUTE_DAYS} />
-                <div className="mt-2 pt-8 border-t border-slate-100">
-                  <Button onClick={() => router.push(builderHref)} variant="primary" iconRight={<Icon name="arrow-right" className="w-4 h-4" />} className="group btn-primary w-full sm:w-auto h-control rounded-2xl text-xs px-8">
-                    {heroDict?.cta_plan || "Start Planning"}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
+      {/* ── 2 · INTERACTIVE ROUTE EXPERIENCE (DAY BY DAY) ──────────────── */}
+      <InteractiveRouteSection lang={lang} />
 
       {/* ── 3 · LOCAL VENDORS ────────────────────────────────────────────── */}
-      <section className="px-6 py-24 md:py-32">
+      <section className="px-4 sm:px-6 py-14 sm:py-20">
         <div className="max-w-6xl mx-auto">
           <Reveal>
-            <div className="flex items-end justify-between gap-4 mb-12">
+            <div className="flex items-end justify-between gap-4 mb-8 sm:mb-10">
               <SectionHeading eyebrow={providersDict?.eyebrow || "Verified locals"} title={providersDict?.title || "People, not packages."} />
               <button onClick={() => router.push(exploreHref)} className="flex-shrink-0 text-[10px] font-black uppercase tracking-widest text-emerald-600 border-b-2 border-emerald-500/20 pb-1 hover:text-emerald-700 hover:border-emerald-700 transition-all">
                 {providersDict?.view_all || "View all"}
@@ -324,7 +170,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
             </div>
           </Reveal>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
             {isProvidersLoading
               ? Array.from({ length: 4 }).map((_, idx) => (
                   <div key={idx} className="bg-white border border-slate-100 rounded-card p-5 space-y-3 animate-pulse">
@@ -367,27 +213,27 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
 
       {/* ── 4 · JOIN AS A LOCAL PROVIDER ─────────────────────────────────── */}
       {joinDict?.title && (
-        <section className="px-6 py-24 md:py-32 bg-slate-50">
+        <section className="px-4 sm:px-6 py-14 sm:py-20 bg-slate-50">
           <Reveal>
-            <div className="relative max-w-4xl mx-auto bg-slate-900 rounded-panel p-12 sm:p-16 text-center overflow-hidden">
+            <div className="relative max-w-4xl mx-auto bg-slate-900 rounded-panel p-8 sm:p-14 text-center overflow-hidden">
               <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none" />
               <div className="absolute bottom-0 left-0 w-56 h-56 bg-emerald-500/10 rounded-full blur-[90px] pointer-events-none" />
               <div className="relative">
-                {joinDict?.badge && <span className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.25em] block mb-5">{joinDict.badge}</span>}
-                <h2 className="text-white text-4xl sm:text-5xl font-black leading-[1.02] tracking-tight [text-wrap:balance]" dangerouslySetInnerHTML={{ __html: joinDict.title }} />
-                {joinDict?.subtitle && <p className="text-slate-300 text-base mt-5 max-w-md mx-auto leading-relaxed">{joinDict.subtitle}</p>}
-                <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-                  <Button onClick={() => router.push(vendorHref)} variant="primary" iconRight={<Icon name="arrow-right" className="w-4 h-4" />} className="group bg-emerald-500 hover:bg-emerald-600 text-white h-control rounded-full px-9 text-xs w-full sm:w-auto shadow-none">
+                {joinDict?.badge && <span className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.25em] block mb-4">{joinDict.badge}</span>}
+                <h2 className="text-white text-3xl sm:text-4xl md:text-5xl font-black leading-[1.05] tracking-tight [text-wrap:balance]" dangerouslySetInnerHTML={{ __html: joinDict.title }} />
+                {joinDict?.subtitle && <p className="text-slate-300 text-sm sm:text-base mt-4 max-w-md mx-auto leading-relaxed">{joinDict.subtitle}</p>}
+                <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+                  <Button onClick={() => router.push(vendorHref)} variant="primary" iconRight={<Icon name="arrow-right" className="w-4 h-4" />} className="group bg-emerald-500 hover:bg-emerald-600 text-white h-12 rounded-full px-8 text-xs w-full sm:w-auto shadow-none">
                     {joinDict?.cta_join || "Join free"}
                   </Button>
                   {joinDict?.cta_learn && (
-                    <Button onClick={() => router.push(aboutHref)} className="bg-transparent border border-white/25 text-white hover:bg-white/10 shadow-none h-control rounded-full px-9 text-xs w-full sm:w-auto">
+                    <Button onClick={() => router.push(aboutHref)} className="bg-transparent border border-white/25 text-white hover:bg-white/10 shadow-none h-12 rounded-full px-8 text-xs w-full sm:w-auto">
                       {joinDict.cta_learn}
                     </Button>
                   )}
                 </div>
                 {joinDict?.note && (
-                  <div className="mt-8 inline-flex items-center gap-2">
+                  <div className="mt-6 inline-flex items-center gap-2">
                     <span className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0"><Icon name="check" className="w-2.5 h-2.5 text-emerald-400" /></span>
                     <span className="text-slate-400 text-[10px] font-black uppercase tracking-wider">{joinDict.note}</span>
                   </div>
@@ -400,13 +246,13 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
 
       {/* ── 5 · TRUST ─────────────────────────────────────────────────────── */}
       {trustBadges.length > 0 && (
-        <section className="px-6 py-20">
+        <section className="px-4 sm:px-6 py-10 sm:py-14">
           <Reveal>
-            <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
               {trustBadges.map((b) => (
-                <div key={b} className="flex flex-col items-center text-center gap-3 p-4">
-                  <span className="w-11 h-11 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center"><Icon name="check" className="w-4 h-4" /></span>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-600 leading-snug">{b}</span>
+                <div key={b} className="flex flex-col items-center text-center gap-2 p-3 sm:p-4 rounded-2xl bg-slate-50/70 border border-slate-100">
+                  <span className="w-10 h-10 rounded-full bg-emerald-100/80 text-emerald-700 flex items-center justify-center"><Icon name="check" className="w-4 h-4" /></span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-700 leading-snug">{b}</span>
                 </div>
               ))}
             </div>
@@ -415,14 +261,14 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
       )}
 
       {/* ── 6 · FINAL CTA ─────────────────────────────────────────────────── */}
-      <section className="px-6 py-28 md:py-40">
+      <section className="px-4 sm:px-6 py-16 sm:py-24 bg-gradient-to-t from-slate-50 to-white">
         <Reveal>
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-slate-900 text-5xl sm:text-6xl font-black leading-[1.02] tracking-tight [text-wrap:balance]">Ready when you are.</h2>
-            <p className="text-slate-500 text-base mt-5 max-w-md mx-auto leading-relaxed">
+            <h2 className="text-slate-900 text-4xl sm:text-5xl md:text-6xl font-black leading-[1.05] tracking-tight [text-wrap:balance]">Ready when you are.</h2>
+            <p className="text-slate-500 text-sm sm:text-base mt-4 max-w-md mx-auto leading-relaxed">
               One route, planned end to end, with local support at every stop.
             </p>
-            <Button onClick={() => router.push(builderHref)} variant="primary" iconRight={<Icon name="arrow-right" className="w-4 h-4" />} className="group btn-primary mt-10 rounded-full h-control px-9 text-xs mx-auto">
+            <Button onClick={() => router.push(builderHref)} variant="primary" iconRight={<Icon name="arrow-right" className="w-4 h-4" />} className="group btn-primary mt-8 rounded-full h-12 px-8 text-xs mx-auto shadow-lg shadow-emerald-600/20">
               {heroDict?.cta_plan || "Start Planning"}
             </Button>
           </div>

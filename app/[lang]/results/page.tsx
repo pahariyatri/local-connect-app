@@ -24,6 +24,7 @@ import {
   EMPTY_VENDORS,
 } from "@/services/vendorService";
 import { getPackage } from "@/services/packageService";
+import { toLocalDateStringSafe } from "@/lib/travelDate";
 
 function parsePlanFromUrl(searchParams: URLSearchParams) {
   try {
@@ -190,8 +191,10 @@ export default function ResultsPage() {
       // If no package, we share the plan via URL params
       shareUrl.searchParams.set('origin', originPoint);
       shareUrl.searchParams.set('destinations', JSON.stringify(destinations));
-      shareUrl.searchParams.set('startDate', startDate ? new Date(startDate).toISOString().split('T')[0] : '');
-      shareUrl.searchParams.set('endDate', endDate ? new Date(endDate).toISOString().split('T')[0] : '');
+      // Local-date formatting, not toISOString(): a shared link must reproduce
+      // the days the traveller actually picked, not the UTC day before them.
+      shareUrl.searchParams.set('startDate', toLocalDateStringSafe(startDate));
+      shareUrl.searchParams.set('endDate', toLocalDateStringSafe(endDate));
       shareUrl.searchParams.set('guestCount', String(guestCount));
       shareUrl.searchParams.set('servicePreferences', JSON.stringify(servicePreferences));
     }

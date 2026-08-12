@@ -52,33 +52,32 @@ export default function LoginPage() {
     return (
         <AuthShell
             lang={String(lang)}
-            title="Sign in"
-            subtitle="Enter your mobile number to continue."
+            eyebrow="Direct Local Booking"
+            title={<>Sign In or <span className="text-emerald-500">Sign Up</span></>}
+            subtitle="Enter your 10-digit mobile number to get started."
         >
             <div className="space-y-5">
                 <div>
-                    <label htmlFor="phone" className="text-sm font-medium text-slate-700 mb-1.5 block">
-                        Mobile number
-                    </label>
-                    <div className={`w-full h-12 rounded-xl border flex items-center transition-colors ${
+                    <div className={`w-full h-14 sm:h-15 rounded-2xl border-2 flex items-center transition-all bg-slate-50/70 ${
                         showInvalid
-                            ? "border-red-400"
-                            : "border-slate-200 focus-within:border-slate-900"
+                            ? "border-red-400 bg-red-50/10"
+                            : "border-slate-200 focus-within:border-slate-900 focus-within:bg-white focus-within:shadow-sm"
                     }`}>
-                        <span className="pl-4 pr-3 text-sm font-medium text-slate-400 select-none border-r border-slate-200 h-6 flex items-center">
-                            +91
-                        </span>
+                        <div className="pl-4 pr-3 text-base font-bold text-slate-800 select-none border-r border-slate-200 h-8 flex items-center gap-1.5">
+                            <span>🇮🇳</span>
+                            <span className="font-black">+91</span>
+                        </div>
                         <input
                             id="phone"
                             name="phone"
                             autoFocus
-                            className="flex-1 h-full px-3 text-sm font-medium tracking-wide placeholder:text-slate-300 bg-transparent text-slate-900 border-0 outline-none focus:outline-none focus:ring-0"
-                            placeholder="00000 00000"
+                            className="flex-1 h-full px-4 text-base sm:text-lg font-bold tracking-wider placeholder:text-slate-300 placeholder:font-normal bg-transparent text-slate-900 border-0 outline-none focus:outline-none focus:ring-0"
+                            placeholder="98765 43210"
                             type="tel"
                             inputMode="numeric"
                             autoComplete="tel-national"
                             aria-invalid={showInvalid}
-                            aria-describedby={showInvalid ? "phone-error" : "phone-hint"}
+                            aria-describedby={showInvalid ? "phone-error" : undefined}
                             maxLength={PHONE_LENGTH}
                             value={phone}
                             onChange={(e) => setPhone(sanitizePhone(e.target.value))}
@@ -86,13 +85,9 @@ export default function LoginPage() {
                             onKeyDown={(e) => { if (e.key === "Enter" && phoneValid) submit(); }}
                         />
                     </div>
-                    {showInvalid ? (
-                        <p id="phone-error" role="alert" className="text-xs text-red-500 mt-1.5">
-                            Enter a valid {PHONE_LENGTH}-digit mobile number.
-                        </p>
-                    ) : (
-                        <p id="phone-hint" className="text-xs text-slate-400 mt-1.5">
-                            We'll sign you in, or set up your PIN if you're new here.
+                    {showInvalid && (
+                        <p id="phone-error" role="alert" className="text-xs text-red-500 font-semibold mt-2">
+                            Please enter a valid 10-digit mobile number.
                         </p>
                     )}
                 </div>
@@ -100,17 +95,17 @@ export default function LoginPage() {
                 <Button
                     onClick={submit}
                     disabled={!phoneValid}
-                    className="w-full h-12 rounded-xl text-sm font-semibold bg-slate-900 hover:bg-black text-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="w-full h-13 sm:h-14 rounded-2xl text-xs sm:text-sm font-black uppercase tracking-[0.15em] bg-slate-900 hover:bg-black text-white shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[0.98]"
                 >
                     Continue
                 </Button>
             </div>
 
-            <p className="mt-8 text-xs text-slate-400 leading-relaxed">
+            <p className="mt-8 text-[11px] sm:text-xs text-slate-400 leading-relaxed text-center font-medium">
                 By continuing, you agree to our{" "}
-                <Link href={`/${lang}/terms-conditions`} className="text-slate-600 underline underline-offset-2">Terms</Link>
+                <Link href={`/${lang}/terms-conditions`} className="text-slate-700 font-bold underline underline-offset-2 hover:text-slate-900">Terms</Link>
                 {" "}and{" "}
-                <Link href={`/${lang}/privacy-policy`} className="text-slate-600 underline underline-offset-2">Privacy Policy</Link>.
+                <Link href={`/${lang}/privacy-policy`} className="text-slate-700 font-bold underline underline-offset-2 hover:text-slate-900">Privacy Policy</Link>.
             </p>
         </AuthShell>
     );

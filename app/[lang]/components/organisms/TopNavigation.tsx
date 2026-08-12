@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { Locale } from "@/i18n-config";
+import { BRAND_CONFIG } from "@/config/brandConfig";
 
 interface TopNavigationProps {
     title?: string;
@@ -16,7 +17,7 @@ interface TopNavigationProps {
 }
 
 export default function TopNavigation({
-    title = "Pahari Yatri",
+    title = BRAND_CONFIG.parentBrandName,
     leftButton,
     rightButtons = [],
     transparent = false,
@@ -26,14 +27,14 @@ export default function TopNavigation({
     const lang = params.lang || "en";
 
     const { user } = useAuth();
-    const { dict } = useLocalizationContext();
+    const { dict, switchLanguage } = useLocalizationContext();
 
     const [scrolled, setScrolled] = useState(false);
     const [isLangOpen, setIsLangOpen] = useState(false);
 
     const LANGUAGE_CYCLE: Locale[] = ['en', 'hi', 'he', 'fr', 'es', 'de'];
     const LANGUAGE_DETAILS: Record<Locale, { label: string; native: string; flag: string }> = {
-        'en': { label: 'English', native: 'English', flag: '🇺🇸' },
+        'en': { label: 'English', native: 'English', flag: '🇬🇧' },
         'hi': { label: 'Hindi', native: 'हिन्दी', flag: '🇮🇳' },
         'he': { label: 'Hebrew', native: 'עברית', flag: '🇮🇱' },
         'fr': { label: 'French', native: 'Français', flag: '🇫🇷' },
@@ -42,7 +43,11 @@ export default function TopNavigation({
     };
 
     const handleLanguageSelect = (newLang: Locale) => {
-        onToggleLanguage?.(newLang);
+        if (onToggleLanguage) {
+            onToggleLanguage(newLang);
+        } else {
+            switchLanguage(newLang);
+        }
         setIsLangOpen(false);
     };
 
@@ -56,6 +61,7 @@ export default function TopNavigation({
     }, []);
 
     const actions = dict?.page?.common?.actions;
+    const isDefaultBrandTitle = title === BRAND_CONFIG.parentBrandName || title === "Pahari Yatri";
 
     return (
         <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
@@ -75,26 +81,39 @@ export default function TopNavigation({
                                 {title && <span className={`text-[10px] font-black uppercase tracking-[0.2em] italic ${(transparent && !scrolled) ? "text-white/80" : "text-slate-900"}`}>{title}</span>}
                             </button>
                         ) : (
-                            <div className="flex items-center gap-4 group">
-                                {/* Brand mark. "PY" = Pahari Yatri — must stay in sync with
-                                    Header.tsx / PublicFooter.tsx / AuthShell.tsx, which all use
-                                    the same initials. (Used to read "LC" for the pre-rebrand
-                                    "Local Connect" name, so the checkout/review flow showed a
-                                    different company than the rest of the site.) */}
+                            <div className="flex items-center gap-3.5 group">
                                 <Link
                                     href={`/${lang}`}
-                                    aria-label="Pahari Yatri — home"
-                                    title="Pahari Yatri"
-                                    className="w-10 h-10 rounded-2xl bg-slate-900 flex items-center justify-center font-black text-white text-xs shadow-2xl rotate-[12deg] group-hover:rotate-0 transition-all duration-500 active:scale-90"
+                                    aria-label={`${BRAND_CONFIG.productDisplayName} — ${BRAND_CONFIG.productDescriptor}`}
+                                    title={BRAND_CONFIG.fullProductName}
+                                    className="w-10 h-10 rounded-2xl bg-slate-900 flex items-center justify-center font-black text-white text-xs shadow-2xl rotate-[12deg] group-hover:rotate-0 transition-all duration-500 active:scale-90 flex-shrink-0"
                                 >
-                                    PY
+                                    {BRAND_CONFIG.brandInitials}
                                 </Link>
                                 <div className="flex flex-col">
-                                    <span className={`text-[11px] sm:text-xs font-black uppercase tracking-[0.3em] italic leading-none ${(transparent && !scrolled) ? "text-white" : "text-slate-900"}`}>
-                                        {title}
-                                    </span>
-                                    {(!transparent || scrolled) && (
-                                        <div className="w-12 h-1 bg-emerald-500/30 rounded-full mt-2 group-hover:w-full transition-all duration-700" />
+                                    {isDefaultBrandTitle ? (
+                                        <>
+                                            <div className="flex items-center gap-1.5">
+                                                <span className={`text-[11px] sm:text-xs font-black uppercase tracking-[0.22em] italic leading-none ${(transparent && !scrolled) ? "text-white" : "text-slate-900"}`}>
+                                                    {BRAND_CONFIG.headerBrandTitle}
+                                                </span>
+                                                <span className="hidden sm:inline-block text-[8px] font-black uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 tracking-wider">
+                                                    {BRAND_CONFIG.productStage}
+                                                </span>
+                                            </div>
+                                            <span className={`text-[8px] sm:text-[9px] font-bold tracking-widest uppercase mt-0.5 ${(transparent && !scrolled) ? "text-white/70" : "text-emerald-600"}`}>
+                                                {BRAND_CONFIG.headerBrandSubtitle}
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className={`text-[11px] sm:text-xs font-black uppercase tracking-[0.3em] italic leading-none ${(transparent && !scrolled) ? "text-white" : "text-slate-900"}`}>
+                                                {title}
+                                            </span>
+                                            {(!transparent || scrolled) && (
+                                                <div className="w-12 h-1 bg-emerald-500/30 rounded-full mt-2 group-hover:w-full transition-all duration-700" />
+                                            )}
+                                        </>
                                     )}
                                 </div>
                             </div>

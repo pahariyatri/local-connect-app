@@ -127,8 +127,8 @@ export default function ProfilePage() {
     const totalSpent = bookings.reduce((sum, b) => sum + Number(b.totalAmount), 0);
 
     return (
-        <div className="min-h-screen bg-white pb-32">
-            <main className="max-w-md mx-auto px-6 pt-24 space-y-10">
+        <div className="min-h-screen bg-white pb-20 sm:pb-28">
+            <main className="max-w-md mx-auto px-4 sm:px-6 pt-6 sm:pt-10 space-y-8 sm:space-y-10">
 
                 {/* Profile Header */}
                 <section className="relative pt-10 pb-6 text-center animate-in fade-in slide-in-from-bottom-5 duration-700">
