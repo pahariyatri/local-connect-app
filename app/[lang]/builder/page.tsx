@@ -7,6 +7,7 @@ import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { useTripPlanner, ServiceType } from "@/contexts/TripPlannerContext";
 import { useTripStore } from "@/store/useTripStore";
 import { prepTracker } from "@/lib/prepTracker";
+import { formatINRWithSymbol } from "@/utils/price";
 import Typography from "../components/atoms/Typography";
 import Button from "../components/atoms/Button";
 import DestinationSelector from "./components/DestinationSelector";
@@ -319,7 +320,7 @@ export default function TripBuilderPage() {
                     {builder.buttons.total ?? "Total"}
                   </span>
                   <span className="text-lg sm:text-2xl font-black text-slate-900 tabular-nums">
-                    ₹{step5Footer.totalPrice.toLocaleString()}
+                    {formatINRWithSymbol(step5Footer.totalPrice)}
                   </span>
                 </div>
               )}
@@ -334,7 +335,10 @@ export default function TripBuilderPage() {
                     <Button
                       onClick={() => step5Footer.onCreatePackage()}
                       disabled={isGenerating || step5Footer.totalPrice <= 0}
-                      className="flex-1 h-12 sm:h-16 rounded-xl sm:rounded-2xl text-sm sm:text-lg font-black tracking-[0.15em] sm:tracking-[0.2em] transition-all uppercase bg-emerald-500 hover:bg-emerald-600 text-white shadow-2xl active:scale-[0.98] disabled:opacity-50"
+                      // Tighter type/tracking on mobile + nowrap so the primary
+                      // CTA stays on one line at 360–390px instead of breaking
+                      // to "CREATE MY / PACKAGE" (PY-033). Desktop unchanged.
+                      className="flex-1 h-12 sm:h-16 px-3 rounded-xl sm:rounded-2xl text-[11px] sm:text-lg font-black tracking-[0.08em] sm:tracking-[0.2em] whitespace-nowrap transition-all uppercase bg-emerald-500 hover:bg-emerald-600 text-white shadow-2xl active:scale-[0.98] disabled:opacity-50"
                     >
                       {isGenerating ? (
                         <div className="flex items-center justify-center gap-3">

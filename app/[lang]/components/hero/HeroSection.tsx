@@ -73,12 +73,22 @@ export default function HeroSection({ onSearch, onPlan }: { onSearch: (query?: s
           </form>
 
           {/* Popular destinations — real supply only. */}
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5 text-xs text-primary-foreground/70">
-            <span className="text-primary-foreground/50">Popular:</span>
+          {/* Each link carries a 44px-tall touch area via padding — the label
+              itself stays text-xs, so the row reads the same but stops being
+              a 16px-tall mis-tap trap on mobile (PY-016). */}
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-x-1 text-xs text-primary-foreground/70">
+            <span className="px-1 text-primary-foreground/50">Popular:</span>
             {POPULAR_DESTINATIONS.map((dest, i) => (
               <React.Fragment key={dest}>
                 {i > 0 && <span className="text-primary-foreground/30">·</span>}
-                <button type="button" onClick={() => submitSearch(dest)} className="hover:text-primary-foreground hover:underline underline-offset-2 transition-colors">
+                <button
+                  type="button"
+                  onClick={() => submitSearch(dest)}
+                  // 46px, not 44: the page wrapper's `.page-fade-in` entrance
+                  // runs a scale(0.98) transform, so a 44px box measures 43.1px
+                  // on screen. 46 clears the 44px guidance either way.
+                  className="inline-flex min-h-[46px] min-w-[46px] items-center justify-center px-3 hover:text-primary-foreground hover:underline underline-offset-2 transition-colors"
+                >
                   {dest}
                 </button>
               </React.Fragment>

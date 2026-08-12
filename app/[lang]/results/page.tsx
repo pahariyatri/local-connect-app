@@ -7,6 +7,7 @@ import { useTripPlanner } from "@/contexts/TripPlannerContext";
 import { useNotification } from "@/contexts/NotificationContext";
 import { useTripStore } from "@/store/useTripStore";
 import { prepTracker } from "@/lib/prepTracker";
+import { formatINRWithSymbol } from "@/utils/price";
 import { useAuth } from "@/contexts/AuthContext";
 import TopNavigation from "../components/organisms/TopNavigation";
 
@@ -493,7 +494,7 @@ export default function ResultsPage() {
             <div className="pl-6">
               <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mb-2">{res.footer.total}</p>
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-white italic tracking-tighter">₹{totalPrice.toLocaleString()}</span>
+                <span className="text-3xl font-black text-white italic tracking-tighter">{formatINRWithSymbol(totalPrice)}</span>
               </div>
               <p className="text-[9px] text-slate-500 mt-1">Based on {itineraryDays.length} {itineraryDays.length === 1 ? "day" : "days"} · {guestCount || 2} guests</p>
               <p className="text-[8px] text-slate-600 mt-1 font-medium">Paid directly to local partners — not charged now</p>
