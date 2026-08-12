@@ -8,10 +8,9 @@ import Button from "@/app/[lang]/components/atoms/Button";
 import Link from "next/link";
 import { fetchCurrentUser } from "@/services/userService";
 import { getUserBookings } from "@/services/bookingService";
-import { logout } from "@/services/authService";
 import { getMyVendor } from "@/services/vendorService";
+import { useAuth } from "@/contexts/AuthContext";
 import { User } from "@/types/userTypes";
-import VerifiedBadge from "../components/atoms/VerifiedBadge";
 import { toNationalDigits } from "@/utils/validation";
 
 // ─── Icon system — same inline-stroke-SVG convention used across the app ───
@@ -90,6 +89,7 @@ export default function ProfilePage() {
     const router = useRouter();
     const params = useParams() as { lang: string };
     const lang = params.lang || "en";
+    const { logout: authLogout } = useAuth();
 
     const [user, setUser] = useState<User | null>(null);
     const [bookings, setBookings] = useState<Booking[]>([]);
@@ -113,7 +113,11 @@ export default function ProfilePage() {
     }, [router, lang]);
 
     const handleLogout = () => {
-        logout();
+        // Go through AuthContext so the in-memory user + localStorage `user_meta`
+        // are cleared too — calling authService.logout() directly only revoked
+        // the server session, leaving the app-wide header still showing an
+        // authenticated account.
+        authLogout();
         router.push(`/${lang}/auth/login`);
     };
 
@@ -123,8 +127,8 @@ export default function ProfilePage() {
     const totalSpent = bookings.reduce((sum, b) => sum + Number(b.totalAmount), 0);
 
     return (
-        <div className="min-h-screen bg-white pb-32">
-            <main className="max-w-md mx-auto px-6 pt-24 space-y-10">
+        <div className="min-h-screen bg-white pb-20 sm:pb-28">
+            <main className="max-w-md mx-auto px-4 sm:px-6 pt-6 sm:pt-10 space-y-8 sm:space-y-10">
 
                 {/* Profile Header */}
                 <section className="relative pt-10 pb-6 text-center animate-in fade-in slide-in-from-bottom-5 duration-700">
@@ -136,16 +140,19 @@ export default function ProfilePage() {
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                             />
                         </div>
-                        <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center shadow-lg">
-                            <VerifiedBadge showText={false} className="scale-90" />
-                        </div>
+                        {/* No verified badge or "Verified Explorer" label here: nothing
+                            about this account has actually been verified. Phone ownership
+                            isn't checked at signup yet (PY-011 — no OTP provider is
+                            configured), and the API doesn't expose a verification state to
+                            render against, so both were unconditional decoration that
+                            asserted a trust signal the platform hasn't earned. Reinstate
+                            them driven by real verification state once OTP is live. */}
                     </div>
 
                     <div className="mt-4">
                         <Typography variant="h1" className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">
                             {user?.name || "Yatri"}
                         </Typography>
-                        <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] mt-2">Verified Explorer</p>
                         {user?.phone && (
                             <p className="text-slate-400 font-medium text-sm mt-1">+91 {toNationalDigits(user.phone)}</p>
                         )}

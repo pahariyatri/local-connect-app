@@ -57,7 +57,7 @@ export default async function DocsPage({ params }: PageProps) {
             Developer <span className="text-emerald-400">Knowledge Hub</span>
           </h1>
           <p className="max-w-2xl mx-auto text-slate-400 font-medium text-sm leading-relaxed">
-            Understand the architectural layers, user flows, and design rules powering the Local Connect platform.
+            Understand the architectural layers, user flows, and design rules powering the Pahari Yatri platform.
           </p>
         </div>
       </div>

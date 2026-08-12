@@ -1,6 +1,11 @@
 "use client";
 
 import React from "react";
+// Travel dates are formatted in the user's own timezone, never via
+// toISOString(). Shared with every other call site in lib/travelDate.ts —
+// keeping it module-private here is exactly how the results share-URL builder
+// ended up reintroducing the UTC day-shift after this was fixed once.
+import { toLocalDateString } from "@/lib/travelDate";
 
 interface DateRangePickerProps {
   startDate: string | null;
@@ -15,6 +20,7 @@ interface DatePreset {
   icon: React.ReactNode;
   getDateRange: () => { start: string; end: string };
 }
+
 
 const DATE_PRESETS = (dict: any): DatePreset[] => { // eslint-disable-line @typescript-eslint/no-explicit-any
   const p = dict?.page?.common?.date_picker || {};
@@ -34,7 +40,7 @@ const DATE_PRESETS = (dict: any): DatePreset[] => { // eslint-disable-line @type
         friday.setDate(today.getDate() + (daysUntilFriday === 0 ? 0 : daysUntilFriday));
         const sunday = new Date(friday);
         sunday.setDate(friday.getDate() + 2);
-        return { start: friday.toISOString().split('T')[0], end: sunday.toISOString().split('T')[0] };
+        return { start: toLocalDateString(friday), end: toLocalDateString(sunday) };
       },
     },
     {
@@ -52,7 +58,7 @@ const DATE_PRESETS = (dict: any): DatePreset[] => { // eslint-disable-line @type
         friday.setDate(today.getDate() + daysUntilNextFriday);
         const sunday = new Date(friday);
         sunday.setDate(friday.getDate() + 2);
-        return { start: friday.toISOString().split('T')[0], end: sunday.toISOString().split('T')[0] };
+        return { start: toLocalDateString(friday), end: toLocalDateString(sunday) };
       },
     },
   ];
@@ -75,7 +81,7 @@ export default function DateRangePicker({
 
   const handleDateClick = (day: number) => {
     const clickedDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-    const dateStr = clickedDate.toISOString().split('T')[0];
+    const dateStr = toLocalDateString(clickedDate);
 
     if (!startDate || (startDate && endDate)) {
       onDateChange(dateStr, "");
@@ -91,12 +97,12 @@ export default function DateRangePicker({
 
   const isBetween = (day: number) => {
     if (!startDate || !endDate) return false;
-    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day).toISOString().split('T')[0];
+    const date = toLocalDateString(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day));
     return date > startDate && date < endDate;
   };
 
   const isSelected = (day: number) => {
-    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day).toISOString().split('T')[0];
+    const date = toLocalDateString(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day));
     return date === startDate || date === endDate;
   };
 
@@ -110,10 +116,10 @@ export default function DateRangePicker({
         days.push(<div key={`empty-${i}`} className="h-12 w-full" />);
     }
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = toLocalDateString(new Date());
 
     for (let d = 1; d <= totalDays; d++) {
-      const dateStr = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), d).toISOString().split('T')[0];
+      const dateStr = toLocalDateString(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), d));
       const selected = isSelected(d);
       const between = isBetween(d);
       const isPast = dateStr < todayStr;
@@ -218,7 +224,12 @@ export default function DateRangePicker({
       {/* 2. Premium Trigger Button - Ultra compact mobile */}
       <button 
         onClick={() => setIsModalOpen(true)}
-        className="w-full group relative bg-white border-2 border-slate-50 hover:border-slate-200 rounded-2xl sm:rounded-[2rem] p-3 sm:p-6 shadow-md shadow-slate-100/50 transition-all active:scale-[0.98] text-left overflow-hidden"
+        // p-4 on mobile (was p-3): the field card sits inside a same-coloured
+        // step panel, so the panel's own padding below it read as part of the
+        // field and taps there did nothing (PY-035). A taller card plus the
+        // visible border below makes the tappable edge legible, and every
+        // point inside the card opens the calendar.
+        className="w-full group relative bg-white border-2 border-slate-100 hover:border-slate-200 rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 shadow-md shadow-slate-100/50 transition-all active:scale-[0.98] text-left overflow-hidden"
       >
           <div className="absolute top-0 right-0 w-20 sm:w-28 h-20 sm:h-28 bg-emerald-50 rounded-full blur-3xl -mr-4 -mt-4 opacity-50 group-hover:scale-150 transition-transform duration-1000" />
           
@@ -237,7 +248,11 @@ export default function DateRangePicker({
               </div>
               
               <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-lg sm:rounded-2xl bg-slate-900 text-white flex flex-col items-center justify-center shadow-md group-hover:rotate-6 transition-transform">
-                  <span className="text-sm sm:text-lg font-black leading-none">{nights > 0 ? nights : "—"}</span>
+                  {/* Was an em dash when no dates were picked, which read as a
+                      "−" decrement control on a stepper that has no increment
+                      (PY-035). This is a readout, not a stepper — show the
+                      actual count so nothing looks like a button. */}
+                  <span className="text-sm sm:text-lg font-black leading-none">{nights > 0 ? nights : 0}</span>
                   <span className="text-[5px] sm:text-[6px] font-black uppercase tracking-widest leading-none mt-0.5">{p.nights || "Nights"}</span>
               </div>
           </div>

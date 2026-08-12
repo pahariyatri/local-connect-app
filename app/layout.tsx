@@ -32,7 +32,9 @@ function resolveLang(paramsLang: string | undefined): Locale {
     : (i18n.defaultLocale as Locale);
 }
 
-const SITE_URL = 'https://app.pahariyatri.com';
+import { BRAND_CONFIG } from "@/config/brandConfig";
+
+const SITE_URL = BRAND_CONFIG.appUrl;
 
 export async function generateMetadata(props: {
   params?: Promise<{ lang?: Locale }>;
@@ -43,7 +45,7 @@ export async function generateMetadata(props: {
   return {
     // Absolute base for OG/Twitter/canonical URL resolution (production frontend).
     metadataBase: new URL(SITE_URL),
-    title: 'Pahari Yatri | Build Your Himachal Journey',
+    title: `${BRAND_CONFIG.productDisplayName} by ${BRAND_CONFIG.parentBrandName} | Himachal Journey Planner`,
     description:
       'Plan stays, transport, food, activities and trusted local services across your complete Himachal route.',
     alternates: {
@@ -51,17 +53,18 @@ export async function generateMetadata(props: {
       languages: Object.fromEntries(i18n.locales.map((l) => [l, `${SITE_URL}/${l}`])),
     },
     openGraph: {
-      title: 'Pahari Yatri',
+      title: `${BRAND_CONFIG.productDisplayName} by ${BRAND_CONFIG.parentBrandName}`,
       description: 'Build your whole Himachal journey — stays, transport, food, activities and trusted local services.',
       type: 'website',
       url: `${SITE_URL}/${lang}`,
+      siteName: BRAND_CONFIG.fullProductName,
     },
     twitter: {
       // No OG/share image asset exists yet (public/ has no og-image) —
       // 'summary' degrades cleanly without one; switch to
       // 'summary_large_image' once a real 1200x630 image is added.
       card: 'summary',
-      title: 'Pahari Yatri | Build Your Himachal Journey',
+      title: `${BRAND_CONFIG.productDisplayName} by ${BRAND_CONFIG.parentBrandName} | Himachal Journey Planner`,
       description: 'Plan stays, transport, food, activities and trusted local services across your complete Himachal route.',
     },
   };
@@ -90,7 +93,7 @@ export default async function RootLayout(props: {
             <TripPlannerProvider>
               <CartProvider>
                 <LocalizationProvider initialDict={dict} initialLang={lang}>
-                  <div className="pb-16">{children}</div>
+                  {children}
                   <NotificationContainer />
                 </LocalizationProvider>
               </CartProvider>

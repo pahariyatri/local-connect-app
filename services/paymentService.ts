@@ -85,7 +85,7 @@ export function initRazorpayCheckout(opts: InitCheckoutOptions): Promise<Razorpa
       key: opts.keyId,
       amount: Math.round(opts.amount * 100), // convert to paise
       currency: opts.currency || 'INR',
-      name: 'Local Connect',
+      name: 'Pahari Yatri',
       description: `Booking #${opts.bookingId}`,
       order_id: opts.orderId,
       prefill: {

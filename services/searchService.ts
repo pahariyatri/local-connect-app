@@ -35,6 +35,13 @@ export interface DiscoveryService {
         pricingLabel: string;
         /** Number of nights the quote covers — only meaningful for stay-type services. */
         nights?: number;
+        /**
+         * Unit the price is quoted in, derived server-side from the service's
+         * own category tree. `night` only for the Accommodation subtree;
+         * everything else is `service` and renders without a unit rather than
+         * an invented one (PY-036).
+         */
+        priceUnit?: 'night' | 'service';
     };
 }
 

@@ -11,6 +11,7 @@ import {
 } from "@/services/bookingService";
 import { discoverServices, buildDiscoveryParams, mapServicesToVendors, EMPTY_VENDORS } from "@/services/vendorService";
 import DiscoveryDrawer from "../../components/molecules/DiscoveryDrawer";
+import SupportContact from "../../components/molecules/SupportContact";
 import type { Vendor } from "../../results/components/VendorSelectionCard";
 
 type BookingStatus =
@@ -366,9 +367,16 @@ export default function BookingDetailPage() {
           </button>
         )}
 
-        <p className="text-center text-[10px] text-slate-300 font-medium mt-8">
-          Need help? WhatsApp us with Booking YATRI-{id}
-        </p>
+        {/* PY-004 — this line used to be plain text with nothing behind it:
+            "Need help? WhatsApp us" while the site had no WhatsApp anywhere.
+            Now a real, config-driven link (and it disappears when no channel
+            is configured, rather than promising a channel that doesn't exist). */}
+        <SupportContact
+          variant="bar"
+          className="mt-8"
+          reference={`Booking YATRI-${id}`}
+          heading={`Need help with Booking YATRI-${id}?`}
+        />
       </div>
 
       <DiscoveryDrawer

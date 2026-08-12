@@ -7,6 +7,7 @@ import { useTripPlanner } from "@/contexts/TripPlannerContext";
 import { useNotification } from "@/contexts/NotificationContext";
 import { useTripStore } from "@/store/useTripStore";
 import { prepTracker } from "@/lib/prepTracker";
+import { formatINRWithSymbol } from "@/utils/price";
 import { useAuth } from "@/contexts/AuthContext";
 import TopNavigation from "../components/organisms/TopNavigation";
 
@@ -14,6 +15,7 @@ import Typography from "../components/atoms/Typography";
 import DayItinerary from "./components/DayItinerary";
 import { Vendor } from "./components/VendorSelectionCard";
 import DiscoveryDrawer from "../components/molecules/DiscoveryDrawer";
+import SupportContact from "../components/molecules/SupportContact";
 
 import {
   discoverServices,
@@ -22,6 +24,7 @@ import {
   EMPTY_VENDORS,
 } from "@/services/vendorService";
 import { getPackage } from "@/services/packageService";
+import { toLocalDateStringSafe } from "@/lib/travelDate";
 
 function parsePlanFromUrl(searchParams: URLSearchParams) {
   try {
@@ -188,8 +191,10 @@ export default function ResultsPage() {
       // If no package, we share the plan via URL params
       shareUrl.searchParams.set('origin', originPoint);
       shareUrl.searchParams.set('destinations', JSON.stringify(destinations));
-      shareUrl.searchParams.set('startDate', startDate ? new Date(startDate).toISOString().split('T')[0] : '');
-      shareUrl.searchParams.set('endDate', endDate ? new Date(endDate).toISOString().split('T')[0] : '');
+      // Local-date formatting, not toISOString(): a shared link must reproduce
+      // the days the traveller actually picked, not the UTC day before them.
+      shareUrl.searchParams.set('startDate', toLocalDateStringSafe(startDate));
+      shareUrl.searchParams.set('endDate', toLocalDateStringSafe(endDate));
       shareUrl.searchParams.set('guestCount', String(guestCount));
       shareUrl.searchParams.set('servicePreferences', JSON.stringify(servicePreferences));
     }
@@ -479,12 +484,20 @@ export default function ResultsPage() {
           </>
         )}
 
+        {/* PY-004 — trip review is the moment a traveler commits to a multi-day,
+            multi-thousand-rupee plan; until now there was no one to ask. */}
+        <SupportContact
+          variant="bar"
+          className="mt-12 mb-24"
+          heading="Questions before you send the request?"
+        />
+
         <div className="fixed bottom-24 left-0 right-0 px-6 z-50 animate-slide-up">
           <div className="max-w-md mx-auto p-4 bg-slate-900 rounded-[3rem] shadow-[0_30px_60px_rgba(0,0,0,0.4)] flex items-center justify-between border border-white/10 backdrop-blur-xl">
             <div className="pl-6">
               <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mb-2">{res.footer.total}</p>
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-white italic tracking-tighter">₹{totalPrice.toLocaleString()}</span>
+                <span className="text-3xl font-black text-white italic tracking-tighter">{formatINRWithSymbol(totalPrice)}</span>
               </div>
               <p className="text-[9px] text-slate-500 mt-1">Based on {itineraryDays.length} {itineraryDays.length === 1 ? "day" : "days"} · {guestCount || 2} guests</p>
               <p className="text-[8px] text-slate-600 mt-1 font-medium">Paid directly to local partners — not charged now</p>

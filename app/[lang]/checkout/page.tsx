@@ -6,6 +6,7 @@ import { prepTracker } from "@/lib/prepTracker";
 import { initRazorpayCheckout, verifyPayment } from "@/services/paymentService";
 import { reserveBooking } from "@/services/bookingService";
 import { useAuth } from "@/contexts/AuthContext";
+import SupportContact from "../components/molecules/SupportContact";
 
 const RAZORPAY_KEY_ID = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '';
 
@@ -260,6 +261,14 @@ export default function CheckoutPage() {
             ← Back to booking
           </button>
         )}
+
+        {/* PY-004 — payment is the single highest-anxiety screen in the product. */}
+        <SupportContact
+          variant="inline"
+          className="mt-6 justify-center"
+          reference={`Booking #${bookingId}`}
+          heading="Something wrong with this payment?"
+        />
 
         <p className="text-center text-[10px] text-slate-300 font-medium mt-6">
           Powered by Razorpay · RBI compliant · PCI DSS Level 1

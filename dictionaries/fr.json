@@ -1,7 +1,7 @@
 {
   "page": {
     "home": {
-      "badge": "Réseau Local Connect",
+      "badge": "Réseau Pahari Yatri",
       "hero": {
         "title": "Rencontrez les <span class=\"text-emerald-600\">vrais locaux</span><br />de l'Himalaya",
         "subtitle": "Connectez-vous directement à des guides, hôtes et opérateurs vérifiés. Pas de forfaits. Pas d'agences. Juste un service local authentique.",
@@ -70,7 +70,7 @@
       },
       "how": {
         "eyebrow": "Processus simple",
-        "title": "Comment fonctionne Local Connect",
+        "title": "Comment fonctionne Pahari Yatri",
         "steps": [
           {
             "title": "Parcourir les locaux",
@@ -310,7 +310,7 @@
         "button": "PARTAGER LE VOYAGE",
         "success": "Lien copié ! Partagez la magie.",
         "title": "Mon road trip dans l'Himachal",
-        "text": "Regardez cet incroyable voyage que j'ai planifié sur Local Connect !"
+        "text": "Regardez cet incroyable voyage que j'ai planifié sur Pahari Yatri !"
       },
       "itinerary": {
         "day": "Jour {day}",
@@ -332,7 +332,7 @@
       },
       "mission": {
         "title": "Notre Mission",
-        "text": "Local Connect est né au cœur de l'Himalaya. Nous avons vu un fossé entre l'immense beauté de notre culture et les outils numériques à la disposition de ceux qui la préservent.<br /><br />Notre plateforme n'est pas seulement un moteur de réservation ; c'est un pont. Nous représentons les propriétaires de maisons d'hôtes, les guides de montagne et les spécialistes de l'aventure qui sont les véritables curateurs de l'expérience montagnarde."
+        "text": "Pahari Yatri est né au cœur de l'Himalaya. Nous avons vu un fossé entre l'immense beauté de notre culture et les outils numériques à la disposition de ceux qui la préservent.<br /><br />Notre plateforme n'est pas seulement un moteur de réservation ; c'est un pont. Nous représentons les propriétaires de maisons d'hôtes, les guides de montagne et les spécialistes de l'aventure qui sont les véritables curateurs de l'expérience montagnarde."
       },
       "markets": {
         "title": "Principaux marchés sources internationaux",
@@ -446,6 +446,13 @@
       }
     },
     "common": {
+      "support": {
+        "title": "Assistance",
+        "need_help": "Besoin d'aide ?",
+        "whatsapp": "Discuter sur WhatsApp",
+        "call": "Appeler l'assistance",
+        "email": "Écrire à l'assistance"
+      },
       "actions": {
         "login": "Connexion",
         "register": "Rejoindre le Hub",
@@ -567,7 +574,7 @@
         }
       ],
       "footer_q": "Des questions ?",
-      "email": "privacy@localconnect.com"
+      "email": "pahariyatri@gmail.com"
     },
     "terms": {
       "title": "Conditions générales",
@@ -575,11 +582,11 @@
       "sections": [
         {
           "title": "01. Acceptation",
-          "text": "En accédant à Local Connect, vous acceptez d'être lié par ces termes. Notre plateforme est un pont entre les voyageurs de montagne et les légendes locales."
+          "text": "En accédant à Pahari Yatri, vous acceptez d'être lié par ces termes. Notre plateforme est un pont entre les voyageurs de montagne et les légendes locales."
         },
         {
           "title": "02. Rôles des vendeurs",
-          "text": "Les vendeurs et les agences (courtiers) sont des entités indépendantes. Local Connect fournit la technologie pour gérer ces partenariats et réservations."
+          "text": "Les vendeurs et les agences (courtiers) sont des entités indépendantes. Pahari Yatri fournit la technologie pour gérer ces partenariats et réservations."
         },
         {
           "title": "03. Réservations et paiements",
@@ -590,7 +597,7 @@
           "text": "Nous promouvons les voyages de montagne responsables. Respectez les cultures locales et gardez les sentiers propres."
         }
       ],
-      "footer": "Local Connect Tech (P) Ltd."
+      "footer": "Travel Platform par Pahari Yatri — Un produit de Pahari Yatri."
     },
     "vendor_dashboard": {
       "welcome": "Bon retour, {name} ! 👋",

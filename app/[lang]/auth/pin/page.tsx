@@ -67,7 +67,7 @@ function PinBoxes({
   };
 
   return (
-    <div className="flex justify-center gap-2.5" onPaste={handlePaste}>
+    <div className="flex justify-center gap-3 sm:gap-4 my-2" onPaste={handlePaste}>
       {Array.from({ length: PIN_LENGTH }).map((_, i) => (
         <input
           key={i}
@@ -80,9 +80,11 @@ function PinBoxes({
           value={value[i] || ''}
           onChange={(e) => handleChange(e, i)}
           onKeyDown={(e) => handleKeyDown(e, i)}
-          className={`w-11 h-12 sm:w-12 sm:h-14 text-center text-lg font-semibold rounded-xl transition-colors outline-none border ${
-            value[i] ? 'border-slate-900 bg-white text-slate-900' : 'border-slate-200 bg-white text-slate-400'
-          } focus:border-slate-900`}
+          className={`w-[52px] h-[58px] sm:w-16 sm:h-16 text-center text-xl font-black rounded-2xl transition-all outline-none border-2 ${
+            value[i]
+              ? 'border-emerald-500 bg-emerald-50/30 text-slate-900 shadow-sm'
+              : 'border-slate-200 bg-slate-50/70 text-slate-400 focus:bg-white focus:border-slate-900 focus:shadow-sm'
+          }`}
           placeholder="•"
         />
       ))}
@@ -122,15 +124,17 @@ export default function PinPage() {
     if (isTicketSignup) return 'NEW_USER_PIN';
     return 'CHECKING_PHONE'; // phone/check decides login vs. signup — always
   });
+  const [newPinStep, setNewPinStep] = useState<1 | 2>(1);
   const [pin, setPinDigits] = useState<string[]>(empty());
   const [confirm, setConfirm] = useState<string[]>(empty());
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const submitLockRef = useRef(false); // belt-and-braces duplicate-submit guard
+  const submitLockRef = useRef(false);
 
   const clearPinState = () => {
     setPinDigits(empty());
     setConfirm(empty());
+    setNewPinStep(1);
   };
 
   const goToDestination = () => router.replace(safeRedirect(redirectTo));
@@ -138,8 +142,6 @@ export default function PinPage() {
   const completeAuth = async (welcome: string) => {
     const profile = await fetchCurrentUser();
     if (!profile?.id) {
-      // Login/signup reported success but /auth/me came back without a
-      // usable profile — a controlled error, never a silent redirect.
       throw new Error('Signed in, but your profile could not be loaded. Please try again.');
     }
     login({
@@ -163,8 +165,8 @@ export default function PinPage() {
 
   // ── Phone-check: the single source of truth for login vs. signup ────────
   useEffect(() => {
-    if (isTicketReset || isTicketSignup) return; // ownership already proven via OTP ticket
-    if (!phoneNumber) return; // handled by the guard render below
+    if (isTicketReset || isTicketSignup) return;
+    if (!phoneNumber) return;
     let cancelled = false;
     (async () => {
       try {
@@ -172,8 +174,6 @@ export default function PinPage() {
         if (cancelled) return;
         const resolvedMode = exists ? 'login' : 'signup';
         setFlow(exists ? 'EXISTING_USER_PIN' : 'NEW_USER_PIN');
-        // Correct the URL if it disagreed with the backend, without adding
-        // a history entry (back button shouldn't bounce through both).
         if (rawMode !== resolvedMode) {
           router.replace(`/${lang}/auth/pin?mode=${resolvedMode}&phone=${phoneNumber}${redirectSuffix}`);
         }
@@ -201,19 +201,40 @@ export default function PinPage() {
     }
   };
 
+  const handleStep1Continue = () => {
+    const pinStr = pin.join('');
+    if (pinStr.length < PIN_LENGTH) {
+      setError(`Enter all ${PIN_LENGTH} digits.`);
+      return;
+    }
+    if (isWeakPin(pinStr)) {
+      setError('That PIN is too simple. Please choose a different PIN.');
+      return;
+    }
+    setError(null);
+    setNewPinStep(2);
+    setConfirm(empty());
+  };
+
   const validateNewPin = (): string | null => {
     const pinStr = pin.join('');
     const confirmStr = confirm.join('');
-    if (pinStr.length < PIN_LENGTH || confirmStr.length < PIN_LENGTH) return `Enter and confirm a ${PIN_LENGTH}-digit PIN.`;
-    if (pinStr !== confirmStr) return 'PINs do not match. Try again.';
-    if (isWeakPin(pinStr)) return 'That PIN is too easy to guess. Please choose a different one.'; // UX pre-check; backend policy is authoritative
+    if (pinStr.length < PIN_LENGTH || confirmStr.length < PIN_LENGTH) return `Enter and confirm your ${PIN_LENGTH}-digit PIN.`;
+    if (pinStr !== confirmStr) return 'PINs do not match. Please try again.';
+    if (isWeakPin(pinStr)) return 'That PIN is too easy to guess. Please choose a different one.';
     return null;
   };
 
   const handleSignup = async () => {
     if (submitLockRef.current) return;
     const validationError = validateNewPin();
-    if (validationError) { setError(validationError); return; }
+    if (validationError) {
+      setError(validationError);
+      if (pin.join('') !== confirm.join('')) {
+        setConfirm(empty());
+      }
+      return;
+    }
     submitLockRef.current = true;
     setFlow('SUBMITTING');
     setError(null);
@@ -228,11 +249,9 @@ export default function PinPage() {
       await completeAuth('Account created! Redirecting...');
     } catch (err) {
       if (err instanceof ApiClientError && err.code === 'AUTH_USER_EXISTS') {
-        // Race: registered by someone/something else between phone/check and
-        // this submit. The backend is authoritative — switch to login.
         clearPinState();
         setFlow('EXISTING_USER_PIN');
-        setError('This number was just registered. Please sign in with your PIN.');
+        setError('This number is already registered. Please sign in with your PIN.');
         submitLockRef.current = false;
         if (rawMode !== 'login') {
           router.replace(`/${lang}/auth/pin?mode=login&phone=${phoneNumber}${redirectSuffix}`);
@@ -252,8 +271,6 @@ export default function PinPage() {
     setError(null);
     try {
       await resetPin(ticket, pin.join(''), confirm.join(''));
-      // Reset revokes every session server-side — sign in fresh rather than
-      // assuming this browser's session is still valid.
       clearPinState();
       setSuccess('PIN reset! Redirecting to sign in...');
       setTimeout(() => router.replace(`/${lang}/auth/login`), 900);
@@ -282,10 +299,16 @@ export default function PinPage() {
 
   const submit = useCallback(() => {
     if (flow === 'EXISTING_USER_PIN') return handleLogin();
-    if (flow === 'NEW_USER_PIN') return handleSignup();
-    if (flow === 'RESET_PIN') return handleResetPin();
+    if (flow === 'NEW_USER_PIN') {
+      if (newPinStep === 1) return handleStep1Continue();
+      return handleSignup();
+    }
+    if (flow === 'RESET_PIN') {
+      if (newPinStep === 1) return handleStep1Continue();
+      return handleResetPin();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flow, pin, confirm, phoneNumber, ticket]);
+  }, [flow, newPinStep, pin, confirm, phoneNumber, ticket]);
 
   // Guard: login/signup need a phone; reset needs a ticket; signup needs a
   // ticket (OTP-verified) OR a phone (direct phone-check path).
@@ -303,7 +326,7 @@ export default function PinPage() {
     );
   }
 
-  // Loading state while phone/check resolves — never the wrong form.
+  // Loading state while phone/check resolves
   if (flow === 'CHECKING_PHONE') {
     return (
       <AuthShell lang={lang} title="One moment" subtitle="Checking your number...">
@@ -326,91 +349,132 @@ export default function PinPage() {
 
   const isNewPinFlow = flow === 'NEW_USER_PIN' || flow === 'RESET_PIN';
   const busy = flow === 'SUBMITTING';
-  const filled = isNewPinFlow
-    ? pin.join('').length === PIN_LENGTH && confirm.join('').length === PIN_LENGTH
-    : pin.join('').length === PIN_LENGTH;
 
-  const heading = flow === 'RESET_PIN' ? 'Choose a new PIN' : isNewPinFlow ? 'Set your PIN' : 'Enter your PIN';
-  const subtitle = flow === 'RESET_PIN'
-    ? `Choose a new ${PIN_LENGTH}-digit PIN.`
-    : isNewPinFlow
-      ? `Create a ${PIN_LENGTH}-digit PIN for`
-      : `Enter the ${PIN_LENGTH}-digit PIN for`;
+  // Dynamic titles and subtitles based on step
+  let pageEyebrow = 'PIN Login';
+  let pageTitle: React.ReactNode = <>Enter your <span className="text-emerald-500">PIN</span></>;
+  let pageSubtitle = phoneNumber ? `For +91 ${maskPhone(phoneNumber)}` : '';
+
+  if (isNewPinFlow) {
+    if (newPinStep === 1) {
+      pageEyebrow = flow === 'RESET_PIN' ? 'Reset PIN' : 'Step 1 of 2';
+      pageTitle = <>Set your <span className="text-emerald-500">4-digit PIN</span></>;
+      pageSubtitle = 'Create a secure PIN for your account';
+    } else {
+      pageEyebrow = flow === 'RESET_PIN' ? 'Reset PIN' : 'Step 2 of 2';
+      pageTitle = <>Confirm your <span className="text-emerald-500">PIN</span></>;
+      pageSubtitle = 'Re-enter the 4-digit PIN to confirm';
+    }
+  }
+
+  const handleBack = () => {
+    if (isNewPinFlow && newPinStep === 2) {
+      setNewPinStep(1);
+      setError(null);
+    } else {
+      router.push(`/${lang}/auth/login`);
+    }
+  };
+
+  const isStep1Filled = pin.join('').length === PIN_LENGTH;
+  const isStep2Filled = confirm.join('').length === PIN_LENGTH;
+  const canProceed = isNewPinFlow
+    ? newPinStep === 1
+      ? isStep1Filled
+      : isStep2Filled
+    : isStep1Filled;
 
   return (
     <AuthShell
       lang={lang}
-      eyebrow={flow === 'RESET_PIN' ? 'Reset PIN' : isNewPinFlow ? 'Set PIN' : 'PIN login'}
-      title={heading}
-      subtitle={
-        <>
-          {subtitle}{' '}
-          {phoneNumber && <span className="text-slate-900 font-medium">+91 {maskPhone(phoneNumber)}</span>}
-        </>
-      }
-      onBack={() => router.push(`/${lang}/auth/login`)}
+      eyebrow={pageEyebrow}
+      title={pageTitle}
+      subtitle={pageSubtitle}
+      onBack={handleBack}
     >
       <div className="space-y-6">
-        <div className="min-h-[20px]" aria-live="polite">
-          {error && (
-            <p role="alert" className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg py-2 px-3 text-center">
-              {error}
-            </p>
-          )}
-          {success && (
-            <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg py-2 px-3 text-center">
-              {success}
-            </p>
-          )}
-        </div>
-
-        {isNewPinFlow ? (
-          <div className="space-y-5">
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-slate-500 text-center">Enter PIN</p>
-              <PinBoxes value={pin} onChange={setPinDigits} autoFocus autoComplete="new-password" label="PIN" />
-            </div>
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-slate-500 text-center">Confirm PIN</p>
-              <PinBoxes value={confirm} onChange={setConfirm} autoComplete="new-password" label="Confirm PIN" />
-            </div>
-          </div>
-        ) : (
-          <PinBoxes value={pin} onChange={setPinDigits} autoFocus autoComplete="current-password" label="PIN" />
+        {error && (
+          <p role="alert" className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl py-2.5 px-3 text-center font-semibold">
+            {error}
+          </p>
+        )}
+        {success && (
+          <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-xl py-2.5 px-3 text-center font-semibold">
+            {success}
+          </p>
         )}
 
-        <div className="space-y-3">
+        {isNewPinFlow ? (
+          <div>
+            {newPinStep === 1 ? (
+              <PinBoxes
+                key="step1-pin"
+                value={pin}
+                onChange={setPinDigits}
+                autoFocus
+                autoComplete="new-password"
+                label="Set PIN"
+              />
+            ) : (
+              <PinBoxes
+                key="step2-confirm"
+                value={confirm}
+                onChange={setConfirm}
+                autoFocus
+                autoComplete="new-password"
+                label="Confirm PIN"
+              />
+            )}
+          </div>
+        ) : (
+          <PinBoxes
+            key="login-pin"
+            value={pin}
+            onChange={setPinDigits}
+            autoFocus
+            autoComplete="current-password"
+            label="PIN"
+          />
+        )}
+
+        <div className="space-y-4">
           <Button
             onClick={submit}
-            disabled={!filled || busy}
+            disabled={!canProceed || busy}
             isLoading={busy}
-            className="w-full h-12 rounded-xl bg-slate-900 hover:bg-black text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full h-13 sm:h-14 rounded-2xl bg-slate-900 hover:bg-black text-white text-xs sm:text-sm font-black uppercase tracking-[0.15em] shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[0.98]"
           >
-            {flow === 'RESET_PIN' ? 'Save new PIN' : flow === 'NEW_USER_PIN' ? 'Create account' : 'Sign in'}
+            {isNewPinFlow
+              ? newPinStep === 1
+                ? 'Continue'
+                : flow === 'RESET_PIN'
+                ? 'Save New PIN'
+                : 'Create Account'
+              : 'Sign In'}
           </Button>
 
           {flow === 'EXISTING_USER_PIN' && (
-            <div className="text-center">
+            <div className="text-center pt-1">
               <button
                 type="button"
                 disabled={busy}
                 onClick={handleForgotPin}
-                className="text-xs text-slate-400 hover:text-slate-900 transition-colors disabled:opacity-50"
+                className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors disabled:opacity-50"
               >
-                Forgot PIN? <span className="text-emerald-600 underline underline-offset-2">Recover with OTP</span>
+                Forgot your PIN? <span className="text-emerald-700 underline underline-offset-2">Reset via OTP</span>
               </button>
             </div>
           )}
 
-          {(flow === 'EXISTING_USER_PIN' || flow === 'NEW_USER_PIN') && (
+          {(!isNewPinFlow || newPinStep === 1) && (
             <div className="text-center">
               <button
                 type="button"
                 disabled={busy}
                 onClick={changeNumber}
-                className="text-xs text-slate-400 hover:text-slate-900 transition-colors disabled:opacity-50"
+                className="text-xs text-slate-400 hover:text-slate-700 transition-colors disabled:opacity-50 font-medium"
               >
-                Not your number? <span className="underline underline-offset-2">Change it</span>
+                Not your number? <span className="underline underline-offset-2">Change number</span>
               </button>
             </div>
           )}

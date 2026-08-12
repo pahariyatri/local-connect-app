@@ -1,339 +1,327 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter, useParams, usePathname } from "next/navigation";
-import { fetchCurrentUser } from "@/services/userService";
-import { User } from "@/types/userTypes";
+import React from "react";
+import Link from "next/link";
+import { useParams, usePathname } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { Locale } from "@/i18n-config";
-import { Icon } from "../atoms/Icon";
 
-type Tab = {
-    id: string;
-    label: string;
-    icon: (active: boolean) => React.ReactNode;
-    route: string;
-};
+/**
+ * Mobile Bottom Navigation Bar
+ * Standardized 5-tab mobile UX with context-aware states for:
+ * 1. Logged-out Guests (Explore | Community | Plan Trip | Partner | Sign In)
+ * 2. Logged-in Travelers (Explore | Community | Plan Trip | My Trips | Account)
+ * 3. Logged-in Vendors (Dashboard | Services | Add Service | Bookings | Profile)
+ */
+export default function BottomNavigation({
+  onToggleLanguage, // eslint-disable-line @typescript-eslint/no-unused-vars
+}: {
+  onToggleLanguage?: (lang?: Locale) => void;
+}) {
+  const params = useParams();
+  const pathname = usePathname() || "";
+  const lang = (params?.lang as string) || "en";
+  const { user } = useAuth();
+  const { dict } = useLocalizationContext();
 
-export default function BottomNavigation({ onToggleLanguage }: { onToggleLanguage?: (lang?: Locale) => void }) {
-    const router = useRouter();
-    const params = useParams();
-    const pathname = usePathname();
-    const lang = params.lang || "en";
-    
-    const LANGUAGE_CYCLE: Locale[] = ['en', 'hi', 'he', 'fr', 'es', 'de'];
-    const LANGUAGE_LABELS: Record<Locale, string> = {
-        'en': 'EN',
-        'hi': 'हिन्दी',
-        'he': 'עברית',
-        'fr': 'FR',
-        'es': 'ES',
-        'de': 'DE'
-    };
+  const isVendor = !!user && /vendor|host|broker/i.test(user.role || "");
 
-    const handleLanguageToggle = () => {
-        const currentIndex = LANGUAGE_CYCLE.indexOf(lang as Locale);
-        const nextIndex = (currentIndex + 1) % LANGUAGE_CYCLE.length;
-        const nextLang = LANGUAGE_CYCLE[nextIndex];
-        onToggleLanguage?.(nextLang);
-    };
-    
-    const [user, setUser] = useState<User | null>(null);
-    const [showNav, setShowNav] = useState(true);
+  const navDict = dict?.nav || {};
+  const commonDict = dict?.page?.common?.actions || {};
 
-    useEffect(() => {
-        // Persistent navigation
-        setShowNav(true);
-    }, []);
+  // Determine user avatar initial
+  const userInitial = user?.name
+    ? user.name.trim().charAt(0).toUpperCase()
+    : user?.phone
+    ? user.phone.slice(-1)
+    : "U";
 
-    const { dict } = useLocalizationContext();
-    const common = dict?.page?.common?.actions;
-    const dashboard = dict?.page?.vendor_dashboard?.tabs;
+  // Check route active statuses
+  const isExploreActive =
+    pathname === `/${lang}` ||
+    pathname.startsWith(`/${lang}/explore`) ||
+    pathname.startsWith(`/${lang}/search`) ||
+    (pathname.startsWith(`/${lang}/vendor/`) &&
+      !pathname.includes("/vendor/dashboard") &&
+      !pathname.includes("/vendor/services") &&
+      !pathname.includes("/vendor/onboarding") &&
+      !pathname.includes("/vendor/bookings"));
 
-    const travelerTabs: Tab[] = [
-        {
-            id: "explore",
-            label: common?.explore || "Explore",
-            icon: (active) => (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={active ? "text-emerald-500" : "text-slate-400"}>
-                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-                </svg>
-            ),
-            route: `/${lang}/explore`,
-        },
-        {
-            id: "community",
-            label: common?.community || "Community",
-            icon: (active) => (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={active ? "text-emerald-500" : "text-slate-400"}>
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                </svg>
-            ),
-            route: `/${lang}/community`,
-        },
-        {
-            id: "trip",
-            label: common?.ai_guide || "AI Guide",
-            icon: () => (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-                    <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>
-                </svg>
-            ),
-            route: `/${lang}/bot`,
-        },
-        {
-            id: "booking",
-            label: common?.bookings || "Bookings",
-            icon: (active) => (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={active ? "text-emerald-500" : "text-slate-400"}>
-                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>
-                </svg>
-            ),
-            route: `/${lang}/bookings`,
-        },
-        {
-            id: "profile",
-            label: common?.profile || "Profile",
-            icon: (active) => (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={active ? "text-emerald-500" : "text-slate-400"}>
-                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                </svg>
-            ),
-            route: `/${lang}/profile`,
-        },
-    ];
+  const isCommunityActive = pathname.startsWith(`/${lang}/community`);
+  const isPlanActive = pathname.startsWith(`/${lang}/builder`) || pathname.startsWith(`/${lang}/journey`);
+  const isPartnerActive = pathname.startsWith(`/${lang}/vendor/onboarding`);
+  const isBookingsActive = pathname.startsWith(`/${lang}/bookings`);
+  const isProfileActive = pathname.startsWith(`/${lang}/profile`);
+  const isAuthActive = pathname.startsWith(`/${lang}/auth/`);
 
-    const vendorTabs: Tab[] = [
-        {
-            id: "dashboard",
-            label: dashboard?.overview || "Dashboard",
-            icon: (active) => (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={active ? "text-emerald-500" : "text-slate-400"}>
-                    <rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>
-                </svg>
-            ),
-            route: `/${lang}/vendor`,
-        },
-        {
-            id: "services",
-            label: dashboard?.services || "Services",
-            icon: (active) => (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={active ? "text-emerald-500" : "text-slate-400"}>
-                    <path d="m16.24 7.76-1.41 1.41ZM12 2v3M6.05 4.95l1.41 1.41ZM2 12h3M4.95 17.95l1.41-1.41M12 22v-3M17.95 19.05l-1.41-1.41M22 12h-3ZM12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/>
-                </svg>
-            ),
-            route: `/${lang}/vendor/services`,
-        },
-        {
-            id: "trip",
-            label: common?.ai_guide || "AI Guide",
-            icon: () => (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-                    <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>
-                </svg>
-            ),
-            route: `/${lang}/bot`,
-        },
-        {
-            id: "bookings",
-            label: dashboard?.bookings || "Sales",
-            icon: (active) => (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={active ? "text-emerald-500" : "text-slate-400"}>
-                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                </svg>
-            ),
-            route: `/${lang}/vendor/bookings`,
-        },
-        {
-            id: "community",
-            label: common?.community || "Community",
-            icon: (active) => (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={active ? "text-emerald-500" : "text-slate-400"}>
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                </svg>
-            ),
-            route: `/${lang}/vendor/community`,
-        },
-    ];
+  // Vendor routes
+  const isVendorDashboardActive = pathname === `/${lang}/vendor/dashboard`;
+  const isVendorServicesActive = pathname.startsWith(`/${lang}/vendor/services`);
+  const isVendorBookingsActive = pathname.startsWith(`/${lang}/vendor/bookings`);
 
-    const brokerTabs: Tab[] = [
-        {
-            id: "dashboard",
-            label: common?.broker_hub || "Broker Hub",
-            icon: (active) => (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={active ? "text-emerald-500" : "text-slate-400"}>
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  return (
+    <nav
+      id="mobile-bottom-navigation"
+      aria-label="Mobile Bottom Navigation"
+      className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/95 backdrop-blur-xl border-t border-slate-200/90 shadow-[0_-6px_25px_rgba(0,0,0,0.06)] px-2 py-1.5 transition-all"
+      style={{ paddingBottom: "max(0.375rem, env(safe-area-inset-bottom))" }}
+    >
+      <div className="max-w-md mx-auto grid grid-cols-5 items-center justify-items-center h-14">
+        
+        {/* ─── CASE 1: VENDOR / HOST LOGGED IN ─── */}
+        {isVendor ? (
+          <>
+            {/* Tab 1: Dashboard */}
+            <Link
+              href={`/${lang}/vendor/dashboard`}
+              className={`flex flex-col items-center justify-center w-full py-1 rounded-xl transition-all active:scale-90 ${
+                isVendorDashboardActive ? "text-emerald-600 font-bold" : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <div className="relative">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isVendorDashboardActive ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                  <rect x="3" y="3" width="7" height="9" />
+                  <rect x="14" y="3" width="7" height="5" />
+                  <rect x="14" y="12" width="7" height="9" />
+                  <rect x="3" y="16" width="7" height="5" />
                 </svg>
-            ),
-            route: `/${lang}/broker`,
-        },
-        {
-            id: "trips",
-            label: common?.assisted || "Assisted",
-            icon: (active) => (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={active ? "text-emerald-500" : "text-slate-400"}>
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                </svg>
-            ),
-            route: `/${lang}/broker/trips`,
-        },
-        {
-            id: "trip",
-            label: common?.ai_guide || "AI Guide",
-            icon: () => (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-                    <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>
-                </svg>
-            ),
-            route: `/${lang}/bot`,
-        },
-        {
-            id: "earnings",
-            label: common?.earnings || "Comms",
-            icon: (active) => (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={active ? "text-emerald-500" : "text-slate-400"}>
-                    <line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                </svg>
-            ),
-            route: `/${lang}/broker/earnings`,
-        },
-        {
-            id: "settings",
-            label: common?.settings || "Settings",
-            icon: (active) => (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={active ? "text-emerald-500" : "text-slate-400"}>
-                    <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                </svg>
-            ),
-            route: `/${lang}/broker/settings`,
-        },
-    ];
+                {isVendorDashboardActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
+              </div>
+              <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
+                Overview
+              </span>
+            </Link>
 
-    const adminTabs: Tab[] = [
-        {
-            id: "dashboard",
-            label: common?.admin_hub || "Admin Pan",
-            icon: (active) => (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={active ? "text-emerald-500" : "text-slate-400"}>
-                    <rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 8v8"/><path d="M8 12h8"/>
+            {/* Tab 2: Services */}
+            <Link
+              href={`/${lang}/vendor/services`}
+              className={`flex flex-col items-center justify-center w-full py-1 rounded-xl transition-all active:scale-90 ${
+                isVendorServicesActive ? "text-emerald-600 font-bold" : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <div className="relative">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isVendorServicesActive ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                  <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                  <line x1="12" y1="22.08" x2="12" y2="12" />
                 </svg>
-            ),
-            route: `/${lang}/admin`,
-        },
-        {
-            id: "verify",
-            label: common?.queue || "Queue",
-            icon: (active) => (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={active ? "text-emerald-500" : "text-slate-400"}>
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                {isVendorServicesActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
+              </div>
+              <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
+                Services
+              </span>
+            </Link>
+
+            {/* Tab 3: Add Service (Center Action) */}
+            <Link
+              href={`/${lang}/vendor/services/new`}
+              className="flex flex-col items-center justify-center -mt-4 group active:scale-95 transition-transform"
+              aria-label="Add New Service"
+            >
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg bg-emerald-600 text-white shadow-emerald-600/30 group-hover:scale-105">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
-            ),
-            route: `/${lang}/admin/verification`,
-        },
-        {
-            id: "trip",
-            label: common?.ai_guide || "AI Guide",
-            icon: () => (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-                    <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>
+              </div>
+              <span className="text-[10px] font-black tracking-wider uppercase mt-1 leading-none text-emerald-700">
+                Add
+              </span>
+            </Link>
+
+            {/* Tab 4: Bookings */}
+            <Link
+              href={`/${lang}/vendor/bookings`}
+              className={`flex flex-col items-center justify-center w-full py-1 rounded-xl transition-all active:scale-90 ${
+                isVendorBookingsActive ? "text-emerald-600 font-bold" : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <div className="relative">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isVendorBookingsActive ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
                 </svg>
-            ),
-            route: `/${lang}/bot`,
-        },
-        {
-            id: "disputes",
-            label: common?.disputes || "Disputes",
-            icon: (active) => (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={active ? "text-emerald-500" : "text-slate-400"}>
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/>
+                {isVendorBookingsActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
+              </div>
+              <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
+                Bookings
+              </span>
+            </Link>
+
+            {/* Tab 5: Profile */}
+            <Link
+              href={`/${lang}/profile`}
+              className={`flex flex-col items-center justify-center w-full py-1 rounded-xl transition-all active:scale-90 ${
+                isProfileActive ? "text-emerald-600 font-bold" : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <div className="relative">
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black leading-none ${
+                  isProfileActive ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-700"
+                }`}>
+                  {userInitial}
+                </span>
+                {isProfileActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
+              </div>
+              <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
+                Profile
+              </span>
+            </Link>
+          </>
+        ) : (
+          /* ─── CASE 2: TRAVELER (LOGGED IN OR GUEST) ─── */
+          <>
+            {/* Tab 1: Explore */}
+            <Link
+              href={`/${lang}/explore`}
+              className={`flex flex-col items-center justify-center w-full py-1 rounded-xl transition-all active:scale-90 ${
+                isExploreActive ? "text-emerald-600 font-bold" : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <div className="relative">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isExploreActive ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                  <circle cx="12" cy="12" r="10" />
+                  <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill={isExploreActive ? "currentColor" : "none"} fillOpacity="0.2" />
                 </svg>
-            ),
-            route: `/${lang}/admin/disputes`,
-        },
-        {
-            id: "financial",
-            label: common?.stats || "Stats",
-            icon: (active) => (
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={active ? "text-emerald-500" : "text-slate-400"}>
-                    <line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/>
+                {isExploreActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
+              </div>
+              <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
+                {navDict.explore || commonDict.explore || "Explore"}
+              </span>
+            </Link>
+
+            {/* Tab 2: Community */}
+            <Link
+              href={`/${lang}/community`}
+              className={`flex flex-col items-center justify-center w-full py-1 rounded-xl transition-all active:scale-90 ${
+                isCommunityActive ? "text-emerald-600 font-bold" : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <div className="relative">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isCommunityActive ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                 </svg>
-            ),
-            route: `/${lang}/admin/analytics`,
-        },
-    ];
+                {isCommunityActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
+              </div>
+              <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
+                {navDict.community || commonDict.community || "Community"}
+              </span>
+            </Link>
 
-    // Determine which tabs to show based on Role
-    let currentTabs = travelerTabs;
-    if (user?.role === "Vendor") {
-        currentTabs = vendorTabs;
-    } else if (user?.vendorType === "agency") {
-        currentTabs = brokerTabs;
-    } else if (user?.role === "Admin") {
-        currentTabs = adminTabs;
-    }
+            {/* Tab 3: Plan Trip (Center Hero Button) */}
+            <Link
+              href={`/${lang}/builder`}
+              className="flex flex-col items-center justify-center -mt-4 group active:scale-95 transition-transform"
+              aria-label="Plan a Trip"
+            >
+              <div
+                className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-all ${
+                  isPlanActive
+                    ? "bg-slate-900 text-white shadow-emerald-500/25 ring-2 ring-emerald-500 ring-offset-2"
+                    : "bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-emerald-600/30 group-hover:scale-105"
+                }`}
+              >
+                <span className="text-lg">✨</span>
+              </div>
+              <span
+                className={`text-[10px] font-black tracking-wider uppercase mt-1 leading-none ${
+                  isPlanActive ? "text-slate-900" : "text-emerald-700"
+                }`}
+              >
+                {navDict.plan || "Plan"}
+              </span>
+            </Link>
 
-    if (!user) return null;
+            {/* Tab 4: Partner (if Guest) or My Trips (if Logged In Traveler) */}
+            {user ? (
+              <Link
+                href={`/${lang}/bookings`}
+                className={`flex flex-col items-center justify-center w-full py-1 rounded-xl transition-all active:scale-90 ${
+                  isBookingsActive ? "text-emerald-600 font-bold" : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <div className="relative">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isBookingsActive ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                  {isBookingsActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
+                </div>
+                <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
+                  {commonDict.my_bookings || "My Trips"}
+                </span>
+              </Link>
+            ) : (
+              <Link
+                href={`/${lang}/vendor/onboarding`}
+                className={`flex flex-col items-center justify-center w-full py-1 rounded-xl transition-all active:scale-90 ${
+                  isPartnerActive ? "text-emerald-600 font-bold" : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <div className="relative">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isPartnerActive ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                  </svg>
+                  {isPartnerActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
+                </div>
+                <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
+                  {navDict.partner || "Partner"}
+                </span>
+              </Link>
+            )}
 
-    const getActiveTabId = () => {
-        const currentTab = currentTabs.find(tab => pathname === tab.route);
-        return currentTab ? currentTab.id : "";
-    };
+            {/* Tab 5: Account (if logged in) or Sign In (if guest) */}
+            {user ? (
+              <Link
+                href={`/${lang}/profile`}
+                className={`flex flex-col items-center justify-center w-full py-1 rounded-xl transition-all active:scale-90 ${
+                  isProfileActive ? "text-emerald-600 font-bold" : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <div className="relative">
+                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black leading-none ${
+                    isProfileActive ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-700"
+                  }`}>
+                    {userInitial}
+                  </span>
+                  {isProfileActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
+                </div>
+                <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
+                  {commonDict.profile || "Account"}
+                </span>
+              </Link>
+            ) : (
+              <Link
+                href={`/${lang}/auth/login`}
+                className={`flex flex-col items-center justify-center w-full py-1 rounded-xl transition-all active:scale-90 ${
+                  isAuthActive ? "text-emerald-600 font-bold" : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <div className="relative">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isAuthActive ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  {isAuthActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
+                </div>
+                <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
+                  {navDict.sign_in || "Sign In"}
+                </span>
+              </Link>
+            )}
+          </>
+        )}
 
-    const activeTabId = getActiveTabId();
-
-    return (
-        <nav
-            className={`fixed bottom-0 left-0 right-0 glass border-t border-white/20 z-50 transition-all duration-500 ease-in-out md:hidden ${
-                showNav ? "translate-y-0" : "translate-y-full"
-            }`}
-        >
-            <div className="flex justify-between items-center max-w-md mx-auto h-20 px-3">
-                {currentTabs.map((tab) => {
-                    const isMiddle = tab.id === "trip";
-                    const active = activeTabId === tab.id;
-                    
-                    return (
-                        <button
-                            key={tab.id}
-                            className="relative flex flex-col items-center justify-center gap-1 group"
-                            onClick={() => router.push(tab.route)}
-                        >
-                            {isMiddle ? (
-                                <div className="absolute -top-10 w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-indigo-600 flex items-center justify-center shadow-xl shadow-emerald-200 border-4 border-white transition-transform group-hover:scale-110 active:scale-95">
-                                    {tab.icon(true)}
-                                </div>
-                            ) : (
-                                <div className={`p-1 rounded-xl transition-colors ${active ? "bg-emerald-50" : "group-hover:bg-slate-50"}`}>
-                                    {tab.icon(active)}
-                                </div>
-                            )}
-                            <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors mt-1 ${
-                                active ? "text-emerald-600" : "text-slate-400"
-                            } ${isMiddle ? "mt-6" : ""}`}>
-                                {tab.label}
-                            </span>
-                        </button>
-                    );
-                })}
-                
-                {/* Language Toggle */}
-                {onToggleLanguage && (
-                    <button
-                        onClick={handleLanguageToggle}
-                        className="flex flex-col items-center justify-center gap-1 group"
-                        title="Toggle language"
-                    >
-                        <div className="p-1 rounded-xl transition-colors group-hover:bg-slate-50">
-                            <span className="text-sm font-black text-slate-400 group-hover:text-slate-900">
-                                {LANGUAGE_LABELS[lang as Locale] || "EN"}
-                            </span>
-                        </div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                            {lang === "en" ? "Lang" : (lang === "hi" ? "भाषा" : "שפה")}
-                        </span>
-                    </button>
-                )}
-            </div>
-        </nav>
-    );
+      </div>
+    </nav>
+  );
 }

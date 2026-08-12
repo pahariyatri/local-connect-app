@@ -10,7 +10,6 @@ import { toApiUiError } from "@/utils/apiErrors";
 import Typography from "../components/atoms/Typography";
 import Button from "../components/atoms/Button";
 import TopNavigation from "../components/organisms/TopNavigation";
-import BottomNavigation from "../components/organisms/BottomNavigation";
 import LocalImage from "../components/atoms/Image";
 import Input from "../components/atoms/Input";
 import DateRangePicker from "../builder/components/DateRangePicker";
@@ -142,9 +141,9 @@ export default function JourneyPage() {
 
     if (!hasTrip) {
         return (
-            <div className="min-h-screen bg-slate-50 pb-40">
+            <div className="min-h-screen bg-slate-50 pb-24 sm:pb-32">
                 <TopNavigation title={journey.title || "Trip Architect"} />
-                <main className="max-w-md mx-auto px-6 pt-24 text-center">
+                <main className="max-w-md mx-auto px-6 pt-20 sm:pt-24 text-center">
                     <div className="text-4xl mb-4">🏔️</div>
                     <Typography variant="h2" className="text-xl font-black text-slate-900 mb-2">Nothing planned yet</Typography>
                     <p className="text-slate-400 text-sm font-medium mb-8">Start with Plan a Trip and your route will show up here to edit.</p>
@@ -152,16 +151,15 @@ export default function JourneyPage() {
                         Plan a Trip
                     </Button>
                 </main>
-                <BottomNavigation />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-40">
+        <div className="min-h-screen bg-slate-50 pb-24 sm:pb-32">
             <TopNavigation title={journey.title || "Trip Architect"} />
             
-            <main className="max-w-md mx-auto px-6 pt-24">
+            <main className="max-w-md mx-auto px-6 pt-20 sm:pt-24">
                 <header className="mb-8">
                     <div className="flex justify-between items-start">
                         <div>
@@ -397,8 +395,6 @@ export default function JourneyPage() {
                     </div>
                 </div>
             )}
-
-            <BottomNavigation />
         </div>
     );
 }

@@ -1,5 +1,5 @@
 export const pwaConfig = {
-    cacheName: 'localconnect-cache',
+    cacheName: 'pahariyatri-cache',
     assets: [
         '/',
         '/offline.html',

@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🏔️ PahariYatri — Local Connect Network
+# 🏔️ Travel Platform by Pahari Yatri
 
 **Connecting travellers with authentic local experiences across the Himalayas**
 
@@ -15,9 +15,9 @@
 
 ## 📖 Overview
 
-**PahariYatri Local Connect** is a community-driven travel marketplace that bridges the gap between adventurous travellers and trusted local service providers across Himalayan regions. The platform enables locals to list services (guides, homestays, transport, experiences) while giving travellers a curated, verified directory with real-time chat, booking, and payment support.
+**Travel Platform by Pahari Yatri** (`https://app.pahariyatri.com`) is a community-driven travel marketplace built by **Pahari Yatri** (`https://www.pahariyatri.com`) that bridges the gap between adventurous travellers and trusted local service providers across Himalayan regions. The platform enables locals to list services (guides, homestays, transport, experiences) while giving travellers a curated, verified directory with custom multi-day trip building, real-time booking, and escrow payment support.
 
-> 🗂 **This repo** contains the **Next.js frontend**. The backend REST API lives in a separate repository.
+> 🗂 **This repo** contains the **Next.js frontend** for `app.pahariyatri.com`. The backend REST API lives in a separate repository.
 
 ---
 
@@ -54,7 +54,7 @@
 
 - **Node.js** `>=22` (use `nvm use` if you have nvm)
 - **npm** `>=10`
-- A running instance of the **Local Connect backend API**
+- A running instance of the **Pahari Yatri backend API**
 
 ### 1 — Clone & Install
 

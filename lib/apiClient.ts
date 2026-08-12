@@ -1,5 +1,5 @@
 /**
- * Centralized API Client for Local Connect Portal — the ONE typed API layer.
+ * Centralized API Client for Travel Platform by Pahari Yatri — typed API layer.
  *
  * - Cookie-based auth (HttpOnly, credentials: 'include'); no JS token storage.
  * - Normalized errors: ApiClientError carries the backend's stable machine
