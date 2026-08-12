@@ -169,12 +169,12 @@ export default function VerifyOtpPage() {
   return (
     <AuthShell
       lang={lang}
-      eyebrow={purpose === 'forgot' ? 'PIN recovery' : 'Verify phone'}
-      title="Enter the code"
+      eyebrow={purpose === 'forgot' ? 'PIN Recovery' : 'Verification'}
+      title={<>Enter the <span className="text-emerald-500">Code</span></>}
       subtitle={
         <>
-          Sent to <span className="text-slate-900 font-medium">+91 {maskPhone(phone)}</span>{' '}
-          <button onClick={() => router.push(`/${lang}/auth/login`)} className="text-emerald-600 underline underline-offset-2">
+          Sent to <span className="text-slate-900 font-bold">+91 {maskPhone(phone)}</span>{' '}
+          <button onClick={() => router.push(`/${lang}/auth/login`)} className="text-emerald-600 font-bold underline underline-offset-2 hover:text-emerald-700">
             Change
           </button>
         </>
@@ -182,20 +182,18 @@ export default function VerifyOtpPage() {
       onBack={() => router.push(`/${lang}/auth/login`)}
     >
       <Form onSubmit={handleOtpVerification} className="space-y-6">
-        <div className="min-h-[20px]" aria-live="polite">
-          {error && (
-            <p role="alert" className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg py-2 px-3 text-center">
-              {error}
-            </p>
-          )}
-          {success && (
-            <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg py-2 px-3 text-center">
-              {success}
-            </p>
-          )}
-        </div>
+        {error && (
+          <p role="alert" className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl py-2.5 px-3 text-center font-semibold">
+            {error}
+          </p>
+        )}
+        {success && (
+          <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-xl py-2.5 px-3 text-center font-semibold">
+            {success}
+          </p>
+        )}
 
-        <div className="flex justify-between gap-2" onPaste={handlePaste}>
+        <div className="flex justify-between gap-2.5 sm:gap-3 my-2" onPaste={handlePaste}>
           {otp.map((digit, index) => (
             <input
               key={index}
@@ -208,38 +206,41 @@ export default function VerifyOtpPage() {
               onChange={(e) => handleChange(e, index)}
               onKeyDown={(e) => handleKeyDown(e, index)}
               maxLength={1}
-              className={`w-full h-12 sm:h-14 text-center text-lg font-semibold rounded-xl transition-colors outline-none border ${digit ? 'border-slate-900 bg-white text-slate-900' : 'border-slate-200 bg-white text-slate-400'
-                } focus:border-slate-900`}
+              className={`w-full h-14 sm:h-16 text-center text-xl font-black rounded-2xl transition-all outline-none border-2 ${
+                digit
+                  ? 'border-emerald-500 bg-emerald-50/30 text-slate-900 shadow-sm'
+                  : 'border-slate-200 bg-slate-50/70 text-slate-400 focus:bg-white focus:border-slate-900 focus:shadow-sm'
+              }`}
               placeholder="•"
               required
             />
           ))}
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           <Button
             type="submit"
             disabled={otp.some((digit) => !digit)}
             isLoading={isVerifying}
-            className="w-full h-12 rounded-xl bg-slate-900 hover:bg-black text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full h-14 sm:h-15 rounded-2xl bg-slate-900 hover:bg-black text-white text-xs sm:text-sm font-black uppercase tracking-[0.15em] shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[0.98]"
           >
-            Verify & continue
+            Verify & Continue
           </Button>
 
-          <div className="text-center">
+          <div className="text-center pt-1">
             <button
               type="button"
               disabled={!canResend || isResending}
               onClick={handleResend}
-              className="text-xs text-slate-400 disabled:opacity-75 transition-colors"
+              className="text-xs text-slate-400 disabled:opacity-75 transition-colors font-medium"
             >
               Didn&apos;t receive a code?{' '}
               {canResend ? (
-                <span className="text-emerald-600 underline underline-offset-2">
+                <span className="text-emerald-700 font-bold underline underline-offset-2">
                   {isResending ? 'Sending…' : 'Resend now'}
                 </span>
               ) : (
-                <span className="text-slate-600 font-medium">
+                <span className="text-slate-600 font-semibold">
                   Retry in <span className="tabular-nums">{Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, '0')}</span>
                 </span>
               )}

@@ -1,10 +1,11 @@
 import type { MetadataRoute } from 'next';
+import { BRAND_CONFIG } from '@/config/brandConfig';
 
 export default function manifest(): MetadataRoute.Manifest {
     return {
-        name: 'LocalConnect',
-        short_name: 'LocalConnect',
-        description: 'Connecting travelers with local vendors seamlessly.',
+        name: BRAND_CONFIG.fullProductName,
+        short_name: BRAND_CONFIG.compactProductName,
+        description: 'Plan stays, transport, food, activities and trusted local services across your complete Himachal route.',
         start_url: '/',
         display: 'standalone',
         background_color: '#ffffff',

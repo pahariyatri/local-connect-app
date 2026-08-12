@@ -1,7 +1,7 @@
 {
   "page": {
     "home": {
-      "badge": "Red Local Connect",
+      "badge": "Red Pahari Yatri",
       "hero": {
         "title": "Conoce a los <span class=\"text-emerald-600\">verdaderos locales</span><br />del Himalaya",
         "subtitle": "Conéctate directamente con guías, anfitriones y operadores verificados. Sin paquetes. Sin agencias. Solo servicio local auténtico.",
@@ -70,7 +70,7 @@
       },
       "how": {
         "eyebrow": "Proceso sencillo",
-        "title": "Cómo funciona Local Connect",
+        "title": "Cómo funciona Pahari Yatri",
         "steps": [
           {
             "title": "Explora locales",
@@ -310,7 +310,7 @@
         "button": "COMPARTIR VIAJE",
         "success": "¡Enlace copiado! Comparte la magia.",
         "title": "Mi viaje por carretera en Himachal",
-        "text": "¡Mira este increíble viaje que planeé en Local Connect!"
+        "text": "¡Mira este increíble viaje que planeé en Pahari Yatri!"
       },
       "itinerary": {
         "day": "Día {day}",
@@ -332,7 +332,7 @@
       },
       "mission": {
         "title": "Nuestra misión",
-        "text": "Local Connect nació en el corazón del Himalaya. Vimos una brecha entre la inmensa belleza de nuestra cultura y las herramientas digitales disponibles para las personas que la preservan.<br /><br />Nuestra plataforma no es solo un motor de reservas; es un puente. Representamos a los propietarios de casas de familia, los guías de montaña y los especialistas en aventuras que son los verdaderos curadores de la experiencia en la montaña."
+        "text": "Pahari Yatri nació en el corazón del Himalaya. Vimos una brecha entre la inmensa belleza de nuestra cultura y las herramientas digitales disponibles para las personas que la preservan.<br /><br />Nuestra plataforma no es solo un motor de reservas; es un puente. Representamos a los propietarios de casas de familia, los guías de montaña y los especialistas en aventuras que son los verdaderos curadores de la experiencia en la montaña."
       },
       "markets": {
         "title": "Principales mercados de origen internacionales",
@@ -366,7 +366,7 @@
       "title": "Planificador de leyendas",
       "loading_title": "Mapeando tu camino",
       "step1": {
-        "title": "¿Hacia dónde va tu <span class=\"text-indigo-600\">historia</span>?",
+        "title": "¿Hacia dónde va tu <span class=\"text-emerald-600\">historia</span>?",
         "subtitle": "Comienza con un origen y elige las paradas de tus sueños.",
         "route_title": "Punto de partida",
         "origin_placeholder": "¿Desde dónde empiezas? (ej. Delhi)",
@@ -446,6 +446,13 @@
       }
     },
     "common": {
+      "support": {
+        "title": "Soporte",
+        "need_help": "¿Necesitas ayuda?",
+        "whatsapp": "Chatear por WhatsApp",
+        "call": "Llamar a soporte",
+        "email": "Enviar correo a soporte"
+      },
       "actions": {
         "login": "Iniciar sesión",
         "register": "Unirse al Hub",
@@ -567,7 +574,7 @@
         }
       ],
       "footer_q": "¿Preguntas?",
-      "email": "privacy@localconnect.com"
+      "email": "pahariyatri@gmail.com"
     },
     "terms": {
       "title": "Términos y condiciones",
@@ -575,11 +582,11 @@
       "sections": [
         {
           "title": "01. Aceptación",
-          "text": "Al acceder a Local Connect, aceptas estar sujeto a estos términos. Nuestra plataforma es un puente entre los viajeros de montaña y las leyendas locales."
+          "text": "Al acceder a Pahari Yatri, aceptas estar sujeto a estos términos. Nuestra plataforma es un puente entre los viajeros de montaña y las leyendas locales."
         },
         {
           "title": "02. Roles de los vendedores",
-          "text": "Los vendedores y agencias (agentes) son entidades independientes. Local Connect proporciona la tecnología para gestionar estas asociaciones y reservas."
+          "text": "Los vendedores y agencias (agentes) son entidades independientes. Pahari Yatri proporciona la tecnología para gestionar estas asociaciones y reservas."
         },
         {
           "title": "03. Reservas y pagos",
@@ -590,7 +597,7 @@
           "text": "Promovemos los viajes de montaña responsables. Respeta las culturas locales y mantén limpios los senderos."
         }
       ],
-      "footer": "Local Connect Tech (P) Ltd."
+      "footer": "Travel Platform por Pahari Yatri — Un producto de Pahari Yatri."
     },
     "vendor_dashboard": {
       "welcome": "¡Bienvenido de nuevo, {name}! 👋",

@@ -22,6 +22,28 @@ test.describe('Pahari Yatri Core Flows', () => {
     await expect(page).toHaveURL(/\/en\/builder/);
   });
 
+  test('Landing page has exactly one hero — regression for the 2026-08-11 duplicate-hero bug', async ({ page }) => {
+    // page.tsx used to render <HeroSection> AND a second, separate inline
+    // hero block (its own headline, subtitle, CTA pair, and route-preview
+    // card) stacked immediately below it in the same wrapping <section> —
+    // two competing full "hero" moments on first load. Exactly one <h1> is
+    // the precise signal: real landing pages legitimately repeat CTA text
+    // like "Plan My Trip" further down (a closing CTA strip, etc.), so
+    // counting buttons isn't a reliable check — counting primary headings is.
+    await page.goto('/en');
+    await expect(page.locator('h1')).toHaveCount(1);
+    await expect(page.locator('h1')).toContainText(/Himachal/i);
+  });
+
+  test('Landing hero has a real destination search input', async ({ page }) => {
+    const searchInput = page.getByPlaceholder('Where are you going?');
+    await page.goto('/en');
+    await expect(searchInput).toBeVisible();
+    await searchInput.fill('Kasol');
+    await page.getByRole('button', { name: 'Search', exact: true }).click();
+    await expect(page).toHaveURL(/\/en\/explore\?q=Kasol/);
+  });
+
   test('Mobile menu works correctly', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'Mobile only test');
     
@@ -44,29 +66,32 @@ test.describe('Pahari Yatri Core Flows', () => {
 
   test('Explore page search and filters', async ({ page }) => {
     await page.goto('/en/explore');
-    
+
     // Check search input
     const searchInput = page.locator('input[id="explore-search"]');
     await expect(searchInput).toBeVisible();
-    
-    // Type and verify empty state or results
+
+    // Typing now searches real inventory (not just filtering the curated
+    // destination cards) — an unmatched query shows the real zero-result
+    // recovery state, not the old destination-only "no match" text.
     await searchInput.fill('UnknownLocation123');
-    await expect(page.locator('text=No destinations match')).toBeVisible();
-    
-    // Clear search
+    await expect(page.getByTestId('explore-zero-result')).toBeVisible({ timeout: 10_000 });
+
+    // Clear search returns to the curated destination grid
     await page.getByRole('button', { name: /Clear search/i }).click();
     await expect(searchInput).toHaveValue('');
-    
+
     // Check categories
     await expect(page.locator('button[id="explore-cat-all"]')).toBeVisible();
-    
-    // Click a destination card
+
+    // Click a destination card — this filters in place (one "Explore"
+    // concept, no more separate /discover page) rather than navigating away.
     const firstCard = page.locator('article[id^="explore-card-"]').first();
-    await expect(firstCard).toBeVisible();
+    const destinationLabel = await firstCard.locator('h2').innerText();
     await firstCard.click();
-    
-    // Should navigate to discover with location param
-    await expect(page).toHaveURL(/\/en\/discover\?location=/);
+
+    await expect(page).toHaveURL(/\/en\/explore$/);
+    await expect(page.getByText(destinationLabel, { exact: false }).first()).toBeVisible();
   });
 
   test('Auth redirects', async ({ page }) => {

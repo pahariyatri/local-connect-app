@@ -1,4 +1,4 @@
-# Local Connect Portal — Docs
+# Travel Platform by Pahari Yatri — Docs
 
 A trip **preparation portal**: a traveller does a few clicks, customises their route
 and stops, and books verified local services. Not an e-commerce store — no cart,

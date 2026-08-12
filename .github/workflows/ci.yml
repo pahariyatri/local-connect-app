@@ -24,12 +24,12 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Lint (non-blocking — pre-existing errors outside auth scope)
-        # eslint.config.mjs was repaired (was legacy JSON in a .mjs — lint never
-        # ran). 17 pre-existing errors remain in legacy components; make this
-        # blocking once they are burned down.
-        continue-on-error: true
-        run: npx eslint app/ lib/ services/ utils/ contexts/ middleware.ts
+      - name: Lint (blocking)
+        # Now blocking, as the previous note asked for: the error backlog is
+        # burned down to 0. `next lint` was removed in Next 16, so the npm
+        # script invokes eslint directly — CI calls that same script so the two
+        # can never drift apart again.
+        run: npm run lint
 
       - name: Typecheck (non-blocking — next.config sets ignoreBuildErrors)
         continue-on-error: true

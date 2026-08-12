@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useCart } from "@/contexts/CartContext";
 import { useNotification } from "@/contexts/NotificationContext";
@@ -10,18 +10,9 @@ import { toApiUiError } from "@/utils/apiErrors";
 import Typography from "../components/atoms/Typography";
 import Button from "../components/atoms/Button";
 import TopNavigation from "../components/organisms/TopNavigation";
-import BottomNavigation from "../components/organisms/BottomNavigation";
 import LocalImage from "../components/atoms/Image";
 import Input from "../components/atoms/Input";
 import DateRangePicker from "../builder/components/DateRangePicker";
-
-const SUGGESTED_ROAD_TRIP_STOPS: ItineraryStop[] = [
-    { id: "s1", day: 1, time: "01:00 PM", activity: "Riverside Dhaba Lunch", type: "food", location: "On way to Manali" },
-    { id: "s2", day: 1, time: "08:00 PM", activity: "Night Club / Bar Visit", type: "activity", location: "Old Manali" },
-    { id: "s3", day: 2, time: "10:00 AM", activity: "Solang Valley Exploration", type: "activity", location: "Solang" },
-    { id: "s4", day: 2, time: "01:30 PM", activity: "Local Dhaba Lunch", type: "food", location: "Solang Outskirts" },
-    { id: "s5", day: 3, time: "11:00 AM", activity: "Souvenir Shopping", type: "other", location: "Mall Road" }
-];
 
 type RoadMapItem = {
     id: string;
@@ -42,7 +33,7 @@ import { useLocalizationContext } from "@/contexts/LocalizationContext";
 export default function JourneyPage() {
     const { cart, removeFromCart, totalPrice } = useCart();
     const { showNotification } = useNotification();
-    const { stops, addStop, removeStop, origin, startDate, endDate, setStartDate, setEndDate, setBasicInfo } = useTripPlanner();
+    const { stops, addStop, removeStop, origin, destinations, startDate, endDate, setStartDate, setEndDate } = useTripPlanner();
     const router = useRouter();
     const params = useParams();
     const { dict, loading } = useLocalizationContext();
@@ -54,27 +45,25 @@ export default function JourneyPage() {
     const [isAddingStop, setIsAddingStop] = useState(false);
     const [isEditingDates, setIsEditingDates] = useState(false);
     const [isSavingDraft, setIsSavingDraft] = useState(false);
+    const [savedTripId, setSavedTripId] = useState<number | null>(null);
     const [newStop, setNewStop] = useState<Omit<ItineraryStop, "id">>({ activity: "", time: "12:00 PM", day: 1, type: "food" });
 
     const journey = dict?.page?.journey || {};
+    const hasTrip = stops.length > 0 || cart.length > 0 || Boolean(origin);
 
-
-    // Pre-populate with user's specific request if empty
-    useEffect(() => {
-        if (stops.length === 0 && !origin) {
-            const today = new Date().toISOString().split('T')[0];
-            const inThreeDays = new Date();
-            inThreeDays.setDate(inThreeDays.getDate() + 3);
-            setBasicInfo("Chandigarh", ["Manali"], today, inThreeDays.toISOString().split('T')[0]);
-            SUGGESTED_ROAD_TRIP_STOPS.forEach(stop => addStop(stop));
-        }
-    }, [stops.length, origin, setBasicInfo, addStop]);
-
-    const handleBooking = () => {
+    // Creating a real booking needs a saved package/trip id, a travel date,
+    // and guest count that this page's local stop-editor state doesn't carry
+    // (that's the results/checkout flow's job — not rebuilding it here).
+    // Save the real draft trip, then hand off to the real "My Journeys" list
+    // rather than simulating a booking that was never actually created.
+    const handleBooking = async () => {
         setIsBooking(true);
-        setTimeout(() => {
-            router.push(`/${pathLang}/booking-status`);
-        }, 1500);
+        try {
+            await handleSaveDraft();
+            router.push(`/${pathLang}/journeys`);
+        } finally {
+            setIsBooking(false);
+        }
     };
 
     const handleAddStop = () => {
@@ -90,19 +79,26 @@ export default function JourneyPage() {
     ] as RoadMapItem[]).filter(item => item.day === activeDay)
      .sort((a, b) => a.time.localeCompare(b.time));
 
+    // Real origin/destination only — "My Himachal Trip" when neither is set
+    // yet, never a specific hardcoded place pair the traveler never chose.
+    const tripName = origin && destinations.length > 0
+        ? `${origin} to ${destinations.join(", ")}`
+        : origin || destinations[0] || "My Himachal Trip";
+
     const handleSaveDraft = async () => {
         setIsSavingDraft(true);
         try {
             const serviceIds = cart
                 .map((item) => Number(item.id))
                 .filter((id) => Number.isFinite(id));
-            await saveDraftTrip({
-                name: `${origin || "Chandigarh"} to Manali`,
+            const trip = await saveDraftTrip({
+                name: tripName,
                 serviceIds,
                 totalPrice,
                 startDate: startDate || new Date().toISOString().split("T")[0],
                 endDate: endDate || new Date().toISOString().split("T")[0],
             });
+            setSavedTripId(trip.id);
             showNotification("Trip saved — find it under My Journeys.", "success");
         } catch (err) {
             showNotification(toApiUiError(err, "We could not save this trip. Please try again.").message, "error");
@@ -112,7 +108,11 @@ export default function JourneyPage() {
     };
 
     const copyShareLink = () => {
-        const shareUrl = `${window.location.origin}/${pathLang}/journey/view?tripId=hp-road-trip-123`;
+        if (!savedTripId) {
+            showNotification("Save this trip first, then share it.", "error");
+            return;
+        }
+        const shareUrl = `${window.location.origin}/${pathLang}/journey/view?tripId=${savedTripId}`;
         navigator.clipboard.writeText(shareUrl);
         showNotification(journey.copy_link_msg || "Share link copied to clipboard!", "success");
     };
@@ -139,11 +139,27 @@ export default function JourneyPage() {
 
     if (!dict) return <div className="min-h-screen bg-slate-50" />;
 
+    if (!hasTrip) {
+        return (
+            <div className="min-h-screen bg-slate-50 pb-24 sm:pb-32">
+                <TopNavigation title={journey.title || "Trip Architect"} />
+                <main className="max-w-md mx-auto px-6 pt-20 sm:pt-24 text-center">
+                    <div className="text-4xl mb-4">🏔️</div>
+                    <Typography variant="h2" className="text-xl font-black text-slate-900 mb-2">Nothing planned yet</Typography>
+                    <p className="text-slate-400 text-sm font-medium mb-8">Start with Plan a Trip and your route will show up here to edit.</p>
+                    <Button onClick={() => router.push(`/${pathLang}/builder`)} className="w-full h-14 rounded-2xl shadow-xl shadow-indigo-100">
+                        Plan a Trip
+                    </Button>
+                </main>
+            </div>
+        );
+    }
+
     return (
-        <div className="min-h-screen bg-slate-50 pb-40">
+        <div className="min-h-screen bg-slate-50 pb-24 sm:pb-32">
             <TopNavigation title={journey.title || "Trip Architect"} />
             
-            <main className="max-w-md mx-auto px-6 pt-24">
+            <main className="max-w-md mx-auto px-6 pt-20 sm:pt-24">
                 <header className="mb-8">
                     <div className="flex justify-between items-start">
                         <div>
@@ -157,7 +173,7 @@ export default function JourneyPage() {
                                 </button>
                             </div>
                             <Typography variant="h1" className="text-3xl font-black text-slate-900 leading-tight">
-                                {origin || "Chandigarh"} → {"Manali"}
+                                {origin && destinations.length > 0 ? `${origin} → ${destinations.join(", ")}` : tripName}
                             </Typography>
                         </div>
                         <button
@@ -208,21 +224,6 @@ export default function JourneyPage() {
                     <button className="px-5 py-3 rounded-2xl font-black text-sm bg-indigo-50 text-indigo-600 border border-indigo-100 whitespace-nowrap">
                         {journey.add_day}
                     </button>
-                </div>
-
-                {/* 🤖 AI Suggestion Chip */}
-                <div className="mb-8 p-5 rounded-[2rem] bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-xl shadow-indigo-100 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-                    <div className="relative z-10 flex gap-4 items-center">
-                        <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl">🤖</div>
-                        <div className="flex-1">
-                            <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1">{journey.ai_insight}</p>
-                            <p className="text-xs font-bold leading-tight">{journey.ai_tip}</p>
-                        </div>
-                        <button className="p-2 rounded-xl bg-white/20 hover:bg-white/30 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                        </button>
-                    </div>
                 </div>
 
                 {/* 🗺️ Roadmap Section */}
@@ -308,19 +309,6 @@ export default function JourneyPage() {
                                         </div>
                                     </div>
                                     
-                                    {/* Smart Suggestion Logic */}
-                                    {item.type === 'activity' && (
-                                        <div className="mt-3 ml-2 p-3 rounded-2xl bg-indigo-50/50 border border-indigo-100 flex items-center justify-between animate-pulse">
-                                            <div className="flex items-center gap-3">
-                                                <div className="text-lg">🤝</div>
-                                                <div>
-                                                    <p className="text-[9px] font-black text-indigo-900 uppercase">{journey.broker_rec}</p>
-                                                    <p className="text-[10px] font-bold text-indigo-600">Local Guide: Rakesh (4.9★)</p>
-                                                </div>
-                                            </div>
-                                            <Button size="small" variant="ghost" className="text-indigo-600 h-6 px-3 text-[9px] font-black">{journey.hire}</Button>
-                                        </div>
-                                    )}
                                 </div>
                             );
                         })
@@ -407,8 +395,6 @@ export default function JourneyPage() {
                     </div>
                 </div>
             )}
-
-            <BottomNavigation />
         </div>
     );
 }

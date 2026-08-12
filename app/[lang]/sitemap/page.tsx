@@ -14,7 +14,7 @@ const pageCategories = [
         links: [
             { name: "Build Story", path: "/builder" },
             { name: "Generated Path", path: "/results" },
-            { name: "Discover Legends", path: "/discover" },
+            { name: "Explore Local Services", path: "/explore" },
             { name: "My Journeys", path: "/bookings" },
             { name: "Trip Breakdown", path: "/bookings/BK-9021/summary" },
             { name: "Live Tracking", path: "/bookings/BK-9021/status" },

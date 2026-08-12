@@ -1,23 +1,94 @@
-import React from 'react';
-import { Icon } from '../atoms/Icon';
-import Image from 'next/image';
+"use client";
 
-export default function HeroSection({ onSearch, onPlan }: { onSearch: () => void; onPlan: () => void }) {
+import React, { useState } from "react";
+import { Icon } from "../atoms/Icon";
+import Image from "next/image";
+
+const POPULAR_DESTINATIONS = ["Manali", "Kasol", "Spiti", "Tirthan", "Dharamshala", "Shimla"];
+
+export default function HeroSection({ onSearch, onPlan }: { onSearch: (query?: string) => void; onPlan?: () => void }) {
+  const [query, setQuery] = useState("");
+
+  const submitSearch = (value?: string) => {
+    onSearch(value ?? query);
+  };
+
   return (
-    <section className="relative bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1400')" }}>
-      <div className="bg-black/40 inset-0 absolute" />
-      <div className="relative max-w-4xl mx-auto px-4 py-32 text-center text-white">
-        <h1 className="text-5xl md:text-6xl font-black tracking-tight mb-4">Explore Himachal<br />like you know a local</h1>
-        <p className="text-lg md:text-xl mb-8">Find trusted stays, rides and experiences — or build the whole journey.</p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <button onClick={onSearch} className="btn-primary rounded-full h-control px-9 text-xs">
-            <Icon name="search" className="w-4 h-4 mr-2" /> Search Local Services
-          </button>
-          <button onClick={onPlan} className="btn-brand rounded-full h-control px-9 text-xs">
-            <Icon name="map-pin" className="w-4 h-4 mr-2" /> Plan My Trip
-          </button>
+    <section className="relative overflow-hidden">
+      <div className="relative min-h-[520px] sm:min-h-[580px] w-full flex items-center justify-center">
+        {/* Background Mountain Photo */}
+        <Image
+          src="https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?q=80&w=1800"
+          alt="Himachal Pradesh Mountain Landscape"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
+        />
+        {/* Subtle dark gradient overlay for crystal clear typography */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/65 to-slate-950/90" />
+
+        <div className="relative z-10 w-full max-w-3xl mx-auto px-4 sm:px-6 py-12 text-center text-white flex flex-col items-center justify-center">
+          {/* Punchy, Clean Hook Line */}
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black leading-[1.08] tracking-tight text-balance">
+            Direct from Himachal locals.{" "}
+            <span className="text-emerald-400">Zero agency markups.</span>
+          </h1>
+
+          <p className="mt-4 max-w-lg text-sm sm:text-base text-slate-300 font-medium leading-relaxed">
+            Connect directly with verified homestay hosts, 4x4 mountain drivers, and native trek guides.
+          </p>
+
+          {/* Sleek Floating Search Console */}
+          <div className="mt-8 w-full max-w-xl">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                submitSearch();
+              }}
+              className="group flex items-center justify-between gap-2 p-2 sm:p-2.5 rounded-full bg-white/95 backdrop-blur-xl shadow-2xl border border-white/30 hover:border-emerald-400/50 hover:shadow-emerald-500/15 transition-all duration-300"
+            >
+              <div className="flex items-center gap-3 flex-1 min-w-0 pl-3 sm:pl-4">
+                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0 group-focus-within:bg-emerald-50 text-slate-400 group-focus-within:text-emerald-600 transition-colors">
+                  <Icon name="search" className="h-4 w-4" />
+                </div>
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Where to? (e.g. Manali, Kasol, Spiti)"
+                  aria-label="Search destination"
+                  className="w-full bg-transparent text-sm sm:text-base font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-medium focus:outline-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="h-11 sm:h-12 px-5 sm:px-7 rounded-full bg-emerald-600 hover:bg-emerald-700 text-xs sm:text-sm font-black uppercase tracking-wider text-white shadow-lg shadow-emerald-600/25 transition-all active:scale-95 shrink-0 flex items-center gap-2"
+              >
+                <span>Search</span>
+              </button>
+            </form>
+          </div>
+
+          {/* Minimal Quick Destination Links */}
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs text-slate-300">
+            <span className="text-[11px] font-bold text-slate-400">Popular:</span>
+            {POPULAR_DESTINATIONS.map((dest) => (
+              <button
+                key={dest}
+                type="button"
+                onClick={() => submitSearch(dest)}
+                className="px-2.5 py-0.5 rounded-full text-xs font-medium text-slate-200 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                {dest}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </section>
   );
 }
+
+

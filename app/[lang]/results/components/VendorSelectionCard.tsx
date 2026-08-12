@@ -3,6 +3,7 @@
 import React from "react";
 import LocalImage from "../../components/atoms/Image";
 import VerifiedBadge from "../../components/atoms/VerifiedBadge";
+import { formatINRWithSymbol } from "@/utils/price";
 
 export interface Vendor {
   id: string;
@@ -98,7 +99,7 @@ export default function VendorSelectionCard({
               )}
               <div className="flex items-center gap-2">
                 <span className={`font-black text-emerald-600 ${isAlternative ? "text-[10px]" : "text-sm"}`}>
-                    ₹{vendor.price}
+                    {formatINRWithSymbol(vendor.price)}
                 </span>
               </div>
             </div>

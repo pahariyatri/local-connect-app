@@ -9,6 +9,7 @@ import { TripStop } from "@/types/tripBuilder";
 import { Vendor } from "../../results/components/VendorSelectionCard";
 import { discoverServices, buildDiscoveryParams, mapServicesToVendors, EMPTY_VENDORS } from "@/services/vendorService";
 import { createPackage } from "@/services/packageService";
+import { toTitleCase } from "@/utils/text";
 import { sessionTracker } from "@/services/sessionService";
 
 interface PackageBuilderStepProps {
@@ -293,8 +294,8 @@ export default function PackageBuilderStep({
 
       <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm mb-6">
         <p className="text-sm font-bold text-slate-500">
-          {origin} → {destinations?.join(" → ")}
-          {routeStops?.length ? ` · via ${routeStops.join(", ")}` : ""} · {itineraryDays.length} {itineraryDays.length === 1 ? "day" : "days"} · {guestCount} guests
+          {toTitleCase(origin)} → {destinations?.map(toTitleCase).join(" → ")}
+          {routeStops?.length ? ` · via ${routeStops.map(toTitleCase).join(", ")}` : ""} · {itineraryDays.length} {itineraryDays.length === 1 ? "day" : "days"} · {guestCount} guests
         </p>
       </div>
 

@@ -1,7 +1,7 @@
 {
   "page": {
     "home": {
-      "badge": "Local Connect Network",
+      "badge": "Pahari Yatri Network",
       "hero": {
         "title": "Build your journey with<br /><span class=\"text-emerald-600\">trusted local partners</span>",
         "subtitle": "Plan the whole journey and reserve it in one place. Pay your local partners directly, on your terms.",
@@ -70,7 +70,7 @@
       },
       "how": {
         "eyebrow": "Simple Process",
-        "title": "How Local Connect Works",
+        "title": "How Pahari Yatri Works",
         "steps": [
           {
             "title": "Browse Locals",
@@ -310,7 +310,7 @@
         "button": "SHARE JOURNEY",
         "success": "Link copied! Share the magic.",
         "title": "My Himachal Road Trip",
-        "text": "Check out this amazing journey I planned on Local Connect!"
+        "text": "Check out this amazing journey I planned on Pahari Yatri!"
       },
       "itinerary": {
         "day": "Day {day}",
@@ -332,7 +332,7 @@
       },
       "mission": {
         "title": "Our Mission",
-        "text": "Local Connect was born in the heart of the Himalayas. We saw a gap between the immense beauty of our culture and the digital tools available to the people who preserve it.<br /><br />Our platform isn't just a booking engine; it's a bridge. We represent the homestay owners, the mountain guides, and the adventure specialists who are the true curators of the mountain experience."
+        "text": "Pahari Yatri was born in the heart of the Himalayas. We saw a gap between the immense beauty of our culture and the digital tools available to the people who preserve it.<br /><br />Our platform isn't just a booking engine; it's a bridge. We represent the homestay owners, the mountain guides, and the adventure specialists who are the true curators of the mountain experience."
       },
       "markets": {
         "title": "Top International Source Markets",
@@ -366,7 +366,7 @@
       "title": "Legend Planner",
       "loading_title": "Mapping your Path",
       "step1": {
-        "title": "Where is your <span class=\"text-indigo-600\">story</span> going?",
+        "title": "Where is your <span class=\"text-emerald-600\">story</span> going?",
         "subtitle": "Start with an origin and pick your dream stops.",
         "route_title": "Starting Point",
         "origin_placeholder": "Where are you starting? (e.g. Delhi)",
@@ -475,6 +475,13 @@
       }
     },
     "common": {
+      "support": {
+        "title": "Support",
+        "need_help": "Need help?",
+        "whatsapp": "Chat on WhatsApp",
+        "call": "Call support",
+        "email": "Email support"
+      },
       "date_picker": {
         "this_weekend": "This Weekend",
         "next_weekend": "Next Weekend",
@@ -597,7 +604,7 @@
         }
       ],
       "footer_q": "Questions?",
-      "email": "privacy@localconnect.com"
+      "email": "pahariyatri@gmail.com"
     },
     "terms": {
       "title": "Terms & Conditions",
@@ -605,11 +612,11 @@
       "sections": [
         {
           "title": "01. Acceptance",
-          "text": "By accessing Local Connect, you agree to be bound by these terms. Our platform is a bridge between mountain travelers and local legends."
+          "text": "By accessing Pahari Yatri, you agree to be bound by these terms. Our platform is a bridge between mountain travelers and local legends."
         },
         {
           "title": "02. Vendor Roles",
-          "text": "Vendors and Agencies (Brokers) are independent entities. Local Connect provides the technology to manage these partnerships and bookings."
+          "text": "Vendors and Agencies (Brokers) are independent entities. Pahari Yatri provides the technology to manage these partnerships and bookings."
         },
         {
           "title": "03. Booking & Payments",
@@ -620,7 +627,7 @@
           "text": "We promote responsible mountain travel. Respect local cultures and keep the trails clean."
         }
       ],
-      "footer": "Local Connect Tech (P) Ltd."
+      "footer": "Travel Platform by Pahari Yatri — A Pahari Yatri product."
     },
     "vendor_dashboard": {
       "welcome": "Welcome back, {name}! 👋",

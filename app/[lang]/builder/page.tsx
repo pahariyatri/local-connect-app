@@ -7,6 +7,7 @@ import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { useTripPlanner, ServiceType } from "@/contexts/TripPlannerContext";
 import { useTripStore } from "@/store/useTripStore";
 import { prepTracker } from "@/lib/prepTracker";
+import { formatINRWithSymbol } from "@/utils/price";
 import Typography from "../components/atoms/Typography";
 import Button from "../components/atoms/Button";
 import DestinationSelector from "./components/DestinationSelector";
@@ -17,6 +18,8 @@ import TravelingPartySelector from "./components/TravelingPartySelector";
 import NextStopSelector from "./components/NextStopSelector";
 import PackageBuilderStep from "./components/PackageBuilderStep";
 import { TripStop, createTripStop } from "@/types/tripBuilder";
+import SupportContact from "../components/molecules/SupportContact";
+import { hasLiveSupportChannel } from "@/lib/supportConfig";
 
 export default function TripBuilderPage() {
   const { lang } = useParams();
@@ -252,7 +255,7 @@ export default function TripBuilderPage() {
   };
 
   return (
-      <main className="max-w-6xl mx-auto px-4 pt-28 sm:pt-36 pb-32 sm:pb-40">
+      <main className="max-w-6xl mx-auto px-4 pt-6 sm:pt-10 pb-24 sm:pb-32">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
             {/* Sidebar - Premium Promise */}
@@ -265,7 +268,16 @@ export default function TripBuilderPage() {
                     <ul className="space-y-5">
                        {[
                            { text: builder.promise.verified, icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
-                           { text: builder.promise.support, icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> },
+                           ...(hasLiveSupportChannel ? [{ text: builder.promise.support, icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> }] : []),
+                           // ^ PY-004: "24/7 On-Trip Support" is only claimed when a real
+                           // LIVE channel (WhatsApp / phone) is configured in
+                           // lib/supportConfig — deliberately hasLiveSupportChannel, not
+                           // hasAnySupportChannel. Support email is now real and reachable
+                           // (see SupportContact below), but email is asynchronous: it
+                           // cannot back a "24/7 on-trip" promise to someone stranded on a
+                           // road at 2am. An unstaffed 24/7 promise on a ₹10k-30k booking
+                           // is itself a trust defect, so the line stays dropped until a
+                           // phone/WhatsApp channel exists behind it.
                            { text: builder.promise.price, icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> }
                        ].map((item, i) => (
                            <li key={i} className="flex items-center gap-3">
@@ -277,6 +289,10 @@ export default function TripBuilderPage() {
                        ))}
                     </ul>
                 </div>
+
+                {/* PY-004 — a real, config-driven way to reach a human while planning.
+                    Renders nothing when no channel is configured. */}
+                <SupportContact variant="bar" heading="Planning help?" />
             </div>
  
             {/* Main Content - Stepper */}
@@ -308,7 +324,7 @@ export default function TripBuilderPage() {
                     {builder.buttons.total ?? "Total"}
                   </span>
                   <span className="text-lg sm:text-2xl font-black text-slate-900 tabular-nums">
-                    ₹{step5Footer.totalPrice.toLocaleString()}
+                    {formatINRWithSymbol(step5Footer.totalPrice)}
                   </span>
                 </div>
               )}
@@ -323,7 +339,10 @@ export default function TripBuilderPage() {
                     <Button
                       onClick={() => step5Footer.onCreatePackage()}
                       disabled={isGenerating || step5Footer.totalPrice <= 0}
-                      className="flex-1 h-12 sm:h-16 rounded-xl sm:rounded-2xl text-sm sm:text-lg font-black tracking-[0.15em] sm:tracking-[0.2em] transition-all uppercase bg-emerald-500 hover:bg-emerald-600 text-white shadow-2xl active:scale-[0.98] disabled:opacity-50"
+                      // Tighter type/tracking on mobile + nowrap so the primary
+                      // CTA stays on one line at 360–390px instead of breaking
+                      // to "CREATE MY / PACKAGE" (PY-033). Desktop unchanged.
+                      className="flex-1 h-12 sm:h-16 px-3 rounded-xl sm:rounded-2xl text-[11px] sm:text-lg font-black tracking-[0.08em] sm:tracking-[0.2em] whitespace-nowrap transition-all uppercase bg-emerald-500 hover:bg-emerald-600 text-white shadow-2xl active:scale-[0.98] disabled:opacity-50"
                     >
                       {isGenerating ? (
                         <div className="flex items-center justify-center gap-3">

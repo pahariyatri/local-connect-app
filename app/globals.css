@@ -8,30 +8,38 @@
  * (bg-surface, text-body, h-control, rounded-card…) over raw palette values.
  */
 :root {
-  /* Colour — HSL triplets so Tailwind can apply opacity modifiers */
-  --primary: 222.2 47.4% 11.2%;          /* slate-900 — primary actions, headings */
-  --primary-foreground: 210 40% 98%;
+  /* Colour — HSL triplets so Tailwind can apply opacity modifiers.
+   * Mountain/local/premium palette: forest pine brand, warm-neutral
+   * grays instead of cool slate-blue. Matches the emerald/slate
+   * overrides in tailwind.config.ts — raw "emerald-" and "slate-"
+   * utility classes and these semantic tokens now resolve to the
+   * same family. */
+  --primary: 150 16.4% 10.8%;            /* charcoal #17201c — primary actions, headings */
+  --primary-foreground: 43 30% 96%;      /* warm off-white */
 
-  --brand: 160 84% 39%;                  /* emerald-500 — brand accent, highlights */
-  --brand-foreground: 210 40% 98%;
+  --brand: 165 46% 32%;                  /* forest pine (mid) — brand accent, highlights */
+  --brand-hover: 165 46.5% 16.9%;        /* forest pine (deep) #173f35 — hover/active */
+  --brand-foreground: 43 30% 96%;
+  --brand-soft: 165 34% 91%;             /* light forest tint — soft badges/backgrounds */
 
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
+  --accent: 23.2 42.4% 51%;              /* warm earth #b7764d — secondary accent, sparingly */
+  --accent-foreground: 43 30% 96%;
 
   --background: 0 0% 100%;               /* page background */
-  --foreground: 222.2 84% 4.9%;
+  --foreground: 150 16.4% 10.8%;         /* charcoal */
 
-  --surface: 210 40% 98%;                /* slate-50 — subdued section/page bg */
+  --surface: 43 30% 95.5%;               /* warm off-white #f7f5f0 — subdued section/page bg */
   --card: 0 0% 100%;                     /* card background */
-  --card-foreground: 222.2 84% 4.9%;
-  --border-subtle: 210 40% 94%;          /* slate-100 — default card/input border */
+  --card-foreground: 150 16.4% 10.8%;
+  --border-subtle: 90 7.1% 89%;          /* stone border #e3e5e1 — default card/input border */
 
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%; /* slate-500 — body/secondary text */
-  --text-faint: 213 27% 84%;             /* slate-300 — hints, placeholders */
+  --muted: 143 20% 92%;                  /* soft sage — muted backgrounds */
+  --muted-foreground: 155 5.6% 42.4%;    /* muted text #66726d — body/secondary text */
+  --text-faint: 90 10% 80%;              /* hints, placeholders */
 
-  --danger: 350 89% 60%;                 /* rose-500 — errors */
-  --success: 160 84% 39%;                /* matches brand — confirmations */
+  --danger: 0 45.5% 49.6%;               /* #b84545 — errors */
+  --warning: 34.6 75% 37.6%;             /* #a86b18 — caution states */
+  --success: 151.4 52.5% 31.4%;          /* #267a52 — confirmations */
 
   /* Typography scale (rem) */
   --text-xs: 0.75rem;

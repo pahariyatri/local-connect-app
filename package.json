@@ -1,12 +1,13 @@
 {
-  "name": "localconnectapp",
+  "name": "pahariyatri-travel-platform",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint app/ lib/ services/ utils/ contexts/ middleware.ts",
+    "lint:fix": "eslint app/ lib/ services/ utils/ contexts/ middleware.ts --fix",
     "check:contract": "node scripts/check-api-contract.mjs ../backend/openapi.json --scope=/auth",
     "typecheck": "tsc --noEmit"
   },
