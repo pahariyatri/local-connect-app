@@ -119,7 +119,7 @@ const ROUTE_PRESETS: RoutePreset[] = [
     title: "Dharamshala & Bir Paragliding Trail",
     subtitle: "Tibetan culture, tea gardens & world-class paragliding take-off",
     emoji: "🪂",
-    durationDays: 4,
+    durationDays: 3,
     totalDistance: "220 km",
     maxAltitude: "2,400 m",
     region: "Kangra Valley",
@@ -195,7 +195,7 @@ const ROUTE_PRESETS: RoutePreset[] = [
     title: "Spiti Valley Cold Desert Explorer",
     subtitle: "High mountain passes, 1000-year-old gompas & lunar valleys",
     emoji: "❄️",
-    durationDays: 5,
+    durationDays: 3,
     totalDistance: "410 km",
     maxAltitude: "4,590 m",
     region: "Lahaul & Spiti",
@@ -281,39 +281,52 @@ export default function InteractiveRouteSection({ lang }: { lang: string }) {
     setActiveDayIndex(0);
   };
 
+  const handlePrevDay = () => {
+    if (activeDayIndex > 0) {
+      setActiveDayIndex(activeDayIndex - 1);
+    }
+  };
+
+  const handleNextDay = () => {
+    if (activeDayIndex < activePreset.stops.length - 1) {
+      setActiveDayIndex(activeDayIndex + 1);
+    }
+  };
+
   const handleOpenInBuilder = () => {
     router.push(`/${lang}/builder?${activePreset.builderUrlParams}`);
   };
 
   return (
-    <section className="py-14 sm:py-20 bg-gradient-to-b from-slate-50 to-white px-4 sm:px-6 relative overflow-hidden">
-      {/* Background Decorative Blur */}
-      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-full max-w-5xl h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+    <section className="py-12 sm:py-20 bg-gradient-to-b from-slate-50/80 via-white to-slate-50/50 px-4 sm:px-6 relative overflow-hidden">
+      {/* Background Subtle Mountain Ambient Blur */}
+      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-full max-w-5xl h-72 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-6xl mx-auto relative z-10">
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 sm:mb-12">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100/80 text-emerald-800 text-[10px] font-black uppercase tracking-widest mb-3">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 sm:mb-10">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100/90 text-emerald-800 text-[11px] font-black uppercase tracking-widest border border-emerald-200/60 shadow-xs">
               <span>🗺️ Verified Route Blueprints</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-[1.1]">
               The journey, day by day.
             </h2>
-            <p className="text-slate-500 text-sm sm:text-base mt-2 max-w-xl font-medium">
+            <p className="text-slate-500 text-sm sm:text-base font-medium max-w-2xl leading-relaxed">
               Every stop, scenic pass, and local host planned in advance — not left to chance on arrival.
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-              Interactive Preview
+          <div className="hidden sm:flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-wider">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Interactive Itinerary
             </span>
           </div>
         </div>
 
-        {/* 1. Circuit Tabs */}
-        <div className="flex gap-2.5 overflow-x-auto pb-3 mb-6 sm:mb-8 scrollbar-hide">
+        {/* 1. Circuit Selector Tabs (Mobile & Desktop) */}
+        <div className="flex items-center gap-2.5 overflow-x-auto pb-2 mb-6 sm:mb-8 scrollbar-hide">
           {ROUTE_PRESETS.map((preset) => {
             const isSelected = preset.id === activePresetId;
             return (
@@ -322,14 +335,14 @@ export default function InteractiveRouteSection({ lang }: { lang: string }) {
                 onClick={() => handleSelectPreset(preset.id)}
                 className={`flex items-center gap-2.5 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all duration-300 border ${
                   isSelected
-                    ? "bg-slate-900 text-white border-slate-900 shadow-xl shadow-slate-900/10 scale-100"
-                    : "bg-white text-slate-600 border-slate-200/80 hover:bg-slate-100 hover:text-slate-900"
+                    ? "bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/15 ring-2 ring-slate-900/20"
+                    : "bg-white text-slate-600 border-slate-200/90 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300"
                 }`}
               >
                 <span className="text-base">{preset.emoji}</span>
-                <span>{preset.title.split("Circuit")[0].split("Trail")[0].split("Explorer")[0].trim()}</span>
+                <span className="font-black">{preset.title.split("Circuit")[0].split("Trail")[0].split("Explorer")[0].trim()}</span>
                 <span
-                  className={`text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider ${
+                  className={`text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider ${
                     isSelected ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500"
                   }`}
                 >
@@ -341,88 +354,101 @@ export default function InteractiveRouteSection({ lang }: { lang: string }) {
         </div>
 
         {/* 2. Main Interactive Route Experience Card */}
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-200/40 overflow-hidden">
+        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-200/50 overflow-hidden">
           
           {/* Header Metric Strip */}
-          <div className="bg-slate-900 text-white px-6 sm:px-8 py-5 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800">
-            <div className="flex items-center gap-3">
-              <span className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-black text-lg shadow-md shadow-emerald-500/20">
+          <div className="bg-slate-950 text-white px-5 sm:px-8 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800">
+            <div className="flex items-center gap-3.5">
+              <span className="w-11 h-11 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-emerald-500/25 shrink-0">
                 {activePreset.emoji}
               </span>
               <div>
-                <h3 className="text-base sm:text-lg font-black text-white leading-tight">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400">
+                    {activePreset.region}
+                  </span>
+                  <span className="text-slate-600 text-xs">•</span>
+                  <span className="text-[10px] font-bold text-slate-400">
+                    {activePreset.durationDays} Days Circuit
+                  </span>
+                </div>
+                <h3 className="text-base sm:text-xl font-black text-white leading-tight mt-0.5">
                   {activePreset.title}
                 </h3>
-                <p className="text-slate-400 text-xs mt-0.5 font-medium">
-                  {activePreset.subtitle}
-                </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-4 sm:gap-6 text-xs">
-              <div className="flex items-center gap-1.5">
-                <span className="text-slate-400 font-bold uppercase text-[10px]">Distance:</span>
-                <span className="font-black text-emerald-400">{activePreset.totalDistance}</span>
+            {/* Quick Metrics */}
+            <div className="flex items-center gap-3 sm:gap-5 text-xs bg-slate-900/90 sm:bg-transparent p-3 sm:p-0 rounded-2xl border border-slate-800 sm:border-0 justify-between sm:justify-end">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1.5">
+                <span className="text-slate-400 font-bold uppercase text-[9px] sm:text-[10px]">Distance:</span>
+                <span className="font-black text-emerald-400 text-xs sm:text-sm">{activePreset.totalDistance}</span>
               </div>
-              <div className="h-4 w-px bg-slate-800" />
-              <div className="flex items-center gap-1.5">
-                <span className="text-slate-400 font-bold uppercase text-[10px]">Max Altitude:</span>
-                <span className="font-black text-emerald-400">{activePreset.maxAltitude}</span>
+              <div className="h-6 w-px bg-slate-800" />
+              <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1.5">
+                <span className="text-slate-400 font-bold uppercase text-[9px] sm:text-[10px]">Max Elevation:</span>
+                <span className="font-black text-emerald-400 text-xs sm:text-sm">{activePreset.maxAltitude}</span>
               </div>
-              <div className="h-4 w-px bg-slate-800" />
-              <div className="hidden sm:flex items-center gap-1.5">
+              <div className="h-6 w-px bg-slate-800 hidden sm:block" />
+              <div className="hidden sm:flex flex-col sm:flex-row sm:items-center gap-1.5">
                 <span className="text-slate-400 font-bold uppercase text-[10px]">Stops:</span>
-                <span className="font-black text-white">{activePreset.stops.length} Days</span>
+                <span className="font-black text-white text-sm">{activePreset.stops.length} Days</span>
               </div>
             </div>
           </div>
 
-          {/* Interactive Day Selection Timeline Bar */}
-          <div className="px-6 sm:px-8 pt-6 pb-2 border-b border-slate-100 bg-slate-50/50">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                Select Day to Inspect Route
-              </span>
-              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full">
-                Step {activeDayIndex + 1} of {activePreset.stops.length}
-              </span>
+          {/* Interactive Day Selection Stepper Bar */}
+          <div className="px-4 sm:px-8 pt-5 pb-3 border-b border-slate-100 bg-slate-50/60">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                  Select Day Itinerary
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2.5 py-0.5 rounded-full">
+                  Day {activeDayIndex + 1} of {activePreset.stops.length}
+                </span>
+              </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 sm:gap-3 pb-3">
+            {/* Responsive Day Buttons */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {activePreset.stops.map((stop, idx) => {
                 const isActive = idx === activeDayIndex;
                 return (
                   <button
                     key={stop.day}
                     onClick={() => setActiveDayIndex(idx)}
-                    className={`relative p-3 sm:p-4 rounded-2xl text-left transition-all duration-300 border ${
+                    className={`relative p-2.5 sm:p-4 rounded-2xl text-left transition-all duration-200 border flex flex-col justify-between ${
                       isActive
                         ? "bg-white border-emerald-500 shadow-md ring-2 ring-emerald-500/20"
-                        : "bg-white/70 border-slate-200/80 hover:bg-white hover:border-slate-300 opacity-75 hover:opacity-100"
+                        : "bg-white/80 border-slate-200/90 hover:bg-white hover:border-slate-300 opacity-80 hover:opacity-100"
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center justify-between mb-1 gap-1">
                       <span
-                        className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                          isActive
-                            ? "bg-slate-900 text-white"
-                            : "bg-slate-100 text-slate-600"
+                        className={`text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                          isActive ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"
                         }`}
                       >
                         Day {stop.day}
                       </span>
-                      <span className="text-xs font-black text-emerald-600">
+                      <span className="text-[10px] sm:text-xs font-black text-emerald-600 truncate">
                         {stop.elevation}
                       </span>
                     </div>
-                    <p className="font-black text-xs sm:text-sm text-slate-900 truncate">
+
+                    <p className="font-black text-xs sm:text-sm text-slate-900 truncate leading-snug">
                       {stop.from} → {stop.to}
                     </p>
-                    <p className="text-[10px] text-slate-400 font-medium truncate mt-0.5">
+
+                    <p className="text-[9px] sm:text-[10px] text-slate-400 font-medium truncate mt-0.5 hidden xs:block">
                       {stop.duration}
                     </p>
+
                     {isActive && (
-                      <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 bg-emerald-500" />
+                      <div className="absolute -bottom-2 sm:-bottom-2.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 bg-emerald-500 hidden sm:block" />
                     )}
                   </button>
                 );
@@ -430,18 +456,18 @@ export default function InteractiveRouteSection({ lang }: { lang: string }) {
             </div>
           </div>
 
-          {/* Active Day Detailed Spotlight View */}
-          <div className="p-6 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          {/* Active Day Spotlight Card */}
+          <div className="p-4 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
             
-            {/* Left: Stop Photo & Local Partner Card */}
+            {/* Left: Stop Photo & Verified Local Host */}
             <div className="lg:col-span-5 space-y-4">
-              <div className="relative h-56 sm:h-64 rounded-2xl overflow-hidden border border-slate-100 shadow-inner group">
+              <div className="relative h-56 sm:h-72 rounded-3xl overflow-hidden border border-slate-100 shadow-md group">
                 <LocalImage
                   src={currentStop.image}
                   alt={`${currentStop.from} to ${currentStop.to}`}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/20" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-black/20" />
                 
                 {/* Floating Tag */}
                 <div className="absolute top-3 left-3">
@@ -450,41 +476,41 @@ export default function InteractiveRouteSection({ lang }: { lang: string }) {
                   </span>
                 </div>
 
-                <div className="absolute bottom-3 left-3 right-3 text-white">
+                <div className="absolute bottom-3.5 left-4 right-4 text-white">
                   <p className="text-xs font-black text-emerald-400 uppercase tracking-widest">
                     Elevation: {currentStop.elevation}
                   </p>
-                  <p className="text-base sm:text-lg font-black leading-tight mt-0.5">
+                  <p className="text-lg sm:text-xl font-black leading-tight mt-0.5">
                     {currentStop.from} ➔ {currentStop.to}
                   </p>
                 </div>
               </div>
 
-              {/* Verified Local Partner Card */}
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="relative w-10 h-10 rounded-full overflow-hidden border border-emerald-400 shadow-sm shrink-0">
+              {/* Verified Local Host Card */}
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50/90 border border-slate-200/80 flex items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="relative w-11 h-11 rounded-full overflow-hidden border-2 border-emerald-500 shadow-sm shrink-0">
                     <LocalImage
                       src={currentStop.localPartner.avatar}
                       alt={currentStop.localPartner.name}
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-black text-slate-900">
+                      <span className="text-xs sm:text-sm font-black text-slate-900 truncate">
                         {currentStop.localPartner.name}
                       </span>
-                      <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[8px] font-black">
+                      <span className="w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px] font-black shrink-0">
                         ✓
                       </span>
                     </div>
-                    <p className="text-[10px] text-slate-500 font-medium">
+                    <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium truncate">
                       {currentStop.localPartner.role}
                     </p>
                   </div>
                 </div>
-                <span className="text-[9px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-100/70 px-2 py-1 rounded-lg shrink-0">
+                <span className="text-[9px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-lg shrink-0">
                   Verified Local
                 </span>
               </div>
@@ -493,55 +519,79 @@ export default function InteractiveRouteSection({ lang }: { lang: string }) {
             {/* Right: Detailed Itinerary Highlights & Live Actions */}
             <div className="lg:col-span-7 flex flex-col justify-between space-y-6">
               <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-xs">
-                    <Icon name={currentStop.icon} className="w-4 h-4" />
-                  </span>
-                  <div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">
-                      Day {currentStop.day} Schedule
+                {/* Day Header Info */}
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-3">
+                    <span className="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black text-sm shadow-sm shrink-0">
+                      <Icon name={currentStop.icon} className="w-5 h-5" />
                     </span>
-                    <h4 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                      {currentStop.from} to {currentStop.to}
-                    </h4>
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">
+                        Day {currentStop.day} Detailed Itinerary
+                      </span>
+                      <h4 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                        {currentStop.from} to {currentStop.to}
+                      </h4>
+                    </div>
+                  </div>
+
+                  {/* Day Prev/Next Controls */}
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={handlePrevDay}
+                      disabled={activeDayIndex === 0}
+                      className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 flex items-center justify-center text-xs font-bold transition-all"
+                      aria-label="Previous day"
+                    >
+                      ←
+                    </button>
+                    <button
+                      onClick={handleNextDay}
+                      disabled={activeDayIndex === activePreset.stops.length - 1}
+                      className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 flex items-center justify-center text-xs font-bold transition-all"
+                      aria-label="Next day"
+                    >
+                      →
+                    </button>
                   </div>
                 </div>
 
-                <div className="mt-4 space-y-2.5">
+                {/* Highlights Checklist */}
+                <div className="space-y-3">
                   <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
                     What&apos;s Included In This Stop:
                   </p>
-                  <ul className="space-y-2">
+                  <ul className="space-y-2.5">
                     {currentStop.highlights.map((highlight, hIdx) => (
                       <li
                         key={hIdx}
-                        className="flex items-start gap-2.5 text-xs sm:text-sm font-semibold text-slate-700 bg-slate-50/80 p-2.5 rounded-xl border border-slate-100"
+                        className="flex items-start gap-3 text-xs sm:text-sm font-semibold text-slate-700 bg-slate-50/90 p-3 rounded-2xl border border-slate-100 shadow-xs"
                       >
                         <span className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5">
                           ✓
                         </span>
-                        <span>{highlight}</span>
+                        <span className="leading-snug">{highlight}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center gap-3">
+              {/* Action Buttons & Value Props */}
+              <div className="pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <Button
                   onClick={handleOpenInBuilder}
                   variant="primary"
                   iconRight={<Icon name="arrow-right" className="w-4 h-4" />}
-                  className="w-full sm:w-auto h-12 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
+                  className="w-full sm:w-auto h-12 px-7 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
                 >
                   Customize This Route in Builder
                 </Button>
 
-                <div className="flex items-center gap-2 text-slate-400 text-xs font-medium">
+                <div className="flex items-center gap-2 text-slate-400 text-xs font-medium text-center sm:text-right">
                   <span>✨ 100% customizable</span>
                   <span>•</span>
-                  <span>Direct local pricing</span>
+                  <span>Direct local rates</span>
                 </div>
               </div>
 

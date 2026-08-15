@@ -65,25 +65,27 @@ const CATEGORY_IMAGES: Record<string, string> = {
   Food: "https://images.unsplash.com/photo-1727404679933-99daa2a7573a?q=80&w=600",
 };
 
-const LOCAL_PROVIDERS = [
-  { id: "p1", name: "Priya Homestay", category: "Stay", location: "Old Manali", image: CATEGORY_IMAGES.Stay, isVerified: true },
-  { id: "p2", name: "Rajan Chauhan", category: "Adventure", location: "Kullu, HP", image: CATEGORY_IMAGES.Adventure, isVerified: true },
-  { id: "p3", name: "Sonam Wangchuk", category: "Transport", location: "Leh, Ladakh", image: CATEGORY_IMAGES.Transport, isVerified: true },
-  { id: "p4", name: "Arjun Thakur", category: "Food", location: "Shimla, HP", image: CATEGORY_IMAGES.Food, isVerified: false },
-];
+interface LocalProviderItem {
+  id: string;
+  name: string;
+  category: string;
+  location: string;
+  image: string;
+  isVerified: boolean;
+}
 
-function mapBackendVendor(v: any) {
+function mapBackendVendor(v: any): LocalProviderItem {
   const typeMap: Record<string, string> = { hotel: "Stay", restaurant: "Food", transport: "Transport", adventure: "Adventure" };
   const category = typeMap[v.types?.[0]?.toLowerCase()] || "Stay";
   const lowerName = (v.businessName || "").toLowerCase();
-  const knownTowns = ["dharamshala", "tirthan", "spiti", "leh", "rishikesh", "shimla", "manali"];
+  const knownTowns = ["dharamshala", "tirthan", "spiti", "leh", "rishikesh", "shimla", "manali", "kasol", "jibhi", "bir"];
   const location = knownTowns.find((t) => lowerName.includes(t));
   return {
     id: v.id,
-    name: (v.businessName || "").replace(/\s*\(.*?\)\s*/g, "").trim(),
+    name: (v.businessName || "").replace(/\s*\(.*?\)\s*/g, "").trim() || "Local Mountain Partner",
     category,
     location: location ? location[0].toUpperCase() + location.slice(1) : "Himachal Pradesh",
-    image: CATEGORY_IMAGES[category] || CATEGORY_IMAGES.Stay,
+    image: v.images?.[0] || CATEGORY_IMAGES[category] || CATEGORY_IMAGES.Stay,
     isVerified: !!v.isVerified,
   };
 }
@@ -106,7 +108,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
   const { dict, lang } = useLocalizationContext();
   const router = useRouter();
 
-  const [providersList, setProvidersList] = useState(LOCAL_PROVIDERS);
+  const [providersList, setProvidersList] = useState<LocalProviderItem[]>([]);
   const [isProvidersLoading, setIsProvidersLoading] = useState(true);
 
   useEffect(() => {
@@ -115,13 +117,11 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
     (async () => {
       try {
         const response = await getVendors();
-        if (!cancelled && Array.isArray(response) && response.length) {
+        if (!cancelled && Array.isArray(response) && response.length > 0) {
           setProvidersList(response.slice(0, 4).map(mapBackendVendor));
         }
       } catch {
-        // No backend reachable (or vendors unavailable) — the curated
-        // LOCAL_PROVIDERS fallback above already covers this, so this is
-        // expected/handled, not worth surfacing as an error.
+        // Backend unavailable or empty
       } finally {
         if (!cancelled) setIsProvidersLoading(false);
       }
@@ -171,42 +171,52 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
           </Reveal>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
-            {isProvidersLoading
-              ? Array.from({ length: 4 }).map((_, idx) => (
-                  <div key={idx} className="bg-white border border-slate-100 rounded-card p-5 space-y-3 animate-pulse">
-                    <div className="w-full h-40 rounded-2xl bg-slate-200" />
-                    <div className="h-3 bg-slate-200 rounded w-2/3" />
-                    <div className="h-3 bg-slate-200 rounded w-1/2" />
-                  </div>
-                ))
-              : providersList.map((p, i) => (
-                  <Reveal key={p.id} delayMs={(i % 4) * 70}>
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => router.push(`/${lang}/vendor/${p.id}`)}
-                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); router.push(`/${lang}/vendor/${p.id}`); } }}
-                      className="group bg-white border border-slate-100 rounded-card overflow-hidden hover:border-emerald-100 hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-500 cursor-pointer active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
-                    >
-                      <div className="relative h-40 overflow-hidden">
-                        <LocalImage src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                        {p.isVerified && (
-                          <div className="absolute top-3 left-3">
-                            <VerifiedBadge showText={false} />
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-5">
-                        <h3 className="text-slate-900 font-bold text-sm truncate">{p.name}</h3>
-                        <p className="text-slate-500 text-[9px] font-semibold uppercase tracking-wide mt-1.5">{p.category}</p>
-                        <p className="text-slate-400 text-[10px] mt-2 flex items-center gap-1"><Icon name="map-pin" className="w-3 h-3 flex-shrink-0" /><span className="truncate">{p.location}</span></p>
-                        <span className="mt-4 inline-flex items-center h-9 px-4 rounded-xl bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest group-hover:bg-emerald-500 transition-colors duration-300">
-                          {providersDict?.connect || "Connect"}
-                        </span>
-                      </div>
+            {isProvidersLoading ? (
+              Array.from({ length: 4 }).map((_, idx) => (
+                <div key={idx} className="bg-white border border-slate-100 rounded-card p-5 space-y-3 animate-pulse">
+                  <div className="w-full h-40 rounded-2xl bg-slate-200" />
+                  <div className="h-3 bg-slate-200 rounded w-2/3" />
+                  <div className="h-3 bg-slate-200 rounded w-1/2" />
+                </div>
+              ))
+            ) : providersList.length > 0 ? (
+              providersList.map((p, i) => (
+                <Reveal key={p.id} delayMs={(i % 4) * 70}>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => router.push(`/${lang}/vendor/${p.id}`)}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); router.push(`/${lang}/vendor/${p.id}`); } }}
+                    className="group bg-white border border-slate-100 rounded-card overflow-hidden hover:border-emerald-100 hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-500 cursor-pointer active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                  >
+                    <div className="relative h-40 overflow-hidden">
+                      <LocalImage src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      {p.isVerified && (
+                        <div className="absolute top-3 left-3">
+                          <VerifiedBadge showText={false} />
+                        </div>
+                      )}
                     </div>
-                  </Reveal>
-                ))}
+                    <div className="p-5">
+                      <h3 className="text-slate-900 font-bold text-sm truncate">{p.name}</h3>
+                      <p className="text-slate-500 text-[9px] font-semibold uppercase tracking-wide mt-1.5">{p.category}</p>
+                      <p className="text-slate-400 text-[10px] mt-2 flex items-center gap-1"><Icon name="map-pin" className="w-3 h-3 flex-shrink-0" /><span className="truncate">{p.location}</span></p>
+                      <span className="mt-4 inline-flex items-center h-9 px-4 rounded-xl bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest group-hover:bg-emerald-500 transition-colors duration-300">
+                        {providersDict?.connect || "Connect"}
+                      </span>
+                    </div>
+                  </div>
+                </Reveal>
+              ))
+            ) : (
+              <div className="col-span-full py-12 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200 p-8">
+                <p className="text-sm font-bold text-slate-700">Connecting to live local network...</p>
+                <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">Explore native guides, 4x4 mountain drivers, and homestays across Himachal Pradesh.</p>
+                <Button onClick={() => router.push(exploreHref)} variant="primary" className="mt-4 h-10 px-6 rounded-full text-xs font-black mx-auto">
+                  Browse Explore Services →
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </section>
