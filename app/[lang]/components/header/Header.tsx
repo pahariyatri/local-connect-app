@@ -117,7 +117,7 @@ export default function Header() {
                 : 'bg-emerald-50 text-emerald-800 border border-emerald-200/80 hover:bg-emerald-100 hover:border-emerald-300'
             }`}
           >
-            <span className="text-[11px]">✨</span>
+            <Icon name="mountain" className="w-3.5 h-3.5" />
             <span>{navDict.plan || 'Plan a Trip'}</span>
           </Link>
         </nav>

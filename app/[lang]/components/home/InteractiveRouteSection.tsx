@@ -10,6 +10,7 @@ interface RouteStopDetail {
   day: number;
   from: string;
   to: string;
+  destinationShort: string;
   duration: string;
   elevation: string;
   tag: string;
@@ -28,7 +29,6 @@ interface RoutePreset {
   id: string;
   title: string;
   subtitle: string;
-  emoji: string;
   durationDays: number;
   totalDistance: string;
   maxAltitude: string;
@@ -40,9 +40,8 @@ interface RoutePreset {
 const ROUTE_PRESETS: RoutePreset[] = [
   {
     id: "parvati-manali",
-    title: "Parvati & Manali Valley Circuit",
-    subtitle: "Riverside stays, cedar pine trails & ancient mountain passes",
-    emoji: "🏔️",
+    title: "Parvati & Manali Valley",
+    subtitle: "Riverside stays, pine forest trails, and high mountain passes",
     durationDays: 3,
     totalDistance: "285 km",
     maxAltitude: "2,050 m",
@@ -53,19 +52,20 @@ const ROUTE_PRESETS: RoutePreset[] = [
         day: 1,
         from: "Chandigarh",
         to: "Kasol",
-        duration: "6.5 hrs scenic drive",
+        destinationShort: "Kasol",
+        duration: "6.5 hrs drive",
         elevation: "1,580 m",
-        tag: "Riverside Arrival & Local Cuisine",
+        tag: "Riverside Arrival",
         icon: "utensils",
         image: "https://images.unsplash.com/photo-1571401835393-8c5f35328320?q=80&w=800",
         highlights: [
-          "Scenic Beas & Parvati river gorge route",
+          "Scenic Beas and Parvati river gorge route",
           "Authentic Himalayan trout & Siddu lunch stop",
           "Riverside cedar trail walk at twilight"
         ],
         localPartner: {
           name: "Rajesh Negi",
-          role: "Verified Homestay Host (Old Kasol)",
+          role: "Homestay Host, Old Kasol",
           avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200",
           isVerified: true
         }
@@ -73,31 +73,33 @@ const ROUTE_PRESETS: RoutePreset[] = [
       {
         day: 2,
         from: "Kasol",
-        to: "Kullu & Naggar",
-        duration: "2.5 hrs valley transit",
+        to: "Naggar Castle",
+        destinationShort: "Naggar",
+        duration: "2.5 hrs transit",
         elevation: "1,750 m",
-        tag: "Heritage Castle & Apple Orchards",
+        tag: "Heritage Castle",
         icon: "mountain",
         image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=800",
         highlights: [
-          "Visit 500-yr-old Naggar Wooden Castle",
+          "Visit 500-year-old Naggar Wooden Castle",
           "Local apple orchard cider tasting session",
           "Guided heritage trail walk with local elder"
         ],
         localPartner: {
           name: "Amit Thakur",
-          role: "Mountain 4x4 Driver & Guide",
+          role: "4x4 Mountain Driver & Guide",
           avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200",
           isVerified: true
         }
       },
       {
         day: 3,
-        from: "Kullu",
+        from: "Naggar",
         to: "Old Manali",
-        duration: "1.5 hrs alpine ascent",
+        destinationShort: "Old Manali",
+        duration: "1.5 hrs drive",
         elevation: "2,050 m",
-        tag: "Alpine Stay & High Mountain Vistas",
+        tag: "Alpine Stay",
         icon: "home",
         image: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?q=80&w=800",
         highlights: [
@@ -107,7 +109,7 @@ const ROUTE_PRESETS: RoutePreset[] = [
         ],
         localPartner: {
           name: "Priya Sharma",
-          role: "Old Manali Eco-Cottage Host",
+          role: "Eco-Cottage Host, Old Manali",
           avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200",
           isVerified: true
         }
@@ -116,9 +118,8 @@ const ROUTE_PRESETS: RoutePreset[] = [
   },
   {
     id: "kangra-bir",
-    title: "Dharamshala & Bir Paragliding Trail",
-    subtitle: "Tibetan culture, tea gardens & world-class paragliding take-off",
-    emoji: "🪂",
+    title: "Dharamshala & Bir Trail",
+    subtitle: "Tibetan culture, tea gardens, and paragliding take-off",
     durationDays: 3,
     totalDistance: "220 km",
     maxAltitude: "2,400 m",
@@ -128,15 +129,16 @@ const ROUTE_PRESETS: RoutePreset[] = [
       {
         day: 1,
         from: "Pathankot",
-        to: "Dharamshala & McLeod",
-        duration: "3.5 hrs pine drive",
+        to: "Dharamshala",
+        destinationShort: "Dharamshala",
+        duration: "3.5 hrs drive",
         elevation: "1,457 m",
-        tag: "Monasteries & Tibetan Culture",
+        tag: "Monasteries & Culture",
         icon: "compass",
         image: "https://images.unsplash.com/photo-1653853572809-ea537274c7f5?q=80&w=800",
         highlights: [
           "Namgyal Monastery & Dalai Lama complex walk",
-          "Local Tibetan thukpa & momo trail in McLeod Ganj",
+          "Local Tibetan thukpa and momo trail in McLeod Ganj",
           "Sunset view of the majestic Dhauladhar range"
         ],
         localPartner: {
@@ -149,20 +151,21 @@ const ROUTE_PRESETS: RoutePreset[] = [
       {
         day: 2,
         from: "McLeod Ganj",
-        to: "Triund Ridge Base",
-        duration: "4.5 hrs guided day trek",
+        to: "Triund Ridge",
+        destinationShort: "Triund Ridge",
+        duration: "4.5 hrs trek",
         elevation: "2,875 m",
-        tag: "Dhauladhar Snowline Trek",
+        tag: "Snowline Trek",
         icon: "mountain",
         image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=800",
         highlights: [
-          "Panoramic 360° snow-clad ridge vistas",
-          "Hot Himalayan chai & maggi on the mountain ridge",
+          "Panoramic 360-degree snow-clad ridge vistas",
+          "Hot Himalayan chai on the mountain ridge",
           "Safe mountain trail navigation with licensed leader"
         ],
         localPartner: {
           name: "Sunil Dogra",
-          role: "Certified Mountaineering Guide",
+          role: "Mountaineering Guide",
           avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=200",
           isVerified: true
         }
@@ -171,9 +174,10 @@ const ROUTE_PRESETS: RoutePreset[] = [
         day: 3,
         from: "Dharamshala",
         to: "Bir Billing",
-        duration: "2 hrs tea garden drive",
+        destinationShort: "Bir Billing",
+        duration: "2 hrs drive",
         elevation: "2,400 m",
-        tag: "World-Class Paragliding Flight",
+        tag: "Paragliding Flight",
         icon: "flag",
         image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=800",
         highlights: [
@@ -192,9 +196,8 @@ const ROUTE_PRESETS: RoutePreset[] = [
   },
   {
     id: "spiti-circuit",
-    title: "Spiti Valley Cold Desert Explorer",
-    subtitle: "High mountain passes, 1000-year-old gompas & lunar valleys",
-    emoji: "❄️",
+    title: "Spiti Valley Explorer",
+    subtitle: "High mountain passes, 1000-year-old gompas, and moon lakes",
     durationDays: 3,
     totalDistance: "410 km",
     maxAltitude: "4,590 m",
@@ -205,9 +208,10 @@ const ROUTE_PRESETS: RoutePreset[] = [
         day: 1,
         from: "Shimla",
         to: "Sangla & Chitkul",
-        duration: "7 hrs Kinnaur valley drive",
+        destinationShort: "Chitkul",
+        duration: "7 hrs drive",
         elevation: "2,696 m",
-        tag: "Last Indian Village on Border",
+        tag: "Last Border Village",
         icon: "map-pin",
         image: "https://images.unsplash.com/photo-1518623001395-125242310d0c?q=80&w=800",
         highlights: [
@@ -226,9 +230,10 @@ const ROUTE_PRESETS: RoutePreset[] = [
         day: 2,
         from: "Sangla",
         to: "Tabo & Kaza",
-        duration: "6 hrs high-pass transit",
+        destinationShort: "Tabo & Kaza",
+        duration: "6 hrs transit",
         elevation: "3,800 m",
-        tag: "1000-Yr-Old Tabo Monastery & Mudh",
+        tag: "Ancient Monastery",
         icon: "home",
         image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=800",
         highlights: [
@@ -246,14 +251,15 @@ const ROUTE_PRESETS: RoutePreset[] = [
       {
         day: 3,
         from: "Kaza",
-        to: "Chandratal Moon Lake",
-        duration: "4.5 hrs Kunzum pass drive",
+        to: "Chandratal Lake",
+        destinationShort: "Chandratal",
+        duration: "4.5 hrs drive",
         elevation: "4,300 m",
-        tag: "Crescent Moon Glacial Lake Camp",
+        tag: "Glacial Moon Lake",
         icon: "mountain",
         image: "https://images.unsplash.com/photo-1574116504481-e06341e984e1?q=80&w=800",
         highlights: [
-          "Kunzum La pass (4,590m) prayer flag stupa",
+          "Kunzum La pass (4,590m) stupa crossing",
           "Sunset reflection on crystal glacial Chandratal",
           "Milky Way high-altitude astronomy camp"
         ],
@@ -275,6 +281,8 @@ export default function InteractiveRouteSection({ lang }: { lang: string }) {
 
   const activePreset = ROUTE_PRESETS.find((p) => p.id === activePresetId) || ROUTE_PRESETS[0];
   const currentStop = activePreset.stops[activeDayIndex] || activePreset.stops[0];
+  const nextStop = activePreset.stops[activeDayIndex + 1];
+  const prevStop = activePreset.stops[activeDayIndex - 1];
 
   const handleSelectPreset = (id: string) => {
     setActivePresetId(id);
@@ -298,34 +306,32 @@ export default function InteractiveRouteSection({ lang }: { lang: string }) {
   };
 
   return (
-    <section className="py-12 sm:py-20 bg-gradient-to-b from-slate-50/80 via-white to-slate-50/50 px-4 sm:px-6 relative overflow-hidden">
-      {/* Background Subtle Mountain Ambient Blur */}
-      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-full max-w-5xl h-72 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-
+    <section className="py-14 sm:py-24 bg-slate-50 border-y border-slate-200/80 px-4 sm:px-6 relative">
       <div className="max-w-6xl mx-auto relative z-10">
+        
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 sm:mb-10">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100/90 text-emerald-800 text-[11px] font-black uppercase tracking-widest border border-emerald-200/60 shadow-xs">
-              <span>🗺️ Verified Route Blueprints</span>
+          <div className="space-y-2.5">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-[10px] font-black uppercase tracking-[0.2em]">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+              Verified Expeditions
             </div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-[1.1]">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-[1.08]">
               The journey, day by day.
             </h2>
-            <p className="text-slate-500 text-sm sm:text-base font-medium max-w-2xl leading-relaxed">
-              Every stop, scenic pass, and local host planned in advance — not left to chance on arrival.
+            <p className="text-slate-500 text-sm sm:text-base font-medium max-w-xl leading-relaxed">
+              Curated multi-day mountain routes with direct local stays, transit, and verified guides.
             </p>
           </div>
 
           <div className="hidden sm:flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-wider">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Interactive Itinerary
+            <span className="text-xs font-bold text-slate-400">
+              Select Circuit:
             </span>
           </div>
         </div>
 
-        {/* 1. Circuit Selector Tabs (Mobile & Desktop) */}
+        {/* 1. Circuit Selector Tabs (Clean, Emoji-Free) */}
         <div className="flex items-center gap-2.5 overflow-x-auto pb-2 mb-6 sm:mb-8 scrollbar-hide">
           {ROUTE_PRESETS.map((preset) => {
             const isSelected = preset.id === activePresetId;
@@ -333,14 +339,13 @@ export default function InteractiveRouteSection({ lang }: { lang: string }) {
               <button
                 key={preset.id}
                 onClick={() => handleSelectPreset(preset.id)}
-                className={`flex items-center gap-2.5 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all duration-300 border ${
+                className={`flex items-center gap-2.5 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl font-bold text-xs sm:text-sm whitespace-nowrap transition-all duration-200 border ${
                   isSelected
-                    ? "bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/15 ring-2 ring-slate-900/20"
-                    : "bg-white text-slate-600 border-slate-200/90 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300"
+                    ? "bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/10"
+                    : "bg-white text-slate-700 border-slate-200 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >
-                <span className="text-base">{preset.emoji}</span>
-                <span className="font-black">{preset.title.split("Circuit")[0].split("Trail")[0].split("Explorer")[0].trim()}</span>
+                <span className="font-black">{preset.title}</span>
                 <span
                   className={`text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider ${
                     isSelected ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500"
@@ -357,39 +362,34 @@ export default function InteractiveRouteSection({ lang }: { lang: string }) {
         <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-200/50 overflow-hidden">
           
           {/* Header Metric Strip */}
-          <div className="bg-slate-950 text-white px-5 sm:px-8 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800">
-            <div className="flex items-center gap-3.5">
-              <span className="w-11 h-11 rounded-2xl bg-emerald-500 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-emerald-500/25 shrink-0">
-                {activePreset.emoji}
-              </span>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400">
-                    {activePreset.region}
-                  </span>
-                  <span className="text-slate-600 text-xs">•</span>
-                  <span className="text-[10px] font-bold text-slate-400">
-                    {activePreset.durationDays} Days Circuit
-                  </span>
-                </div>
-                <h3 className="text-base sm:text-xl font-black text-white leading-tight mt-0.5">
-                  {activePreset.title}
-                </h3>
+          <div className="bg-slate-950 text-white px-5 sm:px-8 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">
+                  {activePreset.region}
+                </span>
+                <span className="text-slate-600 text-xs">•</span>
+                <span className="text-[10px] font-bold text-slate-400">
+                  {activePreset.durationDays} Days Circuit
+                </span>
               </div>
+              <h3 className="text-base sm:text-xl font-black text-white leading-tight mt-0.5">
+                {activePreset.title}
+              </h3>
             </div>
 
             {/* Quick Metrics */}
-            <div className="flex items-center gap-3 sm:gap-5 text-xs bg-slate-900/90 sm:bg-transparent p-3 sm:p-0 rounded-2xl border border-slate-800 sm:border-0 justify-between sm:justify-end">
+            <div className="flex items-center gap-4 sm:gap-6 text-xs bg-slate-900 sm:bg-transparent p-3 sm:p-0 rounded-xl border border-slate-800 sm:border-0 justify-between sm:justify-end">
               <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1.5">
                 <span className="text-slate-400 font-bold uppercase text-[9px] sm:text-[10px]">Distance:</span>
                 <span className="font-black text-emerald-400 text-xs sm:text-sm">{activePreset.totalDistance}</span>
               </div>
-              <div className="h-6 w-px bg-slate-800" />
+              <div className="h-5 w-px bg-slate-800" />
               <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1.5">
                 <span className="text-slate-400 font-bold uppercase text-[9px] sm:text-[10px]">Max Elevation:</span>
                 <span className="font-black text-emerald-400 text-xs sm:text-sm">{activePreset.maxAltitude}</span>
               </div>
-              <div className="h-6 w-px bg-slate-800 hidden sm:block" />
+              <div className="h-5 w-px bg-slate-800 hidden sm:block" />
               <div className="hidden sm:flex flex-col sm:flex-row sm:items-center gap-1.5">
                 <span className="text-slate-400 font-bold uppercase text-[10px]">Stops:</span>
                 <span className="font-black text-white text-sm">{activePreset.stops.length} Days</span>
@@ -397,22 +397,8 @@ export default function InteractiveRouteSection({ lang }: { lang: string }) {
             </div>
           </div>
 
-          {/* Interactive Day Selection Stepper Bar */}
-          <div className="px-4 sm:px-8 pt-5 pb-3 border-b border-slate-100 bg-slate-50/60">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
-                  Select Day Itinerary
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2.5 py-0.5 rounded-full">
-                  Day {activeDayIndex + 1} of {activePreset.stops.length}
-                </span>
-              </div>
-            </div>
-
-            {/* Responsive Day Buttons */}
+          {/* Upgraded Day Selection Stepper Timeline */}
+          <div className="px-4 sm:px-8 py-3.5 border-b border-slate-100 bg-slate-50/70">
             <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {activePreset.stops.map((stop, idx) => {
                 const isActive = idx === activeDayIndex;
@@ -420,36 +406,50 @@ export default function InteractiveRouteSection({ lang }: { lang: string }) {
                   <button
                     key={stop.day}
                     onClick={() => setActiveDayIndex(idx)}
-                    className={`relative p-2.5 sm:p-4 rounded-2xl text-left transition-all duration-200 border flex flex-col justify-between ${
+                    className={`p-3 sm:p-4 rounded-2xl text-left transition-all duration-200 border flex flex-col justify-between gap-1.5 relative overflow-hidden ${
                       isActive
-                        ? "bg-white border-emerald-500 shadow-md ring-2 ring-emerald-500/20"
-                        : "bg-white/80 border-slate-200/90 hover:bg-white hover:border-slate-300 opacity-80 hover:opacity-100"
+                        ? "bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-emerald-500"
+                        : "bg-white text-slate-800 border-slate-200/80 hover:bg-slate-100 hover:border-slate-300"
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-1 gap-1">
+                    {/* Active Accent Top Indicator */}
+                    {isActive && (
+                      <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500" />
+                    )}
+
+                    <div className="flex items-center justify-between gap-1">
                       <span
                         className={`text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                          isActive ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600"
+                          isActive ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-700"
                         }`}
                       >
-                        Day {stop.day}
+                        Day 0{stop.day}
                       </span>
-                      <span className="text-[10px] sm:text-xs font-black text-emerald-600 truncate">
+                      <span
+                        className={`text-[10px] sm:text-xs font-black truncate ${
+                          isActive ? "text-emerald-400" : "text-emerald-600"
+                        }`}
+                      >
                         {stop.elevation}
                       </span>
                     </div>
 
-                    <p className="font-black text-xs sm:text-sm text-slate-900 truncate leading-snug">
-                      {stop.from} → {stop.to}
-                    </p>
-
-                    <p className="text-[9px] sm:text-[10px] text-slate-400 font-medium truncate mt-0.5 hidden xs:block">
-                      {stop.duration}
-                    </p>
-
-                    {isActive && (
-                      <div className="absolute -bottom-2 sm:-bottom-2.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 bg-emerald-500 hidden sm:block" />
-                    )}
+                    <div>
+                      <p
+                        className={`font-black text-xs sm:text-sm truncate leading-snug ${
+                          isActive ? "text-white" : "text-slate-900"
+                        }`}
+                      >
+                        {stop.destinationShort}
+                      </p>
+                      <p
+                        className={`text-[10px] font-medium truncate mt-0.5 ${
+                          isActive ? "text-slate-300" : "text-slate-400"
+                        }`}
+                      >
+                        {stop.duration}
+                      </p>
+                    </div>
                   </button>
                 );
               })}
@@ -457,37 +457,42 @@ export default function InteractiveRouteSection({ lang }: { lang: string }) {
           </div>
 
           {/* Active Day Spotlight Card */}
-          <div className="p-4 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
+          <div className="p-5 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
             
-            {/* Left: Stop Photo & Verified Local Host */}
+            {/* Left: Stop Photo, Elevation & Verified Local Host */}
             <div className="lg:col-span-5 space-y-4">
-              <div className="relative h-56 sm:h-72 rounded-3xl overflow-hidden border border-slate-100 shadow-md group">
+              <div className="relative h-60 sm:h-72 rounded-3xl overflow-hidden border border-slate-100 shadow-md group">
                 <LocalImage
                   src={currentStop.image}
                   alt={`${currentStop.from} to ${currentStop.to}`}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-black/20" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/20 to-transparent" />
                 
                 {/* Floating Tag */}
-                <div className="absolute top-3 left-3">
-                  <span className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-widest border border-white/20">
+                <div className="absolute top-3 left-3 flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full bg-black/70 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-wider border border-white/20">
                     {currentStop.tag}
+                  </span>
+                  <span className="px-2.5 py-1 rounded-full bg-emerald-600/90 backdrop-blur-md text-white text-[10px] font-black uppercase tracking-wider">
+                    Day {currentStop.day}
                   </span>
                 </div>
 
                 <div className="absolute bottom-3.5 left-4 right-4 text-white">
-                  <p className="text-xs font-black text-emerald-400 uppercase tracking-widest">
-                    Elevation: {currentStop.elevation}
-                  </p>
+                  <div className="flex items-center gap-2 text-xs font-black text-emerald-400 uppercase tracking-widest">
+                    <span>Altitude: {currentStop.elevation}</span>
+                    <span>•</span>
+                    <span>{currentStop.duration}</span>
+                  </div>
                   <p className="text-lg sm:text-xl font-black leading-tight mt-0.5">
-                    {currentStop.from} ➔ {currentStop.to}
+                    {currentStop.from} → {currentStop.to}
                   </p>
                 </div>
               </div>
 
               {/* Verified Local Host Card */}
-              <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50/90 border border-slate-200/80 flex items-center justify-between gap-3 shadow-xs">
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3 shadow-xs">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="relative w-11 h-11 rounded-full overflow-hidden border-2 border-emerald-500 shadow-sm shrink-0">
                     <LocalImage
@@ -511,64 +516,74 @@ export default function InteractiveRouteSection({ lang }: { lang: string }) {
                   </div>
                 </div>
                 <span className="text-[9px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-lg shrink-0">
-                  Verified Local
+                  Verified Host
                 </span>
               </div>
             </div>
 
-            {/* Right: Detailed Itinerary Highlights & Live Actions */}
+            {/* Right: Detailed Itinerary Highlights & Step Controls */}
             <div className="lg:col-span-7 flex flex-col justify-between space-y-6">
               <div>
-                {/* Day Header Info */}
+                {/* Day Header Info & Quick Day Navigation */}
                 <div className="flex items-start justify-between gap-3 mb-4">
-                  <div className="flex items-center gap-3">
-                    <span className="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black text-sm shadow-sm shrink-0">
-                      <Icon name={currentStop.icon} className="w-5 h-5" />
-                    </span>
-                    <div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">
-                        Day {currentStop.day} Detailed Itinerary
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/60">
+                        Day {currentStop.day} of {activePreset.stops.length}
                       </span>
-                      <h4 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                        {currentStop.from} to {currentStop.to}
-                      </h4>
+                      <span className="text-xs text-slate-400 font-medium">
+                        {currentStop.duration}
+                      </span>
                     </div>
+                    <h4 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-1">
+                      {currentStop.from} to {currentStop.to}
+                    </h4>
                   </div>
 
                   {/* Day Prev/Next Controls */}
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5 shrink-0">
                     <button
                       onClick={handlePrevDay}
                       disabled={activeDayIndex === 0}
-                      className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 flex items-center justify-center text-xs font-bold transition-all"
+                      className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 text-xs font-black transition-all flex items-center gap-1"
                       aria-label="Previous day"
                     >
-                      ←
+                      ← Prev
                     </button>
                     <button
                       onClick={handleNextDay}
                       disabled={activeDayIndex === activePreset.stops.length - 1}
-                      className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 flex items-center justify-center text-xs font-bold transition-all"
+                      className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-black disabled:opacity-30 disabled:cursor-not-allowed text-white text-xs font-black transition-all flex items-center gap-1"
                       aria-label="Next day"
                     >
-                      →
+                      Next →
                     </button>
                   </div>
                 </div>
 
+                {/* Route Leg Progress Summary Pill */}
+                <div className="mb-4 p-3 rounded-2xl bg-emerald-50/70 border border-emerald-100 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="font-bold text-slate-800">Stop Destination:</span>
+                    <span className="font-black text-emerald-800">{currentStop.to}</span>
+                  </div>
+                  <span className="font-black text-emerald-700">{currentStop.elevation}</span>
+                </div>
+
                 {/* Highlights Checklist */}
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    What&apos;s Included In This Stop:
+                    What You Will Experience Today:
                   </p>
                   <ul className="space-y-2.5">
                     {currentStop.highlights.map((highlight, hIdx) => (
                       <li
                         key={hIdx}
-                        className="flex items-start gap-3 text-xs sm:text-sm font-semibold text-slate-700 bg-slate-50/90 p-3 rounded-2xl border border-slate-100 shadow-xs"
+                        className="flex items-start gap-3 text-xs sm:text-sm font-semibold text-slate-700 bg-slate-50/90 p-3 rounded-2xl border border-slate-100 shadow-xs hover:bg-slate-50 transition-colors"
                       >
                         <span className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black shrink-0 mt-0.5">
-                          ✓
+                          {hIdx + 1}
                         </span>
                         <span className="leading-snug">{highlight}</span>
                       </li>
@@ -577,21 +592,37 @@ export default function InteractiveRouteSection({ lang }: { lang: string }) {
                 </div>
               </div>
 
-              {/* Action Buttons & Value Props */}
-              <div className="pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <Button
-                  onClick={handleOpenInBuilder}
-                  variant="primary"
-                  iconRight={<Icon name="arrow-right" className="w-4 h-4" />}
-                  className="w-full sm:w-auto h-12 px-7 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
-                >
-                  Customize This Route in Builder
-                </Button>
+              {/* Day-to-Day Navigation Links & Builder CTA */}
+              <div className="pt-5 border-t border-slate-100 space-y-3">
+                {/* Next Day Preview Pill */}
+                {nextStop && (
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 text-xs">
+                    <span className="text-slate-500 font-medium">Up next on Day {nextStop.day}:</span>
+                    <button
+                      onClick={handleNextDay}
+                      className="text-emerald-700 font-bold hover:text-emerald-800 hover:underline flex items-center gap-1"
+                    >
+                      <span>{nextStop.from} → {nextStop.to}</span>
+                      <span>→</span>
+                    </button>
+                  </div>
+                )}
 
-                <div className="flex items-center gap-2 text-slate-400 text-xs font-medium text-center sm:text-right">
-                  <span>✨ 100% customizable</span>
-                  <span>•</span>
-                  <span>Direct local rates</span>
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <Button
+                    onClick={handleOpenInBuilder}
+                    variant="primary"
+                    iconRight={<Icon name="arrow-right" className="w-4 h-4" />}
+                    className="w-full sm:w-auto h-12 px-7 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
+                  >
+                    Customize This Route in Builder
+                  </Button>
+
+                  <div className="flex items-center gap-2 text-slate-400 text-xs font-medium text-center sm:text-right">
+                    <span>Direct local rates</span>
+                    <span>•</span>
+                    <span>100% customizable</span>
+                  </div>
                 </div>
               </div>
 
@@ -604,3 +635,4 @@ export default function InteractiveRouteSection({ lang }: { lang: string }) {
     </section>
   );
 }
+

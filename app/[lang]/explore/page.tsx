@@ -156,9 +156,9 @@ export default function ExplorePage() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-between selection:bg-emerald-500/30 selection:text-emerald-900">
       <div>
-        {/* ── STICKY DIRECT SEARCH & FILTER CONSOLE ────────────────── */}
-        <section className="sticky top-[var(--header-height,57px)] z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs py-3.5 px-4 sm:px-6">
-          <div className="max-w-6xl mx-auto space-y-3">
+        {/* ── STICKY DIRECT SEARCH BAR ────────────────── */}
+        <section className="sticky top-[var(--header-height,57px)] z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs py-3 px-4 sm:px-6">
+          <div className="max-w-6xl mx-auto">
             {/* Top Search Input Bar */}
             <div className="flex items-center gap-2.5">
               <div className="relative flex-1">
@@ -184,7 +184,7 @@ export default function ExplorePage() {
                 )}
               </div>
 
-              {hasActiveFilters && (
+              {searchQuery && (
                 <button
                   type="button"
                   onClick={clearSearch}
@@ -194,97 +194,11 @@ export default function ExplorePage() {
                 </button>
               )}
             </div>
-
-            {/* Valley Locations and Service Category Pills */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 pt-0.5">
-              {/* Valleys Pills */}
-              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide py-0.5">
-                {locationsList.map((loc) => {
-                  const isSelected = selectedLocation === loc;
-                  return (
-                    <button
-                      key={loc}
-                      onClick={() => setSelectedLocation(loc)}
-                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 ${
-                        isSelected
-                          ? "bg-slate-900 text-white shadow-sm ring-1 ring-slate-900"
-                          : "bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200"
-                      }`}
-                    >
-                      {loc === "All" ? "✨ All Valleys" : loc}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="hidden sm:block h-4 w-px bg-slate-200 shrink-0 mx-1" />
-
-              {/* Category Pills */}
-              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide py-0.5">
-                <button
-                  id="explore-cat-all"
-                  onClick={() => setActiveCategory("all")}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 border ${
-                    activeCategory === "all"
-                      ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
-                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:text-slate-900"
-                  }`}
-                >
-                  All Services
-                </button>
-                {categories.filter((c) => c.id !== "all").map((cat) => {
-                  const isCatSelected = activeCategory === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      id={`explore-cat-${cat.id}`}
-                      onClick={() => setActiveCategory(isCatSelected ? "all" : cat.id)}
-                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 border ${
-                        isCatSelected
-                          ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
-                          : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:text-slate-900"
-                      }`}
-                    >
-                      {cat.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
           </div>
         </section>
 
         {/* ── DIRECT OPERATORS CARDS BODY ─────────────────────────── */}
         <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-          {/* Header Metric Strip */}
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                {selectedLocation !== "All"
-                  ? `Verified Operators in ${selectedLocation}`
-                  : "Verified Local Operators across Himachal"}
-              </h1>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
-                {isLoading
-                  ? "Searching direct mountain hosts, drivers, and guides..."
-                  : `Showing ${services.length} direct local services with transparent pricing.`}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {selectedLocation !== "All" && (
-                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200/60">
-                  📍 {selectedLocation}
-                </span>
-              )}
-              {activeCategory !== "all" && (
-                <span className="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-full">
-                  {categories.find((c: any) => c.id === activeCategory)?.label}
-                </span>
-              )}
-            </div>
-          </div>
-
           {/* ── CARDS GRID / STATES ───────────────────────────────── */}
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6" data-testid="explore-results-grid">
@@ -311,7 +225,7 @@ export default function ExplorePage() {
               data-testid="explore-error-state"
             >
               <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mx-auto mb-3 text-lg font-bold">
-                ⚠️
+                <Icon name="alert-circle" className="w-6 h-6 text-rose-500" />
               </div>
               <p className="text-slate-900 text-base font-black mb-1">{error}</p>
               <p className="text-slate-400 text-xs mb-6 font-medium">Please check your connection and try again.</p>
@@ -327,22 +241,24 @@ export default function ExplorePage() {
               className="text-center py-16 bg-white rounded-3xl border border-slate-200/80 p-8 shadow-sm"
               data-testid="explore-zero-result"
             >
-              <div className="w-14 h-14 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center mx-auto mb-4 text-2xl">
-                🏔️
+              <div className="w-14 h-14 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mx-auto mb-4">
+                <Icon name="search" className="w-6 h-6 text-slate-400" />
               </div>
               <p className="text-slate-900 text-lg font-black mb-1">
-                No direct listings found {searchQuery ? `for "${searchQuery}"` : "for this selection"}.
+                No direct listings found {searchQuery ? `for "${searchQuery}"` : ""}.
               </p>
               <p className="text-slate-500 text-xs max-w-md mx-auto mb-6 font-medium">
                 Try searching another valley or build a custom route with our interactive itinerary planner.
               </p>
               <div className="flex flex-wrap items-center justify-center gap-3">
-                <button
-                  onClick={clearSearch}
-                  className="px-5 py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
-                >
-                  Reset Filters
-                </button>
+                {searchQuery && (
+                  <button
+                    onClick={clearSearch}
+                    className="px-5 py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
+                  >
+                    Reset Search
+                  </button>
+                )}
                 <button
                   onClick={() => router.push(`/${lang}/builder`)}
                   className="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider transition-colors shadow-md shadow-emerald-600/20"
@@ -375,9 +291,10 @@ export default function ExplorePage() {
                       </span>
                       <span
                         data-testid="explore-result-location"
-                        className="px-2.5 py-1 bg-slate-900/90 text-white backdrop-blur-md rounded-full text-[10px] font-bold shadow-sm"
+                        className="px-2.5 py-1 bg-slate-900/90 text-white backdrop-blur-md rounded-full text-[10px] font-bold shadow-sm flex items-center gap-1"
                       >
-                        📍 {service.location.city}
+                        <Icon name="map-pin" className="w-2.5 h-2.5 text-emerald-400" />
+                        <span>{service.location.city}</span>
                       </span>
                     </div>
 
