@@ -9,7 +9,8 @@
     "lint": "eslint app/ lib/ services/ utils/ contexts/ middleware.ts",
     "lint:fix": "eslint app/ lib/ services/ utils/ contexts/ middleware.ts --fix",
     "check:contract": "node scripts/check-api-contract.mjs ../backend/openapi.json --scope=/auth",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@formatjs/intl": "^3.0.4",

@@ -87,7 +87,7 @@ export const createService = async (vendorId: string, serviceData: any) => {
   return (result as any)?.data ?? result;
 };
 
-// ═══════════════════ CATEGORIES ═══════════════════
+// ═══════════════════ CATEGORIES & LOCATIONS ═══════════════════
 
 export const getCategories = async () => {
   const raw = await api.get('/categories', { skipAuth: true });
@@ -96,6 +96,17 @@ export const getCategories = async () => {
 
 export const getSubcategories = async (categoryId: number | string) => {
   const raw = await api.get(`/categories/${categoryId}/subcategories`, { skipAuth: true });
+  return (raw as any)?.data ?? raw;
+};
+
+export const getLocations = async (circuit?: string) => {
+  const query = circuit ? `?circuit=${encodeURIComponent(circuit)}` : '';
+  const raw = await api.get(`/locations${query}`, { skipAuth: true });
+  return (raw as any)?.data ?? raw;
+};
+
+export const getCircuits = async () => {
+  const raw = await api.get('/locations/circuits', { skipAuth: true });
   return (raw as any)?.data ?? raw;
 };
 

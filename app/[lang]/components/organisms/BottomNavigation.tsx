@@ -224,10 +224,21 @@ export default function BottomNavigation({
                 className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-all ${
                   isPlanActive
                     ? "bg-slate-900 text-white shadow-emerald-500/25 ring-2 ring-emerald-500 ring-offset-2"
-                    : "bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-emerald-600/30 group-hover:scale-105"
+                    : "bg-emerald-600 text-white shadow-emerald-600/30 group-hover:scale-105"
                 }`}
               >
-                <span className="text-lg">✨</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-5 h-5"
+                >
+                  <path d="m8 3 4 8 5-5 5 15H2L8 3z" />
+                </svg>
               </div>
               <span
                 className={`text-[10px] font-black tracking-wider uppercase mt-1 leading-none ${
