@@ -18,10 +18,7 @@ type HomeProps = {
   params: Promise<{ lang: Locale }>;
 };
 
-
-
-
-// ─── Scroll-reveal animation wrapper (IntersectionObserver + CSS transition) ─
+// ─── Scroll-reveal animation wrapper ─────────────────────────────────────────
 
 function Reveal({ children, className = "", delayMs = 0 }: { children: React.ReactNode; className?: string; delayMs?: number }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -46,7 +43,7 @@ function Reveal({ children, className = "", delayMs = 0 }: { children: React.Rea
   return (
     <div
       ref={ref}
-      className={`transition-all duration-750 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"} ${className}`}
+      className={`transition-all duration-700 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"} ${className}`}
       style={{ transitionDelay: visible ? `${delayMs}ms` : "0ms" }}
     >
       {children}
@@ -54,15 +51,13 @@ function Reveal({ children, className = "", delayMs = 0 }: { children: React.Rea
   );
 }
 
-
-// ─── Vendor mapping — mirrors the shape already used across the app; no
-// fabricated ratings or review counts. ───────────────────────────────────────
+// ─── Vendor mapping ──────────────────────────────────────────────────────────
 
 const CATEGORY_IMAGES: Record<string, string> = {
-  Stay: "https://images.unsplash.com/photo-1768490219497-94bcc4b78e52?q=80&w=600",
-  Adventure: "https://images.unsplash.com/photo-1574116504481-e06341e984e1?q=80&w=600",
-  Transport: "https://images.unsplash.com/photo-1772249491385-e9f6facf5be3?q=80&w=600",
-  Food: "https://images.unsplash.com/photo-1727404679933-99daa2a7573a?q=80&w=600",
+  Stay: "https://images.unsplash.com/photo-1571401835393-8c5f35328320?q=80&w=600",
+  Adventure: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=600",
+  Transport: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=600",
+  Food: "https://images.unsplash.com/photo-1574116504481-e06341e984e1?q=80&w=600",
 };
 
 interface LocalProviderItem {
@@ -88,18 +83,6 @@ function mapBackendVendor(v: any): LocalProviderItem {
     image: v.images?.[0] || CATEGORY_IMAGES[category] || CATEGORY_IMAGES.Stay,
     isVerified: !!v.isVerified,
   };
-}
-
-// ─── Section heading — matches the app's uppercase-eyebrow convention ───────
-
-function SectionHeading({ eyebrow, title, subtitle, center = false, dark = false }: { eyebrow?: string; title: string; subtitle?: string; center?: boolean; dark?: boolean }) {
-  return (
-    <div className={`${center ? "text-center mx-auto" : ""} max-w-2xl`}>
-      {eyebrow && <span className="text-emerald-600 text-[10px] font-black uppercase tracking-[0.25em] block mb-4">{eyebrow}</span>}
-      <h2 className={`text-4xl sm:text-5xl font-black leading-[1.02] tracking-tight [text-wrap:balance] ${dark ? "text-white" : "text-slate-900"}`}>{title}</h2>
-      {subtitle && <p className={`text-base mt-4 leading-relaxed ${dark ? "text-slate-300" : "text-slate-500"}`}>{subtitle}</p>}
-    </div>
-  );
 }
 
 // ─── Page ────────────────────────────────────────────────────────────────────
@@ -131,21 +114,9 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
 
   if (!dict) return <Loading />;
 
-  const pageDict = (dict as any)?.page?.home || {};
-  const heroDict = pageDict?.hero || {};
-  const providersDict = pageDict?.providers || {};
-  const joinDict = pageDict?.join || {};
-  const trustDict = pageDict?.trust || {};
-
-  const trustBadges = [trustDict.verified, trustDict.escrow, trustDict.messaging, trustDict.reviews].filter(Boolean);
-
   const builderHref = `/${lang}/builder`;
   const vendorHref = `/${lang}/vendor/onboarding`;
   const exploreHref = `/${lang}/explore`;
-  const aboutHref = `/${lang}/about`;
-  const communityHref = `/${lang}/community`;
-  const termsHref = `/${lang}/terms-conditions`;
-  const privacyHref = `/${lang}/privacy-policy`;
 
   return (
     <main className="bg-white min-h-screen antialiased selection:bg-emerald-500/30 selection:text-emerald-900 overflow-x-hidden">
@@ -158,14 +129,24 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
       {/* ── 2 · INTERACTIVE ROUTE EXPERIENCE (DAY BY DAY) ──────────────── */}
       <InteractiveRouteSection lang={lang} />
 
-      {/* ── 3 · LOCAL VENDORS ────────────────────────────────────────────── */}
-      <section className="px-4 sm:px-6 py-14 sm:py-20">
+      {/* ── 3 · VERIFIED LOCAL HOSTS & OPERATORS ────────────────────────── */}
+      <section className="px-4 sm:px-6 py-14 sm:py-20 bg-white">
         <div className="max-w-6xl mx-auto">
           <Reveal>
             <div className="flex items-end justify-between gap-4 mb-8 sm:mb-10">
-              <SectionHeading eyebrow={providersDict?.eyebrow || "Verified locals"} title={providersDict?.title || "People, not packages."} />
-              <button onClick={() => router.push(exploreHref)} className="flex-shrink-0 text-[10px] font-black uppercase tracking-widest text-emerald-600 border-b-2 border-emerald-500/20 pb-1 hover:text-emerald-700 hover:border-emerald-700 transition-all">
-                {providersDict?.view_all || "View all"}
+              <div>
+                <span className="text-emerald-600 text-[10px] font-black uppercase tracking-[0.25em] block mb-2">
+                  Native Himachal Network
+                </span>
+                <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+                  Verified Local Operators
+                </h2>
+              </div>
+              <button
+                onClick={() => router.push(exploreHref)}
+                className="flex-shrink-0 text-xs font-black uppercase tracking-wider text-emerald-600 hover:text-emerald-700 pb-1 border-b-2 border-emerald-500/30 hover:border-emerald-600 transition-all"
+              >
+                View all operators →
               </button>
             </div>
           </Reveal>
@@ -173,47 +154,65 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
             {isProvidersLoading ? (
               Array.from({ length: 4 }).map((_, idx) => (
-                <div key={idx} className="bg-white border border-slate-100 rounded-card p-5 space-y-3 animate-pulse">
-                  <div className="w-full h-40 rounded-2xl bg-slate-200" />
-                  <div className="h-3 bg-slate-200 rounded w-2/3" />
+                <div key={idx} className="bg-white border border-slate-100 rounded-3xl p-5 space-y-3 animate-pulse">
+                  <div className="w-full h-44 rounded-2xl bg-slate-200" />
+                  <div className="h-4 bg-slate-200 rounded w-2/3" />
                   <div className="h-3 bg-slate-200 rounded w-1/2" />
                 </div>
               ))
             ) : providersList.length > 0 ? (
               providersList.map((p, i) => (
-                <Reveal key={p.id} delayMs={(i % 4) * 70}>
+                <Reveal key={p.id} delayMs={(i % 4) * 60}>
                   <div
                     role="button"
                     tabIndex={0}
                     onClick={() => router.push(`/${lang}/vendor/${p.id}`)}
                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); router.push(`/${lang}/vendor/${p.id}`); } }}
-                    className="group bg-white border border-slate-100 rounded-card overflow-hidden hover:border-emerald-100 hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-500 cursor-pointer active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                    className="group bg-white border border-slate-200/80 rounded-3xl overflow-hidden hover:border-emerald-500/40 hover:shadow-xl hover:shadow-slate-200/60 hover:-translate-y-1 transition-all duration-300 cursor-pointer active:scale-[0.99] flex flex-col justify-between"
                   >
-                    <div className="relative h-40 overflow-hidden">
-                      <LocalImage src={p.image} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                      {p.isVerified && (
-                        <div className="absolute top-3 left-3">
-                          <VerifiedBadge showText={false} />
-                        </div>
-                      )}
+                    <div className="relative h-44 overflow-hidden">
+                      <LocalImage
+                        src={p.image}
+                        alt={p.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
+                      
+                      <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                        <span className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-wider border border-white/20">
+                          {p.category}
+                        </span>
+                        {p.isVerified && <VerifiedBadge showText={false} />}
+                      </div>
+
+                      <div className="absolute bottom-3 left-3 right-3 text-white">
+                        <p className="text-[11px] font-medium flex items-center gap-1 text-slate-200">
+                          <Icon name="map-pin" className="w-3 h-3 text-emerald-400 shrink-0" />
+                          <span className="truncate">{p.location}</span>
+                        </p>
+                      </div>
                     </div>
-                    <div className="p-5">
-                      <h3 className="text-slate-900 font-bold text-sm truncate">{p.name}</h3>
-                      <p className="text-slate-500 text-[9px] font-semibold uppercase tracking-wide mt-1.5">{p.category}</p>
-                      <p className="text-slate-400 text-[10px] mt-2 flex items-center gap-1"><Icon name="map-pin" className="w-3 h-3 flex-shrink-0" /><span className="truncate">{p.location}</span></p>
-                      <span className="mt-4 inline-flex items-center h-9 px-4 rounded-xl bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest group-hover:bg-emerald-500 transition-colors duration-300">
-                        {providersDict?.connect || "Connect"}
+
+                    <div className="p-4 flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <h3 className="text-slate-900 font-black text-sm truncate">{p.name}</h3>
+                        <p className="text-emerald-700 text-[10px] font-bold uppercase tracking-wider mt-0.5">
+                          Direct Local Host
+                        </p>
+                      </div>
+                      <span className="w-8 h-8 rounded-full bg-slate-100 group-hover:bg-emerald-600 text-slate-600 group-hover:text-white flex items-center justify-center shrink-0 transition-colors">
+                        →
                       </span>
                     </div>
                   </div>
                 </Reveal>
               ))
             ) : (
-              <div className="col-span-full py-12 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200 p-8">
-                <p className="text-sm font-bold text-slate-700">Connecting to live local network...</p>
-                <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">Explore native guides, 4x4 mountain drivers, and homestays across Himachal Pradesh.</p>
+              <div className="col-span-full py-10 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200 p-8">
+                <p className="text-sm font-bold text-slate-800">Direct Local Marketplace</p>
+                <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">Explore native guides, 4x4 mountain drivers, and homestays across Himachal Pradesh.</p>
                 <Button onClick={() => router.push(exploreHref)} variant="primary" className="mt-4 h-10 px-6 rounded-full text-xs font-black mx-auto">
-                  Browse Explore Services →
+                  Browse Services Directory →
                 </Button>
               </div>
             )}
@@ -221,68 +220,73 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
         </div>
       </section>
 
-      {/* ── 4 · JOIN AS A LOCAL PROVIDER ─────────────────────────────────── */}
-      {joinDict?.title && (
-        <section className="px-4 sm:px-6 py-14 sm:py-20 bg-slate-50">
+      {/* ── 4 · VISUAL BENTO HUB (PLAN & HOST) ────────────────────────────── */}
+      <section className="px-4 sm:px-6 py-10 sm:py-16 bg-slate-50 border-t border-slate-200/80">
+        <div className="max-w-6xl mx-auto">
           <Reveal>
-            <div className="relative max-w-4xl mx-auto bg-slate-900 rounded-panel p-8 sm:p-14 text-center overflow-hidden">
-              <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none" />
-              <div className="absolute bottom-0 left-0 w-56 h-56 bg-emerald-500/10 rounded-full blur-[90px] pointer-events-none" />
-              <div className="relative">
-                {joinDict?.badge && <span className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.25em] block mb-4">{joinDict.badge}</span>}
-                <h2 className="text-white text-3xl sm:text-4xl md:text-5xl font-black leading-[1.05] tracking-tight [text-wrap:balance]" dangerouslySetInnerHTML={{ __html: joinDict.title }} />
-                {joinDict?.subtitle && <p className="text-slate-300 text-sm sm:text-base mt-4 max-w-md mx-auto leading-relaxed">{joinDict.subtitle}</p>}
-                <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-                  <Button onClick={() => router.push(vendorHref)} variant="primary" iconRight={<Icon name="arrow-right" className="w-4 h-4" />} className="group bg-emerald-500 hover:bg-emerald-600 text-white h-12 rounded-full px-8 text-xs w-full sm:w-auto shadow-none">
-                    {joinDict?.cta_join || "Join free"}
-                  </Button>
-                  {joinDict?.cta_learn && (
-                    <Button onClick={() => router.push(aboutHref)} className="bg-transparent border border-white/25 text-white hover:bg-white/10 shadow-none h-12 rounded-full px-8 text-xs w-full sm:w-auto">
-                      {joinDict.cta_learn}
-                    </Button>
-                  )}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              
+              {/* Card A: Start Planning (Dark Glassmorphism, Visual Hero) */}
+              <div className="lg:col-span-7 relative bg-slate-950 text-white rounded-3xl p-8 sm:p-10 overflow-hidden flex flex-col justify-between shadow-2xl">
+                <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/15 rounded-full blur-[100px] pointer-events-none" />
+                <div className="relative space-y-4">
+                  <span className="text-emerald-400 text-[10px] font-black uppercase tracking-[0.25em] block">
+                    Custom Mountain Circuits
+                  </span>
+                  <h3 className="text-3xl sm:text-4xl font-black leading-tight tracking-tight">
+                    Build your Himachal route with local stays & transit.
+                  </h3>
+                  <p className="text-slate-400 text-xs sm:text-sm max-w-md leading-relaxed">
+                    Select your starting point, favorite valleys, and connect directly with verified drivers and homestays.
+                  </p>
                 </div>
-                {joinDict?.note && (
-                  <div className="mt-6 inline-flex items-center gap-2">
-                    <span className="w-4 h-4 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0"><Icon name="check" className="w-2.5 h-2.5 text-emerald-400" /></span>
-                    <span className="text-slate-400 text-[10px] font-black uppercase tracking-wider">{joinDict.note}</span>
+
+                <div className="relative pt-8 mt-6 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 text-slate-300 text-xs font-bold">
+                    <span className="flex items-center gap-1.5"><Icon name="check" className="w-4 h-4 text-emerald-400" /> 0% Markup</span>
+                    <span className="flex items-center gap-1.5"><Icon name="check" className="w-4 h-4 text-emerald-400" /> Escrow Safe</span>
                   </div>
-                )}
-              </div>
-            </div>
-          </Reveal>
-        </section>
-      )}
-
-      {/* ── 5 · TRUST ─────────────────────────────────────────────────────── */}
-      {trustBadges.length > 0 && (
-        <section className="px-4 sm:px-6 py-10 sm:py-14">
-          <Reveal>
-            <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-              {trustBadges.map((b) => (
-                <div key={b} className="flex flex-col items-center text-center gap-2 p-3 sm:p-4 rounded-2xl bg-slate-50/70 border border-slate-100">
-                  <span className="w-10 h-10 rounded-full bg-emerald-100/80 text-emerald-700 flex items-center justify-center"><Icon name="check" className="w-4 h-4" /></span>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-700 leading-snug">{b}</span>
+                  <Button
+                    onClick={() => router.push(builderHref)}
+                    variant="primary"
+                    iconRight={<Icon name="arrow-right" className="w-4 h-4" />}
+                    className="h-12 px-7 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-emerald-600/25 shrink-0"
+                  >
+                    Start Planning
+                  </Button>
                 </div>
-              ))}
+              </div>
+
+              {/* Card B: Join As Partner (Clean, High Intent) */}
+              <div className="lg:col-span-5 bg-white border border-slate-200/80 rounded-3xl p-8 sm:p-10 flex flex-col justify-between shadow-md">
+                <div className="space-y-3">
+                  <span className="text-slate-400 text-[10px] font-black uppercase tracking-[0.25em] block">
+                    For Local Hosts
+                  </span>
+                  <h3 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-snug">
+                    Offer your homestay, 4x4 cab, or trek.
+                  </h3>
+                  <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">
+                    List directly for travelers across India with zero upfront listing fees and direct payouts.
+                  </p>
+                </div>
+
+                <div className="pt-6 mt-6 border-t border-slate-100 flex items-center justify-between gap-3">
+                  <Button
+                    onClick={() => router.push(vendorHref)}
+                    className="h-11 px-6 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-black uppercase tracking-wider"
+                  >
+                    Join as Local Partner →
+                  </Button>
+                  <span className="text-[11px] font-bold text-slate-400">
+                    Free Registration
+                  </span>
+                </div>
+              </div>
+
             </div>
           </Reveal>
-        </section>
-      )}
-
-      {/* ── 6 · FINAL CTA ─────────────────────────────────────────────────── */}
-      <section className="px-4 sm:px-6 py-16 sm:py-24 bg-gradient-to-t from-slate-50 to-white">
-        <Reveal>
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-slate-900 text-4xl sm:text-5xl md:text-6xl font-black leading-[1.05] tracking-tight [text-wrap:balance]">Ready when you are.</h2>
-            <p className="text-slate-500 text-sm sm:text-base mt-4 max-w-md mx-auto leading-relaxed">
-              One route, planned end to end, with local support at every stop.
-            </p>
-            <Button onClick={() => router.push(builderHref)} variant="primary" iconRight={<Icon name="arrow-right" className="w-4 h-4" />} className="group btn-primary mt-8 rounded-full h-12 px-8 text-xs mx-auto shadow-lg shadow-emerald-600/20">
-              {heroDict?.cta_plan || "Start Planning"}
-            </Button>
-          </div>
-        </Reveal>
+        </div>
       </section>
 
       <PublicFooter />
