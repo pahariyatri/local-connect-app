@@ -7,6 +7,7 @@ import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import PublicFooter from "../components/organisms/PublicFooter";
 import { Icon } from "../components/atoms/Icon";
 import { BRAND_CONFIG } from "@/config/brandConfig";
+import { hasLiveSupportChannel } from "@/lib/supportConfig";
 
 export default function AboutPage() {
   const router = useRouter();
@@ -16,11 +17,19 @@ export default function AboutPage() {
   const heroTitle = about?.hero?.title || 'Local <span class="text-emerald-500">Legends</span>.';
   const heroSubtitle = BRAND_CONFIG.aboutSummary;
 
+  // Corrected 2026-08: "Escrow Protected" described a holding mechanism that
+  // doesn't exist (real model: a Razorpay reservation fee, paid to Pahari
+  // Yatri; the trip cost goes straight to the partner). "24/7 Mountain
+  // Helpline" was unconditional — same PY-004 rule as builder/page.tsx's
+  // "Our Promise" card applies here: don't claim a live 24/7 channel unless
+  // one is actually configured.
   const stats = [
     { value: "100%", label: "Direct Local Match", sub: "No agency markups" },
     { value: "6+", label: "Mountain Circuits", sub: "Manali, Spiti, Kasol & more" },
-    { value: "Bank-Grade", label: "Encrypted Checkout", sub: "Powered by Razorpay" },
-    { value: "24/7", label: "Mountain Helpline", sub: "Direct support on-route" },
+    { value: "Direct", label: "Reservation Fee", sub: "Trip cost paid to the partner, not held by us" },
+    hasLiveSupportChannel
+      ? { value: "Live", label: "Support Channel", sub: "Reach a human before or during your trip" }
+      : { value: "Email", label: "Support Channel", sub: "We reply, but it's not instant" },
   ];
 
   const circuits = [
@@ -70,8 +79,10 @@ export default function AboutPage() {
     },
     {
       icon: "wallet" as const,
-      title: "Secure Reservation Payment",
-      desc: "A small reservation fee confirms your booking through our encrypted payment gateway. The rest of your trip cost is paid directly to your host or driver, exactly as agreed.",
+      title: "Reservation Fee, Paid Direct",
+      // Corrected 2026-08: previously described an escrow-style hold-and-
+      // release mechanism that doesn't match how payment actually works.
+      desc: "Local partners confirm your request first. A reservation fee then locks in the booking; the trip cost itself is paid directly to your local partner, not held by us.",
     },
     {
       icon: "compass" as const,

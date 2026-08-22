@@ -311,7 +311,7 @@
     },
     "results": {
       "title": "Tu camino de leyenda",
-      "access_badge": "ACCESO A GRUPO SECRETO",
+      "access_badge": "TU PLAN DE YATRA",
       "subtitle": "Diseñado para tu viaje del alma de {duration} días. Con leyendas locales seleccionadas.",
       "guest_count": "Número de personas",
       "guest_count_placeholder": "¿Cuántos viajeros?",
@@ -330,7 +330,7 @@
       "footer": {
         "total": "Total estimado",
         "escrow": "PROTEGIDO POR DEPÓSITO",
-        "book_now": "RESERVAR AHORA"
+        "book_now": "SOLICITAR RESERVA"
       }
     },
     "about": {
@@ -387,8 +387,8 @@
         "subtitle": "Comprobando disponibilidad en tiempo real para ti."
       },
       "step5": {
-        "title": "Construye tu <span class=\"text-emerald-600\">paquete</span>",
-        "subtitle": "Elige proveedores para cada día. Comparte o reserva cuando termines."
+        "title": "Construye tu <span class=\"text-emerald-600\">plan de Yatra</span>",
+        "subtitle": "Elige socios locales para cada día. Comparte o solicita cuando termines."
       },
       "interests": {
         "title": "¿Qué <span class=\"text-rose-500\">deseas</span>?",
@@ -436,7 +436,7 @@
         "back": "Atrás",
         "continue": "CONTINUAR",
         "seePlan": "VER MI PLAN",
-        "createPackage": "Crear mi paquete",
+        "createPackage": "Crear mi plan de Yatra",
         "building": "CONSTRUYENDO VIAJE..."
       },
       "loading": {
@@ -534,7 +534,7 @@
         "added": "{category} añadido al Día {day}",
         "removed": "{category} eliminado. Descubriendo mejores alternativas...",
         "exploring": "Explorando más opciones de {category}...",
-        "booking_request": "Solicitando tarifas exclusivas de Secret Group para {name}...",
+        "booking_request": "Solicitando disponibilidad del socio local para {name}...",
         "booking_success": "¡Reserva confirmada! Revisa tu pestaña 'Viaje' para ver los detalles."
       },
       "errors": {

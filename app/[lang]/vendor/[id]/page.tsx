@@ -17,6 +17,7 @@ import VerifiedBadge from "../../components/atoms/VerifiedBadge";
 import StarRating from "../../components/atoms/StarRating";
 
 import FeedbackReviewModal, { ReviewItem } from "../../components/molecules/FeedbackReviewModal";
+import { trackPartnerProfileView } from "@/lib/analytics";
 
 const CATEGORY_IMAGES: Record<string, string> = {
     "Homestays": "https://images.unsplash.com/photo-1587061949409-02df41d5e562?q=80&w=1200",
@@ -49,7 +50,11 @@ export interface DetailedService {
     image: string;
     city?: string;
     inclusions: string[];
+    /** Real per-service value from the backend, or the honest hedge below when
+     *  the vendor hasn't set one. Never a fabricated specific policy. */
     cancellationPolicy: string;
+    /** Only set when the backend actually returns one — never defaulted. */
+    termsAndConditions?: string;
     prices?: any[];
 }
 
@@ -201,6 +206,7 @@ export default function VendorProfilePage() {
                     services: servicesList,
                     hometown: servicesList[0]?.city || response.city || "Himachal Pradesh",
                 });
+                trackPartnerProfileView(response.id, cleanName);
             } else {
                 setLoadError("not_found");
             }
@@ -570,6 +576,7 @@ export default function VendorProfilePage() {
                         variant="bar"
                         reference={`Host ${profile.name}`}
                         heading="Questions or Special Requests for this Host?"
+                        partnerContext={{ id: profile.id, name: profile.name }}
                     />
                 </div>
             </main>
@@ -658,12 +665,22 @@ export default function VendorProfilePage() {
                                 </div>
                             )}
 
-                            {/* Booking & Cancellation Terms */}
+                            {/* Booking & Cancellation Terms — real per-service value only (see
+                                AUDIT-007 above). Never assume "Flexible" — that's a claim, not a
+                                fact, until the vendor sets one. */}
                             {activeDetailModal.cancellationPolicy && (
                                 <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/60 space-y-1">
-                                    <span className="text-[10px] font-black uppercase text-amber-800 tracking-wider">Flexible Policy</span>
+                                    <span className="text-[10px] font-black uppercase text-amber-800 tracking-wider">Cancellation Policy</span>
                                     <p className="text-xs text-amber-900 font-medium">
                                         {activeDetailModal.cancellationPolicy}
+                                    </p>
+                                </div>
+                            )}
+                            {activeDetailModal.termsAndConditions && (
+                                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-1">
+                                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Service Terms</span>
+                                    <p className="text-xs text-slate-700 font-medium">
+                                        {activeDetailModal.termsAndConditions}
                                     </p>
                                 </div>
                             )}

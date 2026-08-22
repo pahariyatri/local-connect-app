@@ -20,32 +20,50 @@ export default function TermsConditionsPage() {
     {
       icon: "wallet" as const,
       num: "02",
-      title: "Booking, Pricing & Payments",
-      text: "All listings and package pricing are provided directly by verified local partners. When requesting a booking, you pay a reservation fee directly to the platform through a secure, encrypted payment gateway to confirm your slot. The remaining trip balance is paid directly to the host or driver on arrival, according to the agreed terms.",
+      title: "Booking, Pricing & Reservation Fee",
+      // Corrected 2026-08: previously described a general "secure escrow"
+      // holding the full trip amount — that doesn't match how payment
+      // actually works (see Section 04), so the word isn't used here again.
+      text: "All listings and pricing are provided directly by local partners. A booking request goes to each partner for confirmation before any payment is taken. Once every partner confirms, you pay a platform reservation fee to lock in the booking — this fee is separate from the trip cost itself, which is paid directly to each local partner on their own terms.",
     },
     {
       icon: "alert-circle" as const,
       num: "03",
-      title: "Cancellations, Road Blocks & Weather Contingencies",
-      text: "Mountain travel in Himachal is subject to unpredictable weather and road conditions. If a major pass (e.g. Rohtang, Kunzum, Jalori) or route is officially closed due to landslides or extreme snow, full refunds or alternative route reallocations are honored without penalty.",
+      title: "Cancellations & Refunds",
+      // Corrected 2026-08: previously promised an automatic full refund for
+      // weather/road closures with no process behind it — removed. Refund
+      // handling is real but reviewed case by case, and cancellation terms
+      // are set per service by each local partner, not by this platform.
+      text: "Mountain travel in Himachal is subject to unpredictable weather and road conditions. Cancellation and refund terms are set per service by each local partner — review the policy shown on a service before requesting it, or ask the partner directly if none is shown. Reservation-fee refunds are reviewed case by case, are not automatic, and are not instant.",
+    },
+    {
+      icon: "info" as const,
+      num: "04",
+      title: "Reservation Fee, Confirmation & Support — Practical Notes",
+      text: "This section is a practical summary for travellers and local partners, in plain language — it is not formal legal advice. Local partners confirm your request before any payment is taken. Once confirmed, the reservation fee shown before you pay locks in the booking; the trip cost itself is paid directly to each local partner. Cancellation and refund terms vary by service and partner — check the specific policy shown, and contact support before you pay if anything is unclear.",
     },
     {
       icon: "users" as const,
-      num: "04",
+      num: "05",
       title: "Host & Traveler Responsibilities",
-      text: "All local drivers must maintain valid commercial mountain permits and passenger insurance. Travelers are responsible for carrying valid government ID proof, adhering to check-in timings, and treating local communities with utmost dignity.",
+      text: "Local partners are independent operators, not Pahari Yatri employees. Travelers are responsible for carrying valid government ID proof, adhering to check-in timings, and treating local communities with respect.",
     },
     {
       icon: "mountain" as const,
-      num: "05",
+      num: "06",
       title: "Mountain Code & 'Leave No Trace'",
       text: "We strictly uphold sustainable Himalayan tourism. Travelers and operators must respect fragile mountain ecosystems, avoid single-use plastics, and follow sacred local customs and village rules (such as in Malana and Tosh).",
     },
     {
       icon: "check-circle" as const,
-      num: "06",
-      title: "Dispute Resolution & Platform Assistance",
-      text: "In the unlikely event of a service dispute or mismatch on the ground, Pahari Yatri provides 24/7 dedicated mediation and emergency escalation to ensure fair resolution for both the guest and local host.",
+      num: "07",
+      title: "Support & Escalation",
+      // Corrected 2026-08: previously claimed unconditional "24/7 dedicated
+      // mediation and emergency escalation" — the rest of the product
+      // deliberately gates 24/7 language behind a real configured channel
+      // (lib/supportConfig.ts, hasLiveSupportChannel) so this exact promise
+      // doesn't get made without one behind it. Brought into line with that.
+      text: "If a service dispute or mismatch happens on the ground, contact support using the channel shown in the app — response times depend on which support channel is currently live and staffed.",
     },
   ];
 
@@ -78,7 +96,7 @@ export default function TermsConditionsPage() {
             <div>
               <h2 className="text-sm font-black text-slate-900">Summary of Key Principles</h2>
               <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1 leading-relaxed">
-                Pahari Yatri connects you directly with verified locals. We don't take hidden cuts from operators. Your reservation payments are processed through a secure gateway, and our team backs every booking with 24/7 mountain support.
+                Pahari Yatri connects you directly with local partners. Local partners confirm your request first; a reservation fee then locks in the booking, and the trip cost is paid directly to each partner. Cancellation and refund terms vary by service — see Sections 03–04 below.
               </p>
             </div>
           </div>

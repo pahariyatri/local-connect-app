@@ -20,6 +20,15 @@ import PackageBuilderStep from "./components/PackageBuilderStep";
 import { TripStop, createTripStop } from "@/types/tripBuilder";
 import SupportContact from "../components/molecules/SupportContact";
 import { hasLiveSupportChannel } from "@/lib/supportConfig";
+import {
+  trackTravellerRequestStart,
+  trackTravellerDestinationSelect,
+  trackTravellerDateSelect,
+  trackTravellerPeopleSelect,
+  trackTravellerNeedSelect,
+  trackTravellerStopAdd,
+  trackTravellerPlanPreview,
+} from "@/lib/analytics";
 
 const DESTINATION_ID_MAP: Record<string, string> = {
   manali: "manali",
@@ -104,6 +113,11 @@ export default function TripBuilderPage() {
     setIsMounted(true);
   }, []);
 
+  useEffect(() => {
+    trackTravellerRequestStart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Sync state from URL query parameters & context on mount
   useEffect(() => {
     const urlOrigin = searchParams?.get("origin");
@@ -159,6 +173,12 @@ export default function TripBuilderPage() {
   const handleNext = () => {
     if (currentStep < 5) {
       prepTracker.funnelStep(currentStep as 1 | 2 | 3 | 4, STEP_METADATA[currentStep]);
+      // One dataLayer event per completed step, fired in the same place as
+      // the existing prepTracker call so the two pipelines never drift apart.
+      if (currentStep === 1) trackTravellerDestinationSelect(localOrigin, localDestinations);
+      else if (currentStep === 2) trackTravellerDateSelect(localStartDate, localEndDate);
+      else if (currentStep === 3) trackTravellerPeopleSelect(localGuestCount);
+      else if (currentStep === 4) trackTravellerNeedSelect(localServicePreferences);
       setCurrentStep(prev => prev + 1);
     } else if (currentStep === 5) {
       setBasicInfo(localOrigin, localDestinations, localStartDate || "", localEndDate || "");
@@ -175,6 +195,7 @@ export default function TripBuilderPage() {
         servicePreferences: localServicePreferences,
       });
       prepTracker.funnelStep('plan_submitted', STEP_METADATA[5]);
+      trackTravellerPlanPreview(localDestinations, localGuestCount);
       setStep5Footer(null);
       setCurrentStep(6);
     }
@@ -293,7 +314,13 @@ export default function TripBuilderPage() {
                origin={localOrigin}
                destinations={localDestinations}
                stops={localTripStops}
-               onStopsChange={setLocalTripStops}
+               onStopsChange={(stops) => {
+                 if (stops.length > localTripStops.length) {
+                   const added = stops[stops.length - 1];
+                   trackTravellerStopAdd(added?.name ?? "", stops.length);
+                 }
+                 setLocalTripStops(stops);
+               }}
                startDate={localStartDate}
                endDate={localEndDate}
                guestCount={localGuestCount}
@@ -427,7 +454,7 @@ export default function TripBuilderPage() {
                           <span className="text-xs md:text-sm tracking-widest">{builder.buttons.building}</span>
                         </div>
                       ) : (
-                        builder.buttons.createPackage ?? "Create My Package"
+                        builder.buttons.createPackage ?? "Create my Yatra plan"
                       )}
                     </Button>
                   )

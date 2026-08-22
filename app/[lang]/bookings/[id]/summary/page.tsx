@@ -86,7 +86,7 @@ export default function BookingSummaryPage() {
                     
                     <div className="space-y-4">
                         <div className="flex justify-between items-center text-xs">
-                            <span className="font-bold text-slate-400 uppercase tracking-wider">Total Package</span>
+                            <span className="font-bold text-slate-400 uppercase tracking-wider">Trip Total</span>
                             <span className="font-black text-slate-900">₹{totalAmount.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between items-center text-xs">
@@ -103,7 +103,7 @@ export default function BookingSummaryPage() {
 
                 {/* Inclusion List from Trip Snapshot */}
                 <div className="mb-24">
-                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 pl-4">Package Includes</h3>
+                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 pl-4">Trip Includes</h3>
                     <div className="grid grid-cols-2 gap-3">
                         {booking?.trip?.services?.map((service: any, i: number) => (
                             <div key={i} className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-slate-50 shadow-sm">
@@ -126,7 +126,8 @@ export default function BookingSummaryPage() {
                             </Button>
                             <p className="text-center text-[9px] font-bold text-slate-400 uppercase mt-3 tracking-widest flex items-center justify-center gap-1.5">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                                Secure Reservation Payment
+                                {/* Corrected 2026-08: was "Secure Escrow Payment" — no escrow mechanism exists. */}
+                                Secure Payment via Razorpay
                             </p>
                         </div>
                     </div>

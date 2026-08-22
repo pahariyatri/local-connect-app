@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { api } from "@/lib/apiClient";
 import {
   respondToBookingItem as _respondToBookingItem,
@@ -255,6 +256,21 @@ export default function BookingDetailPage() {
             </p>
           </div>
         </div>
+
+        {/* No self-service cancel action yet — the API supports it
+            (POST /booking/:id/cancel) but there's no UI for it. Until that's
+            built, point people at support/policy rather than promising
+            something that isn't there or an instant refund timeline we don't
+            control (Razorpay processes refunds on their own schedule). */}
+        {isReserved && (
+          <p className="mb-6 text-xs text-slate-400 font-medium text-center">
+            Need to cancel?{" "}
+            <Link href={`/${lang}/terms-conditions`} className="text-emerald-600 font-bold hover:text-emerald-700">
+              See the cancellation &amp; refund terms
+            </Link>
+            {" "}or use the support link below — refunds are reviewed, not instant.
+          </p>
+        )}
 
         {error && (
           <div className="mb-4 p-4 bg-red-50 rounded-2xl border border-red-100">

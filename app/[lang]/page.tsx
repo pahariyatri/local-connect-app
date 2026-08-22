@@ -15,6 +15,7 @@ import { Icon, IconName } from "./components/atoms/Icon";
 import PublicFooter from "./components/organisms/PublicFooter";
 import HeroSection from "./components/organisms/HeroSection";
 import InteractiveRouteSection from "./components/organisms/InteractiveRouteSection";
+import { trackAppLandingView, trackPortalCtaClick } from "@/lib/analytics";
 
 type HomeProps = {
   params: Promise<{ lang: Locale }>;
@@ -141,6 +142,10 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
   const [isDestinationsLoading, setIsDestinationsLoading] = useState(true);
 
   useEffect(() => {
+    trackAppLandingView();
+  }, []);
+
+  useEffect(() => {
     if (!dict) return;
     let cancelled = false;
     (async () => {
@@ -195,7 +200,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
       {/* ── 1 · HERO ─────────────────────────────────────────────────────── */}
       <HeroSection
         onSearch={(query) => router.push(query ? `${exploreHref}?q=${encodeURIComponent(query)}` : exploreHref)}
-        onPlan={() => router.push(builderHref)}
+        onPlan={() => { trackPortalCtaClick("hero_plan", builderHref); router.push(builderHref); }}
       />
 
       {/* ── 1b · CATEGORIES ──────────────────────────────────────────────── */}
@@ -288,7 +293,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
                 </p>
               </div>
               <button
-                onClick={() => router.push(exploreHref)}
+                onClick={() => { trackPortalCtaClick("view_all_operators", exploreHref); router.push(exploreHref); }}
                 className="flex-shrink-0 text-xs font-black uppercase tracking-wider text-emerald-600 hover:text-emerald-700 pb-1 border-b-2 border-emerald-500/30 hover:border-emerald-600 transition-all self-start sm:self-auto flex items-center gap-1.5"
               >
                 <span>{dict.page?.home?.providers?.view_all || "View All"}</span>
@@ -328,7 +333,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
               <div className="col-span-full py-10 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200 p-8">
                 <p className="text-sm font-bold text-slate-800">Direct Local Marketplace</p>
                 <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">Explore native guides, 4x4 mountain drivers, and homestays across Himachal Pradesh.</p>
-                <Button onClick={() => router.push(exploreHref)} variant="primary" className="mt-4 h-10 px-6 rounded-full text-sm font-semibold mx-auto flex items-center gap-2">
+                <Button onClick={() => { trackPortalCtaClick("browse_services_directory", exploreHref); router.push(exploreHref); }} variant="primary" className="mt-4 h-10 px-6 rounded-full text-sm font-semibold mx-auto flex items-center gap-2">
                   <span>Browse services directory</span>
                   <Icon name="arrow-right" className="w-3.5 h-3.5" />
                 </Button>
@@ -362,10 +367,13 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
                 <div className="relative pt-8 mt-6 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-4 text-slate-300 text-xs font-bold">
                     <span className="flex items-center gap-1.5"><Icon name="check" className="w-4 h-4 text-emerald-400" /> 0% Markup</span>
+                    {/* Corrected 2026-08: was "Escrow Safe" — the platform doesn't hold
+                        trip funds in escrow (a Razorpay reservation fee, paid directly
+                        to partners for the rest), so the word doesn't apply here. */}
                     <span className="flex items-center gap-1.5"><Icon name="check" className="w-4 h-4 text-emerald-400" /> Reserve, Pay Direct</span>
                   </div>
                   <Button
-                    onClick={() => router.push(builderHref)}
+                    onClick={() => { trackPortalCtaClick("start_planning", builderHref); router.push(builderHref); }}
                     variant="primary"
                     iconRight={<Icon name="arrow-right" className="w-4 h-4" />}
                     className="h-12 px-7 rounded-2xl text-sm font-semibold shrink-0"
@@ -391,7 +399,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
 
                 <div className="pt-6 mt-6 border-t border-slate-100 flex items-center justify-between gap-3">
                   <Button
-                    onClick={() => router.push(vendorHref)}
+                    onClick={() => { trackPortalCtaClick("join_as_local_partner", vendorHref); router.push(vendorHref); }}
                     variant="dark"
                     iconRight={<Icon name="arrow-right" className="w-4 h-4" />}
                     className="h-11 px-6 rounded-xl text-sm font-semibold"

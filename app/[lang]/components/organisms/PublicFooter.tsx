@@ -63,6 +63,9 @@ export default function PublicFooter() {
             <p className="text-slate-400 text-xs leading-relaxed">
               {BRAND_CONFIG.tagline}
             </p>
+            <p className="text-slate-500 text-[11px] leading-relaxed">
+              {BRAND_CONFIG.trustLine}
+            </p>
 
             <div className="pt-2 text-xs space-y-1.5 border-t border-white/5">
               <p className="text-slate-500 text-[11px]">

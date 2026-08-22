@@ -6,6 +6,7 @@ import { prepTracker } from "@/lib/prepTracker";
 import { initRazorpayCheckout, verifyPayment } from "@/services/paymentService";
 import { reserveBooking } from "@/services/bookingService";
 import { useAuth } from "@/contexts/AuthContext";
+import Link from "next/link";
 import SupportContact from "../components/molecules/SupportContact";
 
 const RAZORPAY_KEY_ID = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '';
@@ -237,6 +238,27 @@ export default function CheckoutPage() {
           <div className="mb-4 p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-center gap-3">
             <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
             <p className="text-blue-700 font-bold text-sm">Verifying payment with bank...</p>
+          </div>
+        )}
+
+        {/* Payment-safety disclosure — by this point the booking is already
+            VENDOR_ACCEPTED (every partner confirmed), so this isn't a warning
+            that confirmation is pending; it's what's being charged and what
+            to check before paying it. */}
+        {state !== 'success' && orderId && (
+          <div className="mb-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+            <p className="text-xs text-slate-600 font-medium leading-relaxed">
+              Before paying, please review the cancellation and refund terms for
+              this local partner. Pahari Yatri helps connect you with local
+              support; final service terms may vary by partner, and this
+              reservation fee is separate from what you pay each partner directly.
+            </p>
+            <Link
+              href={`/${lang}/terms-conditions`}
+              className="inline-block mt-2 text-xs font-black text-emerald-600 hover:text-emerald-700 uppercase tracking-wide"
+            >
+              Read Terms &amp; Conditions →
+            </Link>
           </div>
         )}
 

@@ -311,7 +311,7 @@
     },
     "results": {
       "title": "Dein Legenden-Pfad",
-      "access_badge": "GEHEIMGRUPPEN-ZUGANG",
+      "access_badge": "DEIN YATRA-PLAN",
       "subtitle": "Erstellt für deine {duration}-tägige Seelenreise. Mit handverlesenen lokalen Legenden.",
       "guest_count": "Anzahl der Personen",
       "guest_count_placeholder": "Wie viele Reisende?",
@@ -330,7 +330,7 @@
       "footer": {
         "total": "Geschätzter Gesamtpreis",
         "escrow": "TREUHANDGESCHÜTZT",
-        "book_now": "JETZT BUCHEN"
+        "book_now": "BUCHUNG ANFRAGEN"
       }
     },
     "about": {
@@ -387,8 +387,8 @@
         "subtitle": "Echtzeit-Verfügbarkeit wird für Sie geprüft."
       },
       "step5": {
-        "title": "Baue dein <span class=\"text-emerald-600\">Paket</span>",
-        "subtitle": "Wähle Anbieter für jeden Tag. Teilen oder buchen, wenn fertig."
+        "title": "Baue deinen <span class=\"text-emerald-600\">Yatra-Plan</span>",
+        "subtitle": "Wähle lokale Partner für jeden Tag. Teilen oder Anfrage senden, wenn fertig."
       },
       "interests": {
         "title": "Wonach <span class=\"text-rose-500\">sehnst</span> du dich?",
@@ -436,7 +436,7 @@
         "back": "Zurück",
         "continue": "WEITER",
         "seePlan": "MEINEN PLAN ANSEHEN",
-        "createPackage": "Mein Paket erstellen",
+        "createPackage": "Meinen Yatra-Plan erstellen",
         "building": "BAUE REISE..."
       },
       "loading": {
@@ -534,7 +534,7 @@
         "added": "{category} zu Tag {day} hinzugefügt",
         "removed": "{category} entfernt. Entdecke bessere Alternativen...",
         "exploring": "Entdecke weitere {category}-Optionen...",
-        "booking_request": "Exklusive Secret Group Raten für {name} anfragen...",
+        "booking_request": "Verfügbarkeit des lokalen Partners für {name} wird angefragt...",
         "booking_success": "Buchung bestätigt! Überprüfen Sie den Tab 'Reise' für Details."
       },
       "errors": {

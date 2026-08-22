@@ -37,10 +37,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const act = ACTIVITY_MAP[params.activity];
   if (!dest || !act) return {};
 
-  const title = `${act.display} in ${dest.display} | Book Instantly | Pahari Yatri`;
+  // Corrected 2026-08: "Book Instantly" / "Instant booking" don't match the
+  // real flow (request → local partner confirms → reservation fee) — see
+  // booking.entity.ts's BookingStatus lifecycle. Don't put a claim in a
+  // <title>/<meta description> that the product itself doesn't do.
+  const title = `${act.display} in ${dest.display} | Pahari Yatri`;
   const description =
-    `Find and book verified ${act.keyword} in ${dest.display}, ${dest.state}. ` +
-    `Instant booking, transparent prices, local experts. No advance planning needed.`;
+    `Find verified ${act.keyword} in ${dest.display}, ${dest.state}. ` +
+    `Transparent prices, local experts, request-based confirmation.`;
 
   return {
     title,
@@ -132,8 +136,8 @@ export default async function DestinationActivityPage({ params }: PageProps) {
               {act.display} in {dest.display}
             </h1>
             <p className="text-slate-300 text-base font-medium mb-8">
-              Verified local {act.keyword.toLowerCase()} operators. Transparent prices. Instant booking.
-              No advance planning or travel agents needed.
+              Verified local {act.keyword.toLowerCase()} operators. Transparent prices. Request-based confirmation.
+              No travel agents needed.
             </p>
             <a
               href={`/${params.lang}/builder`}

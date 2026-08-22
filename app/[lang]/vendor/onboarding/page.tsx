@@ -9,6 +9,7 @@ import { toApiUiError } from "@/utils/apiErrors";
 import { createVendor, createPointOfContact, getMyVendor } from "@/services/vendorService";
 import { uploadMedia, deleteMedia, validateImage, type UploadedMedia } from "@/services/mediaService";
 import { useTouchedFields } from "@/hooks/useTouchedFields";
+import { trackVendorApplyStart, trackVendorApplySubmit } from "@/lib/analytics";
 import Typography from "../../components/atoms/Typography";
 import Button from "../../components/atoms/Button";
 import Input from "../../components/atoms/Input";
@@ -117,6 +118,12 @@ export default function VendorOnboardingPage() {
     })();
     return () => { cancelled = true; };
   }, [lang, router]);
+
+  // Fires once the form is actually shown — not for a user who turns out to
+  // already have a vendor record and gets redirected straight to their dashboard.
+  useEffect(() => {
+    if (onboardCheck === "needed") trackVendorApplyStart();
+  }, [onboardCheck]);
 
   // Step 1 — basic info
   const [contactFirstName, setContactFirstName] = useState("");
@@ -283,6 +290,7 @@ export default function VendorOnboardingPage() {
       // successfully submitting this form. Don't call token/refresh here.
       try { window.localStorage.setItem("vendorId", vendorId); } catch { /* storage unavailable — non-fatal */ }
 
+      trackVendorApplySubmit(vendorId, businessName.trim());
       router.replace(`/${lang}/vendor/onboarding/confirmation`);
     } catch (err) {
       const ui = toApiUiError(err, "We could not submit your application. Review the highlighted fields and try again.");

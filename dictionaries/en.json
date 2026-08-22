@@ -18,7 +18,7 @@
       "builder": {
         "eyebrow": "For Travellers",
         "title": "Build Your Trip in <span class=\"text-emerald-600\">6 Steps</span>",
-        "subtitle": "Tell us your route, dates & interests — we'll match you with verified locals along the whole way and turn it into one bookable package.",
+        "subtitle": "Tell us your route, dates & interests — we'll match you with verified locals along the whole way and turn it into one Yatra plan you can send as a request.",
         "steps": [
           {
             "label": "Route",
@@ -41,8 +41,8 @@
             "desc": "Along the way"
           },
           {
-            "label": "Package",
-            "desc": "Ready to book"
+            "label": "Plan",
+            "desc": "Ready to send"
           }
         ],
         "cta": "Start Building — Free",
@@ -311,7 +311,7 @@
     },
     "results": {
       "title": "Your Legend Path",
-      "access_badge": "SECRET GROUP ACCESS",
+      "access_badge": "YOUR YATRA PLAN",
       "subtitle": "Crafted for your {duration}-day soul journey. Featuring hand-picked Local Legends.",
       "guest_count": "Number of People",
       "guest_count_placeholder": "How many travelers?",
@@ -387,8 +387,8 @@
         "subtitle": "Checking real-time availability for you."
       },
       "step5": {
-        "title": "Build your <span class=\"text-emerald-600\">package</span>",
-        "subtitle": "Choose vendors for each day. Share or book when done."
+        "title": "Build your <span class=\"text-emerald-600\">Yatra plan</span>",
+        "subtitle": "Choose local partners for each day. Share or request when done."
       },
       "next_stop": {
         "title": "Where do you want to <span class=\"text-emerald-500\">stop</span>?",
@@ -465,7 +465,7 @@
         "back": "Back",
         "continue": "CONTINUE",
         "seePlan": "SEE MY PLAN",
-        "createPackage": "Create my package",
+        "createPackage": "Create my Yatra plan",
         "building": "BUILDING TRIP..."
       },
       "loading": {
@@ -534,7 +534,7 @@
         "added": "{category} added to Day {day}",
         "removed": "{category} removed. Discovering better alternatives...",
         "exploring": "Exploring more {category} options...",
-        "booking_request": "Requesting exclusive Secret Group rates for {name}...",
+        "booking_request": "Requesting local partner availability for {name}...",
         "booking_success": "Booking Confirmed! Check your 'Journey' tab for details."
       },
       "errors": {

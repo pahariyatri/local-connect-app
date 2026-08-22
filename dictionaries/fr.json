@@ -311,7 +311,7 @@
     },
     "results": {
       "title": "Votre chemin de légende",
-      "access_badge": "ACCÈS GROUPE SECRET",
+      "access_badge": "VOTRE PLAN DE YATRA",
       "subtitle": "Conçu pour votre voyage de l'âme de {duration} jours. Avec des légendes locales triées sur le volet.",
       "guest_count": "Nombre de personnes",
       "guest_count_placeholder": "Combien de voyageurs ?",
@@ -330,7 +330,7 @@
       "footer": {
         "total": "Total estimé",
         "escrow": "SÉQUESTRE PROTÉGÉ",
-        "book_now": "RÉSERVER MAINTENANT"
+        "book_now": "DEMANDER UNE RÉSERVATION"
       }
     },
     "about": {
@@ -387,8 +387,8 @@
         "subtitle": "Vérification de la disponibilité en temps réel pour vous."
       },
       "step5": {
-        "title": "Construisez votre <span class=\"text-emerald-600\">forfait</span>",
-        "subtitle": "Choisissez les prestataires pour chaque jour. Partagez ou réservez quand vous avez fini."
+        "title": "Construisez votre <span class=\"text-emerald-600\">plan de Yatra</span>",
+        "subtitle": "Choisissez des partenaires locaux pour chaque jour. Partagez ou envoyez votre demande une fois terminé."
       },
       "interests": {
         "title": "De quoi avez-vous <span class=\"text-rose-500\">envie</span> ?",
@@ -436,7 +436,7 @@
         "back": "Retour",
         "continue": "CONTINUER",
         "seePlan": "VOIR MON PLAN",
-        "createPackage": "Créer mon forfait",
+        "createPackage": "Créer mon plan de Yatra",
         "building": "CONSTRUCTION DU VOYAGE..."
       },
       "loading": {
@@ -534,7 +534,7 @@
         "added": "{category} ajouté au Jour {day}",
         "removed": "{category} supprimé. Recherche de meilleures alternatives...",
         "exploring": "Exploration de plus d'options de {category}...",
-        "booking_request": "Demande de tarifs exclusifs Secret Group pour {name}...",
+        "booking_request": "Demande de disponibilité du partenaire local pour {name}...",
         "booking_success": "Réservation confirmée ! Consultez votre onglet 'Voyage' pour plus de détails."
       },
       "errors": {
