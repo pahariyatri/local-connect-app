@@ -103,7 +103,8 @@ Copy `.env.example` → `.env.local` and configure:
 | `NEXT_PUBLIC_API_BASE_URL` | ✅ | Base URL of the backend API (no `/api/v1` suffix) |
 | `NEXT_PUBLIC_RAZORPAY_KEY_ID` | ✅ | Razorpay public key for checkout |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Optional | Web Push public key |
-| `NEXT_PUBLIC_GA_ID` | Optional | Google Analytics measurement ID |
+| `NEXT_PUBLIC_GTM_ID` | Optional | Google Tag Manager container ID — loads GTM, which owns GA4/portal event tracking (`lib/analytics.ts`). Blank = tracking off, nothing loads. |
+| `NEXT_PUBLIC_GA_ID` | Optional | Legacy — not read by any code path today |
 | `NEXT_PUBLIC_SENTRY_DSN` | Optional | Sentry DSN for error monitoring |
 | `NEXT_PUBLIC_ENABLE_CHAT` | Optional | Feature flag — enable real-time chat (default: `true`) |
 | `NEXT_PUBLIC_ENABLE_NOTIFICATIONS` | Optional | Feature flag — enable push notifications (default: `true`) |
@@ -126,6 +127,15 @@ docker build \
 docker run -p 3000:3000 pahariyatri-local-connect
 ```
 
+> ⚠️ **For Docker/Next.js standalone builds, all `NEXT_PUBLIC_*` variables — including `NEXT_PUBLIC_GTM_ID` — are baked into the client bundle at build time, not read at container runtime.** Setting `NEXT_PUBLIC_GTM_ID` (or any `NEXT_PUBLIC_*` var) only on the running container via `docker run -e ...` or a platform's runtime-env panel **is not enough** — the bundle copied into the final image has already been compiled without it. To enable GTM tracking, pass it to the build itself:
+>
+> ```bash
+> docker build \
+>   --build-arg NEXT_PUBLIC_API_BASE_URL=https://api.pahariyatri.com \
+>   --build-arg NEXT_PUBLIC_GTM_ID=GTM-XXXXXXX \
+>   -t pahariyatri-local-connect .
+> ```
+
 ### Docker Compose
 
 ```bash
@@ -140,9 +150,11 @@ The Docker image uses **Next.js standalone output** for a minimal runtime footpr
 
 | Platform | How |
 |---|---|
-| **Vercel** | Import repo → set `NEXT_PUBLIC_*` env vars → deploy. No Dockerfile needed. |
-| **Fly.io / Render / ECS / K8s** | Build the image with the correct `NEXT_PUBLIC_API_BASE_URL` build arg → deploy the container. |
+| **Vercel** | Import repo → set `NEXT_PUBLIC_*` env vars (including `NEXT_PUBLIC_GTM_ID` if using GTM) → deploy. No Dockerfile needed — Vercel handles the build-time inlining itself. |
+| **Fly.io / Render / ECS / K8s** | Build the image with the correct `NEXT_PUBLIC_API_BASE_URL` and `NEXT_PUBLIC_GTM_ID` build args → deploy the container. A platform's *runtime* env-var panel is not sufficient for these — see the Docker section above. |
 
+> **This table describes generic options, not a confirmed statement of how `app.pahariyatri.com` is hosted today.** As of 2026-08, this repository has no deploy automation of its own — `.github/workflows/ci.yml` only lints, typechecks, and build-tests a Docker image; it never pushes it anywhere. Wherever the real production build runs (a platform dashboard, a server, something else) is not visible from this repo. Confirm with whoever manages hosting before assuming any of the above.
+>
 > **CORS:** The origin this frontend is served from must be whitelisted in the backend's `CORS_ORIGIN` setting. Update it in the backend repo when deploying to a new domain.
 
 ---
