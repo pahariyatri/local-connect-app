@@ -93,9 +93,16 @@ export default async function RootLayout(props: {
 
   const { children } = props;
   return (
-    <html lang={lang} dir={lang === "he" ? "rtl" : "ltr"}>
+    // suppressHydrationWarning on html/body only: browser extensions (e.g.
+    // Storylane, LocatorJS) inject attributes like class="js-storylane-extension"
+    // or __processed_<uuid>__="true" onto these two elements before React
+    // hydrates, which React then reports as a mismatch even though nothing
+    // in our render output actually differs. Scoped to just these two tags
+    // so a real mismatch anywhere else in the tree still warns normally.
+    <html lang={lang} dir={lang === "he" ? "rtl" : "ltr"} suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
         <AuthProvider>
           <NotificationProvider>

@@ -3,12 +3,11 @@
     "home": {
       "badge": "Red Pahari Yatri",
       "hero": {
-        "title": "Conoce a los <span class=\"text-emerald-600\">verdaderos locales</span><br />del Himalaya",
-        "subtitle": "Conéctate directamente con guías, anfitriones y operadores verificados. Sin paquetes. Sin agencias. Solo servicio local auténtico.",
-        "cta_plan": "Planear mi viaje",
-        "cta_explore": "Explorar locales",
-        "vendor_link": "¿Eres local? Publica tu servicio",
-        "social_proof": "locales listos para conectar"
+        "title": "Viaja como si conocieras a alguien allí.",
+        "subtitle": "Busca alojamientos, traslados y guías reales de locales verificados en Himachal, de forma directa y sin comisión de agencia.",
+        "search_placeholder": "¿A dónde vas? (Kasol, Manali, Tosh...)",
+        "search_cta": "Buscar",
+        "plan_cta": "O planifica un viaje completo"
       },
       "stats": {
         "providers": "Proveedores locales",
