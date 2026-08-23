@@ -3,12 +3,11 @@
     "home": {
       "badge": "Pahari Yatri Network",
       "hero": {
-        "title": "Build your journey with<br /><span class=\"text-emerald-600\">trusted local partners</span>",
-        "subtitle": "Plan the whole journey and reserve it in one place. Pay your local partners directly, on your terms.",
-        "cta_plan": "Plan My Trip",
-        "cta_explore": "Explore Locals",
-        "vendor_link": "Are you a local? List your service",
-        "social_proof": "locals ready to connect"
+        "title": "Travel like you know someone there.",
+        "subtitle": "Search real stays, rides, and guides from verified Himachal locals — direct, with no agency markup.",
+        "search_placeholder": "Where are you going? (Kasol, Manali, Tosh...)",
+        "search_cta": "Search",
+        "plan_cta": "Or build a whole trip"
       },
       "stats": {
         "providers": "Local Providers",

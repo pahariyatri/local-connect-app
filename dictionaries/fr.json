@@ -3,12 +3,11 @@
     "home": {
       "badge": "Réseau Pahari Yatri",
       "hero": {
-        "title": "Rencontrez les <span class=\"text-emerald-600\">vrais locaux</span><br />de l'Himalaya",
-        "subtitle": "Connectez-vous directement à des guides, hôtes et opérateurs vérifiés. Pas de forfaits. Pas d'agences. Juste un service local authentique.",
-        "cta_plan": "Planifier mon voyage",
-        "cta_explore": "Découvrir les locaux",
-        "vendor_link": "Vous êtes un local ? Proposez votre service",
-        "social_proof": "locaux prêts à se connecter"
+        "title": "Voyagez comme si vous connaissiez quelqu'un sur place.",
+        "subtitle": "Trouvez de vrais hébergements, trajets et guides auprès d'habitants vérifiés de l'Himachal — en direct, sans commission d'agence.",
+        "search_placeholder": "Où allez-vous ? (Kasol, Manali, Tosh...)",
+        "search_cta": "Rechercher",
+        "plan_cta": "Ou planifiez tout un voyage"
       },
       "stats": {
         "providers": "Prestataires locaux",

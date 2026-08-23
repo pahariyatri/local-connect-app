@@ -3,12 +3,11 @@
     "home": {
       "badge": "Pahari Yatri Netzwerk",
       "hero": {
-        "title": "Triff die <span class=\"text-emerald-600\">echten Locals</span><br />des Himalaya",
-        "subtitle": "Verbinde dich direkt mit geprüften Guides, Gastgebern und Anbietern. Keine Pauschalreisen. Keine Agenturen. Nur echter lokaler Service.",
-        "cta_plan": "Reise planen",
-        "cta_explore": "Locals entdecken",
-        "vendor_link": "Bist du ein Local? Biete deinen Service an",
-        "social_proof": "Locals bereit zum Verbinden"
+        "title": "Reisen, als würdest du dort jemanden kennen.",
+        "subtitle": "Finde echte Unterkünfte, Fahrten und Guides von verifizierten Einheimischen in Himachal — direkt und ohne Vermittlungsgebühr.",
+        "search_placeholder": "Wohin geht die Reise? (Kasol, Manali, Tosh...)",
+        "search_cta": "Suchen",
+        "plan_cta": "Oder plane eine ganze Reise"
       },
       "stats": {
         "providers": "Lokale Anbieter",
