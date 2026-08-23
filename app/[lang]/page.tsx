@@ -72,14 +72,19 @@ interface LocalProviderItem {
 function mapBackendVendor(v: any): LocalProviderItem {
   const typeMap: Record<string, string> = { hotel: "Stay", restaurant: "Food", transport: "Transport", adventure: "Adventure" };
   const category = typeMap[v.types?.[0]?.toLowerCase()] || "Stay";
-  const lowerName = (v.businessName || "").toLowerCase();
-  const knownTowns = ["dharamshala", "tirthan", "spiti", "leh", "rishikesh", "shimla", "manali", "kasol", "jibhi", "bir"];
-  const location = knownTowns.find((t) => lowerName.includes(t));
+  // `GET /vendors` (the public list this carousel renders) doesn't return a
+  // location field, so there's no real per-vendor town to show here. This
+  // used to guess one by string-matching the business name against a
+  // hardcoded town list — that can attribute a vendor to a town it isn't
+  // actually in (e.g. a "Manali Style Cafe" based in Kasol) and shows up as
+  // a wrong, misleading fact rather than a UI guess. Showing the one thing
+  // that's actually true (the state) until the endpoint carries real
+  // location data.
   return {
     id: v.id,
     name: (v.businessName || "").replace(/\s*\(.*?\)\s*/g, "").trim() || "Local Mountain Partner",
     category,
-    location: location ? location[0].toUpperCase() + location.slice(1) : "Himachal Pradesh",
+    location: "Himachal Pradesh",
     image: v.images?.[0] || CATEGORY_IMAGES[category] || CATEGORY_IMAGES.Stay,
     isVerified: !!v.isVerified,
   };

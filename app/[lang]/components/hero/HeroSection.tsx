@@ -29,14 +29,14 @@ export default function HeroSection({ onSearch, onPlan }: { onSearch: (query?: s
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/65 to-slate-950/90" />
 
         <div className="relative z-10 w-full max-w-3xl mx-auto px-4 sm:px-6 py-12 text-center text-white flex flex-col items-center justify-center">
-          {/* Punchy, Clean Hook Line */}
+          {/* One hero hook: traveler need, not platform pitch */}
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-black leading-[1.08] tracking-tight text-balance">
-            Direct from Himachal locals.{" "}
-            <span className="text-emerald-400">Zero agency markups.</span>
+            Travel like you know{" "}
+            <span className="text-emerald-400">someone there.</span>
           </h1>
 
           <p className="mt-4 max-w-lg text-sm sm:text-base text-slate-300 font-medium leading-relaxed">
-            Connect directly with verified homestay hosts, 4x4 mountain drivers, and native trek guides.
+            Search real stays, rides, and guides from verified Himachal locals — direct, with no agency markup.
           </p>
 
           {/* Sleek Floating Search Console */}
@@ -56,7 +56,7 @@ export default function HeroSection({ onSearch, onPlan }: { onSearch: (query?: s
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Where to? (e.g. Manali, Kasol, Spiti)"
+                  placeholder="Where are you going? (Kasol, Manali, Tosh...)"
                   aria-label="Search destination"
                   className="w-full bg-transparent text-sm sm:text-base font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-medium focus:outline-none"
                 />
@@ -85,6 +85,17 @@ export default function HeroSection({ onSearch, onPlan }: { onSearch: (query?: s
               </button>
             ))}
           </div>
+
+          {/* Secondary path for the full-trip persona — one primary action (search), one quiet secondary */}
+          {onPlan && (
+            <button
+              type="button"
+              onClick={onPlan}
+              className="mt-4 text-xs font-bold text-slate-300 hover:text-white underline underline-offset-4 decoration-slate-500 hover:decoration-emerald-400 transition-colors"
+            >
+              Or build a whole trip →
+            </button>
+          )}
         </div>
       </div>
     </section>
