@@ -42,19 +42,28 @@ export async function generateMetadata(props: {
   const params = props.params ? await props.params : undefined;
   const lang = resolveLang(params?.lang);
 
+  // The old copy here ("Himachal Journey Planner") framed the whole product
+  // as a trip-planning tool, which undersells the direct-search path (a
+  // traveler who just needs "taxi in Kasol" shouldn't read this as a
+  // planner-only product) — this is the same tagline already live in the
+  // footer and now the hero, kept as one consistent line rather than a
+  // third, different pitch.
+  const title = `${BRAND_CONFIG.tagline} | ${BRAND_CONFIG.fullProductName}`;
+  const description =
+    'Search real homestays, 4x4 drivers, and local guides across Himachal Pradesh — verified locals, direct and with no agency markup. Or build a full multi-stop route with stays and transit in one place.';
+
   return {
     // Absolute base for OG/Twitter/canonical URL resolution (production frontend).
     metadataBase: new URL(SITE_URL),
-    title: `${BRAND_CONFIG.productDisplayName} by ${BRAND_CONFIG.parentBrandName} | Himachal Journey Planner`,
-    description:
-      'Plan stays, transport, food, activities and trusted local services across your complete Himachal route.',
+    title,
+    description,
     alternates: {
       canonical: `${SITE_URL}/${lang}`,
       languages: Object.fromEntries(i18n.locales.map((l) => [l, `${SITE_URL}/${l}`])),
     },
     openGraph: {
-      title: `${BRAND_CONFIG.productDisplayName} by ${BRAND_CONFIG.parentBrandName}`,
-      description: 'Build your whole Himachal journey — stays, transport, food, activities and trusted local services.',
+      title,
+      description,
       type: 'website',
       url: `${SITE_URL}/${lang}`,
       siteName: BRAND_CONFIG.fullProductName,
@@ -64,8 +73,8 @@ export async function generateMetadata(props: {
       // 'summary' degrades cleanly without one; switch to
       // 'summary_large_image' once a real 1200x630 image is added.
       card: 'summary',
-      title: `${BRAND_CONFIG.productDisplayName} by ${BRAND_CONFIG.parentBrandName} | Himachal Journey Planner`,
-      description: 'Plan stays, transport, food, activities and trusted local services across your complete Himachal route.',
+      title,
+      description,
     },
   };
 }
