@@ -41,27 +41,28 @@ export default function NewServicePage() {
   const { lang } = useParams();
 
   // Vendor resolution — same pattern as the services list page.
-  const [vendorId, setVendorId] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    try { return window.localStorage.getItem("vendorId"); } catch { return null; }
-  });
-  const [resolvingVendor, setResolvingVendor] = useState(() => {
-    if (typeof window === "undefined") return true;
-    try { return !window.localStorage.getItem("vendorId"); } catch { return true; }
-  });
+  const [vendorId, setVendorId] = useState<string | null>(null);
+  const [resolvingVendor, setResolvingVendor] = useState(true);
 
   useEffect(() => {
-    if (vendorId) return;
     let cancelled = false;
     getMyVendor()
       .then((vendor) => {
-        if (cancelled || !vendor?.id) return;
-        setVendorId(vendor.id);
-        try { window.localStorage.setItem("vendorId", vendor.id); } catch { /* non-fatal */ }
+        if (cancelled) return;
+        if (vendor?.id) {
+          setVendorId(vendor.id);
+          try { window.localStorage.setItem("vendorId", vendor.id); } catch { /* non-fatal */ }
+        } else {
+          setVendorId(null);
+          try { window.localStorage.removeItem("vendorId"); } catch { /* non-fatal */ }
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setVendorId(null);
       })
       .finally(() => { if (!cancelled) setResolvingVendor(false); });
     return () => { cancelled = true; };
-  }, [vendorId]);
+  }, []);
 
   const [step, setStep] = useState(1);
   const [isMounted, setIsMounted] = useState(false);

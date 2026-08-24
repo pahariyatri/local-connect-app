@@ -8,6 +8,7 @@ import { sanitizePhone, isValidPhone, PHONE_LENGTH, toNationalDigits } from "@/u
 import { toApiUiError } from "@/utils/apiErrors";
 import { createVendor, createPointOfContact, getMyVendor } from "@/services/vendorService";
 import { uploadMedia, deleteMedia, validateImage, type UploadedMedia } from "@/services/mediaService";
+import { api } from "@/lib/apiClient";
 import Typography from "../../components/atoms/Typography";
 import Button from "../../components/atoms/Button";
 import Input from "../../components/atoms/Input";
@@ -71,7 +72,7 @@ const STEP_LABELS = ["Basic info", "Category", "About", "Documents", "Review"];
 export default function VendorOnboardingPage() {
   const { lang } = useParams();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
 
   const [step, setStep] = useState(1);
   const [isMounted, setIsMounted] = useState(false);
@@ -231,9 +232,13 @@ export default function VendorOnboardingPage() {
         ...(email.trim() ? { email: email.trim() } : {}),
       });
 
-      // No backend link between a logged-in user and their vendor record yet
-      // (see final report) — this is the pragmatic bridge so the dashboard
-      // can show the vendor that was *just* created in this session.
+      // Rotate session refresh token to receive updated Role.Vendor claim in JWT,
+      // and refresh local AuthContext state.
+      try {
+        await api.post('/auth/token/refresh');
+        await refreshUser();
+      } catch { /* storage/network fallback */ }
+
       try { window.localStorage.setItem("vendorId", vendorId); } catch { /* storage unavailable — non-fatal */ }
 
       router.replace(`/${lang}/vendor/onboarding/confirmation`);
@@ -244,7 +249,7 @@ export default function VendorOnboardingPage() {
       isSubmittingRef.current = false;
       setSubmitting(false);
     }
-  }, [createdVendorId, documents, businessName, description, types, contactName, phone, email, lang, router]);
+  }, [createdVendorId, documents, businessName, description, types, contactName, phone, email, lang, router, refreshUser]);
 
   // ─── Step content ──────────────────────────────────────────────────────
   // The step number + title live in the progress indicator (below), so each

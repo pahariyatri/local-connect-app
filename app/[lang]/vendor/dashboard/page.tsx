@@ -49,32 +49,8 @@ export default function VendorDashboardPage() {
             <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em] mt-2 italic">Welcome back to your business hub</p>
         </header>
 
-        {/* Quick Management Hub - Replaces Tabs */}
-        <section className="mb-16 animate-in fade-in slide-in-from-bottom-3 duration-700 delay-100">
-            <Typography variant="h3" className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em] mb-8 px-2">
-                Management Hub
-            </Typography>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                {managementLinks.map((link, i) => (
-                    <Link
-                        key={i}
-                        href={link.route}
-                        className="group p-6 bg-white rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-emerald-50 hover:border-emerald-100 transition-all duration-500 text-center flex flex-col items-center"
-                    >
-                        <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-500 flex items-center justify-center mb-4 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors duration-500">
-                            <DashIcon name={link.icon} className="w-5 h-5" />
-                        </div>
-                        <div className="font-black text-slate-900 uppercase tracking-tighter text-[10px] italic leading-none">{link.name}</div>
-                    </Link>
-                ))}
-            </div>
-        </section>
-
         {/* Real-time Insights */}
         <section className="animate-in fade-in slide-in-from-bottom-5 duration-1000 delay-200">
-            <Typography variant="h3" className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em] mb-8 px-2">
-                Business Pulse
-            </Typography>
             <VendorDashboardOverview dict={dict} />
         </section>
         

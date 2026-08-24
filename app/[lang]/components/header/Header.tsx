@@ -58,13 +58,22 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const navLinks = [
-    { href: `/${lang}/explore`, label: navDict.explore || commonDict.explore || 'Explore' },
-    { href: `/${lang}/community`, label: navDict.community || commonDict.community || 'Community' },
-    { href: `/${lang}/vendor/onboarding`, label: navDict.partner || 'Become a Partner' },
-  ];
+  const isVendor = !!user && /vendor|host|broker/i.test(user.role || '');
 
-  const planTripHref = `/${lang}/builder`;
+  const navLinks = isVendor
+    ? [
+        { href: `/${lang}/vendor/dashboard`, label: 'Dashboard' },
+        { href: `/${lang}/vendor/services`, label: 'Services' },
+        { href: `/${lang}/vendor/bookings`, label: 'Bookings' },
+        { href: `/${lang}/community`, label: navDict.community || commonDict.community || 'Community' },
+      ]
+    : [
+        { href: `/${lang}/explore`, label: navDict.explore || commonDict.explore || 'Explore' },
+        { href: `/${lang}/community`, label: navDict.community || commonDict.community || 'Community' },
+        { href: `/${lang}/vendor/onboarding`, label: navDict.partner || 'Become a Partner' },
+      ];
+
+  const planTripHref = isVendor ? `/${lang}/vendor/services/new` : `/${lang}/builder`;
   const isPlanActive = pathname?.startsWith(planTripHref);
   const isActive = (href: string) => pathname === href || (href !== `/${lang}` && pathname?.startsWith(href));
 
@@ -108,7 +117,7 @@ export default function Header() {
             </Link>
           ))}
 
-          {/* Highlighted 'Plan a Trip' CTA in Nav */}
+          {/* Contextual CTA in Nav */}
           <Link
             href={planTripHref}
             className={`ml-1 flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm ${
@@ -117,8 +126,8 @@ export default function Header() {
                 : 'bg-emerald-50 text-emerald-800 border border-emerald-200/80 hover:bg-emerald-100 hover:border-emerald-300'
             }`}
           >
-            <Icon name="mountain" className="w-3.5 h-3.5" />
-            <span>{navDict.plan || 'Plan a Trip'}</span>
+            <Icon name={isVendor ? 'plus' : 'mountain'} className="w-3.5 h-3.5" />
+            <span>{isVendor ? 'Add Service' : (navDict.plan || 'Plan a Trip')}</span>
           </Link>
         </nav>
 

@@ -151,7 +151,7 @@ export default function ProfilePage() {
 
                     <div className="mt-4">
                         <Typography variant="h1" className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">
-                            {user?.name || "Yatri"}
+                            {user?.name || `${(user as any)?.firstName || ''} ${(user as any)?.lastName || ''}`.trim() || "Yatri"}
                         </Typography>
                         {user?.phone && (
                             <p className="text-slate-400 font-medium text-sm mt-1">+91 {toNationalDigits(user.phone)}</p>

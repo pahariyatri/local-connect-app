@@ -205,27 +205,6 @@ export default function VendorDashboardOverview({ dict }: VendorDashboardOvervie
             })}
           </div>
         </div>
-
-        {/* Quick actions */}
-        <div className="space-y-6">
-          <Typography variant="h3" className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em] px-2">
-            {res.quick_actions.title}
-          </Typography>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-                { title: res.quick_actions.add_service.title, icon: "plus" as IconName, desc: res.quick_actions.add_service.desc, route: `/${lang}/vendor/services` },
-                { title: res.quick_actions.view_reports.title, icon: "chart" as IconName, desc: res.quick_actions.view_reports.desc, route: `/${lang}/vendor/dashboard` },
-                { title: res.quick_actions.messages.title, icon: "chat" as IconName, desc: res.quick_actions.messages.desc, route: `/${lang}/vendor/dashboard` },
-                { title: res.quick_actions.settings.title, icon: "settings" as IconName, desc: res.quick_actions.settings.desc, route: `/${lang}/vendor/dashboard` }
-            ].map((action, i) => (
-                <Link key={i} href={action.route} className="p-6 bg-white rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-indigo-50 hover:border-indigo-100 transition-all duration-500 text-left group">
-                    <DashIcon name={action.icon} className="w-5 h-5 text-slate-400 mb-4 group-hover:text-indigo-600 group-hover:scale-125 transition-all duration-500" />
-                    <div className="font-black text-slate-900 uppercase tracking-tighter text-[11px] italic mb-1 group-hover:text-indigo-600 transition-colors">{action.title}</div>
-                    <div className="text-[8px] font-bold text-slate-300 uppercase leading-snug tracking-wider">{action.desc}</div>
-                </Link>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* Efficiency Index — real completed/pending counts from actual bookings.
