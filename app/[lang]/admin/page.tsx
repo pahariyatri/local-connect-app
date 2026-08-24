@@ -611,7 +611,7 @@ export default function AdminDashboard() {
                                                     <td className="py-3 text-right text-slate-300">{vendor.serviceViews}</td>
                                                     <td className="py-3 text-right text-slate-300">{vendor.addedToTrips}</td>
                                                     <td className="py-3 text-right text-amber-500 font-black">{vendor.totalRequests}</td>
-                                                    <td className="py-3 text-right text-emerald-400 font-black">{vendor.acceptanceRate}</td>
+                                                    <td className="py-3 text-right text-emerald-400 font-black">{vendor.acceptanceRate ?? "—"}</td>
                                                     <td className="py-3">
                                                         <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
                                                             vendor.isVerified ? "bg-emerald-950 text-emerald-400 border border-emerald-900" : "bg-slate-800 text-slate-400"

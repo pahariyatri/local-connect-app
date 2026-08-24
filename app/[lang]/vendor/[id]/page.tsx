@@ -176,7 +176,7 @@ export default function VendorProfilePage() {
                     id: response.id,
                     name: cleanName,
                     image: servicesList[0]?.image || CATEGORY_IMAGES[category] || CATEGORY_IMAGES["Homestays"],
-                    rating: response.trustScore ?? 5.0,
+                    rating: response.trustScore ?? null,
                     startingPrice: minPrice,
                     currency: "INR",
                     category,
@@ -325,12 +325,13 @@ export default function VendorProfilePage() {
                     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
                         <div className="flex items-center gap-3">
                             <div className="flex items-center gap-1 bg-amber-50 border border-amber-200/60 px-3 py-1 rounded-full">
-                                <span className="text-amber-500 font-black text-xs">★ {profile.rating ? profile.rating.toFixed(1) : "5.0"}</span>
+                                {profile.rating != null ? (
+                                    <span className="text-amber-500 font-black text-xs">★ {profile.rating.toFixed(1)}</span>
+                                ) : (
+                                    <span className="text-slate-500 font-bold text-xs">Not yet rated</span>
+                                )}
                                 <span className="text-[10px] font-bold text-slate-500">Verified Host</span>
                             </div>
-                            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full">
-                                100% Acceptance Rate
-                            </span>
                         </div>
 
                         {profile.startingPrice != null && (
