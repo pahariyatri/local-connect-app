@@ -157,6 +157,51 @@ export const removeBookingItem = async (bookingId: number, itemId: number) => {
   return (raw as any)?.data ?? raw;
 };
 
+/** Direct Searcher flow (AUDIT-003): book a single service without going through the multi-day Trip Planner. See `POST /api/v1/booking/direct`. */
+export interface CreateDirectBookingData {
+  serviceId: number;
+  travelDate: string;
+  endDate?: string;
+  guestCount?: number;
+  quantity?: number;
+  notes?: string;
+  idempotencyKey?: string;
+}
+
+export interface DirectBookingResult {
+  bookingId: number;
+  status: string;
+  source: string;
+  totalAmount: number;
+  reservationFeeAmount: number;
+  currency: string;
+  itemCount: number;
+  message: string;
+  isDuplicate?: boolean;
+}
+
+export const createDirectBooking = async (data: CreateDirectBookingData): Promise<DirectBookingResult> => {
+  sessionTracker.track('booking_started', {
+    entityType: 'service',
+    entityId: String(data.serviceId),
+    metadata: { travelDate: data.travelDate, guestCount: data.guestCount },
+  });
+
+  const raw = await api.post('/booking/direct', data);
+  const result = ((raw as any)?.data ?? raw) as DirectBookingResult;
+
+  if (result?.bookingId) {
+    sessionTracker.track('booking_completed', {
+      entityType: 'booking',
+      entityId: String(result.bookingId),
+      metadata: { reservationFeeAmount: result.reservationFeeAmount, currency: result.currency, source: 'direct' },
+    });
+  }
+
+  api.invalidateCache('/booking');
+  return result;
+};
+
 /** Creates the Razorpay order for the reservation fee — only once every vendor has confirmed. See `POST /api/v1/booking/:id/reserve`. */
 export const reserveBooking = async (bookingId: number): Promise<{ bookingId: number; orderId: string; amount: number; currency: string }> => {
   const raw = await api.post(`/booking/${bookingId}/reserve`, {});

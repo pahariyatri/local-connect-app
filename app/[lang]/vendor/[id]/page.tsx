@@ -9,6 +9,7 @@ import SupportContact from "../../components/molecules/SupportContact";
 import { getVendorById } from "@/services/vendorService";
 import { ApiClientError } from "@/lib/apiClient";
 import { searchDiscoveryServices } from "@/services/searchService";
+import { createDirectBooking } from "@/services/bookingService";
 import { Icon } from "../../components/atoms/Icon";
 
 const CATEGORY_IMAGES: Record<string, string> = {
@@ -71,8 +72,12 @@ export default function VendorProfilePage() {
     const lang = params.lang || "en";
     const router = useRouter();
     const { showNotification } = useNotification();
-    const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
     const [activeDetailModal, setActiveDetailModal] = useState<DetailedService | null>(null);
+    const [bookingModalService, setBookingModalService] = useState<DetailedService | null>(null);
+    const [bookingTravelDate, setBookingTravelDate] = useState("");
+    const [bookingGuestCount, setBookingGuestCount] = useState(1);
+    const [bookingNotes, setBookingNotes] = useState("");
+    const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
     const [profile, setProfile] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState<"not_found" | "error" | null>(null);
@@ -203,15 +208,35 @@ export default function VendorProfilePage() {
         );
     }
 
-    const currentSelected = profile.services.find((s: DetailedService) => s.id === selectedServiceId);
+    const openBookingModal = (service: DetailedService) => {
+        setBookingModalService(service);
+        setBookingTravelDate("");
+        setBookingGuestCount(1);
+        setBookingNotes("");
+    };
 
-    const handleAddToPackage = (service?: DetailedService) => {
-        const target = service || currentSelected;
-        if (!target) {
-            return showNotification("Please select a service first", "error");
+    const handleSubmitBooking = async () => {
+        if (!bookingModalService) return;
+        if (!bookingTravelDate) {
+            return showNotification("Please choose a travel date", "error");
         }
-        showNotification(`Added ${target.name} to your trip plan!`, "success");
-        router.push(`/${lang}/builder`);
+        setIsSubmittingBooking(true);
+        try {
+            const result = await createDirectBooking({
+                serviceId: Number(bookingModalService.id),
+                travelDate: bookingTravelDate,
+                guestCount: bookingGuestCount,
+                notes: bookingNotes || undefined,
+            });
+            showNotification(result.message, "success");
+            setBookingModalService(null);
+            setActiveDetailModal(null);
+            router.push(`/${lang}/bookings/${result.bookingId}`);
+        } catch (err) {
+            showNotification(err instanceof ApiClientError ? err.message : "Could not submit your booking request. Please try again.", "error");
+        } finally {
+            setIsSubmittingBooking(false);
+        }
     };
 
     const handleSharePortfolio = () => {
@@ -345,7 +370,7 @@ export default function VendorProfilePage() {
                     ) : (
                         <div className="space-y-4">
                             {profile.services.map((service: DetailedService) => {
-                                const isSelected = selectedServiceId === service.id;
+                                const isSelected = bookingModalService?.id === service.id;
                                 return (
                                     <div
                                         key={service.id}
@@ -404,13 +429,10 @@ export default function VendorProfilePage() {
                                                         Details
                                                     </button>
                                                     <button
-                                                        onClick={() => {
-                                                            setSelectedServiceId(service.id);
-                                                            handleAddToPackage(service);
-                                                        }}
+                                                        onClick={() => openBookingModal(service)}
                                                         className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-emerald-600 text-white text-xs font-black uppercase tracking-wider transition-all shadow-sm active:scale-95"
                                                     >
-                                                        Add to Trip
+                                                        Request to Book
                                                     </button>
                                                 </div>
                                             </div>
@@ -538,14 +560,93 @@ export default function VendorProfilePage() {
                                 Back
                             </button>
                             <button
-                                onClick={() => {
-                                    setSelectedServiceId(activeDetailModal.id);
-                                    handleAddToPackage(activeDetailModal);
-                                    setActiveDetailModal(null);
-                                }}
+                                onClick={() => openBookingModal(activeDetailModal)}
                                 className="w-2/3 h-12 rounded-2xl bg-slate-900 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all"
                             >
-                                Add to Trip Plan →
+                                Request to Book →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── DIRECT BOOKING REQUEST MODAL ───────────────────────── */}
+            {bookingModalService && (
+                <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+                    <div
+                        className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl overflow-y-auto shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+                        role="dialog"
+                        aria-modal="true"
+                    >
+                        <div className="p-5 sm:p-6 space-y-5">
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <h3 className="text-lg font-black text-slate-900">Request to Book</h3>
+                                    <p className="text-xs text-slate-500 font-medium">{bookingModalService.name} · Host: {profile.name}</p>
+                                </div>
+                                <button
+                                    onClick={() => setBookingModalService(null)}
+                                    className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-sm font-bold hover:bg-slate-200 transition-all"
+                                    aria-label="Close"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+
+                            <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-100 text-xs text-emerald-900 font-medium">
+                                The host will call you to confirm availability. You&apos;ll only pay a small token deposit once they&apos;ve confirmed — the rest is paid directly to the host on arrival.
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1.5">Travel Date</label>
+                                <input
+                                    type="date"
+                                    value={bookingTravelDate}
+                                    min={new Date(Date.now() + 86400000).toISOString().slice(0, 10)}
+                                    onChange={(e) => setBookingTravelDate(e.target.value)}
+                                    className="w-full h-12 px-4 rounded-2xl border border-slate-200 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1.5">
+                                    Guests (up to {bookingModalService.capacity})
+                                </label>
+                                <input
+                                    type="number"
+                                    min={1}
+                                    max={bookingModalService.capacity}
+                                    value={bookingGuestCount}
+                                    onChange={(e) => setBookingGuestCount(Math.max(1, Math.min(bookingModalService.capacity, Number(e.target.value) || 1)))}
+                                    className="w-full h-12 px-4 rounded-2xl border border-slate-200 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1.5">Special Requests (optional)</label>
+                                <textarea
+                                    value={bookingNotes}
+                                    onChange={(e) => setBookingNotes(e.target.value)}
+                                    rows={2}
+                                    placeholder="e.g. early check-in, dietary needs..."
+                                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 resize-none"
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                                <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Starting from</span>
+                                <span className="text-sm font-black text-slate-900">
+                                    ₹{Math.round(bookingModalService.price).toLocaleString("en-IN")} <span className="text-[10px] font-bold text-slate-400">{bookingModalService.unit}</span>
+                                </span>
+                            </div>
+                            <p className="text-[10px] text-slate-400 font-medium -mt-3">Final price is confirmed by the host and shown before any payment.</p>
+
+                            <button
+                                onClick={handleSubmitBooking}
+                                disabled={isSubmittingBooking || !bookingTravelDate}
+                                className="w-full h-12 rounded-2xl bg-slate-900 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all"
+                            >
+                                {isSubmittingBooking ? "Sending Request..." : "Send Booking Request"}
                             </button>
                         </div>
                     </div>
