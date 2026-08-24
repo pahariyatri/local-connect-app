@@ -140,9 +140,6 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
           <Reveal>
             <div className="flex items-end justify-between gap-4 mb-8 sm:mb-10">
               <div>
-                <span className="text-emerald-600 text-[10px] font-black uppercase tracking-[0.25em] block mb-2">
-                  Native Himachal Network
-                </span>
                 <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
                   Verified Local Operators
                 </h2>
@@ -156,7 +153,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
             </div>
           </Reveal>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+          <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 overflow-x-auto pb-4 snap-x snap-mandatory hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0">
             {isProvidersLoading ? (
               Array.from({ length: 4 }).map((_, idx) => (
                 <div key={idx} className="bg-white border border-slate-100 rounded-3xl p-5 space-y-3 animate-pulse">
@@ -173,7 +170,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
                     tabIndex={0}
                     onClick={() => router.push(`/${lang}/vendor/${p.id}`)}
                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); router.push(`/${lang}/vendor/${p.id}`); } }}
-                    className="group bg-white border border-slate-200/80 rounded-3xl overflow-hidden hover:border-emerald-500/40 hover:shadow-xl hover:shadow-slate-200/60 hover:-translate-y-1 transition-all duration-300 cursor-pointer active:scale-[0.99] flex flex-col justify-between"
+                    className="group bg-white border border-slate-200/80 rounded-3xl overflow-hidden hover:border-emerald-500/40 hover:shadow-xl hover:shadow-slate-200/60 hover:-translate-y-1 transition-all duration-300 cursor-pointer active:scale-[0.99] flex flex-col justify-between min-w-[260px] sm:min-w-0 shrink-0 snap-center"
                   >
                     <div className="relative h-44 overflow-hidden">
                       <LocalImage

@@ -68,25 +68,22 @@ export default function InteractiveRouteSection({ lang }: { lang: string }) {
   return (
     <section className="py-14 sm:py-20 bg-slate-50 border-y border-slate-200/80 px-4 sm:px-6">
       <div className="max-w-6xl mx-auto">
-        <div className="max-w-xl mb-8 sm:mb-10">
-          <span className="text-emerald-600 text-[10px] font-black uppercase tracking-[0.25em] block mb-2">
-            {t.eyebrow || "Curated Routes"}
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
-            {t.title || "Ready-made journeys."}
-          </h2>
-          <p className="mt-2 text-slate-500 text-sm sm:text-base font-medium leading-relaxed">
-            {t.subtitle || "Real multi-day routes across Himachal — open one in the builder and make it yours."}
-          </p>
+        <div className="mb-6 sm:mb-10 flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+              {t.title || "Ready-made journeys."}
+            </h2>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6">
+        {/* Mobile Horizontal Scroll, Desktop Grid */}
+        <div className="flex sm:grid sm:grid-cols-3 gap-4 sm:gap-6 overflow-x-auto pb-4 snap-x snap-mandatory hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0">
           {ROUTE_PRESETS.map((preset) => (
             <button
               key={preset.id}
               type="button"
               onClick={() => openInBuilder(preset)}
-              className="group text-left bg-white rounded-3xl border border-slate-200/80 overflow-hidden hover:border-emerald-500/40 hover:shadow-xl hover:shadow-slate-200/60 hover:-translate-y-1 transition-all duration-300"
+              className="group text-left bg-white rounded-3xl border border-slate-200/80 overflow-hidden hover:border-emerald-500/40 hover:shadow-xl hover:shadow-slate-200/60 hover:-translate-y-1 transition-all duration-300 min-w-[280px] sm:min-w-0 shrink-0 snap-center"
             >
               <div className="relative h-48 sm:h-56 overflow-hidden">
                 <LocalImage

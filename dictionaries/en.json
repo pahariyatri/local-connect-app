@@ -521,7 +521,10 @@
         "queue": "Queue",
         "disputes": "Disputes",
         "stats": "Stats",
-        "community": "Community"
+        "community": "Community",
+        "log_out": "Log out",
+        "language": "Language / भाषा",
+        "popular": "Popular:"
       },
       "notifications": {
         "added": "{category} added to Day {day}",

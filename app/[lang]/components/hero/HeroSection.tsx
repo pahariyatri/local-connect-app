@@ -40,9 +40,7 @@ export default function HeroSection({ onSearch, onPlan }: { onSearch: (query?: s
             }}
           />
 
-          <p className="mt-4 max-w-lg text-sm sm:text-base text-slate-300 font-medium leading-relaxed">
-            {hero.subtitle || "Search real stays, rides, and guides from verified Himachal locals — direct, with no agency markup."}
-          </p>
+          {/* Minimalist Approach: No long paragraphs. Just a powerful statement and immediate action. */}
 
           {/* Sleek Floating Search Console */}
           <div className="mt-8 w-full max-w-xl">
@@ -78,7 +76,7 @@ export default function HeroSection({ onSearch, onPlan }: { onSearch: (query?: s
 
           {/* Minimal Quick Destination Links */}
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs text-slate-300">
-            <span className="text-[11px] font-bold text-slate-400">Popular:</span>
+            <span className="text-[11px] font-bold text-slate-400">{dict?.page?.common?.actions?.popular || "Popular:"}</span>
             {POPULAR_DESTINATIONS.map((dest) => (
               <button
                 key={dest}

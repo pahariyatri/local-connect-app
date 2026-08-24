@@ -157,7 +157,7 @@ export default function Header() {
               <div className="absolute right-0 mt-2 w-44 rounded-2xl bg-white border border-slate-200/80 shadow-2xl shadow-slate-300/50 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
                 <div className="px-3 py-1.5 border-b border-slate-100">
                   <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                    Language / भाषा
+                    {commonDict.language || 'Language / भाषा'}
                   </p>
                 </div>
                 {SUPPORTED_LANGUAGES.map((item) => {
@@ -212,9 +212,9 @@ export default function Header() {
                   onClick={handleLogout}
                   data-testid="header-logout"
                   className="text-[11px] font-bold text-slate-500 hover:text-rose-600 px-2 py-1 rounded-full hover:bg-rose-50 transition-colors"
-                  title="Log out of your account"
+                  title={commonDict.log_out || 'Log out'}
                 >
-                  Log out
+                  {commonDict.log_out || 'Log out'}
                 </button>
               </div>
             ) : (
