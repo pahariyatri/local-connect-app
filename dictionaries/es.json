@@ -3,7 +3,7 @@
     "home": {
       "badge": "Red Pahari Yatri",
       "hero": {
-        "title": "Viaja como si conocieras a alguien allí.",
+        "title": "Viaja como si <span class=\"text-emerald-400\">conocieras a alguien</span> allí.",
         "subtitle": "Busca alojamientos, traslados y guías reales de locales verificados en Himachal, de forma directa y sin comisión de agencia.",
         "search_placeholder": "¿A dónde vas? (Kasol, Manali, Tosh...)",
         "search_cta": "Buscar",
@@ -99,6 +99,13 @@
         "escrow": "Pagos en depósito",
         "messaging": "Mensajería directa",
         "reviews": "Reseñas valoradas"
+      },
+      "routes": {
+        "eyebrow": "Rutas seleccionadas",
+        "title": "Viajes ya listos.",
+        "subtitle": "Rutas reales de varios días por Himachal: abre una en el creador y hazla tuya.",
+        "cta": "Planificar esta ruta",
+        "days_unit": "días"
       }
     },
     "discover": {

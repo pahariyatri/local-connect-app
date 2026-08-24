@@ -3,7 +3,7 @@
     "home": {
       "badge": "Pahari Yatri Netzwerk",
       "hero": {
-        "title": "Reisen, als würdest du dort jemanden kennen.",
+        "title": "Reisen, als würdest du <span class=\"text-emerald-400\">dort jemanden kennen</span>.",
         "subtitle": "Finde echte Unterkünfte, Fahrten und Guides von verifizierten Einheimischen in Himachal — direkt und ohne Vermittlungsgebühr.",
         "search_placeholder": "Wohin geht die Reise? (Kasol, Manali, Tosh...)",
         "search_cta": "Suchen",
@@ -99,6 +99,13 @@
         "escrow": "Treuhand-Zahlungen",
         "messaging": "Direkte Nachrichten",
         "reviews": "Bewertete Rezensionen"
+      },
+      "routes": {
+        "eyebrow": "Kuratierte Routen",
+        "title": "Fertige Reisen.",
+        "subtitle": "Echte mehrtägige Routen durch Himachal — öffne eine im Builder und mach sie zu deiner eigenen.",
+        "cta": "Diese Route planen",
+        "days_unit": "Tage"
       }
     },
     "discover": {

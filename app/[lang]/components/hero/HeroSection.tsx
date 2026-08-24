@@ -3,11 +3,14 @@
 import React, { useState } from "react";
 import { Icon } from "../atoms/Icon";
 import Image from "next/image";
+import { useLocalizationContext } from "@/contexts/LocalizationContext";
 
 const POPULAR_DESTINATIONS = ["Manali", "Kasol", "Spiti", "Tirthan", "Dharamshala", "Shimla"];
 
 export default function HeroSection({ onSearch, onPlan }: { onSearch: (query?: string) => void; onPlan?: () => void }) {
   const [query, setQuery] = useState("");
+  const { dict } = useLocalizationContext();
+  const hero = dict?.page?.home?.hero || {};
 
   const submitSearch = (value?: string) => {
     onSearch(value ?? query);
@@ -30,13 +33,15 @@ export default function HeroSection({ onSearch, onPlan }: { onSearch: (query?: s
 
         <div className="relative z-10 w-full max-w-3xl mx-auto px-4 sm:px-6 py-12 text-center text-white flex flex-col items-center justify-center">
           {/* One hero hook: traveler need, not platform pitch */}
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black leading-[1.08] tracking-tight text-balance">
-            Travel like you know{" "}
-            <span className="text-emerald-400">someone there.</span>
-          </h1>
+          <h1
+            className="text-3xl sm:text-5xl md:text-6xl font-black leading-[1.08] tracking-tight text-balance"
+            dangerouslySetInnerHTML={{
+              __html: hero.title || 'Travel like you know <span class="text-emerald-400">someone there.</span>',
+            }}
+          />
 
           <p className="mt-4 max-w-lg text-sm sm:text-base text-slate-300 font-medium leading-relaxed">
-            Search real stays, rides, and guides from verified Himachal locals — direct, with no agency markup.
+            {hero.subtitle || "Search real stays, rides, and guides from verified Himachal locals — direct, with no agency markup."}
           </p>
 
           {/* Sleek Floating Search Console */}
@@ -56,7 +61,7 @@ export default function HeroSection({ onSearch, onPlan }: { onSearch: (query?: s
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Where are you going? (Kasol, Manali, Tosh...)"
+                  placeholder={hero.search_placeholder || "Where are you going? (Kasol, Manali, Tosh...)"}
                   aria-label="Search destination"
                   className="w-full bg-transparent text-sm sm:text-base font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-medium focus:outline-none"
                 />
@@ -66,7 +71,7 @@ export default function HeroSection({ onSearch, onPlan }: { onSearch: (query?: s
                 type="submit"
                 className="h-11 sm:h-12 px-5 sm:px-7 rounded-full bg-emerald-600 hover:bg-emerald-700 text-xs sm:text-sm font-black uppercase tracking-wider text-white shadow-lg shadow-emerald-600/25 transition-all active:scale-95 shrink-0 flex items-center gap-2"
               >
-                <span>Search</span>
+                <span>{hero.search_cta || "Search"}</span>
               </button>
             </form>
           </div>
@@ -93,7 +98,7 @@ export default function HeroSection({ onSearch, onPlan }: { onSearch: (query?: s
               onClick={onPlan}
               className="mt-4 text-xs font-bold text-slate-300 hover:text-white underline underline-offset-4 decoration-slate-500 hover:decoration-emerald-400 transition-colors"
             >
-              Or build a whole trip →
+              {hero.plan_cta || "Or build a whole trip"} →
             </button>
           )}
         </div>
