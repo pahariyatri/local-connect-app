@@ -11,6 +11,11 @@ export interface DiscoveryService {
     images: string[];
     shortDescription: string;
     description: string;
+    /** Real inclusions, or the backend's own generic fallback when a service hasn't set any — never invented client-side. */
+    inclusions: string[];
+    exclusions: string[];
+    cancellationPolicy: string;
+    termsAndConditions: string;
     capacity: number;
     isAvailable: boolean;
     serviceArea: string;
@@ -49,6 +54,8 @@ export interface DiscoverySearchParams {
     q?: string;
     location?: string;
     category?: string;
+    /** All services for one vendor — the vendor profile page's real data source (AUDIT-007). */
+    vendorId?: string;
     dateFrom?: string;
     dateTo?: string;
     travelers?: number;
