@@ -26,16 +26,38 @@ something is complete. Ship the smallest thing that proves value, then measure.
 ============================================================
 3. BUSINESS MODEL (locked — do not re-litigate without explicit user input)
 ============================================================
-- **Commission:** ~20% of booking value on completed stays/taxi/guide bookings.
-  This is deliberately below the 25–30% many OTAs charge — it is a vendor-facing
-  selling point ("we take less than MakeMyTrip") and should appear in vendor-facing
-  copy and onboarding flows.
-- **Settlement model (hybrid, cash-first-market-appropriate):** Traveler books
-  online. Traveler pays the VENDOR directly on arrival — cash or UPI, vendor's
-  choice. Pahari Yatri does NOT hold traveler payment by default. Platform
-  invoices the vendor commission monthly (Booking.com/Goibibo pattern). A future
-  "pay online at booking" option can be added per-vendor once trust is established,
-  but hybrid pay-on-arrival is the DEFAULT and must remain fully supported.
+Traveler-facing flow: REQUEST → VENDOR CONFIRMS BY CALL → TOKEN DEPOSIT
+(small, online) → PAY VENDOR ON ARRIVAL (cash/UPI, in person) → POST-STAY
+REVIEW.
+
+- **Token deposit:** a small reservation/token fee, charged online once the
+  vendor has confirmed availability. NOT the full booking value — a
+  booking-lock deposit against no-shows. Credits against the commission
+  owed on that booking (see Settlement, below), not a separate platform fee.
+- **Vendor confirms by call:** after a traveler requests a booking, the
+  vendor calls them directly to confirm details/availability BEFORE the
+  token deposit is collected. This is a human, phone-based step, not only
+  an in-app accept/reject click — any in-app "accept" action records the
+  outcome of that call, it doesn't replace it.
+- **Pay on arrival:** the traveler pays the vendor the remaining balance
+  directly — cash or UPI, vendor's choice — on arrival. Pahari Yatri does
+  NOT hold this portion. This is the DEFAULT and must remain fully
+  supported; a future "pay everything online" option can be added
+  per-vendor later, once trust is established.
+- **Post-stay review:** after the stay/service completes, the traveler is
+  prompted for a real review/rating. This is the ONLY source of a vendor's
+  public rating — a vendor with zero reviews shows "Not yet rated," never
+  a default/placeholder score (see §4 no-fabrication rule).
+- **Commission:** ~20% of booking value on completed stays/taxi/guide
+  bookings, snapshotted per-booking at settlement-creation time so a later
+  rate change never alters an already-settled booking. Deliberately below
+  the 25–30% many OTAs charge — a vendor-facing selling point ("we take
+  less than MakeMyTrip"), should appear in vendor onboarding copy.
+- **Settlement:** the token deposit already collected online credits
+  against the commission owed; platform invoices the vendor monthly for
+  the remaining balance (Booking.com/Goibibo pattern). If the deposit
+  ever exceeds the computed commission on a booking, do NOT auto-refund
+  the vendor — flag it for manual admin review, never a silent write-off.
 - **Secondary revenue (build only after commission flow is stable):** optional
   paid "featured placement" for vendors on destination/search pages (MMT
   Spotlight-style) — this must be clearly labeled as a promoted placement, never
@@ -44,6 +66,27 @@ something is complete. Ship the smallest thing that proves value, then measure.
 - **No-show / cash-booking risk control:** track traveler no-show history;
   flag/restrict repeat no-show travelers from future hybrid bookings, mirroring
   Goibibo's approach. This must exist before hybrid bookings scale past pilot volume.
+
+**What's already built (verified 2026-08-24 by reading code, not assumed):**
+the token-deposit mechanism works end-to-end — `Booking.reservationFeeAmount`/
+`reservationFeeBps`, charged via Razorpay in `PaymentService.createOrder` —
+while `Booking.totalAmount` is explicitly documented in the entity as
+"payable directly to vendors," confirming pay-on-arrival is already the
+real model, not aspirational. A `Settlement` entity exists (commission
+tracking, deposit-credit fields, a `NEEDS_REVIEW` status for the
+exceeds-deposit case) but is schema-only — nothing creates, reads, or
+updates a row yet.
+
+**What's missing (same verification pass):** the booking-completion
+trigger that would create Settlement rows — `BookingStatus.COMPLETED` is
+never actually set anywhere in the codebase, no cron or admin action
+transitions a booking to it. The vendor-confirms-by-call step has no
+explicit modeling beyond the existing `VENDOR_ACCEPTED` status (no
+call-log or confirmation-method field). Post-stay review/rating collection
+does not exist at all — `Vendor.trustScore` is a schema default (5.0)
+never overwritten by real data, so every vendor currently shows an
+identical, fabricated-looking "5.0" (tracked as AUDIT-005). Monthly
+vendor invoicing does not exist.
 
 ============================================================
 4. HARD SAFETY RULES (non-negotiable)
