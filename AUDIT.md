@@ -61,7 +61,7 @@ OPEN ISSUES (work top to bottom by severity)
 | ID | Sev | Persona | Area | Description | Status |
 |---|---|---|---|---|---|
 | AUDIT-001 | P0 | Direct Searcher | Search | Searching "Kasol" twice in a row (identical query) returns a different, mostly-unrelated set of results each time (Shimla, Tirthan, Dharamshala, Kasol, Spiti mixed together) — location filtering is not actually being applied server-side; looks like an unfiltered/randomized result set. | **Fixed** — see FIXED LOG |
-| AUDIT-002 | P0 | Direct Searcher | Search results | Two differently-titled, differently-priced result cards ("Mountain View Stay (kasol)" and "Resort in the Hills (kasol)") both link to the SAME real vendor ("Dhauladhar Homestay & Treks"), whose actual recorded location is Dharamshala, not Kasol. Card content (title/price/category) appears to be decorative/placeholder, disconnected from the real vendor record. | Open — likely explained by AUDIT-001's root cause (see note below); needs its own re-verification pass now that AUDIT-001 is fixed before treating as still-open |
+| AUDIT-002 | P0 | Direct Searcher | Search results | Two differently-titled, differently-priced result cards ("Mountain View Stay (kasol)" and "Resort in the Hills (kasol)") both link to the SAME real vendor ("Dhauladhar Homestay & Treks"), whose actual recorded location is Dharamshala, not Kasol. Card content (title/price/category) appears to be decorative/placeholder, disconnected from the real vendor record. | **Fixed** (no separate code change — was a downstream symptom of AUDIT-001; see FIXED LOG) |
 | AUDIT-003 | P1 | Direct Searcher | Add to Trip | Clicking "Add to Trip" on one specific listing forces the full 6-step multi-day Trip Builder wizard (origin/dates/party/interests) instead of a direct booking/reservation form. A Direct Searcher persona should never be routed through the Trip Planner flow. | Open |
 | AUDIT-004 | P1 | Direct Searcher / Trip Planner | Trip Builder | The specific item the user picked doesn't survive the wizard: after completing the trip-builder steps, the final package auto-selected a different item ("Guided Kheerganga Trek & Hot Springs") under the wrong category ("STAY" for a trek), and demoted the homestay the user explicitly chose to an unselected alternate. | Open |
 | AUDIT-005 | P1 (suspected — confirm before fixing) | All | Trust signals | Every listing/vendor profile card shows identical "★5.0 · 100% Acceptance Rate." Confirm whether `Vendor.trustScore` is a real computed field or a schema default never overwritten by real reviews — if the latter, this is fabricated trust data and violates CLAUDE.md's no-fabrication rule; must show "Not yet rated" or similar until real data exists. | Open |
@@ -154,3 +154,16 @@ re-verification) before this was discovered, but the *process* bypassed the
 approval gate. Flagged to the user directly; the underlying auto-commit/push
 behavior is a separate, recurring issue worth the user's attention
 independent of this fix's correctness.
+
+**AUDIT-002** — No separate code change needed. Investigated by pulling the
+real API response for `GET /discovery/services?q=Kasol` directly: the
+"Mountain View Stay (kasol)" service (id 31) genuinely belongs to vendor
+`096d2c50-e66f-40ae-ac3d-735491ff2fd4`, itself named "Mountain View Stay
+(kasol)" and correctly located in Kasol — a completely different vendor
+from "Dhauladhar Homestay & Treks" (`f8387cc4-...`, Dharamshala). The
+mismatch during the original walkthrough was the AUDIT-001 race:
+clicking a card that was rendered during (or just as the page transitioned
+out of) the unfiltered flash. Re-verified via `/chrome` against production:
+searched "Kasol", clicked "Mountain View Stay (kasol)", landed on vendor
+`096d2c50-...`, page correctly shows "Kasol" as the location. No further
+action needed.
