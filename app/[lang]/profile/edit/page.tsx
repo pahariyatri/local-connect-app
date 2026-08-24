@@ -6,7 +6,7 @@ import Textarea from "@/app/[lang]/components/atoms/Textarea";
 import Typography from "@/app/[lang]/components/atoms/Typography";
 import ImageUploader from "@/app/[lang]/components/molecules/ImageUploader";
 import React, { useState, useEffect } from "react";
-import { sanitizePhone, PHONE_LENGTH, toNationalDigits } from "@/utils/validation";
+import { sanitizePhone, isValidPhone, PHONE_LENGTH, toNationalDigits } from "@/utils/validation";
 import { fetchCurrentUser, updateUser } from "@/services/userService";
 
 interface ProfileForm {
@@ -152,8 +152,14 @@ export default function EditProfilePage() {
                         </p>
                     )}
 
+                    {(!formData.name.trim() || !isValidPhone(formData.phone)) && (
+                        <p role="alert" className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200/80 px-3.5 py-2 rounded-xl">
+                            ⚠️ Please enter your name and a valid 10-digit mobile number.
+                        </p>
+                    )}
+
                     <div className="flex justify-end">
-                        <Button variant="primary" size="medium" type="submit" disabled={saving}>
+                        <Button variant="primary" size="medium" type="submit" disabled={saving || !formData.name.trim() || !isValidPhone(formData.phone)}>
                             {saving ? "Saving…" : "Save Changes"}
                         </Button>
                     </div>

@@ -88,6 +88,8 @@ export default function EditServicePage() {
     getSubcategories(categoryId).then((subs) => setSubcategories(Array.isArray(subs) ? subs : [])).catch(() => setSubcategories([]));
   }, [categoryId]);
 
+  const isFormValid = name.trim().length >= 3 && Number(weekdayPrice) > 0 && description.trim().length >= 10;
+
   const handleSave = async () => {
     if (!service) return;
     setSaving(true);
@@ -271,10 +273,18 @@ export default function EditServicePage() {
             />
           )}
 
-          <div className="pt-10 border-t border-slate-100 flex gap-4">
+          {saveError && <p role="alert" className="text-xs text-red-500 font-semibold mb-4">{saveError}</p>}
+
+          {!isFormValid && (
+            <p role="alert" className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200/80 px-3.5 py-2 rounded-xl mb-4">
+              ⚠️ Service name (min 3 chars), description (min 10 chars), and base weekday price are required.
+            </p>
+          )}
+
+          <div className="pt-6 border-t border-slate-100 flex gap-4">
             <Button
               onClick={handleSave}
-              disabled={saving}
+              disabled={saving || !isFormValid}
               className="flex-[2] h-16 rounded-2xl bg-slate-900 text-white font-bold text-sm hover:bg-black active:scale-[0.98] transition-all disabled:opacity-50"
             >
               {saving ? "Saving…" : "Save changes"}

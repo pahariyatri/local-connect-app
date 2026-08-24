@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { useTripPlanner, ServiceType } from "@/contexts/TripPlannerContext";
 import { useTripStore } from "@/store/useTripStore";
@@ -21,9 +21,54 @@ import { TripStop, createTripStop } from "@/types/tripBuilder";
 import SupportContact from "../components/molecules/SupportContact";
 import { hasLiveSupportChannel } from "@/lib/supportConfig";
 
+const DESTINATION_ID_MAP: Record<string, string> = {
+  manali: "manali",
+  sissu: "manali",
+  kullu: "manali",
+  shimla: "shimla",
+  kufri: "shimla",
+  chail: "shimla",
+  kasauli: "shimla",
+  kasol: "kasol",
+  malana: "kasol",
+  parvati: "kasol",
+  dharamshala: "dharamshala",
+  mcleodganj: "dharamshala",
+  "mcleod ganj": "dharamshala",
+  bir: "dharamshala",
+  billing: "dharamshala",
+  pathankot: "dharamshala",
+  kangra: "dharamshala",
+  tirthan: "tirthan",
+  jibhi: "tirthan",
+  jalori: "tirthan",
+  shoja: "tirthan",
+  spiti: "spiti",
+  kalpa: "spiti",
+  nako: "spiti",
+  tabo: "spiti",
+  kaza: "spiti",
+  sangla: "spiti",
+  chandratal: "spiti",
+};
+
+function normalizeDestinationParams(raw: string[]): string[] {
+  const matched = new Set<string>();
+  for (const item of raw) {
+    const key = item.toLowerCase().trim();
+    if (DESTINATION_ID_MAP[key]) {
+      matched.add(DESTINATION_ID_MAP[key]);
+    } else {
+      matched.add(key);
+    }
+  }
+  return Array.from(matched);
+}
+
 export default function TripBuilderPage() {
   const { lang } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const {
     origin, destinations, startDate, endDate, servicePreferences, guestCount,
     routeStops, stopServicesByDay,
@@ -59,16 +104,42 @@ export default function TripBuilderPage() {
     setIsMounted(true);
   }, []);
 
-  // Sync state from context on mount
+  // Sync state from URL query parameters & context on mount
   useEffect(() => {
-    if (origin) setLocalOrigin(origin);
-    if (destinations.length) setLocalDestinations(destinations);
+    const urlOrigin = searchParams?.get("origin");
+    const urlDestinations = searchParams?.get("destinations");
+
+    let activeOrigin = origin;
+    let activeDestinations = destinations;
+
+    if (urlOrigin) {
+      activeOrigin = urlOrigin;
+      setLocalOrigin(urlOrigin);
+    } else if (origin) {
+      setLocalOrigin(origin);
+    }
+
+    if (urlDestinations) {
+      const rawDests = urlDestinations.split(",").map((d) => d.trim()).filter(Boolean);
+      const parsedDests = normalizeDestinationParams(rawDests);
+      if (parsedDests.length) {
+        activeDestinations = parsedDests;
+        setLocalDestinations(parsedDests);
+      }
+    } else if (destinations.length) {
+      setLocalDestinations(destinations);
+    }
+
+    if (urlOrigin || urlDestinations) {
+      setBasicInfo(activeOrigin, activeDestinations, startDate || "", endDate || "");
+    }
+
     if (startDate) setLocalStartDate(startDate);
     if (endDate) setLocalEndDate(endDate);
     if (servicePreferences.length) setLocalServicePreferences(servicePreferences);
     if (guestCount) setLocalGuestCount(guestCount);
     if (stopServicesByDay && Object.keys(stopServicesByDay).length) setLocalStopServices(stopServicesByDay);
-  }, [origin, destinations, startDate, endDate, servicePreferences, guestCount, routeStops, stopServicesByDay]);
+  }, [searchParams, origin, destinations, startDate, endDate, servicePreferences, guestCount, routeStops, stopServicesByDay, setBasicInfo]);
 
   const toggleLanguage = () => {
     const newLang = lang === "en" ? "he" : "en";

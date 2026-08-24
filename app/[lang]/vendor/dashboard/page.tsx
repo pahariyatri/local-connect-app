@@ -32,10 +32,7 @@ export default function VendorDashboardPage() {
   const managementLinks: { name: string; icon: DashIconName; route: string; desc: string }[] = [
     { name: res.tabs.bookings, icon: "calendar", route: `/${lang}/vendor/bookings`, desc: "Manage guest bookings" },
     { name: res.tabs.services, icon: "home", route: `/${lang}/vendor/services`, desc: "Inventory & pricing" },
-    { name: "Calendar", icon: "calendar-days", route: `/${lang}/vendor/calendar`, desc: "Availability schedule" },
-    { name: "Payouts", icon: "wallet", route: `/${lang}/vendor/payouts`, desc: "Earnings & transfers" },
-    { name: "Contracts", icon: "file", route: `/${lang}/vendor/contracts`, desc: "Legal agreements" },
-    { name: "Partners", icon: "users", route: `/${lang}/vendor/partnerships`, desc: "Network growth" },
+    { name: "Calendar", icon: "calendar-days", route: `/${lang}/vendor/bookings?view=calendar`, desc: "Availability schedule" },
     { name: res.tabs?.community || "Community", icon: "chat", route: `/${lang}/vendor/community`, desc: "Host circle" },
   ];
 

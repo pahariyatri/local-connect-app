@@ -449,6 +449,35 @@
         "verified": "Proveedores 100% verificados",
         "support": "Soporte en viaje 24/7",
         "price": "Garantía de mejor precio"
+      },
+      "next_stop": {
+        "title": "¿Dónde quieres <span class=\"text-emerald-500\">parar</span>?",
+        "subtitle": "Elige las paradas en tu ruta basadas en servicios reales disponibles.",
+        "route_label": "Tu Ruta",
+        "order_title": "Organiza tus paradas",
+        "order_subtitle": "Arrastra para ordenar o usa las flechas. La primera parada va primero en tu viaje.",
+        "start_label": "Inicio",
+        "end_label": "Final",
+        "stop_word": "parada",
+        "move_up": "Subir",
+        "move_down": "Bajar",
+        "remove": "Eliminar parada",
+        "stops_title": "Lugares en tu ruta",
+        "stops_subtitle": "Toca los pueblos que te gustaría explorar.",
+        "selected": "seleccionado",
+        "clear": "Limpiar",
+        "service": "servicio",
+        "services": "servicios",
+        "available_here": "disponible aquí",
+        "empty_title": "No se encontraron paradas en esta ruta aún.",
+        "empty_sub": "Puedes continuar y crearemos tu plan desde tus destinos.",
+        "skip_hint": "Opcional. Omitir en cualquier momento e ir directo al plan.",
+        "preview_title": "Tu plan día a día",
+        "preview_subtitle": "Una vista previa de tus días. Ajusta las paradas arriba para modificarlo.",
+        "day_word": "día",
+        "days_word": "días",
+        "day_abbr": "Día",
+        "depart_from": "Salida desde"
       }
     },
     "common": {
@@ -476,7 +505,11 @@
         "admin_hub": "Panel de control",
         "queue": "Cola",
         "disputes": "Disputas",
-        "stats": "Estadísticas"
+        "stats": "Estadísticas",
+        "community": "Comunidad",
+        "log_out": "Cerrar sesión",
+        "language": "Idioma / Language",
+        "popular": "Popular:"
       },
       "date_picker": {
         "quick_select": "Selección rápida",
@@ -612,7 +645,8 @@
         "overview": "Resumen",
         "services": "Mis servicios",
         "bookings": "Reservas",
-        "analytics": "Análisis"
+        "analytics": "Análisis",
+        "community": "Comunidad"
       },
       "stats": {
         "services": "Servicios",
@@ -757,6 +791,42 @@
           "Dic"
         ]
       }
+    },
+    "community": {
+      "badge": "Viajeros + Anfitriones Locales",
+      "title": "La Comunidad",
+      "subtitle": "Viajeros y anfitriones locales verificados compartiendo el camino.",
+      "all": "Todos",
+      "travelers": "Viajeros",
+      "vendors": "Anfitriones",
+      "placeholder": "Comparte una idea, un consejo o un momento en la montaña...",
+      "post": "Publicar",
+      "posting": "Publicando...",
+      "like": "Me gusta",
+      "no_comments": "Aún no hay respuestas. Sé el primero en comentar.",
+      "comment_placeholder": "Escribe una respuesta...",
+      "send": "Enviar",
+      "sign_in_to_comment": "Inicia sesión para unirte a la conversación.",
+      "empty": "No hay nada aquí todavía. Inicia la conversación.",
+      "join_title": "Únete a la comunidad",
+      "join_sub": "Inicia sesión para compartir tu viaje y responder a otros.",
+      "join_cta": "Iniciar sesión",
+      "role_traveler": "Viajero",
+      "role_vendor": "Anfitrión",
+      "role_verified": "Anfitrión Verificado",
+      "traveler_badge": "Comunidad de Viajeros",
+      "traveler_title": "En el camino",
+      "traveler_subtitle": "Viajes, consejos y momentos de otros viajeros.",
+      "host_notice": "Esta es la comunidad de viajeros. Tu espacio de anfitrión está en tu panel.",
+      "host_cta": "Espacio de anfitrión",
+      "host_badge": "Comunidad de Anfitriones · Privado",
+      "host_title": "El Círculo de Anfitriones",
+      "host_subtitle": "Un espacio privado para anfitriones verificados para crecer juntos.",
+      "host_placeholder": "Comparte una actualización, un consejo operativo o consulta a otros...",
+      "host_empty": "Aún no hay publicaciones. Comparte la primera novedad.",
+      "host_only_title": "Solo Anfitriones",
+      "host_only_sub": "Esta comunidad es para anfitriones verificados.",
+      "host_only_cta": "Ir a la comunidad de viajeros"
     }
   }
 }

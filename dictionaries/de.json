@@ -449,6 +449,35 @@
         "verified": "100% verifizierte Anbieter",
         "support": "24/7 Reise-Support",
         "price": "Bestpreis-Garantie"
+      },
+      "next_stop": {
+        "title": "Wo möchten Sie <span class=\"text-emerald-500\">anhalten</span>?",
+        "subtitle": "Wählen Sie Orte entlang Ihrer Route basierend auf verfügbaren Angeboten.",
+        "route_label": "Ihre Route",
+        "order_title": "Stopps anordnen",
+        "order_subtitle": "Ziehen Sie, um die Reihenfolge festzulegen, oder nutzen Sie die Pfeile.",
+        "start_label": "Start",
+        "end_label": "Ziel",
+        "stop_word": "Stopp",
+        "move_up": "Nach oben",
+        "move_down": "Nach unten",
+        "remove": "Stopp entfernen",
+        "stops_title": "Orte auf Ihrer Route",
+        "stops_subtitle": "Tippen Sie auf die Orte, die Sie erkunden möchten.",
+        "selected": "ausgewählt",
+        "clear": "Löschen",
+        "service": "Service",
+        "services": "Services",
+        "available_here": "hier verfügbar",
+        "empty_title": "Noch keine Stopps auf dieser Route gefunden.",
+        "empty_sub": "Sie können fortfahren und wir erstellen den Plan anhand Ihrer Reiseziele.",
+        "skip_hint": "Optional. Jederzeit überspringen und direkt zum Reiseplan weitergehen.",
+        "preview_title": "Ihr Tagesplan",
+        "preview_subtitle": "Eine Vorschau Ihrer Tagesetappen. Passen Sie Stopps oben an.",
+        "day_word": "Tag",
+        "days_word": "Tage",
+        "day_abbr": "Tag",
+        "depart_from": "Abreise ab"
       }
     },
     "common": {
@@ -476,7 +505,11 @@
         "admin_hub": "Admin-Bereich",
         "queue": "Warteschlange",
         "disputes": "Konflikte",
-        "stats": "Statistiken"
+        "stats": "Statistiken",
+        "community": "Community",
+        "log_out": "Abmelden",
+        "language": "Sprache / Language",
+        "popular": "Beliebt:"
       },
       "date_picker": {
         "quick_select": "Schnellauswahl",
@@ -612,7 +645,8 @@
         "overview": "Übersicht",
         "services": "Meine Services",
         "bookings": "Buchungen",
-        "analytics": "Analysen"
+        "analytics": "Analysen",
+        "community": "Community"
       },
       "stats": {
         "services": "Services",
@@ -757,6 +791,42 @@
           "Dez"
         ]
       }
+    },
+    "community": {
+      "badge": "Reisende + Lokale Gastgeber",
+      "title": "Die Community",
+      "subtitle": "Reisende und verifizierte lokale Gastgeber teilen ihre Erfahrungen.",
+      "all": "Alle",
+      "travelers": "Reisende",
+      "vendors": "Gastgeber",
+      "placeholder": "Teilen Sie Gedanken, Tipps oder Momente aus den Bergen...",
+      "post": "Beitrag",
+      "posting": "Wird gepostet...",
+      "like": "Gefällt mir",
+      "no_comments": "Noch keine Antworten. Machen Sie den Anfang.",
+      "comment_placeholder": "Antwort schreiben...",
+      "send": "Senden",
+      "sign_in_to_comment": "Anmelden, um mitzudiskutieren.",
+      "empty": "Noch nichts hier. Starten Sie die Diskussion.",
+      "join_title": "Der Community beitreten",
+      "join_sub": "Melden Sie sich an, um Erlebnisse zu teilen und zu antworten.",
+      "join_cta": "Anmelden",
+      "role_traveler": "Reisender",
+      "role_vendor": "Gastgeber",
+      "role_verified": "Verifizierter Gastgeber",
+      "traveler_badge": "Reisenden-Community",
+      "traveler_title": "Unterwegs",
+      "traveler_subtitle": "Reisen, Tipps und Momente von anderen Reisenden.",
+      "host_notice": "Dies ist die Reisenden-Community. Ihr Gastgeberbereich befindet sich im Dashboard.",
+      "host_cta": "Gastgeber-Bereich",
+      "host_badge": "Gastgeber-Community · Privat",
+      "host_title": "Der Gastgeber-Kreis",
+      "host_subtitle": "Ein privater Bereich für verifizierte Gastgeber zum Austausch.",
+      "host_placeholder": "Teilen Sie Updates, Betriebstipps oder Fragen...",
+      "host_empty": "Noch keine Beiträge. Teilen Sie das erste Update.",
+      "host_only_title": "Nur für Gastgeber",
+      "host_only_sub": "Diese Community ist verifizierten Gastgebern vorbehalten.",
+      "host_only_cta": "Zur Reisenden-Community"
     }
   }
 }

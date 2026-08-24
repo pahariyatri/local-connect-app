@@ -11,11 +11,11 @@ import PublicFooter from "../components/organisms/PublicFooter";
 import { Icon } from "../components/atoms/Icon";
 
 const TOPIC_FILTERS = [
-  { id: "all", label: "All Stories", emoji: "🏔️" },
-  { id: "treks", label: "Treks & Trails", emoji: "🥾" },
-  { id: "stays", label: "Homestays & Cabins", emoji: "🏡" },
-  { id: "roads", label: "Passes & Road Status", emoji: "🚗" },
-  { id: "food", label: "Local Dhabas & Cafés", emoji: "🍲" },
+  { id: "all", label: "All Stories" },
+  { id: "treks", label: "Treks & Trails" },
+  { id: "stays", label: "Homestays & Cabins" },
+  { id: "roads", label: "Passes & Road Status" },
+  { id: "food", label: "Local Dhabas & Cafés" },
 ];
 
 export default function TravellerCommunityPage() {
@@ -57,14 +57,14 @@ export default function TravellerCommunityPage() {
       <div className="relative z-10 space-y-1">
         <div className="flex items-center gap-2">
           <span className="text-emerald-400 text-xs font-black uppercase tracking-widest">
-            Join 1,000+ Mountain Wanderers
+            Community
           </span>
         </div>
         <h2 className="font-black text-lg sm:text-xl tracking-tight">
           {c.join_title ?? "Share Your Himachal Journey"}
         </h2>
         <p className="text-slate-300 text-xs sm:text-sm font-medium max-w-md">
-          {c.join_sub ?? "Sign in to share live road conditions, homestay discoveries, and connect with fellow mountain travelers."}
+          {c.join_sub ?? "Sign in to share live road conditions, homestay discoveries, and connect with fellow travelers."}
         </p>
       </div>
       <Link
@@ -96,13 +96,13 @@ export default function TravellerCommunityPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-black uppercase tracking-widest">
-                🏔️ The Himachal Collective
+                Himachal Collective
               </span>
               <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                Mountain Dispatch & Traveler Stories
+                Traveler Community
               </h1>
               <p className="text-slate-500 font-medium text-xs sm:text-sm max-w-xl leading-relaxed">
-                Live road updates, hidden trails, homestay reviews, and honest mountain tips directly from travelers and local friends.
+                Live road updates, hidden trails, and mountain insights from real travelers.
               </p>
             </div>
 
@@ -110,7 +110,7 @@ export default function TravellerCommunityPage() {
               href={`/${lang}/builder`}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-slate-900 hover:bg-emerald-600 text-white text-xs font-bold transition-colors flex-shrink-0 self-start md:self-center shadow-sm"
             >
-              <span>✨ Plan a Route</span>
+              <span>Plan a Route</span>
               <Icon name="arrow-right" className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -128,7 +128,6 @@ export default function TravellerCommunityPage() {
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900"
                 }`}
               >
-                <span>{topic.emoji}</span>
                 <span>{topic.label}</span>
               </button>
             ))}

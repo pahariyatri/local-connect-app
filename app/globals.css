@@ -137,9 +137,13 @@ body {
   }
 }
 
-/* scrollbar-hide — used in horizontal pill/tab rows */
-.scrollbar-hide::-webkit-scrollbar { display: none; }
-.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+/* scrollbar-hide / hide-scrollbar — used in horizontal pill/tab rows */
+.scrollbar-hide::-webkit-scrollbar,
+.hide-scrollbar::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.scrollbar-hide,
+.hide-scrollbar,
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 
 /* Custom scrollbar */

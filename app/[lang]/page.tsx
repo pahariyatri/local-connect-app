@@ -135,29 +135,35 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
       <InteractiveRouteSection lang={lang} />
 
       {/* ── 3 · VERIFIED LOCAL HOSTS & OPERATORS ────────────────────────── */}
-      <section className="px-4 sm:px-6 py-14 sm:py-20 bg-white">
-        <div className="max-w-6xl mx-auto">
+      <section className="py-14 sm:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal>
-            <div className="flex items-end justify-between gap-4 mb-8 sm:mb-10">
-              <div>
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-10">
+              <div className="space-y-1">
+                <span className="text-emerald-600 text-xs font-black uppercase tracking-widest block">
+                  {dict.page?.home?.providers?.eyebrow || "Verified Locals"}
+                </span>
                 <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
-                  Verified Local Operators
+                  {dict.page?.home?.providers?.title || "Trusted Local Partners"}
                 </h2>
+                <p className="text-slate-500 text-xs sm:text-sm font-medium max-w-xl">
+                  Connect directly with verified mountain hosts, homestays, and 4x4 transport providers with 0% middleman markup.
+                </p>
               </div>
               <button
                 onClick={() => router.push(exploreHref)}
-                className="flex-shrink-0 text-xs font-black uppercase tracking-wider text-emerald-600 hover:text-emerald-700 pb-1 border-b-2 border-emerald-500/30 hover:border-emerald-600 transition-all"
+                className="flex-shrink-0 text-xs font-black uppercase tracking-wider text-emerald-600 hover:text-emerald-700 pb-1 border-b-2 border-emerald-500/30 hover:border-emerald-600 transition-all self-start sm:self-auto"
               >
-                View all operators →
+                {dict.page?.home?.providers?.view_all || "View All"} →
               </button>
             </div>
           </Reveal>
 
-          <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 overflow-x-auto pb-4 snap-x snap-mandatory hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0">
+          <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide no-scrollbar hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0">
             {isProvidersLoading ? (
               Array.from({ length: 4 }).map((_, idx) => (
                 <div key={idx} className="bg-white border border-slate-100 rounded-3xl p-5 space-y-3 animate-pulse">
-                  <div className="w-full h-44 rounded-2xl bg-slate-200" />
+                  <div className="w-full h-48 rounded-2xl bg-slate-200" />
                   <div className="h-4 bg-slate-200 rounded w-2/3" />
                   <div className="h-3 bg-slate-200 rounded w-1/2" />
                 </div>
@@ -170,15 +176,15 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
                     tabIndex={0}
                     onClick={() => router.push(`/${lang}/vendor/${p.id}`)}
                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); router.push(`/${lang}/vendor/${p.id}`); } }}
-                    className="group bg-white border border-slate-200/80 rounded-3xl overflow-hidden hover:border-emerald-500/40 hover:shadow-xl hover:shadow-slate-200/60 hover:-translate-y-1 transition-all duration-300 cursor-pointer active:scale-[0.99] flex flex-col justify-between min-w-[260px] sm:min-w-0 shrink-0 snap-center"
+                    className="group bg-white border border-slate-200/80 rounded-3xl overflow-hidden hover:border-emerald-500/40 hover:shadow-2xl hover:shadow-slate-200/80 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer active:scale-[0.99] flex flex-col justify-between min-w-[270px] sm:min-w-0 shrink-0 snap-center"
                   >
-                    <div className="relative h-44 overflow-hidden">
+                    <div className="relative h-48 overflow-hidden">
                       <LocalImage
                         src={p.image}
                         alt={p.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
                       
                       <div className="absolute top-3 left-3 flex items-center gap-1.5">
                         <span className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-wider border border-white/20">

@@ -7,7 +7,7 @@ import { useLocalizationContext } from "@/contexts/LocalizationContext";
 
 const POPULAR_DESTINATIONS = ["Manali", "Kasol", "Spiti", "Tirthan", "Dharamshala", "Shimla"];
 
-export default function HeroSection({ onSearch, onPlan }: { onSearch: (query?: string) => void; onPlan?: () => void }) {
+export default function HeroSection({ onSearch }: { onSearch: (query?: string) => void; onPlan?: () => void }) {
   const [query, setQuery] = useState("");
   const { dict } = useLocalizationContext();
   const hero = dict?.page?.home?.hero || {};
@@ -18,7 +18,7 @@ export default function HeroSection({ onSearch, onPlan }: { onSearch: (query?: s
 
   return (
     <section className="relative overflow-hidden">
-      <div className="relative min-h-[520px] sm:min-h-[580px] w-full flex items-center justify-center">
+      <div className="relative min-h-[480px] sm:min-h-[520px] w-full flex items-center justify-center">
         {/* Background Mountain Photo */}
         <Image
           src="https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?q=80&w=1800"
@@ -32,7 +32,7 @@ export default function HeroSection({ onSearch, onPlan }: { onSearch: (query?: s
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/65 to-slate-950/90" />
 
         <div className="relative z-10 w-full max-w-3xl mx-auto px-4 sm:px-6 py-12 text-center text-white flex flex-col items-center justify-center">
-          {/* One hero hook: traveler need, not platform pitch */}
+          {/* Hero Heading */}
           <h1
             className="text-3xl sm:text-5xl md:text-6xl font-black leading-[1.08] tracking-tight text-balance"
             dangerouslySetInnerHTML={{
@@ -40,9 +40,7 @@ export default function HeroSection({ onSearch, onPlan }: { onSearch: (query?: s
             }}
           />
 
-          {/* Minimalist Approach: No long paragraphs. Just a powerful statement and immediate action. */}
-
-          {/* Sleek Floating Search Console */}
+          {/* Sleek Search Console */}
           <div className="mt-8 w-full max-w-xl">
             <form
               onSubmit={(e) => {
@@ -59,7 +57,7 @@ export default function HeroSection({ onSearch, onPlan }: { onSearch: (query?: s
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder={hero.search_placeholder || "Where are you going? (Kasol, Manali, Tosh...)"}
+                  placeholder={hero.search_placeholder || "Where are you going? (Kasol, Manali, Spiti...)"}
                   aria-label="Search destination"
                   className="w-full bg-transparent text-sm sm:text-base font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-medium focus:outline-none"
                 />
@@ -73,32 +71,6 @@ export default function HeroSection({ onSearch, onPlan }: { onSearch: (query?: s
               </button>
             </form>
           </div>
-
-          {/* Minimal Quick Destination Links */}
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs text-slate-300">
-            <span className="text-[11px] font-bold text-slate-400">{dict?.page?.common?.actions?.popular || "Popular:"}</span>
-            {POPULAR_DESTINATIONS.map((dest) => (
-              <button
-                key={dest}
-                type="button"
-                onClick={() => submitSearch(dest)}
-                className="px-2.5 py-0.5 rounded-full text-xs font-medium text-slate-200 hover:text-white hover:bg-white/10 transition-colors"
-              >
-                {dest}
-              </button>
-            ))}
-          </div>
-
-          {/* Secondary path for the full-trip persona — one primary action (search), one quiet secondary */}
-          {onPlan && (
-            <button
-              type="button"
-              onClick={onPlan}
-              className="mt-4 text-xs font-bold text-slate-300 hover:text-white underline underline-offset-4 decoration-slate-500 hover:decoration-emerald-400 transition-colors"
-            >
-              {hero.plan_cta || "Or build a whole trip"} →
-            </button>
-          )}
         </div>
       </div>
     </section>

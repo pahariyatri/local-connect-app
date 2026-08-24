@@ -357,7 +357,7 @@ export default function VendorOnboardingPage() {
                 onBlur={() => markTouched("description")}
                 placeholder="What do you offer, and what makes it worth booking?"
                 rows={6}
-                className="!bg-transparent !border-0 !p-0 focus:!bg-transparent"
+                className="!bg-transparent !border-0 px-2 py-2 focus:!bg-transparent"
                 error={touched.description ? errors.description : undefined}
               />
               {activeHints.length > 0 && !errors.description && (
@@ -492,32 +492,39 @@ export default function VendorOnboardingPage() {
 
       {isMounted && createPortal(
         <div className="builder-footer-safe-area fixed bottom-0 left-0 right-0 px-3 sm:px-6 pt-3 sm:pt-6 bg-white/90 backdrop-blur-xl border-t border-slate-100 z-50">
-          <div className="max-w-2xl mx-auto px-2 sm:px-4 flex items-center justify-between gap-3 sm:gap-4">
-            <Button variant="ghost" onClick={handleBack} className="w-fit px-6 sm:px-8 h-12 sm:h-16 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:bg-slate-100 text-[9px] sm:text-xs">
-              {step === 1 ? "Exit" : "Back"}
-            </Button>
-            {step === TOTAL_STEPS ? (
-              <Button
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="flex-1 h-12 sm:h-16 rounded-xl sm:rounded-2xl text-sm sm:text-lg font-black tracking-[0.15em] sm:tracking-[0.2em] transition-all uppercase bg-slate-900 hover:bg-black text-white shadow-2xl active:scale-[0.98] disabled:opacity-50"
-              >
-                {submitting ? (
-                  <div className="flex items-center justify-center gap-3">
-                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                    <span className="text-xs md:text-sm tracking-widest">Submitting…</span>
-                  </div>
-                ) : "Submit Application"}
-              </Button>
-            ) : (
-              <Button
-                onClick={handleNext}
-                disabled={!isStepValid(step)}
-                className="flex-1 h-12 sm:h-16 rounded-xl sm:rounded-2xl text-sm sm:text-lg font-black tracking-[0.15em] sm:tracking-[0.2em] transition-all uppercase bg-slate-900 hover:bg-black text-white shadow-2xl active:scale-[0.98] disabled:opacity-40"
-              >
-                Continue
-              </Button>
+          <div className="max-w-2xl mx-auto px-2 sm:px-4 flex flex-col gap-2">
+            {!isStepValid(step) && getStepValidationHint(step) && (
+              <p role="alert" className="text-center text-xs font-bold text-amber-700 bg-amber-50/90 border border-amber-200/80 px-3 py-1.5 rounded-xl animate-fade-in">
+                ⚠️ {getStepValidationHint(step)}
+              </p>
             )}
+            <div className="flex items-center justify-between gap-3 sm:gap-4">
+              <Button variant="ghost" onClick={handleBack} className="w-fit px-6 sm:px-8 h-12 sm:h-16 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:bg-slate-100 text-[9px] sm:text-xs">
+                {step === 1 ? "Exit" : "Back"}
+              </Button>
+              {step === TOTAL_STEPS ? (
+                <Button
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="flex-1 h-12 sm:h-16 rounded-xl sm:rounded-2xl text-sm sm:text-lg font-black tracking-[0.15em] sm:tracking-[0.2em] transition-all uppercase bg-slate-900 hover:bg-black text-white shadow-2xl active:scale-[0.98] disabled:opacity-50"
+                >
+                  {submitting ? (
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                      <span className="text-xs md:text-sm tracking-widest">Submitting…</span>
+                    </div>
+                  ) : "Submit Application"}
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleNext}
+                  disabled={!isStepValid(step)}
+                  className="flex-1 h-12 sm:h-16 rounded-xl sm:rounded-2xl text-sm sm:text-lg font-black tracking-[0.15em] sm:tracking-[0.2em] transition-all uppercase bg-slate-900 hover:bg-black text-white shadow-2xl active:scale-[0.98] disabled:opacity-40"
+                >
+                  Continue
+                </Button>
+              )}
+            </div>
           </div>
         </div>,
         document.body,

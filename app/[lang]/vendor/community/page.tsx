@@ -42,7 +42,6 @@ export default function HostCommunityPage() {
     return (
       <div className="max-w-2xl mx-auto px-4">
         <div className="rounded-[2rem] border-2 border-slate-100 bg-white p-10 text-center">
-          <div className="text-4xl mb-4">🛡️</div>
           <h1 className="text-2xl font-black text-slate-900 uppercase italic tracking-tight mb-2">
             {c.host_only_title ?? "Hosts only"}
           </h1>

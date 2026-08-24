@@ -317,6 +317,28 @@ export default function NewServicePage() {
     }
   };
 
+  const getStepValidationHint = (s: number) => {
+    switch (s) {
+      case 1:
+        if (errors.name) return "Service name (min 3 characters) is required.";
+        if (errors.subcategoryId) return "Please select category and sub-category.";
+        if (errors.description) return "Add a description (min 10 characters).";
+        return undefined;
+      case 2:
+        if (errors.street) return "Street or area address is required.";
+        if (errors.city) return "City is required.";
+        if (errors.state) return "State is required.";
+        if (errors.postalCode) return "Postal code is required.";
+        return undefined;
+      case 3:
+        if (errors.weekdayPrice) return "Please enter a valid base weekday price.";
+        if (errors.capacity) return "Please select a valid guest capacity.";
+        return undefined;
+      default:
+        return undefined;
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto px-4 pb-40">
       <div className="mb-10">
@@ -346,32 +368,39 @@ export default function NewServicePage() {
 
       {isMounted && createPortal(
         <div className="fixed bottom-0 left-0 right-0 px-4 sm:px-6 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] bg-white/90 backdrop-blur-xl border-t border-slate-100 z-50">
-          <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
-            <Button variant="ghost" onClick={handleBack} className="w-fit px-6 h-14 rounded-2xl font-bold text-slate-400 hover:text-slate-900 hover:bg-slate-100 text-sm">
-              {step === 1 ? "Cancel" : "Back"}
-            </Button>
-            {step === TOTAL_STEPS ? (
-              <Button
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="flex-1 h-14 rounded-2xl text-base font-black transition-all bg-slate-900 hover:bg-black text-white shadow-lg active:scale-[0.98] disabled:opacity-50"
-              >
-                {submitting ? (
-                  <div className="flex items-center justify-center gap-3">
-                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                    <span>Saving…</span>
-                  </div>
-                ) : "Add service"}
-              </Button>
-            ) : (
-              <Button
-                onClick={handleNext}
-                disabled={!isStepValid(step)}
-                className="flex-1 h-14 rounded-2xl text-base font-black transition-all bg-slate-900 hover:bg-black text-white shadow-lg active:scale-[0.98] disabled:opacity-40"
-              >
-                Continue
-              </Button>
+          <div className="max-w-2xl mx-auto flex flex-col gap-2">
+            {!isStepValid(step) && getStepValidationHint(step) && (
+              <p role="alert" className="text-center text-xs font-bold text-amber-700 bg-amber-50/90 border border-amber-200/80 px-3 py-1.5 rounded-xl animate-fade-in">
+                ⚠️ {getStepValidationHint(step)}
+              </p>
             )}
+            <div className="flex items-center justify-between gap-3">
+              <Button variant="ghost" onClick={handleBack} className="w-fit px-6 h-14 rounded-2xl font-bold text-slate-400 hover:text-slate-900 hover:bg-slate-100 text-sm">
+                {step === 1 ? "Cancel" : "Back"}
+              </Button>
+              {step === TOTAL_STEPS ? (
+                <Button
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="flex-1 h-14 rounded-2xl text-base font-black transition-all bg-slate-900 hover:bg-black text-white shadow-lg active:scale-[0.98] disabled:opacity-50"
+                >
+                  {submitting ? (
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                      <span>Saving…</span>
+                    </div>
+                  ) : "Add service"}
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleNext}
+                  disabled={!isStepValid(step)}
+                  className="flex-1 h-14 rounded-2xl text-base font-black transition-all bg-slate-900 hover:bg-black text-white shadow-lg active:scale-[0.98] disabled:opacity-40"
+                >
+                  Continue
+                </Button>
+              )}
+            </div>
           </div>
         </div>,
         document.body,
