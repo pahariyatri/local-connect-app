@@ -33,14 +33,31 @@ const CAT_LABEL_BY_SERVICE_CATEGORY: Record<string, string> = {
 
 const SEARCH_DEBOUNCE_MS = 300;
 
+// Read once, synchronously, so the very first render (and the very first
+// search it triggers) already has the real filter — see the useState
+// initializers below for why this matters.
+function readUrlParam(name: string): string | null {
+  if (typeof window === "undefined") return null;
+  return new URLSearchParams(window.location.search).get(name);
+}
+
 export default function ExplorePage() {
   const router = useRouter();
   const { lang } = useParams<{ lang: string }>();
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [locationsList, setLocationsList] = useState<string[]>(DEFAULT_LOCATIONS);
   const [activeCategory, setActiveCategory] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState("All");
+  // Lazy initializers (not a post-mount effect): searchQuery/selectedLocation
+  // must be correct on the FIRST render, because the mount effect below fires
+  // its first runSearch() immediately using whatever these are at that
+  // moment. They used to start as ""/"All" and get corrected only once a
+  // separate effect (gated on `categories`, i.e. after a real network
+  // round-trip) read the URL — so a fresh navigation to e.g. /explore?q=Kasol
+  // would first run an unfiltered, platform-wide search (mixing in every
+  // location) and only later replace it with the real Kasol-filtered one.
+  // Reading the URL here instead means the first search is already correct.
+  const [searchQuery, setSearchQuery] = useState(() => readUrlParam("q") || "");
+  const [selectedLocation, setSelectedLocation] = useState(() => readUrlParam("location") || "All");
   const [services, setServices] = useState<DiscoveryService[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,21 +92,17 @@ export default function ExplorePage() {
     return () => { cancelled = true; };
   }, []);
 
-  // Initialize query parameters if provided in URL
+  // Category (unlike q/location above) can only be resolved once the real
+  // `categories` list has loaded from the backend, since a URL token like
+  // "trek" needs matching against real category ids/labels — so this stays
+  // effect-based rather than a lazy initializer.
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const locParam = params.get("location");
-    const catParam = params.get("category");
-    const qParam = params.get("q");
-    if (locParam) setSelectedLocation(locParam);
-    if (qParam) setSearchQuery(qParam);
-    if (catParam) {
-      const matched = categories.find(
-        (c) => c.id === catParam.toLowerCase() || c.backendCategory === catParam.toLowerCase()
-      );
-      if (matched) setActiveCategory(matched.id);
-    }
+    const catParam = readUrlParam("category");
+    if (!catParam) return;
+    const matched = categories.find(
+      (c) => c.id === catParam.toLowerCase() || c.backendCategory === catParam.toLowerCase()
+    );
+    if (matched) setActiveCategory(matched.id);
   }, [categories]);
 
   const runSearch = async () => {
