@@ -203,7 +203,7 @@ export default function DateRangePicker({
 
                     <div className="relative z-10">
                         <p className={`text-[7px] sm:text-[9px] font-black uppercase tracking-[0.2em] mb-0.5 opacity-60`}>{preset.subLabel}</p>
-                        <h3 className={`font-black text-xs sm:text-lg leading-tight truncate`}>{preset.label}</h3>
+                        <h3 className={`font-black text-xs sm:text-lg leading-tight`}>{preset.label}</h3>
                     </div>
                 </button>
               );
