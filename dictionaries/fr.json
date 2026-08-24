@@ -3,7 +3,7 @@
     "home": {
       "badge": "Réseau Pahari Yatri",
       "hero": {
-        "title": "Voyagez comme si vous connaissiez quelqu'un sur place.",
+        "title": "Voyagez comme si vous <span class=\"text-emerald-400\">connaissiez quelqu'un</span> sur place.",
         "subtitle": "Trouvez de vrais hébergements, trajets et guides auprès d'habitants vérifiés de l'Himachal — en direct, sans commission d'agence.",
         "search_placeholder": "Où allez-vous ? (Kasol, Manali, Tosh...)",
         "search_cta": "Rechercher",
@@ -99,6 +99,13 @@
         "escrow": "Paiements sécurisés",
         "messaging": "Messagerie directe",
         "reviews": "Avis notés"
+      },
+      "routes": {
+        "eyebrow": "Itinéraires sélectionnés",
+        "title": "Des voyages prêts à l'emploi.",
+        "subtitle": "De vrais itinéraires de plusieurs jours à travers l'Himachal — ouvrez-en un dans le générateur et personnalisez-le.",
+        "cta": "Planifier cet itinéraire",
+        "days_unit": "jours"
       }
     },
     "discover": {
