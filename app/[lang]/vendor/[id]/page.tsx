@@ -7,7 +7,6 @@ import { useNotification } from "@/contexts/NotificationContext";
 import TopNavigation from "../../components/organisms/TopNavigation";
 import SupportContact from "../../components/molecules/SupportContact";
 import { getVendorById } from "@/services/vendorService";
-import { getServices } from "@/services/catalogService";
 import { ApiClientError } from "@/lib/apiClient";
 import { searchDiscoveryServices } from "@/services/searchService";
 import { Icon } from "../../components/atoms/Icon";
@@ -47,40 +46,23 @@ export interface DetailedService {
     prices?: any[];
 }
 
-const getServiceClassification = (s: any) => {
-    const name = (s.name || "").toLowerCase();
-    const subcat = (s.subcategory?.name || "").toLowerCase();
-
-    if (name.includes("angling") || name.includes("trout") || name.includes("trek") || name.includes("trail") || name.includes("rafting") || name.includes("guide") || subcat.includes("adventure")) {
-        return {
-            category: "Adventure & Guide",
-            unit: "per person / session",
-            image: s.thumbnail || s.additionalData?.images?.[0] || CATEGORY_IMAGES["Adventures"],
-            inclusions: ["Certified Local Guide", "UNESCO GHNP Trail Briefing", "Permit & Entry Assistance", "Angling Gear & First Aid"]
-        };
-    }
-    if (name.includes("taxi") || name.includes("cab") || name.includes("transfer") || name.includes("transport") || subcat.includes("transport")) {
-        return {
-            category: "Transport",
-            unit: "per vehicle / trip",
-            image: s.thumbnail || s.additionalData?.images?.[0] || CATEGORY_IMAGES["Transport"],
-            inclusions: ["Experienced Hill Driver", "Mountain-ready 4x4 / MUV", "Toll & Fuel Included", "Luggage Assistance"]
-        };
-    }
-    if (name.includes("food") || name.includes("meal") || name.includes("cafe") || name.includes("restaurant") || subcat.includes("food")) {
-        return {
-            category: "Food & Dining",
-            unit: "per person",
-            image: s.thumbnail || s.additionalData?.images?.[0] || CATEGORY_IMAGES["Food"],
-            inclusions: ["Fresh Local Himachali Meal", "Traditional Mountain Spices", "Hygienic Preparation", "Local Tea / Beverage"]
-        };
-    }
-    return {
-        category: s.subcategory?.name || "Homestay & Lodge",
-        unit: "per night",
-        image: s.thumbnail || s.additionalData?.images?.[0] || CATEGORY_IMAGES["Homestays"],
-        inclusions: ["Verified Local Host", "Riverside / Valley Balcony", "Hot Water & Heated Bedding", "Assisted Check-in"]
-    };
+// Purely decorative fallback image when a service has no real photo — a
+// generic category picture, not a claim about what's included. Real
+// category comes from the API (s.category); no keyword-guessing here.
+// (Previously this was `getServiceClassification()`, which ALSO invented
+// inclusions/cancellation-policy/price per category regardless of what the
+// real service actually was — see AUDIT-007. Removed entirely: the
+// vendorId-filtered discovery API call below already returns real
+// inclusions, cancellationPolicy, and pricing for every service.)
+const categoryFallbackImage = (category: string): string => {
+    const key = /adventure|trek|guide|raft/i.test(category)
+        ? "Adventures"
+        : /transport|taxi|cab/i.test(category)
+        ? "Transport"
+        : /food|meal|dining/i.test(category)
+        ? "Food"
+        : "Homestays";
+    return CATEGORY_IMAGES[key];
 };
 
 export default function VendorProfilePage() {
@@ -103,60 +85,25 @@ export default function VendorProfilePage() {
             if (response && response.id) {
                 let servicesList: DetailedService[] = [];
                 try {
-                    const allServices = await getServices();
-                    if (Array.isArray(allServices)) {
-                        const matched = allServices.filter(
-                            (s: any) => s.vendor?.id === response.id || s.vendorId === response.id
-                        );
-                        servicesList = matched.map((s: any) => {
-                            const rawPrice = Array.isArray(s.prices) && s.prices.length > 0
-                                ? Number(s.prices[0]?.price)
-                                : 2000;
-                            const classification = getServiceClassification(s);
-
-                            return {
-                                id: String(s.id),
-                                name: s.name,
-                                description: s.description || "Authentic verified local mountain experience.",
-                                price: rawPrice,
-                                currency: "INR",
-                                unit: classification.unit,
-                                capacity: s.capacity || 2,
-                                category: classification.category,
-                                subcategoryName: s.subcategory?.name,
-                                image: classification.image,
-                                city: s.addresses?.[0]?.city || undefined,
-                                inclusions: classification.inclusions,
-                                cancellationPolicy: "Free cancellation up to 48 hours prior to start date.",
-                                prices: s.prices || []
-                            };
-                        });
-                    }
-
-                    // Fallback to discovery search if direct services list had 0
-                    if (servicesList.length === 0) {
-                        const searchResult = await searchDiscoveryServices({ q: response.businessName, limit: 50 });
-                        const fallbackMatched = searchResult.services.filter((s) => s.vendor.id === response.id);
-                        if (fallbackMatched.length > 0) {
-                            servicesList = fallbackMatched.map((s) => {
-                                const classification = getServiceClassification(s);
-                                return {
-                                    id: String(s.id),
-                                    name: s.name,
-                                    description: s.shortDescription || s.description || "Verified local service.",
-                                    price: s.pricing.unitPrice,
-                                    currency: s.pricing.currency || "INR",
-                                    unit: s.pricing.priceUnit ? `per ${s.pricing.priceUnit}` : classification.unit,
-                                    capacity: 2,
-                                    category: s.category || classification.category,
-                                    image: classification.image,
-                                    city: s.location?.city,
-                                    inclusions: classification.inclusions,
-                                    cancellationPolicy: "Free cancellation up to 48 hours before check-in.",
-                                };
-                            });
-                        }
-                    }
+                    // Real data only: the same discovery endpoint /explore
+                    // uses, filtered to this vendor (AUDIT-007) — inclusions,
+                    // cancellationPolicy, and pricing all come straight from
+                    // the API, nothing invented client-side.
+                    const searchResult = await searchDiscoveryServices({ vendorId: response.id, limit: 50 });
+                    servicesList = searchResult.services.map((s) => ({
+                        id: String(s.id),
+                        name: s.name,
+                        description: s.shortDescription || s.description,
+                        price: s.pricing.unitPrice,
+                        currency: s.pricing.currency || "INR",
+                        unit: s.pricing.priceUnit ? `per ${s.pricing.priceUnit}` : "per service",
+                        capacity: s.capacity ?? 2,
+                        category: s.category,
+                        image: s.thumbnail || categoryFallbackImage(s.category),
+                        city: s.location?.city,
+                        inclusions: s.inclusions,
+                        cancellationPolicy: s.cancellationPolicy,
+                    }));
                 } catch (serviceErr) {
                     console.error("Error loading services for vendor:", serviceErr);
                 }
