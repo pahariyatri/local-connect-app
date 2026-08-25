@@ -144,7 +144,6 @@ export default function VendorDashboardOverview({ dict }: VendorDashboardOvervie
   const recentBookings = bookings.slice(0, 3);
 
   const statCards: { label: string; val: string | number; icon: IconName; color: string; bg: string; route: string }[] = [
-    { label: res.stats.services, val: totalServices ?? "—", icon: "home", color: "text-indigo-600", bg: "bg-indigo-50", route: `/${lang}/vendor/services` },
     { label: res.stats.bookings, val: totalBookings, icon: "calendar", color: "text-emerald-600", bg: "bg-emerald-50", route: `/${lang}/vendor/bookings` },
     { label: res.stats.revenue, val: `₹${totalRevenue.toLocaleString()}`, icon: "wallet", color: "text-slate-900", bg: "bg-slate-100", route: `/${lang}/vendor/payouts` },
   ];
