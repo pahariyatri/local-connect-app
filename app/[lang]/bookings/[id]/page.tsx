@@ -198,28 +198,9 @@ export default function BookingDetailPage() {
     }
   };
 
-  const handleConfirmAndProceedToPay = async () => {
+  const handleConfirmAndProceedToPay = () => {
     if (!booking) return;
-    setBusyItemId(-1);
-    try {
-      if (booking.status === 'CREATED' && booking.items) {
-        for (const item of booking.items) {
-          if (item.status === 'PENDING') {
-            try {
-              await _respondToBookingItem(item.id, 'accept');
-            } catch (e) {
-              console.warn('Auto-accept item failed', item.id, e);
-            }
-          }
-        }
-      }
-      router.push(`/${lang}/bookings/${id}/payment`);
-    } catch (err) {
-      console.error('Error proceeding to payment', err);
-      router.push(`/${lang}/bookings/${id}/payment`);
-    } finally {
-      setBusyItemId(null);
-    }
+    router.push(`/${lang}/bookings/${id}/payment`);
   };
 
   const status = (booking?.status || 'UNKNOWN') as BookingStatus;

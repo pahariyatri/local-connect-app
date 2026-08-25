@@ -157,15 +157,6 @@ export default function CheckoutPage() {
             onClick={async () => {
               setState('preparing');
               try {
-                const { getBooking, respondToBookingItem } = await import('@/services/bookingService');
-                const bk = await getBooking(bookingId);
-                if (bk?.items) {
-                  for (const item of bk.items) {
-                    if (item.status === 'PENDING') {
-                      await respondToBookingItem(item.id, 'accept');
-                    }
-                  }
-                }
                 const result = await reserveBooking(parseInt(bookingId, 10));
                 setOrderId(result.orderId);
                 setAmount(Number(result.amount));
