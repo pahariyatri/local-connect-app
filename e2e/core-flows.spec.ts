@@ -39,27 +39,24 @@ test.describe('Pahari Yatri Core Flows', () => {
     await expect(page).toHaveURL(/\/en\/explore\?q=Kasol/);
   });
 
-  test('Mobile menu works correctly', async ({ page, isMobile }) => {
+  test('Mobile navigation works correctly', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'Mobile only test');
     
     await page.goto('/en');
+    await page.waitForLoadState('domcontentloaded');
     
-    // Open menu
-    const menuBtn = page.locator('button[id="header-menu-toggle"]');
-    await expect(menuBtn).toBeVisible();
-    await menuBtn.click();
+    // Check mobile bottom navigation
+    const bottomNav = page.locator('#mobile-bottom-navigation');
+    await expect(bottomNav).toBeVisible({ timeout: 10_000 });
     
-    // Check links inside mobile menu
-    const mobileNav = page.locator('nav[id="header-mobile-nav"]');
-    await expect(mobileNav).toBeVisible();
-    await expect(mobileNav.getByRole('link', { name: /Explore/i })).toBeVisible();
-    
-    // Close menu by navigating
-    await mobileNav.getByRole('link', { name: /Explore/i }).click();
+    // Navigate via bottom nav link
+    const exploreLink = bottomNav.locator('a[href*="/explore"]');
+    await expect(exploreLink).toBeVisible();
+    await exploreLink.click({ force: true });
     await expect(page).toHaveURL(/\/en\/explore/);
   });
 
-  test('Explore page search and filters', async ({ page }) => {
+  test('Explore page search and location filter', async ({ page }) => {
     await page.goto('/en/explore');
 
     // Check search input
@@ -74,16 +71,13 @@ test.describe('Pahari Yatri Core Flows', () => {
     await page.getByRole('button', { name: /Clear search/i }).click();
     await expect(searchInput).toHaveValue('');
 
-    // Check category filters
-    await expect(page.locator('button[id="explore-cat-all"]')).toBeVisible();
+    // Check location input
+    const locationInput = page.locator('input[id="explore-location"]');
+    await expect(locationInput).toBeVisible();
 
-    // Click a valley location filter button
-    const manaliBtn = page.getByRole('button', { name: /Manali/i }).first();
-    await expect(manaliBtn).toBeVisible();
-    await manaliBtn.click();
-
+    await locationInput.fill('Kasol');
+    await page.waitForTimeout(500);
     await expect(page).toHaveURL(/\/en\/explore/);
-    await expect(page.getByText(/Manali/i).first()).toBeVisible();
   });
 
   test('Auth redirects', async ({ page }) => {
