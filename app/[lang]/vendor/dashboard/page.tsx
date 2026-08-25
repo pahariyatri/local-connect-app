@@ -38,7 +38,7 @@ export default function VendorDashboardPage() {
   return (
     <div className="max-w-5xl mx-auto px-4">
         {/* Hub Header */}
-        <header className="mb-12 animate-in fade-in slide-in-from-bottom-5 duration-700">
+        <header className="mb-6 sm:mb-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
             <Typography variant="h1" className="text-4xl font-black text-slate-900 leading-tight">
                 Control <span className="text-emerald-500">Center.</span>
             </Typography>
@@ -50,7 +50,7 @@ export default function VendorDashboardPage() {
             <VendorDashboardOverview dict={dict} />
         </section>
         
-        <div className="mt-20 text-center pb-12 opacity-20">
+        <div className="mt-10 sm:mt-12 text-center pb-8 opacity-20">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.5em]">Command & Control v.2.5</p>
         </div>
     </div>

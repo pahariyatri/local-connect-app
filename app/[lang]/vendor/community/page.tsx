@@ -10,7 +10,7 @@ export default function VendorCommunityPage() {
   const lang = (params?.lang as string) || "en";
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-between py-12 px-4">
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-between py-4 sm:py-6 px-4">
       <main className="max-w-2xl mx-auto text-center space-y-6">
         <div className="w-16 h-16 rounded-3xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-md">
           <Icon name="star" className="w-8 h-8 text-emerald-600" />

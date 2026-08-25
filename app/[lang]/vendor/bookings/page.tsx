@@ -211,7 +211,7 @@ export default function ManageBookingsPage() {
 
   return (
     <div className="max-w-md mx-auto">
-      <header className="mb-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
+      <header className="mb-6 sm:mb-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
         <Typography variant="h1" className="text-4xl font-black text-slate-900 leading-tight">
           Guests <span className="text-emerald-500">&</span> Assists.
         </Typography>
@@ -523,7 +523,7 @@ export default function ManageBookingsPage() {
         </div>
       )}
 
-      <div className="mt-16 text-center pb-12">
+      <div className="mt-10 sm:mt-12 text-center pb-8">
         <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em]">End of feed</p>
       </div>
     </div>

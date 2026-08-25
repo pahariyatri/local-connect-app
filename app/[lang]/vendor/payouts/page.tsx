@@ -16,7 +16,7 @@ export default function VendorPayouts() {
 
   return (
     <div className="max-w-md mx-auto">
-        <header className="mb-10 animate-in fade-in slide-in-from-bottom-5 duration-700">
+        <header className="mb-6 sm:mb-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
             <Typography variant="h1" className="text-4xl font-black text-slate-900 leading-tight">
                 Financial <span className="text-emerald-600">Hub.</span>
             </Typography>
@@ -120,7 +120,7 @@ export default function VendorPayouts() {
             </div>
         </div>
 
-        <div className="mt-16 text-center pb-12 opacity-30">
+        <div className="mt-10 sm:mt-12 text-center pb-8 opacity-30">
             <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.5em]">Authorized SecOps Trace</p>
         </div>
     </div>

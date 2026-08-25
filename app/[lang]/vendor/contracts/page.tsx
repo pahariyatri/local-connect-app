@@ -28,7 +28,7 @@ const MOCK_CONTRACTS = [
 export default function ContractsPage() {
     return (
         <div className="max-w-md mx-auto">
-            <header className="mb-10 animate-in fade-in slide-in-from-bottom-5 duration-700">
+            <header className="mb-6 sm:mb-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
                 <Typography variant="h1" className="text-4xl font-black text-slate-900 leading-tight">
                     Legal <span className="text-indigo-600">&</span> Contracts.
                 </Typography>
@@ -86,7 +86,7 @@ export default function ContractsPage() {
                 <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-indigo-500/10 rounded-full blur-[80px] group-hover:scale-110 transition-transform duration-1000"></div>
             </div>
             
-            <div className="mt-16 text-center pb-12 opacity-20">
+            <div className="mt-10 sm:mt-12 text-center pb-8 opacity-20">
                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.5em]">Legal Ops Ledger v.1.0</p>
             </div>
         </div>

@@ -133,8 +133,8 @@ export default function EditServicePage() {
   if (!service) return null;
 
   return (
-    <div className="min-h-screen bg-white pb-32">
-      <main className="max-w-2xl mx-auto px-6">
+    <div className="min-h-screen bg-white pb-24">
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 pt-4 sm:pt-6">
         <button onClick={() => router.back()} className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors mb-6">
           ← Back
         </button>

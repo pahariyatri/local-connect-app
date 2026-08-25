@@ -115,7 +115,7 @@ export default function ServiceListPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6">
-      <header className="pt-8 pb-10 flex justify-between items-start">
+      <header className="pt-2 sm:pt-4 pb-6 sm:pb-8 flex justify-between items-start">
         <div>
           <Typography variant="h1" className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
             Your services

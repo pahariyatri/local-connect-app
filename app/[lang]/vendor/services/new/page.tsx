@@ -340,7 +340,7 @@ export default function NewServicePage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pb-40">
+    <div className="max-w-2xl mx-auto px-4 pb-28">
       <div className="mb-10">
         <div className="flex items-baseline justify-between mb-2">
           <p className="text-sm font-black text-slate-900">

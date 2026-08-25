@@ -16,7 +16,7 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
 
     return (
         <div className="bg-slate-50 min-h-screen">
-            <div className={!isOnboarding ? "pt-28 sm:pt-36 pb-32 sm:pb-40" : ""}>
+            <div className={!isOnboarding ? "pt-6 sm:pt-10 pb-16 sm:pb-24" : ""}>
                 {children}
             </div>
         </div>
