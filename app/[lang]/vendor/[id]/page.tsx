@@ -9,7 +9,7 @@ import SupportContact from "../../components/molecules/SupportContact";
 import { getVendorById } from "@/services/vendorService";
 import { ApiClientError } from "@/lib/apiClient";
 import { searchDiscoveryServices } from "@/services/searchService";
-import { createDirectBooking } from "@/services/bookingService";
+import { createDirectBooking, getUserBookings } from "@/services/bookingService";
 import { Icon } from "../../components/atoms/Icon";
 
 import FeedbackReviewModal, { ReviewItem } from "../../components/molecules/FeedbackReviewModal";
@@ -85,6 +85,7 @@ export default function VendorProfilePage() {
     const [loadError, setLoadError] = useState<"not_found" | "error" | null>(null);
     const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
     const [reviews, setReviews] = useState<ReviewItem[]>([]);
+    const [canReview, setCanReview] = useState(false);
 
     useEffect(() => {
         if (!id) return;
@@ -95,6 +96,35 @@ export default function VendorProfilePage() {
             // ignore
         }
     }, [id]);
+
+    useEffect(() => {
+        async function checkReviewEligibility() {
+            if (!id || !profile?.id) return;
+            try {
+                const userBookings = await getUserBookings({ limit: 50 });
+                if (userBookings?.bookings?.length > 0) {
+                    const vendorServiceIds = new Set((profile?.services || []).map((s: any) => String(s.id)));
+                    const hasBooking = userBookings.bookings.some((b: any) => {
+                        if (b.directServiceId && vendorServiceIds.has(String(b.directServiceId))) return true;
+                        if (b.items && Array.isArray(b.items)) {
+                            return b.items.some((item: any) => String(item.vendor?.id || item.vendorId) === String(id));
+                        }
+                        if (b.package?.selectedServices) {
+                            const servicesMap = b.package.selectedServices;
+                            return Object.values(servicesMap).some((day: any) =>
+                                Object.values(day || {}).some((sid: any) => sid != null && vendorServiceIds.has(String(sid)))
+                            );
+                        }
+                        return false;
+                    });
+                    setCanReview(hasBooking);
+                }
+            } catch {
+                setCanReview(false);
+            }
+        }
+        checkReviewEligibility();
+    }, [id, profile]);
 
     const fetchProfile = async () => {
         setIsLoading(true);
@@ -130,26 +160,32 @@ export default function VendorProfilePage() {
                 const vendorType = response.types?.[0] || "";
                 const category = VENDOR_TYPE_TO_CATEGORY[vendorType.toLowerCase()] || "Local Partner";
                 const cleanName = response.businessName.replace(/\s*\(.*?\)\s*/g, "").trim();
+                const contactPerson = response.pointOfContact?.name || response.user?.name || "Himachal Local Host";
                 const minPrice = servicesList.length > 0 ? Math.min(...servicesList.map((s) => s.price)) : null;
 
+                const offeredCategories = Array.from(new Set(servicesList.map((s) => s.category).filter(Boolean)));
+
                 const features = [
-                    response.isVerified && "Verified Partner",
-                    response.isInstantBooking && "Instant Booking Enabled",
+                    response.isVerified && "Verified Local Partner",
+                    response.isInstantBooking && "Instant Direct Booking",
                     typeof response.acceptanceRate === "number" && `${response.acceptanceRate}% Acceptance Rate`,
+                    "100% Escrow Protected",
                 ].filter(Boolean) as string[];
 
                 setProfile({
                     id: response.id,
                     name: cleanName,
+                    contactPerson,
                     image: servicesList[0]?.image || CATEGORY_IMAGES[category] || CATEGORY_IMAGES["Homestays"],
                     rating: response.trustScore ?? null,
                     startingPrice: minPrice,
                     currency: "INR",
                     category,
-                    description: response.description || "Authentic verified Himachal local partner.",
+                    offeredCategories,
+                    description: response.description || "Authentic verified Himachal local partner offering direct homestays, mountain transit, and guided local experiences.",
                     features,
                     services: servicesList,
-                    hometown: servicesList[0]?.city || "Himachal Pradesh",
+                    hometown: servicesList[0]?.city || response.city || "Himachal Pradesh",
                 });
             } else {
                 setLoadError("not_found");
@@ -262,81 +298,100 @@ export default function VendorProfilePage() {
 
     return (
         <div className="min-h-screen bg-slate-50 pb-28">
-            <TopNavigation title={profile.name} />
+            <TopNavigation title={profile.name} transparent={true} />
 
             {/* ── HERO BANNER ────────────────────────────────────────── */}
-            <div className="h-72 sm:h-96 w-full relative overflow-hidden bg-slate-900">
+            <div className="w-full relative overflow-hidden bg-slate-950 pt-20 sm:pt-24 pb-8 sm:pb-12 px-4 sm:px-8">
                 <LocalImage
                     src={profile.image}
                     alt={profile.name}
-                    className="w-full h-full object-cover opacity-85"
+                    className="absolute inset-0 w-full h-full object-cover opacity-40"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
-                
-                {/* Floating Badges on Hero */}
-                <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
-                    <span className="px-3 py-1 bg-emerald-500 text-white text-[10px] font-black uppercase rounded-full tracking-wider shadow-lg">
-                        PAHARI YATRI VERIFIED
-                    </span>
-                    <button
-                        onClick={handleSharePortfolio}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/90 backdrop-blur-md hover:bg-white text-slate-800 rounded-full text-[10px] font-black uppercase tracking-wider shadow-md transition-all active:scale-95"
-                    >
-                        <Icon name="share" className="w-3.5 h-3.5" />
-                        Share
-                    </button>
-                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-950/30" />
 
-                <div className="absolute bottom-6 left-4 right-4 sm:left-8 sm:right-8 text-white">
-                    <div className="max-w-3xl mx-auto flex items-center gap-2 mb-1.5">
-                        <span className="text-[11px] font-black uppercase tracking-wider text-emerald-400">
-                            {profile.category}
+                <div className="max-w-3xl mx-auto relative z-10 space-y-4">
+                    {/* Floating Badges */}
+                    <div className="flex items-center justify-between gap-3 pt-2">
+                        <span className="px-3 py-1 bg-emerald-500 text-white text-[10px] font-black uppercase rounded-full tracking-wider shadow-lg">
+                            PAHARI YATRI VERIFIED
                         </span>
-                        <span className="text-slate-400 text-xs">•</span>
-                        <span className="text-[11px] font-bold text-slate-200 capitalize">
-                            📍 {profile.hometown}
-                        </span>
+                        <button
+                            onClick={handleSharePortfolio}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded-full text-[10px] font-black uppercase tracking-wider border border-white/20 shadow-md transition-all active:scale-95"
+                        >
+                            <Icon name="share" className="w-3.5 h-3.5" />
+                            Share
+                        </button>
                     </div>
-                    <h1 className="max-w-3xl mx-auto text-2xl sm:text-4xl font-black tracking-tight leading-tight uppercase">
-                        {profile.name}
-                    </h1>
+
+                    <div className="text-white space-y-1.5 pt-2">
+                        <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-black uppercase tracking-wider text-emerald-400">
+                                {profile.category}
+                            </span>
+                            <span className="text-slate-400 text-xs">•</span>
+                            <span className="text-[11px] font-bold text-slate-200 capitalize">
+                                📍 {profile.hometown}
+                            </span>
+                        </div>
+                        <h1 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight uppercase text-white">
+                            {profile.name}
+                        </h1>
+                    </div>
                 </div>
             </div>
 
             {/* ── MAIN CONTENT ───────────────────────────────────────── */}
-            <main className="max-w-3xl mx-auto px-4 -mt-4 relative z-10 space-y-6">
+            <main className="max-w-3xl mx-auto px-4 sm:px-6 -mt-6 relative z-10 space-y-6">
                 {/* Vendor Overview Card */}
                 <div className="bg-white rounded-3xl p-5 sm:p-8 shadow-xl border border-slate-200/80 space-y-5">
-                    {/* Top Highlights Bar */}
-                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
-                        <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1 bg-amber-50 border border-amber-200/60 px-3 py-1 rounded-full">
-                                {profile.rating != null ? (
-                                    <span className="text-amber-500 font-black text-xs">★ {profile.rating.toFixed(1)}</span>
-                                ) : (
-                                    <span className="text-slate-500 font-bold text-xs">Not yet rated</span>
-                                )}
-                                <span className="text-[10px] font-bold text-slate-500">Verified Host</span>
-                            </div>
+                    {/* Header: Business & Host Identity */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-5">
+                        <div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-md mb-2 inline-block">
+                                Verified Local Partner • {profile.category}
+                            </span>
+                            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                                {profile.name}
+                            </h2>
+                            <p className="text-xs text-slate-500 font-bold mt-1 flex items-center gap-2">
+                                <span>👤 Hosted by <strong className="text-slate-800 font-black">{profile.contactPerson}</strong></span>
+                                <span>•</span>
+                                <span>📍 {profile.hometown}</span>
+                            </p>
                         </div>
 
                         {profile.startingPrice != null && (
-                            <div className="text-right">
+                            <div className="sm:text-right shrink-0 bg-slate-50 sm:bg-transparent p-3 sm:p-0 rounded-2xl">
                                 <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 block">Starting from</span>
-                                <span className="text-base sm:text-lg font-black text-slate-900">
+                                <span className="text-lg sm:text-xl font-black text-slate-900">
                                     ₹{Math.round(profile.startingPrice).toLocaleString("en-IN")}
                                 </span>
                             </div>
                         )}
                     </div>
 
-                    {/* Description */}
+                    {/* About this Host */}
                     <div>
-                        <h2 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1.5">About this Host</h2>
+                        <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1.5">About this Partner</h3>
                         <p className="text-slate-600 text-xs sm:text-sm font-medium leading-relaxed">
                             {profile.description}
                         </p>
                     </div>
+
+                    {/* Services Summary Pill */}
+                    {profile.offeredCategories && profile.offeredCategories.length > 0 && (
+                        <div className="bg-slate-50/80 rounded-2xl p-3.5 border border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                            <span className="text-xs font-bold text-slate-700">Services Offered by Host:</span>
+                            <div className="flex flex-wrap gap-1.5">
+                                {profile.offeredCategories.map((cat: string, idx: number) => (
+                                    <span key={idx} className="px-2.5 py-0.5 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-slate-800 shadow-2xs capitalize">
+                                        {cat}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Features Chips */}
                     <div className="flex flex-wrap gap-2 pt-1">
@@ -479,12 +534,18 @@ export default function VendorProfilePage() {
                                 Traveler Reviews ({reviews.length})
                             </h3>
                         </div>
-                        <button
-                            onClick={() => setIsFeedbackModalOpen(true)}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-emerald-600 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-sm active:scale-95 self-start sm:self-auto"
-                        >
-                            <span>★ Write Review / Feedback</span>
-                        </button>
+                        {canReview ? (
+                            <button
+                                onClick={() => setIsFeedbackModalOpen(true)}
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-emerald-600 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-sm active:scale-95 self-start sm:self-auto"
+                            >
+                                <span>★ Write Review / Feedback</span>
+                            </button>
+                        ) : (
+                            <span className="text-[11px] text-slate-400 font-medium self-start sm:self-auto">
+                                🔒 Reviewing enabled after taking service with host
+                            </span>
+                        )}
                     </div>
 
                     {reviews.length === 0 ? (

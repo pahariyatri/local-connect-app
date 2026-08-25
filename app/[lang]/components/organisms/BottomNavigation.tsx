@@ -12,7 +12,7 @@ import { Locale } from "@/i18n-config";
  * Standardized 5-tab mobile UX with context-aware states for:
  * 1. Logged-out Guests (Explore | Community | Plan Trip | Partner | Sign In)
  * 2. Logged-in Travelers (Explore | Community | Plan Trip | My Trips | Account)
- * 3. Logged-in Vendors (Dashboard | Services | Add Service | Bookings | Profile)
+ * 3. Logged-in Vendors (Overview | Services | Add Service | Bookings | Profile)
  */
 export default function BottomNavigation({
   onToggleLanguage, // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -46,11 +46,19 @@ export default function BottomNavigation({
       !pathname.includes("/vendor/dashboard") &&
       !pathname.includes("/vendor/services") &&
       !pathname.includes("/vendor/onboarding") &&
-      !pathname.includes("/vendor/bookings"));
+      !pathname.includes("/vendor/bookings") &&
+      !pathname.includes("/vendor/community"));
 
-  const isCommunityActive = pathname.startsWith(`/${lang}/community`);
-  const isPlanActive = pathname.startsWith(`/${lang}/builder`) || pathname.startsWith(`/${lang}/journey`);
+  const isCommunityActive =
+    pathname.startsWith(`/${lang}/community`) ||
+    pathname.startsWith(`/${lang}/vendor/community`);
+
+  const isPlanActive =
+    pathname.startsWith(`/${lang}/builder`) ||
+    pathname.startsWith(`/${lang}/journey`);
+
   const isPartnerActive = pathname.startsWith(`/${lang}/vendor/onboarding`);
+  const isAboutActive = pathname.startsWith(`/${lang}/about`);
   const isBookingsActive = pathname.startsWith(`/${lang}/bookings`);
   const isProfileActive = pathname.startsWith(`/${lang}/profile`);
   const isAuthActive = pathname.startsWith(`/${lang}/auth/`);
@@ -67,7 +75,7 @@ export default function BottomNavigation({
       className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/95 backdrop-blur-xl border-t border-slate-200/90 shadow-[0_-6px_25px_rgba(0,0,0,0.06)] px-2 py-1.5 transition-all"
       style={{ paddingBottom: "max(0.375rem, env(safe-area-inset-bottom))" }}
     >
-      <div className={`max-w-md mx-auto grid items-center justify-items-center h-14 ${isVendor ? "grid-cols-5" : "grid-cols-4"}`}>
+      <div className="max-w-md mx-auto grid grid-cols-5 items-center justify-items-center h-14">
         
         {/* ─── CASE 1: VENDOR / HOST LOGGED IN ─── */}
         {isVendor ? (
@@ -193,7 +201,28 @@ export default function BottomNavigation({
               </span>
             </Link>
 
-            {/* Tab 2: Plan Trip (Center Hero Button) */}
+            {/* Tab 2: My Trips / Bookings */}
+            <Link
+              href={`/${lang}/bookings`}
+              className={`flex flex-col items-center justify-center w-full py-1 rounded-xl transition-all active:scale-90 ${
+                isBookingsActive ? "text-emerald-600 font-bold" : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <div className="relative">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isBookingsActive ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                {isBookingsActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
+              </div>
+              <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
+                {commonDict.my_bookings || "My Trips"}
+              </span>
+            </Link>
+
+            {/* Tab 3: Plan Trip (Center Hero Button) */}
             <Link
               href={`/${lang}/builder`}
               className="flex flex-col items-center justify-center -mt-4 group active:scale-95 transition-transform"
@@ -228,28 +257,8 @@ export default function BottomNavigation({
               </span>
             </Link>
 
-            {/* Tab 4: Partner (if Guest) or My Trips (if Logged In Traveler) */}
+            {/* Tab 4: Partner (if logged in) or About Us (if guest) */}
             {user ? (
-              <Link
-                href={`/${lang}/bookings`}
-                className={`flex flex-col items-center justify-center w-full py-1 rounded-xl transition-all active:scale-90 ${
-                  isBookingsActive ? "text-emerald-600 font-bold" : "text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                <div className="relative">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isBookingsActive ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                    <line x1="16" y1="2" x2="16" y2="6" />
-                    <line x1="8" y1="2" x2="8" y2="6" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                  </svg>
-                  {isBookingsActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
-                </div>
-                <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
-                  {commonDict.my_bookings || "My Trips"}
-                </span>
-              </Link>
-            ) : (
               <Link
                 href={`/${lang}/vendor/onboarding`}
                 className={`flex flex-col items-center justify-center w-full py-1 rounded-xl transition-all active:scale-90 ${
@@ -265,6 +274,25 @@ export default function BottomNavigation({
                 </div>
                 <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
                   {navDict.partner || "Partner"}
+                </span>
+              </Link>
+            ) : (
+              <Link
+                href={`/${lang}/about`}
+                className={`flex flex-col items-center justify-center w-full py-1 rounded-xl transition-all active:scale-90 ${
+                  isAboutActive ? "text-emerald-600 font-bold" : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <div className="relative">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isAboutActive ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                  </svg>
+                  {isAboutActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
+                </div>
+                <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
+                  About
                 </span>
               </Link>
             )}

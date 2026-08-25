@@ -8,7 +8,7 @@ import PublicFooter from "../components/organisms/PublicFooter";
 import { searchDiscoveryServices, DiscoveryService } from "@/services/searchService";
 import { sessionTracker } from "@/services/sessionService";
 
-import { getCategories, searchLocations } from "@/services/catalogService";
+import { getCategories } from "@/services/catalogService";
 
 const DEFAULT_CATEGORIES = [
   { id: "all", label: "All Services", backendCategory: undefined },
@@ -53,48 +53,12 @@ export default function ExplorePage() {
   // would first run an unfiltered, platform-wide search (mixing in every
   // location) and only later replace it with the real Kasol-filtered one.
   // Reading the URL here instead means the first search is already correct.
-  const [searchQuery, setSearchQuery] = useState(() => readUrlParam("q") || "");
-  const [selectedLocation, setSelectedLocation] = useState(() => readUrlParam("location") || "All");
+  const [searchQuery, setSearchQuery] = useState(() => readUrlParam("q") || readUrlParam("location") || "");
   const [services, setServices] = useState<DiscoveryService[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isInitialMount = useRef(true);
-
-  // Location typeahead — suggestions from the indexed /locations/search
-  // endpoint, separate (shorter) debounce from the main result-search below
-  // so the dropdown feels instant while the actual service search still
-  // waits for the user to pause typing.
-  const [locationSuggestions, setLocationSuggestions] = useState<{ id: number; name: string; slug: string; type: string }[]>([]);
-  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
-  const locationDropdownRef = useRef<HTMLDivElement>(null);
-  const locationSuggestDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    const query = selectedLocation === "All" ? "" : selectedLocation.trim();
-    if (locationSuggestDebounceRef.current) clearTimeout(locationSuggestDebounceRef.current);
-    if (query.length < 2) {
-      setLocationSuggestions([]);
-      return;
-    }
-    locationSuggestDebounceRef.current = setTimeout(async () => {
-      try {
-        const results = await searchLocations(query, 6);
-        setLocationSuggestions(Array.isArray(results) ? results : []);
-      } catch {
-        setLocationSuggestions([]);
-      }
-    }, 200);
-    return () => {
-      if (locationSuggestDebounceRef.current) clearTimeout(locationSuggestDebounceRef.current);
-    };
-  }, [selectedLocation]);
-
-  const pickLocation = (loc: { name: string; slug: string }) => {
-    setSelectedLocation(loc.slug || loc.name);
-    setShowLocationSuggestions(false);
-    setLocationSuggestions([]);
-  };
 
   // Fetch dynamic categories from backend on mount
   useEffect(() => {
@@ -118,10 +82,7 @@ export default function ExplorePage() {
     return () => { cancelled = true; };
   }, []);
 
-  // Category (unlike q/location above) can only be resolved once the real
-  // `categories` list has loaded from the backend, since a URL token like
-  // "trek" needs matching against real category ids/labels — so this stays
-  // effect-based rather than a lazy initializer.
+  // Category can only be resolved once the real `categories` list has loaded
   useEffect(() => {
     const catParam = readUrlParam("category");
     if (!catParam) return;
@@ -137,10 +98,9 @@ export default function ExplorePage() {
     try {
       const sessionId = await sessionTracker.getSessionId().catch(() => undefined);
       const activeCat = categories.find((c) => c.id === activeCategory);
-      const loc = selectedLocation === "All" ? undefined : selectedLocation;
+      const qVal = searchQuery.trim() || undefined;
       const result = await searchDiscoveryServices({
-        q: searchQuery.trim() || undefined,
-        location: loc,
+        q: qVal,
         category: activeCat?.backendCategory,
         limit: 30,
         sessionId,
@@ -148,8 +108,7 @@ export default function ExplorePage() {
       setServices(result.services || []);
       sessionTracker.track("search_performed", {
         metadata: {
-          q: searchQuery.trim() || undefined,
-          location: loc,
+          q: qVal,
           category: activeCat?.backendCategory,
           resultsCount: result.services?.length || 0,
         },
@@ -176,13 +135,12 @@ export default function ExplorePage() {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [searchQuery, selectedLocation, activeCategory]);
+  }, [searchQuery, activeCategory]);
 
-  const hasActiveFilters = Boolean(searchQuery.trim()) || selectedLocation !== "All" || activeCategory !== "all";
+  const hasActiveFilters = Boolean(searchQuery.trim()) || activeCategory !== "all";
 
   const clearSearch = () => {
     setSearchQuery("");
-    setSelectedLocation("All");
     setActiveCategory("all");
   };
 
@@ -192,19 +150,25 @@ export default function ExplorePage() {
     return "";
   };
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    runSearch();
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-between selection:bg-emerald-500/30 selection:text-emerald-900">
       <div>
         {/* ── STICKY DIRECT SEARCH BAR ────────────────── */}
         <section className="sticky top-[var(--header-height,57px)] z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs py-3 px-4 sm:px-6">
           <div className="max-w-6xl mx-auto">
-            {/* Top Search Input Bar */}
-            <div className="flex items-center gap-2.5">
+            {/* Top Search Form */}
+            <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 sm:gap-3">
               <div className="relative flex-1">
                 <input
                   id="explore-search"
                   type="text"
-                  placeholder="Search Himachal valleys, stays, 4x4 drivers, guides..."
+                  placeholder="Search location, stay, 4x4 driver, or trek (e.g. Kasol, Tosh, Manali)..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-10 py-2.5 sm:py-3 rounded-2xl bg-slate-100/90 hover:bg-slate-100 focus:bg-white border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-inner"
@@ -214,7 +178,12 @@ export default function ExplorePage() {
                 </span>
                 {searchQuery && (
                   <button
-                    onClick={() => setSearchQuery("")}
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery("");
+                      if (debounceRef.current) clearTimeout(debounceRef.current);
+                      setTimeout(runSearch, 0);
+                    }}
                     className="absolute right-3.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-600 flex items-center justify-center text-xs font-bold transition-all"
                     aria-label="Clear search"
                   >
@@ -223,67 +192,25 @@ export default function ExplorePage() {
                 )}
               </div>
 
-              <div className="relative w-36 sm:w-52 shrink-0" ref={locationDropdownRef}>
-                <input
-                  id="explore-location"
-                  type="text"
-                  placeholder="Any location"
-                  value={selectedLocation === "All" ? "" : selectedLocation}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setSelectedLocation(v || "All");
-                    setShowLocationSuggestions(true);
-                  }}
-                  onFocus={() => setShowLocationSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 150)}
-                  className="w-full pl-9 pr-8 py-2.5 sm:py-3 rounded-2xl bg-slate-100/90 hover:bg-slate-100 focus:bg-white border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-inner"
-                />
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                  <Icon name="map-pin" className="w-4 h-4" />
-                </span>
-                {selectedLocation !== "All" && (
-                  <button
-                    onClick={() => {
-                      setSelectedLocation("All");
-                      setLocationSuggestions([]);
-                    }}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-600 flex items-center justify-center text-xs font-bold transition-all"
-                    aria-label="Clear location"
-                  >
-                    ✕
-                  </button>
-                )}
+              {/* Dedicated Search Button */}
+              <button
+                type="submit"
+                className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs sm:text-sm transition-all shadow-md shadow-emerald-600/20 flex items-center gap-2 shrink-0"
+              >
+                <Icon name="search" className="w-4 h-4" />
+                <span>Search</span>
+              </button>
 
-                {showLocationSuggestions && locationSuggestions.length > 0 && (
-                  <div
-                    className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 max-h-64 overflow-y-auto"
-                    onMouseDown={(e) => e.preventDefault()}
-                  >
-                    {locationSuggestions.map((loc) => (
-                      <button
-                        key={loc.id}
-                        type="button"
-                        onClick={() => pickLocation(loc)}
-                        className="w-full px-4 py-2.5 text-left hover:bg-slate-50 transition-colors first:rounded-t-2xl last:rounded-b-2xl border-b border-slate-100 last:border-0 flex items-center justify-between gap-2"
-                      >
-                        <span className="font-bold text-slate-800 text-xs sm:text-sm truncate">{loc.name}</span>
-                        <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 shrink-0">{loc.type?.replace('_', ' ')}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {(searchQuery || selectedLocation !== "All") && (
+              {hasActiveFilters && (
                 <button
                   type="button"
                   onClick={clearSearch}
-                  className="px-4 py-2.5 sm:py-3 rounded-2xl text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 transition-all shrink-0"
+                  className="px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-2xl text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 transition-all shrink-0"
                 >
                   Reset
                 </button>
               )}
-            </div>
+            </form>
           </div>
         </section>
 
