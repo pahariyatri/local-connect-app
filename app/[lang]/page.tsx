@@ -249,55 +249,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
       {/* ── 2 · INTERACTIVE ROUTE EXPERIENCE (DAY BY DAY) ──────────────── */}
       <InteractiveRouteSection lang={lang} />
 
-      {/* ── 2.5 · WHY PAHARI YATRI (3 PILLARS OF TRUST) ──────────────────── */}
-      <section className="py-10 sm:py-14 bg-slate-50 border-y border-slate-200/70">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Reveal>
-            <div className="text-center max-w-xl mx-auto mb-8 space-y-1">
-              <span className="text-emerald-600 text-xs font-black uppercase tracking-widest block">The Pahari Standard</span>
-              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Direct, Safe & Local Travel</h2>
-            </div>
-          </Reveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
-            <Reveal delayMs={0}>
-              <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-3 hover:border-emerald-500/40 hover:shadow-xl transition-all">
-                <div className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-                  <Icon name="mountain" className="w-5 h-5" />
-                </div>
-                <h3 className="text-base font-black text-slate-900">0% Middleman Markup</h3>
-                <p className="text-slate-500 text-xs leading-relaxed font-medium">
-                  Connect directly with verified local homestays, 4x4 drivers, and certified trek guides at true local rates.
-                </p>
-              </div>
-            </Reveal>
-
-            <Reveal delayMs={100}>
-              <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-3 hover:border-emerald-500/40 hover:shadow-xl transition-all">
-                <div className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-                  <Icon name="check-circle" className="w-5 h-5" />
-                </div>
-                <h3 className="text-base font-black text-slate-900">100% Escrow Protection</h3>
-                <p className="text-slate-500 text-xs leading-relaxed font-medium">
-                  Payments are safely held in escrow until you check in or fulfill your journey, protecting both traveler and host.
-                </p>
-              </div>
-            </Reveal>
-
-            <Reveal delayMs={200}>
-              <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-3 hover:border-emerald-500/40 hover:shadow-xl transition-all">
-                <div className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-                  <Icon name="map-pin" className="w-5 h-5" />
-                </div>
-                <h3 className="text-base font-black text-slate-900">On-Ground Local Support</h3>
-                <p className="text-slate-500 text-xs leading-relaxed font-medium">
-                  Local teams based in Kasol, Manali, Spiti, and Shimla for weather updates, road permits, and instant help.
-                </p>
-              </div>
-            </Reveal>
-          </div>
-        </div>
-      </section>
 
       {/* ── 3 · VERIFIED LOCAL HOSTS & OPERATORS ────────────────────────── */}
       <section className="py-14 sm:py-20 bg-white">

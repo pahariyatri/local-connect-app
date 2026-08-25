@@ -197,7 +197,7 @@ export default function BottomNavigation({
                 {isExploreActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
               </div>
               <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
-                {navDict.explore || commonDict.explore || "Explore"}
+                {lang === "en" ? "Explore" : (navDict.explore || commonDict.explore || "Explore")}
               </span>
             </Link>
 

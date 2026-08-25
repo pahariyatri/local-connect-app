@@ -30,7 +30,7 @@ const ROUTE_PRESETS: RoutePreset[] = [
   },
   {
     id: "kangra-bir",
-    title: "Dharamshala & Bir Trail",
+    title: "Dharamshala & Bir",
     region: "Kangra Valley",
     durationDays: 3,
     totalDistance: "220 km",
