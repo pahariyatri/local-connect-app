@@ -176,7 +176,7 @@ export default function ExplorePage() {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [searchQuery, selectedLocation, activeCategory, categories]);
+  }, [searchQuery, selectedLocation, activeCategory]);
 
   const hasActiveFilters = Boolean(searchQuery.trim()) || selectedLocation !== "All" || activeCategory !== "all";
 
