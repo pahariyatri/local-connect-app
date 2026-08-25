@@ -9,10 +9,12 @@ import { toApiUiError } from "@/utils/apiErrors";
 import { createVendor, createPointOfContact, getMyVendor } from "@/services/vendorService";
 import { uploadMedia, deleteMedia, validateImage, type UploadedMedia } from "@/services/mediaService";
 import { api } from "@/lib/apiClient";
+import { useTouchedFields } from "@/hooks/useTouchedFields";
 import Typography from "../../components/atoms/Typography";
 import Button from "../../components/atoms/Button";
 import Input from "../../components/atoms/Input";
 import Textarea from "../../components/atoms/Textarea";
+import FieldError from "../../components/atoms/FieldError";
 
 // ─── Icon system — same inline-stroke-SVG convention used across the app ───
 
@@ -69,6 +71,19 @@ type DocEntry = UploadedMedia & { label: string; uploading?: boolean };
 const TOTAL_STEPS = 5;
 const STEP_LABELS = ["Basic info", "Category", "About", "Documents", "Review"];
 
+type FieldName = "contactName" | "businessName" | "phone" | "email" | "types" | "description";
+
+// Which fields belong to each step — drives markAllTouched on "Continue" so
+// every error on the step surfaces at once, including button-group fields
+// (like `types`) that have no blur event to touch them individually.
+const STEP_FIELDS: Record<number, FieldName[]> = {
+  1: ["contactName", "businessName", "phone", "email"],
+  2: ["types"],
+  3: ["description"],
+  4: [],
+  5: [],
+};
+
 export default function VendorOnboardingPage() {
   const { lang } = useParams();
   const router = useRouter();
@@ -118,7 +133,7 @@ export default function VendorOnboardingPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Submission
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const { touched, markTouched, markAllTouched } = useTouchedFields<FieldName>();
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [createdVendorId, setCreatedVendorId] = useState<string | null>(null);
@@ -128,8 +143,6 @@ export default function VendorOnboardingPage() {
     if (user?.phone && !phone) setPhone(toNationalDigits(user.phone));
     if (user?.email && !email) setEmail(user.email);
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const markTouched = (field: string) => setTouched((t) => ({ ...t, [field]: true }));
 
   const errors = {
     contactName: contactName.trim().length < 1 ? "Your name is required." : undefined,
@@ -153,11 +166,14 @@ export default function VendorOnboardingPage() {
 
   const toggleType = (t: VendorType) => {
     setTypes((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
+    // Button groups have no blur event — touch on first interaction so the
+    // error can appear/clear reactively as the user (de)selects categories,
+    // same as a text field reacting to onBlur.
+    markTouched("types");
   };
 
   const handleNext = () => {
-    if (step === 1) setTouched((t) => ({ ...t, contactName: true, businessName: true, phone: true, email: true }));
-    if (step === 3) setTouched((t) => ({ ...t, description: true }));
+    markAllTouched(STEP_FIELDS[step] ?? []);
     if (!isStepValid(step)) return;
     if (step < TOTAL_STEPS) setStep(step + 1);
   };
@@ -296,7 +312,7 @@ export default function VendorOnboardingPage() {
                   className="flex-1 h-full px-4 py-4 bg-transparent border-0 outline-none font-medium text-slate-900"
                 />
               </div>
-              {touched.phone && errors.phone && <p role="alert" className="text-xs text-red-500 mt-1.5 pl-2 animate-fade-in">{errors.phone}</p>}
+              <FieldError message={touched.phone ? errors.phone : undefined} />
             </div>
             <Input
               label="Email (optional)"
@@ -341,7 +357,7 @@ export default function VendorOnboardingPage() {
                 );
               })}
             </div>
-            {touched.types && errors.types && <p role="alert" className="text-xs text-red-500 pl-2 mt-3 animate-fade-in">{errors.types}</p>}
+            <div className="mt-3"><FieldError message={touched.types ? errors.types : undefined} /></div>
           </div>
         );
       case 3: {
@@ -493,11 +509,6 @@ export default function VendorOnboardingPage() {
       {isMounted && createPortal(
         <div className="builder-footer-safe-area fixed bottom-0 left-0 right-0 px-3 sm:px-6 pt-3 sm:pt-6 bg-white/90 backdrop-blur-xl border-t border-slate-100 z-50">
           <div className="max-w-2xl mx-auto px-2 sm:px-4 flex flex-col gap-2">
-            {!isStepValid(step) && getStepValidationHint(step) && (
-              <p role="alert" className="text-center text-xs font-bold text-amber-700 bg-amber-50/90 border border-amber-200/80 px-3 py-1.5 rounded-xl animate-fade-in">
-                ⚠️ {getStepValidationHint(step)}
-              </p>
-            )}
             <div className="flex items-center justify-between gap-3 sm:gap-4">
               <Button variant="ghost" onClick={handleBack} className="w-fit px-6 sm:px-8 h-12 sm:h-16 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:bg-slate-100 text-[9px] sm:text-xs">
                 {step === 1 ? "Exit" : "Back"}

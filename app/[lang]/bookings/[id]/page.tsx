@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/apiClient";
 import {
@@ -97,7 +97,6 @@ export default function BookingDetailPage() {
   const [booking, setBooking] = useState<BookingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [pollCount, setPollCount] = useState(0);
   const [contacts, setContacts] = useState<any[] | null>(null);
   const [busyItemId, setBusyItemId] = useState<number | null>(null);
   const [replaceDrawer, setReplaceDrawer] = useState<{ item: BookingItemData | null; vendors: Vendor[]; loading: boolean }>({ item: null, vendors: [], loading: false });
@@ -122,14 +121,23 @@ export default function BookingDetailPage() {
   const bookingStatus = booking?.status;
 
   // Poll while in-flight — vendor responses or payment capture happen asynchronously.
-  // Controlled interval prevents infinite API request loops that overload the server.
+  // pollAttempts is a ref (not state) so the cap survives across IN_FLIGHT status
+  // transitions (e.g. CREATED -> VENDOR_ACCEPTED -> PAYMENT_PENDING): each status
+  // change re-runs this effect, and a local/state counter would reset to 0 every
+  // time, letting a booking that keeps changing status poll indefinitely instead
+  // of stopping after 10 attempts total.
+  const pollAttempts = useRef(0);
+  useEffect(() => {
+    pollAttempts.current = 0;
+  }, [id]);
+
   useEffect(() => {
     if (!bookingStatus || !IN_FLIGHT.includes(bookingStatus as BookingStatus)) return;
+    if (pollAttempts.current >= 10) return;
 
-    let pollCount = 0;
     const interval = setInterval(async () => {
-      pollCount += 1;
-      if (pollCount > 10) {
+      pollAttempts.current += 1;
+      if (pollAttempts.current > 10) {
         clearInterval(interval);
         return;
       }
@@ -137,7 +145,7 @@ export default function BookingDetailPage() {
     }, 6000);
 
     return () => clearInterval(interval);
-  }, [bookingStatus, fetchBooking]);
+  }, [bookingStatus, fetchBooking, id]);
 
   // Load vendor contacts once unlocked.
   useEffect(() => {
@@ -333,22 +341,35 @@ export default function BookingDetailPage() {
           </section>
         )}
 
-        {/* Reserve & Pay CTA */}
-        {(status === 'CREATED' || status === 'VENDOR_ACCEPTED') && (
+        {/* Reserve & Pay CTA — only actionable once every partner has accepted.
+            The payment page itself rejects a CREATED-status booking ("not
+            ready for payment yet — waiting on local partner confirmation"),
+            so letting this button through in CREATED sent travelers into a
+            dead-end error. Kept visible (disabled) rather than hidden so the
+            fee amount and "why" stay in view while they wait. */}
+        {(status === 'CREATED' || isReadyToReserve) && (
           <div className="mb-6 space-y-2">
             <button
               onClick={handleConfirmAndProceedToPay}
-              disabled={busyItemId !== null}
-              className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-base uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              disabled={busyItemId !== null || !isReadyToReserve}
+              className={`w-full h-16 font-black text-base uppercase tracking-widest rounded-2xl shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${
+                isReadyToReserve
+                  ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-500/25"
+                  : "bg-slate-100 text-slate-400 shadow-none cursor-not-allowed"
+              }`}
             >
               {busyItemId === -1 ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
+              ) : isReadyToReserve ? (
                 <span>Reserve · Pay ₹{(feeAmount ?? 276.85).toLocaleString('en-IN')}</span>
+              ) : (
+                <span>Waiting for partner confirmation…</span>
               )}
             </button>
             <p className="text-center text-[10px] text-slate-400 font-medium">
-              Pay ₹{(feeAmount ?? 276.85).toLocaleString('en-IN')} platform reservation fee to confirm direct booking.
+              {isReadyToReserve
+                ? `Pay ₹${(feeAmount ?? 276.85).toLocaleString('en-IN')} platform reservation fee to confirm direct booking.`
+                : "You'll be able to pay as soon as a local partner confirms."}
             </p>
           </div>
         )}

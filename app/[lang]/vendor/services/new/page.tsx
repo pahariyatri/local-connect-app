@@ -11,6 +11,8 @@ import { getMyVendor } from "@/services/vendorService";
 import { getCategories, getSubcategories, createService } from "@/services/catalogService";
 import { toApiUiError } from "@/utils/apiErrors";
 import Loading from "@/app/loading";
+import { useTouchedFields } from "@/hooks/useTouchedFields";
+import FieldError from "../../../components/atoms/FieldError";
 
 // ─── Icon system — same inline-stroke-SVG convention used across the app ───
 
@@ -35,6 +37,18 @@ type Category = { id: number; name: string };
 
 const TOTAL_STEPS = 4;
 const STEP_LABELS = ["Basics", "Location", "Pricing", "Review"];
+
+type FieldName = "name" | "subcategoryId" | "description" | "city" | "state" | "street" | "postalCode" | "weekdayPrice" | "capacity";
+
+// Which fields belong to each step — drives markAllTouched on "Continue" so
+// every error on the step surfaces at once, including button-group fields
+// (subcategoryId, capacity) that have no blur event to touch them individually.
+const STEP_FIELDS: Record<number, FieldName[]> = {
+  1: ["name", "subcategoryId", "description"],
+  2: ["city", "state", "street", "postalCode"],
+  3: ["weekdayPrice", "capacity"],
+  4: [],
+};
 
 export default function NewServicePage() {
   const router = useRouter();
@@ -104,12 +118,18 @@ export default function NewServicePage() {
   const [capacity, setCapacity] = useState("2");
 
   // Submission
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const { touched, markTouched, markAllTouched } = useTouchedFields<FieldName>();
+
+  // Button groups have no blur event — the moment sub-category chips appear
+  // is the equivalent "you've reached this field" signal, so the error can
+  // show/clear reactively as the user picks one, same as a text field on blur.
+  useEffect(() => {
+    if (categoryId && subcategories.length > 0) markTouched("subcategoryId");
+  }, [categoryId, subcategories.length, markTouched]);
+
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const isSubmittingRef = useRef(false);
-
-  const markTouched = (field: string) => setTouched((t) => ({ ...t, [field]: true }));
 
   const errors = {
     name: name.trim().length < 3 ? "Give this service a clear name (at least 3 characters)." : undefined,
@@ -134,9 +154,7 @@ export default function NewServicePage() {
   };
 
   const handleNext = () => {
-    if (step === 1) setTouched((t) => ({ ...t, name: true, subcategoryId: true, description: true }));
-    if (step === 2) setTouched((t) => ({ ...t, city: true, state: true, street: true, postalCode: true }));
-    if (step === 3) setTouched((t) => ({ ...t, weekdayPrice: true, capacity: true }));
+    markAllTouched(STEP_FIELDS[step] ?? []);
     if (!isStepValid(step)) return;
     if (step < TOTAL_STEPS) setStep(step + 1);
   };
@@ -241,7 +259,7 @@ export default function NewServicePage() {
                     </button>
                   ))}
                 </div>
-                {touched.subcategoryId && errors.subcategoryId && <p role="alert" className="text-xs text-red-500 mt-2 pl-2">{errors.subcategoryId}</p>}
+                <div className="mt-2"><FieldError message={touched.subcategoryId ? errors.subcategoryId : undefined} /></div>
               </div>
             )}
 
@@ -287,7 +305,7 @@ export default function NewServicePage() {
                   <button
                     key={num}
                     type="button"
-                    onClick={() => setCapacity(String(num))}
+                    onClick={() => { setCapacity(String(num)); markTouched("capacity"); }}
                     className={`w-14 h-14 rounded-2xl text-base font-black transition-all active:scale-95 ${
                       capacity === String(num) ? "bg-slate-900 text-white" : "bg-slate-50 text-slate-400 hover:bg-slate-100"
                     }`}
@@ -296,7 +314,7 @@ export default function NewServicePage() {
                   </button>
                 ))}
               </div>
-              {touched.capacity && errors.capacity && <p role="alert" className="text-xs text-red-500 mt-2 pl-2">{errors.capacity}</p>}
+              <div className="mt-2"><FieldError message={touched.capacity ? errors.capacity : undefined} /></div>
             </div>
           </div>
         );
@@ -314,28 +332,6 @@ export default function NewServicePage() {
         );
       }
       default: return null;
-    }
-  };
-
-  const getStepValidationHint = (s: number) => {
-    switch (s) {
-      case 1:
-        if (errors.name) return "Service name (min 3 characters) is required.";
-        if (errors.subcategoryId) return "Please select category and sub-category.";
-        if (errors.description) return "Add a description (min 10 characters).";
-        return undefined;
-      case 2:
-        if (errors.street) return "Street or area address is required.";
-        if (errors.city) return "City is required.";
-        if (errors.state) return "State is required.";
-        if (errors.postalCode) return "Postal code is required.";
-        return undefined;
-      case 3:
-        if (errors.weekdayPrice) return "Please enter a valid base weekday price.";
-        if (errors.capacity) return "Please select a valid guest capacity.";
-        return undefined;
-      default:
-        return undefined;
     }
   };
 
@@ -369,11 +365,6 @@ export default function NewServicePage() {
       {isMounted && createPortal(
         <div className="fixed bottom-0 left-0 right-0 px-4 sm:px-6 pt-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] bg-white/90 backdrop-blur-xl border-t border-slate-100 z-50">
           <div className="max-w-2xl mx-auto flex flex-col gap-2">
-            {!isStepValid(step) && getStepValidationHint(step) && (
-              <p role="alert" className="text-center text-xs font-bold text-amber-700 bg-amber-50/90 border border-amber-200/80 px-3 py-1.5 rounded-xl animate-fade-in">
-                ⚠️ {getStepValidationHint(step)}
-              </p>
-            )}
             <div className="flex items-center justify-between gap-3">
               <Button variant="ghost" onClick={handleBack} className="w-fit px-6 h-14 rounded-2xl font-bold text-slate-400 hover:text-slate-900 hover:bg-slate-100 text-sm">
                 {step === 1 ? "Cancel" : "Back"}
