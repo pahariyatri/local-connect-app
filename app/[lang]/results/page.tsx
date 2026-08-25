@@ -397,33 +397,76 @@ export default function ResultsPage() {
   const res = dict.page.results;
 
   return (
-    <div className="min-h-screen bg-white pb-44">
+    <div className="min-h-screen bg-slate-50/50 pb-44">
       <TopNavigation title="Your Legend Path" />
 
-      <main className="max-w-md mx-auto px-6 pt-24 text-slate-900">
-        <header className="mb-12 animate-in fade-in slide-in-from-bottom-5 duration-700 relative">
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-50 rounded-full blur-3xl opacity-50 -z-10" />
-          <div className="flex items-center justify-between mb-8">
-            <span className="px-4 py-2 bg-slate-900 text-white text-[9px] font-black uppercase rounded-2xl tracking-[0.2em] shadow-2xl">
-              {res.access_badge || "SECRET GROUP ACCESS 🤫"}
-            </span>
-            <button onClick={handleShare} className="w-12 h-12 bg-white text-slate-900 rounded-2xl shadow-xl border border-slate-100 flex items-center justify-center hover:bg-slate-50 transition-all active:scale-90">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" x2="12" y1="2" y2="15" /></svg>
-            </button>
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-24 text-slate-900">
+        {/* ── 1 · HERO HEADER BANNER ───────────────────────────────────────── */}
+        <header className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="relative bg-slate-950 text-white rounded-3xl p-6 sm:p-10 overflow-hidden shadow-2xl border border-slate-800">
+            {/* Background Decorative Glow */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/20 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/15 rounded-full blur-[100px] pointer-events-none" />
+
+            <div className="relative z-10 space-y-6">
+              {/* Header Badges & Actions */}
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 bg-emerald-500 text-white text-[9px] sm:text-[10px] font-black uppercase rounded-xl tracking-widest shadow-md">
+                    {packageIdParam ? "PUBLISHED TRIP CIRCUIT" : (res.access_badge || "SECRET GROUP ACCESS 🤫")}
+                  </span>
+                  <span className="px-2.5 py-1 bg-white/10 text-slate-300 text-[9px] font-bold uppercase rounded-xl tracking-wider backdrop-blur-md">
+                    ⚡ Verified Local Stays & Transit
+                  </span>
+                </div>
+                <button
+                  onClick={handleShare}
+                  className="h-10 px-4 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all backdrop-blur-md active:scale-95 border border-white/10"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" x2="12" y1="2" y2="15" /></svg>
+                  <span>Share Circuit</span>
+                </button>
+              </div>
+
+              {/* Route Title */}
+              <div>
+                <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.25em] block mb-1">
+                  Himachal Circuit Itinerary
+                </span>
+                <Typography variant="h1" className="text-3xl sm:text-5xl font-black text-white leading-tight tracking-tight uppercase italic">
+                  {originPoint || "Delhi"} <span className="text-emerald-400 font-normal">→</span> {destinations.length > 0 ? destinations.join(" → ") : "Manali"}
+                </Typography>
+              </div>
+
+              {/* Route Meta Stats Bar */}
+              <div className="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300 font-bold">
+                  {startDate && endDate && (
+                    <span className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
+                      📅 {new Date(startDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} – {new Date(endDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                    </span>
+                  )}
+                  <span className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
+                    🏔️ {itineraryDays.length} {itineraryDays.length === 1 ? "Day" : "Days"} Trip
+                  </span>
+                  <span className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
+                    👥 {guestCount} Guests
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {!packageIdParam && (
+                    <button
+                      onClick={() => router.push(`/${lang}/builder`)}
+                      className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all"
+                    >
+                      Modify Circuit
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
-          <Typography variant="h1" className="text-5xl font-black text-slate-900 leading-[0.9] tracking-tighter uppercase italic mb-4">
-            {originPoint || "Chandigarh"} <br /> <span className="text-emerald-500">→</span> <br /> {destinations.length > 0 ? destinations.join(", ") : "Manali"}
-          </Typography>
-          {startDate && endDate && (
-            <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">
-              {new Date(startDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-              {" – "}
-              {new Date(endDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-              {" · "}
-              {itineraryDays.length} {itineraryDays.length === 1 ? "day" : "days"}
-              {guestCount > 0 && ` · ${guestCount} guests`}
-            </p>
-          )}
         </header>
 
         {suggestedNearby && (
@@ -435,18 +478,28 @@ export default function ResultsPage() {
         )}
 
         {packageIdParam && !packageLoading && !packageData ? (
-          <div className="py-20 text-center">
+          <div className="py-20 text-center bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
             <p className="text-slate-500 font-medium">Package not found.</p>
             <a href={`/${pathLang}/builder`} className="text-emerald-600 font-bold mt-2 inline-block">Start planning</a>
           </div>
         ) : (servicesLoading || (packageIdParam && packageLoading)) ? (
-          <div className="flex flex-col items-center justify-center py-20">
+          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-slate-200 shadow-sm">
             <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4" />
             <p className="text-slate-500 font-medium">Finding services for you...</p>
           </div>
         ) : (
-          <>
-            <div className="space-y-16">
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-10">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div>
+                <h3 className="text-lg font-black text-slate-900">Day-by-Day Circuit Breakdown</h3>
+                <p className="text-xs text-slate-500">Selected verified local homestays, 4x4 cabs, and trek guides.</p>
+              </div>
+              <span className="text-xs font-black text-emerald-600 uppercase tracking-wider bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
+                0% Markup Direct Payouts
+              </span>
+            </div>
+
+            <div className="space-y-12">
               {itineraryDays.map(day => {
                 const allCats = ["Stay", "Taxi", "Adventure", "Meals"];
                 const cats = packageData ? allCats.filter(c => selections[day]?.[c]) : allCats;
@@ -468,10 +521,10 @@ export default function ResultsPage() {
                 );
               })}
             </div>
+
             {!packageData && (
-              <div className="mt-20 mb-32 text-center py-12 border-t border-slate-100 animate-fade-in">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="w-12 h-12 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin mb-4 shadow-lg shadow-emerald-100" />
+              <div className="mt-12 text-center py-8 border-t border-slate-100 animate-fade-in">
+                <div className="flex flex-col items-center gap-3">
                   <Typography variant="h3" className="text-[10px] font-black text-slate-900 uppercase tracking-[0.3em]">
                     {res.itinerary.explore_more}
                   </Typography>
@@ -481,31 +534,29 @@ export default function ResultsPage() {
                 </div>
               </div>
             )}
-          </>
+          </div>
         )}
 
-        {/* PY-004 — trip review is the moment a traveler commits to a multi-day,
-            multi-thousand-rupee plan; until now there was no one to ask. */}
         <SupportContact
           variant="bar"
-          className="mt-12 mb-24"
+          className="mt-10 mb-20"
           heading="Questions before you send the request?"
         />
 
-        <div className="fixed bottom-24 left-0 right-0 px-6 z-50 animate-slide-up">
-          <div className="max-w-md mx-auto p-4 bg-slate-900 rounded-[3rem] shadow-[0_30px_60px_rgba(0,0,0,0.4)] flex items-center justify-between border border-white/10 backdrop-blur-xl">
-            <div className="pl-6">
-              <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mb-2">{res.footer.total}</p>
+        {/* Floating Bottom Bar */}
+        <div className="fixed bottom-6 left-0 right-0 px-4 sm:px-6 z-50 animate-slide-up">
+          <div className="max-w-2xl mx-auto p-4 bg-slate-950 text-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.4)] flex items-center justify-between border border-slate-800 backdrop-blur-xl">
+            <div className="pl-2 sm:pl-4">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{res.footer.total}</p>
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-black text-white italic tracking-tighter">{formatINRWithSymbol(totalPrice)}</span>
+                <span className="text-2xl sm:text-3xl font-black text-white italic tracking-tight">{formatINRWithSymbol(totalPrice)}</span>
               </div>
-              <p className="text-[9px] text-slate-500 mt-1">Based on {itineraryDays.length} {itineraryDays.length === 1 ? "day" : "days"} · {guestCount || 2} guests</p>
-              <p className="text-[8px] text-slate-600 mt-1 font-medium">Paid directly to local partners — not charged now</p>
+              <p className="text-[9px] text-slate-400 mt-0.5 font-medium">{itineraryDays.length} Days · {guestCount} Guests · Paid directly to local partners</p>
             </div>
             <button
               onClick={handleBookNow}
               disabled={isBooking}
-              className="h-16 px-10 rounded-[2rem] bg-emerald-500 text-white font-black text-sm uppercase tracking-widest shadow-2xl shadow-emerald-500/20 active:scale-95 transition-all disabled:opacity-50"
+              className="h-13 sm:h-14 px-6 sm:px-8 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg shadow-emerald-500/25 active:scale-95 transition-all disabled:opacity-50"
             >
               {isBooking ? "SENDING REQUEST..." : res.footer.book_now}
             </button>

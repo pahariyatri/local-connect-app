@@ -201,9 +201,10 @@ export default function TopNavigation({
                                 </Link>
                                 <Link
                                     href={`/${lang}/profile`}
-                                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-lg sm:text-xl hover:bg-white hover:shadow-xl hover:shadow-slate-100 transition-all group active:scale-90"
+                                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black text-xs sm:text-sm hover:bg-emerald-600 transition-all group active:scale-90 shadow-md border border-slate-800"
+                                    title={user?.name || "My Account"}
                                 >
-                                    <span className="group-hover:scale-110 transition-transform">👤</span>
+                                    {user?.name ? user.name.slice(0, 2).toUpperCase() : user?.phone ? user.phone.slice(-2) : "PY"}
                                 </Link>
                             </>
                         ) : (

@@ -675,7 +675,7 @@ export default function VendorProfilePage() {
 
             {/* ── SERVICE DETAILS MODAL ─────────────────────── */}
             {isMounted && activeDetailModal && createPortal(
-                <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 pb-16 sm:pb-4 overflow-y-auto">
+                <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
                     <div
                         className="relative bg-white w-full max-w-lg max-h-[80vh] sm:max-h-[85vh] rounded-3xl overflow-hidden shadow-2xl flex flex-col my-auto border border-slate-100 animate-in fade-in zoom-in-95 duration-200"
                         role="dialog"
@@ -790,7 +790,7 @@ export default function VendorProfilePage() {
 
             {/* ── DIRECT BOOKING REQUEST MODAL (STREAMLINED UX) ───────────────────────── */}
             {isMounted && bookingModalService && createPortal(
-                <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 pb-16 sm:pb-4 overflow-y-auto">
+                <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
                     <div
                         className="relative bg-white w-full max-w-md max-h-[80vh] sm:max-h-[85vh] rounded-3xl overflow-hidden shadow-2xl flex flex-col my-auto border border-slate-100 animate-in fade-in zoom-in-95 duration-200"
                         role="dialog"
@@ -838,17 +838,6 @@ export default function VendorProfilePage() {
                                     </button>
                                 </div>
                             )}
-
-                            {/* Zero Deposit Trust Banner */}
-                            <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200/60 flex items-start gap-2.5 text-emerald-950">
-                                <span className="text-base leading-none">⚡</span>
-                                <div className="space-y-0.5 text-xs">
-                                    <p className="font-black text-emerald-900">Zero Upfront Payment Required</p>
-                                    <p className="text-[11px] text-emerald-800 leading-snug">
-                                        Host confirms date availability directly with you. Pay remainder on arrival.
-                                    </p>
-                                </div>
-                            </div>
 
                             {/* Date Selection — input-like trigger that opens a range calendar */}
                             <div className="space-y-2">

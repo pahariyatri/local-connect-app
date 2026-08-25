@@ -30,7 +30,7 @@ export default function LangLayout({
   return (
     <div
       dir={lang === "he" ? "rtl" : "ltr"}
-      className={`bg-white min-h-screen overflow-x-hidden ${showBottomNav ? "pb-20 md:pb-0" : ""}`}
+      className="bg-white min-h-screen overflow-x-hidden flex flex-col justify-between"
     >
       {!isAuthRoute && !hasOwnTopNav && <Header />}
       <div className="page-fade-in">{children}</div>

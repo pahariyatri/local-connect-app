@@ -146,7 +146,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
   const exploreHref = `/${lang}/explore`;
 
   return (
-    <main className="bg-white min-h-screen antialiased selection:bg-emerald-500/30 selection:text-emerald-900 overflow-x-hidden pb-28 sm:pb-12">
+    <main className="bg-white min-h-screen antialiased selection:bg-emerald-500/30 selection:text-emerald-900 overflow-x-hidden">
       {/* ── 1 · HERO ─────────────────────────────────────────────────────── */}
       <HeroSection
         onSearch={(query) => router.push(query ? `${exploreHref}?q=${encodeURIComponent(query)}` : exploreHref)}
