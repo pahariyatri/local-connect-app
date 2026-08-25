@@ -75,7 +75,7 @@ export default function HeroSection({ onSearch }: { onSearch: (query?: string) =
           </h1>
 
           {/* Floating Glassmorphism Search Bar */}
-          <div className="mt-8 w-full max-w-xl space-y-3">
+          <div className="mt-8 w-full max-w-xl">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -89,7 +89,7 @@ export default function HeroSection({ onSearch }: { onSearch: (query?: string) =
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Where are you going?"
+                  placeholder="Where are you going? (Kasol, Manali, Spiti...)"
                   aria-label="Search destination"
                   className="w-full bg-transparent text-xs sm:text-base font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
                 />
@@ -103,37 +103,6 @@ export default function HeroSection({ onSearch }: { onSearch: (query?: string) =
                 <Icon name="arrow-right" className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
               </button>
             </form>
-
-            {/* Quick Suggestion Pills */}
-            <div className="flex items-center justify-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-[11px] font-bold text-slate-300">
-              <span className="text-slate-400 text-[10px] font-extrabold uppercase mr-1 hidden sm:inline">Try:</span>
-              {POPULAR_SUGGESTIONS.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => {
-                    setQuery(tag);
-                    submitSearch(tag);
-                  }}
-                  className="px-3 py-1 rounded-full bg-white/10 hover:bg-emerald-500/20 hover:text-emerald-300 border border-white/15 transition-all shrink-0 active:scale-95 text-[10px] sm:text-xs"
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Social Trust Micro-Chips */}
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2 sm:gap-6 text-[10px] sm:text-[11px] font-bold text-slate-300">
-            <span className="flex items-center gap-1 bg-white/5 px-2.5 py-1 rounded-full border border-white/10 backdrop-blur-xs">
-              <Icon name="check" className="w-3 h-3 text-emerald-400" /> 0% Middleman Fee
-            </span>
-            <span className="flex items-center gap-1 bg-white/5 px-2.5 py-1 rounded-full border border-white/10 backdrop-blur-xs">
-              <Icon name="check" className="w-3 h-3 text-emerald-400" /> 100% Escrow Safeguard
-            </span>
-            <span className="flex items-center gap-1 bg-white/5 px-2.5 py-1 rounded-full border border-white/10 backdrop-blur-xs">
-              <Icon name="users" className="w-3 h-3 text-emerald-400" /> Direct Mountain Hosts
-            </span>
           </div>
         </div>
       </div>

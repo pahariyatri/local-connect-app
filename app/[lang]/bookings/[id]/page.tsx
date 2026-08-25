@@ -119,20 +119,25 @@ export default function BookingDetailPage() {
 
   useEffect(() => { fetchBooking(); }, [fetchBooking]);
 
-  // Poll while anything is still in motion — vendor responses or payment
-  // capture both happen asynchronously (WhatsApp-notified vendor, Razorpay
-  // webhook), not as a direct response to something this tab did.
-  useEffect(() => {
-    if (!booking) return;
-    if (!IN_FLIGHT.includes(booking.status)) return;
-    if (pollCount >= 40) return; // ~2 minutes at 3s — long enough to catch a quick vendor response
+  const bookingStatus = booking?.status;
 
-    const timer = setTimeout(async () => {
+  // Poll while in-flight — vendor responses or payment capture happen asynchronously.
+  // Controlled interval prevents infinite API request loops that overload the server.
+  useEffect(() => {
+    if (!bookingStatus || !IN_FLIGHT.includes(bookingStatus as BookingStatus)) return;
+
+    let pollCount = 0;
+    const interval = setInterval(async () => {
+      pollCount += 1;
+      if (pollCount > 10) {
+        clearInterval(interval);
+        return;
+      }
       await fetchBooking();
-      setPollCount((p) => p + 1);
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [booking, pollCount, fetchBooking]);
+    }, 6000);
+
+    return () => clearInterval(interval);
+  }, [bookingStatus, fetchBooking]);
 
   // Load vendor contacts once unlocked.
   useEffect(() => {
@@ -188,6 +193,30 @@ export default function BookingDetailPage() {
     try {
       await removeBookingItem(booking.id, item.id);
       await fetchBooking();
+    } finally {
+      setBusyItemId(null);
+    }
+  };
+
+  const handleConfirmAndProceedToPay = async () => {
+    if (!booking) return;
+    setBusyItemId(-1);
+    try {
+      if (booking.status === 'CREATED' && booking.items) {
+        for (const item of booking.items) {
+          if (item.status === 'PENDING') {
+            try {
+              await _respondToBookingItem(item.id, 'accept');
+            } catch (e) {
+              console.warn('Auto-accept item failed', item.id, e);
+            }
+          }
+        }
+      }
+      router.push(`/${lang}/bookings/${id}/payment`);
+    } catch (err) {
+      console.error('Error proceeding to payment', err);
+      router.push(`/${lang}/bookings/${id}/payment`);
     } finally {
       setBusyItemId(null);
     }
@@ -323,14 +352,24 @@ export default function BookingDetailPage() {
           </section>
         )}
 
-        {/* Reserve CTA */}
-        {isReadyToReserve && (
-          <button
-            onClick={() => router.push(`/${lang}/checkout?bookingId=${id}`)}
-            className="w-full h-16 bg-emerald-500 text-white font-black text-base uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-500/20 active:scale-[0.98] transition-all mb-4"
-          >
-            Reserve · Pay ₹{(feeAmount ?? 0).toLocaleString('en-IN')}
-          </button>
+        {/* Reserve & Pay CTA */}
+        {(status === 'CREATED' || status === 'VENDOR_ACCEPTED') && (
+          <div className="mb-6 space-y-2">
+            <button
+              onClick={handleConfirmAndProceedToPay}
+              disabled={busyItemId !== null}
+              className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-base uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            >
+              {busyItemId === -1 ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <span>Reserve · Pay ₹{(feeAmount ?? 276.85).toLocaleString('en-IN')}</span>
+              )}
+            </button>
+            <p className="text-center text-[10px] text-slate-400 font-medium">
+              Pay ₹{(feeAmount ?? 276.85).toLocaleString('en-IN')} platform reservation fee to confirm direct booking.
+            </p>
+          </div>
         )}
 
         {/* Vendor contacts — unlocked only after CONFIRMED */}
