@@ -103,9 +103,7 @@ test.describe('No fabricated fallback data', () => {
 
     await page.goto(`${PROD_URL}/en/explore`);
     await page.locator('#explore-search').fill('anything');
-    await page.waitForTimeout(600);
-
-    await expect(page.getByTestId('explore-error-state')).toBeVisible();
+    await expect(page.getByTestId('explore-error-state')).toBeVisible({ timeout: 10_000 });
     const bodyText = await page.locator('body').innerText();
     for (const fixture of FABRICATED_FIXTURES) {
       expect(bodyText).not.toContain(fixture);

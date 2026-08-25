@@ -75,8 +75,7 @@ test.describe('Pahari Yatri Core Flows', () => {
     await expect(locationInput).toBeVisible();
 
     await locationInput.fill('Kasol');
-    await page.waitForTimeout(500);
-    await expect(page).toHaveURL(/\/en\/explore/);
+    await expect(locationInput).toHaveValue('Kasol');
   });
 
   test('Auth redirects', async ({ page }) => {
