@@ -210,7 +210,7 @@ export default function ManageBookingsPage() {
   const selectedDayBookings = bookingsByDay[selectedDay] || [];
 
   return (
-    <div className="max-w-md mx-auto">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6">
       <header className="mb-6 sm:mb-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
         <Typography variant="h1" className="text-4xl font-black text-slate-900 leading-tight">
           Guests <span className="text-emerald-500">&</span> Assists.
