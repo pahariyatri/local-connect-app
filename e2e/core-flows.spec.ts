@@ -43,17 +43,16 @@ test.describe('Pahari Yatri Core Flows', () => {
     test.skip(!isMobile, 'Mobile only test');
     
     await page.goto('/en');
-    await page.waitForLoadState('domcontentloaded');
     
     // Check mobile bottom navigation
     const bottomNav = page.locator('#mobile-bottom-navigation');
     await expect(bottomNav).toBeVisible({ timeout: 10_000 });
     
     // Navigate via bottom nav link
-    const exploreLink = bottomNav.locator('a[href*="/explore"]');
-    await expect(exploreLink).toBeVisible();
-    await exploreLink.click({ force: true });
-    await expect(page).toHaveURL(/\/en\/explore/);
+    const builderLink = bottomNav.locator('a[href*="/builder"]');
+    await expect(builderLink).toBeVisible();
+    await builderLink.click({ force: true });
+    await expect(page).toHaveURL(/\/en\/builder/);
   });
 
   test('Explore page search and location filter', async ({ page }) => {
