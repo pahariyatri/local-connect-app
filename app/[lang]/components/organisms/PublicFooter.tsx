@@ -15,7 +15,6 @@ export default function PublicFooter() {
       links: [
         { label: 'Explore Directory', href: p('/explore') },
         { label: 'Trip Builder', href: p('/builder') },
-        { label: 'Community', href: p('/community') },
       ],
     },
     {

@@ -67,7 +67,7 @@ export default function BottomNavigation({
       className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white/95 backdrop-blur-xl border-t border-slate-200/90 shadow-[0_-6px_25px_rgba(0,0,0,0.06)] px-2 py-1.5 transition-all"
       style={{ paddingBottom: "max(0.375rem, env(safe-area-inset-bottom))" }}
     >
-      <div className="max-w-md mx-auto grid grid-cols-5 items-center justify-items-center h-14">
+      <div className={`max-w-md mx-auto grid items-center justify-items-center h-14 ${isVendor ? "grid-cols-5" : "grid-cols-4"}`}>
         
         {/* ─── CASE 1: VENDOR / HOST LOGGED IN ─── */}
         {isVendor ? (
@@ -193,28 +193,7 @@ export default function BottomNavigation({
               </span>
             </Link>
 
-            {/* Tab 2: Community */}
-            <Link
-              href={`/${lang}/community`}
-              className={`flex flex-col items-center justify-center w-full py-1 rounded-xl transition-all active:scale-90 ${
-                isCommunityActive ? "text-emerald-600 font-bold" : "text-slate-500 hover:text-slate-800"
-              }`}
-            >
-              <div className="relative">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isCommunityActive ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-                {isCommunityActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
-              </div>
-              <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
-                {navDict.community || commonDict.community || "Community"}
-              </span>
-            </Link>
-
-            {/* Tab 3: Plan Trip (Center Hero Button) */}
+            {/* Tab 2: Plan Trip (Center Hero Button) */}
             <Link
               href={`/${lang}/builder`}
               className="flex flex-col items-center justify-center -mt-4 group active:scale-95 transition-transform"

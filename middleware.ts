@@ -27,7 +27,7 @@ export function middleware(request: NextRequest) {
 
     // Define protected routes that require authentication
     const reservedVendorSubroutes = [
-        'bookings', 'calendar', 'community', 'contracts', 'dashboard', 'onboarding', 'partnerships', 'payouts', 'services'
+        'bookings', 'calendar', 'contracts', 'dashboard', 'onboarding', 'partnerships', 'payouts', 'services'
     ];
     
     const isProtectedVendorRoute = pathname.startsWith(`/${locale}/vendor`) && (
@@ -38,7 +38,6 @@ export function middleware(request: NextRequest) {
     const isProtected = pathname.startsWith(`/${locale}/profile`) ||
                         pathname.startsWith(`/${locale}/dashboard`) ||
                         pathname.startsWith(`/${locale}/admin`) ||
-                        pathname.startsWith(`/${locale}/journeys`) ||
                         isProtectedVendorRoute;
 
     // Check if the user is trying to access a protected route

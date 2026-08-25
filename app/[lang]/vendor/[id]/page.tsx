@@ -12,6 +12,8 @@ import { searchDiscoveryServices } from "@/services/searchService";
 import { createDirectBooking } from "@/services/bookingService";
 import { Icon } from "../../components/atoms/Icon";
 
+import FeedbackReviewModal, { ReviewItem } from "../../components/molecules/FeedbackReviewModal";
+
 const CATEGORY_IMAGES: Record<string, string> = {
     "Homestays": "https://images.unsplash.com/photo-1587061949409-02df41d5e562?q=80&w=1200",
     "Adventures": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=1200",
@@ -81,6 +83,18 @@ export default function VendorProfilePage() {
     const [profile, setProfile] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState<"not_found" | "error" | null>(null);
+    const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+    const [reviews, setReviews] = useState<ReviewItem[]>([]);
+
+    useEffect(() => {
+        if (!id) return;
+        try {
+            const raw = localStorage.getItem(`py_reviews_${id}`);
+            if (raw) setReviews(JSON.parse(raw));
+        } catch {
+            // ignore
+        }
+    }, [id]);
 
     const fetchProfile = async () => {
         setIsLoading(true);
@@ -454,6 +468,52 @@ export default function VendorProfilePage() {
                     )}
                 </div>
 
+                {/* ── VERIFIED REVIEWS & FEEDBACK SECTION ── */}
+                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                        <div>
+                            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600">
+                                Verified Feedback & Ratings
+                            </span>
+                            <h3 className="text-lg font-black text-slate-900 tracking-tight">
+                                Traveler Reviews ({reviews.length})
+                            </h3>
+                        </div>
+                        <button
+                            onClick={() => setIsFeedbackModalOpen(true)}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-emerald-600 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-sm active:scale-95 self-start sm:self-auto"
+                        >
+                            <span>★ Write Review / Feedback</span>
+                        </button>
+                    </div>
+
+                    {reviews.length === 0 ? (
+                        <div className="py-6 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 p-4">
+                            <p className="text-xs font-bold text-slate-700">No public reviews yet for this host.</p>
+                            <p className="text-[11px] text-slate-400 mt-0.5">Be the first traveler to rate your stay or ride!</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {reviews.map((rev) => (
+                                <div key={rev.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-amber-400 font-black text-xs">
+                                                {"★".repeat(rev.rating)}{"☆".repeat(5 - rev.rating)}
+                                            </span>
+                                            <span className="text-xs font-black text-slate-800">{rev.authorName}</span>
+                                        </div>
+                                        <span className="text-[10px] font-medium text-slate-400">{rev.createdAt}</span>
+                                    </div>
+                                    <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                                        {rev.publicComment}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
                 {/* Direct Host Contact & Inquiries */}
                 <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80">
                     <SupportContact
@@ -652,6 +712,18 @@ export default function VendorProfilePage() {
                     </div>
                 </div>
             )}
+
+            {/* ── FEEDBACK & REVIEW MODAL ── */}
+            <FeedbackReviewModal
+                vendorId={id}
+                vendorName={profile.name}
+                isOpen={isFeedbackModalOpen}
+                onClose={() => setIsFeedbackModalOpen(false)}
+                onSubmitted={(newReview) => {
+                    setReviews((prev) => [newReview, ...prev]);
+                    showNotification("Thank you! Your feedback & rating have been saved.", "success");
+                }}
+            />
         </div>
     );
 }

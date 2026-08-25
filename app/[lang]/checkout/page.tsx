@@ -39,7 +39,7 @@ export default function CheckoutPage() {
   // Guard: no bookingId at all → nothing to pay for.
   useEffect(() => {
     if (!bookingId) {
-      router.replace(`/${lang}/journeys`);
+      router.replace(`/${lang}/bookings`);
     }
   }, [bookingId, lang, router]);
 

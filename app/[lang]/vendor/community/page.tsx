@@ -1,85 +1,64 @@
 "use client";
 
-import React, { useMemo } from "react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
-import { useLocalizationContext } from "@/contexts/LocalizationContext";
-import type { CommunityAuthor } from "@/services/communityService";
-import CommunityFeed from "../../community/components/CommunityFeed";
+import React from "react";
+import { useRouter, useParams } from "next/navigation";
+import { Icon } from "../../components/atoms/Icon";
 
-export default function HostCommunityPage() {
-  const { lang } = useParams();
-  const { user } = useAuth();
-  const { dict } = useLocalizationContext();
-
-  const c = dict?.page?.community ?? {};
-  const t: Record<string, string> = {
-    placeholder: c.host_placeholder ?? "Share an update, an operations tip, or ask fellow hosts...",
-    post: c.post ?? "Post",
-    posting: c.posting ?? "Posting...",
-    like: c.like ?? "Like",
-    no_comments: c.no_comments ?? "No replies yet. Be the first to say something.",
-    comment_placeholder: c.comment_placeholder ?? "Write a reply...",
-    send: c.send ?? "Send",
-    sign_in_to_comment: c.sign_in_to_comment ?? "Sign in to join the conversation.",
-    empty: c.host_empty ?? "No posts yet. Share the first update with fellow hosts.",
-  };
-  const roleLabels = {
-    traveler: c.role_traveler ?? "Traveller",
-    vendor: c.role_vendor ?? "Host",
-    verified: c.role_verified ?? "Verified Host",
-  };
-
-  const isVendor = !!user && /vendor|host|broker/i.test(user.role || "");
-  const currentUser: CommunityAuthor | null = useMemo(() => {
-    if (!user) return null;
-    return { id: user.id, name: user.name || "You", role: "vendor", verified: true };
-  }, [user]);
-
-  // Access control: this space is for hosts only.
-  if (!isVendor) {
-    return (
-      <div className="max-w-2xl mx-auto px-4">
-        <div className="rounded-[2rem] border-2 border-slate-100 bg-white p-10 text-center">
-          <h1 className="text-2xl font-black text-slate-900 uppercase italic tracking-tight mb-2">
-            {c.host_only_title ?? "Hosts only"}
-          </h1>
-          <p className="text-slate-400 font-medium text-sm mb-6">
-            {c.host_only_sub ?? "This community is for verified hosts. Travellers can head to the traveller community."}
-          </p>
-          <Link
-            href={`/${lang}/community`}
-            className="inline-flex h-12 px-6 rounded-2xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest items-center justify-center hover:bg-black transition-all active:scale-95"
-          >
-            {c.host_only_cta ?? "Go to traveller community"}
-          </Link>
-        </div>
-      </div>
-    );
-  }
+export default function VendorCommunityPage() {
+  const router = useRouter();
+  const params = useParams();
+  const lang = (params?.lang as string) || "en";
 
   return (
-    <div className="max-w-2xl mx-auto px-4">
-      <header className="mb-8">
-        <span className="text-emerald-500 font-black uppercase tracking-[0.3em] text-[10px] mb-3 block">
-          {c.host_badge ?? "Host Community · Private"}
-        </span>
-        <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter uppercase italic leading-[0.9]">
-          {c.host_title ?? "The Host Circle"}
-        </h1>
-        <p className="text-slate-400 font-medium mt-3 text-sm sm:text-base leading-relaxed">
-          {c.host_subtitle ?? "A private space for verified hosts to share tips, updates, and grow together."}
-        </p>
-      </header>
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-between py-12 px-4">
+      <main className="max-w-2xl mx-auto text-center space-y-6">
+        <div className="w-16 h-16 rounded-3xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-md">
+          <Icon name="star" className="w-8 h-8 text-emerald-600" />
+        </div>
 
-      <CommunityFeed
-        space="vendor"
-        currentUser={currentUser}
-        canPost={isVendor}
-        t={t}
-        roleLabels={roleLabels}
-      />
+        <div className="space-y-2">
+          <span className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-600">
+            Host Feedback & Rating Hub
+          </span>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+            Direct Ratings & Feedback Streamlined
+          </h1>
+          <p className="text-slate-500 text-xs sm:text-sm max-w-md mx-auto font-medium leading-relaxed">
+            Traveler feedback is now captured directly on your host profile & completed bookings via public ratings and private quality notes.
+          </p>
+        </div>
+
+        <div className="p-6 bg-white rounded-3xl border border-slate-200/80 shadow-md max-w-lg mx-auto space-y-4 text-left">
+          <div className="flex items-start gap-3">
+            <span className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+              ★
+            </span>
+            <div>
+              <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider">Public Profile Ratings</h4>
+              <p className="text-xs text-slate-500 font-medium">Build trust with 5-star ratings displayed on your partner profile page.</p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3 border-t border-slate-100 pt-3">
+            <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+              ✉️
+            </span>
+            <div>
+              <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider">Private Improvement Feedback</h4>
+              <p className="text-xs text-slate-500 font-medium">Receive private feedback notes to help optimize stay and transport quality.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={() => router.push(`/${lang}/vendor/dashboard`)}
+            className="h-12 px-6 rounded-full bg-slate-900 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest shadow-lg transition-all active:scale-95"
+          >
+            Go to Vendor Dashboard →
+          </button>
+        </div>
+      </main>
     </div>
   );
 }

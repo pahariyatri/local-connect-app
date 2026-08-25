@@ -11,8 +11,8 @@ import Loading from "../loading";
 import { getVendors } from "@/services/vendorService";
 import { Icon } from "./components/atoms/Icon";
 import PublicFooter from "./components/organisms/PublicFooter";
-import HeroSection from "./components/hero/HeroSection";
-import InteractiveRouteSection from "./components/home/InteractiveRouteSection";
+import HeroSection from "./components/organisms/HeroSection";
+import InteractiveRouteSection from "./components/organisms/InteractiveRouteSection";
 
 type HomeProps = {
   params: Promise<{ lang: Locale }>;

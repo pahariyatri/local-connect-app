@@ -173,16 +173,13 @@ export default function ProfilePage() {
                     ))}
                 </div>
 
-                {/* Recent Journeys */}
+                {/* Recent Bookings */}
                 <section className="animate-in fade-in slide-in-from-bottom-3 duration-700 delay-200">
                     <div className="flex justify-between items-end mb-6 px-1">
                         <Typography variant="h2" className="text-xl font-black text-slate-900 uppercase tracking-tighter italic">
-                            Recent Journeys
+                            Recent Bookings
                         </Typography>
                         <div className="flex items-center gap-3">
-                            <Link href={`/${lang}/journeys`} className="text-[10px] font-black text-indigo-500 uppercase tracking-widest underline underline-offset-4">
-                                My Journeys
-                            </Link>
                             <Link href={`/${lang}/bookings`} className="text-[10px] font-black text-emerald-500 uppercase tracking-widest underline underline-offset-4">
                                 All Trips
                             </Link>

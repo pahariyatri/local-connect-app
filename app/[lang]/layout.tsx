@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
-import Header from "./components/header/Header";
+import Header from "./components/organisms/Header";
 import BottomNavigation from "./components/organisms/BottomNavigation";
 
 export default function LangLayout({
@@ -22,8 +22,8 @@ export default function LangLayout({
 
   // Routes that render their own custom TopNavigation
   const hasOwnTopNav =
-    /^\/[^/]+\/(bookings|admin|sitemap|results|journey)(\/|$)/.test(pathname) ||
-    /^\/[^/]+\/vendor\/(?!dashboard|bookings|calendar|community|contracts|onboarding|partnerships|payouts|services)[^/]+(\/|$)/.test(pathname);
+    /^\/[^/]+\/(bookings|admin|sitemap|results)(\/|$)/.test(pathname) ||
+    /^\/[^/]+\/vendor\/(?!dashboard|bookings|calendar|contracts|onboarding|partnerships|payouts|services)[^/]+(\/|$)/.test(pathname);
 
   const showBottomNav = !isAuthRoute && !isBuilderRoute;
 

@@ -65,11 +65,9 @@ export default function Header() {
         { href: `/${lang}/vendor/dashboard`, label: 'Dashboard' },
         { href: `/${lang}/vendor/services`, label: 'Services' },
         { href: `/${lang}/vendor/bookings`, label: 'Bookings' },
-        { href: `/${lang}/community`, label: navDict.community || commonDict.community || 'Community' },
       ]
     : [
         { href: `/${lang}/explore`, label: navDict.explore || commonDict.explore || 'Explore' },
-        { href: `/${lang}/community`, label: navDict.community || commonDict.community || 'Community' },
         { href: `/${lang}/vendor/onboarding`, label: navDict.partner || 'Become a Partner' },
       ];
 
@@ -126,7 +124,6 @@ export default function Header() {
                 : 'bg-emerald-50 text-emerald-800 border border-emerald-200/80 hover:bg-emerald-100 hover:border-emerald-300'
             }`}
           >
-            <Icon name={isVendor ? 'plus' : 'mountain'} className="w-3.5 h-3.5" />
             <span>{isVendor ? 'Add Service' : (navDict.plan || 'Plan a Trip')}</span>
           </Link>
         </nav>

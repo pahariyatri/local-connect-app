@@ -27,12 +27,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
             priority: 0.8,
         },
         {
-            url: `${BASE_URL}/en/community`,
-            lastModified: new Date(),
-            changeFrequency: 'weekly',
-            priority: 0.6,
-        },
-        {
             url: `${BASE_URL}/en/about`,
             lastModified: new Date(),
             changeFrequency: 'yearly',
@@ -56,23 +50,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
             changeFrequency: 'yearly',
             priority: 0.2,
         },
-        // /en/blog omitted — the page has no content yet (see robots.ts,
-        // which also disallows it). Add it back once real posts exist.
     ]
-
-    // const siteUrl = siteMetadata.siteUrl
-
-    // const blogRoutes = allBlogs
-    //     .filter((post) => !post.draft)
-    //     .map((post) => ({
-    //         url: `${siteUrl}/${post.path}`,
-    //         lastModified: post.lastmod || post.date,
-    //     }))
-
-    // const routes = ['', 'blog', 'projects', 'tags'].map((route) => ({
-    //     url: `${siteUrl}/${route}`,
-    //     lastModified: new Date().toISOString().split('T')[0],
-    // }))
-
-    // return [...routes, ...blogRoutes]
 }

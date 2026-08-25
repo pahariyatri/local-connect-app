@@ -33,7 +33,6 @@ export default function VendorDashboardPage() {
     { name: res.tabs.bookings, icon: "calendar", route: `/${lang}/vendor/bookings`, desc: "Manage guest bookings" },
     { name: res.tabs.services, icon: "home", route: `/${lang}/vendor/services`, desc: "Inventory & pricing" },
     { name: "Calendar", icon: "calendar-days", route: `/${lang}/vendor/bookings?view=calendar`, desc: "Availability schedule" },
-    { name: res.tabs?.community || "Community", icon: "chat", route: `/${lang}/vendor/community`, desc: "Host circle" },
   ];
 
   return (

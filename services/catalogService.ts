@@ -110,6 +110,14 @@ export const getCircuits = async () => {
   return (raw as any)?.data ?? raw;
 };
 
+/** Typeahead search over the location table — for address/destination autocomplete fields. */
+export const searchLocations = async (q: string, limit = 8) => {
+  if (!q.trim()) return [];
+  const params = new URLSearchParams({ q, limit: String(limit) });
+  const raw = await api.get(`/locations/search?${params.toString()}`, { skipAuth: true, skipCache: true });
+  return (raw as any)?.data ?? raw ?? [];
+};
+
 // ═══════════════════ ITINERARY ═══════════════════
 
 export const generateItinerary = async (packageId: number) => {
