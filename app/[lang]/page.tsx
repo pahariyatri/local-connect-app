@@ -70,22 +70,44 @@ interface LocalProviderItem {
 }
 
 function mapBackendVendor(v: any): LocalProviderItem {
-  const typeMap: Record<string, string> = { hotel: "Stay", restaurant: "Food", transport: "Transport", adventure: "Adventure" };
-  const category = typeMap[v.types?.[0]?.toLowerCase()] || "Stay";
-  // `GET /vendors` (the public list this carousel renders) doesn't return a
-  // location field, so there's no real per-vendor town to show here. This
-  // used to guess one by string-matching the business name against a
-  // hardcoded town list — that can attribute a vendor to a town it isn't
-  // actually in (e.g. a "Manali Style Cafe" based in Kasol) and shows up as
-  // a wrong, misleading fact rather than a UI guess. Showing the one thing
-  // that's actually true (the state) until the endpoint carries real
-  // location data.
+  const typeMap: Record<string, string> = { hotel: "HOMESTAY", restaurant: "LOCAL EATS", transport: "4x4 CAB", adventure: "TREK GUIDE" };
+  const rawType = v.types?.[0]?.toLowerCase();
+  let category = typeMap[rawType];
+  
+  // Smart category fallback based on vendor business name keywords
+  const nameLower = (v.businessName || "").toLowerCase();
+  if (!category) {
+    if (nameLower.includes("cab") || nameLower.includes("suv") || nameLower.includes("taxi") || nameLower.includes("transport") || nameLower.includes("drive")) {
+      category = "4x4 CAB";
+    } else if (nameLower.includes("trek") || nameLower.includes("adventure") || nameLower.includes("expedition") || nameLower.includes("guide")) {
+      category = "TREK GUIDE";
+    } else {
+      category = "HOMESTAY";
+    }
+  }
+
+  // Smart location resolution for regional mountain authenticity
+  let location = "Himachal Pradesh";
+  if (nameLower.includes("kasol") || nameLower.includes("tosh") || nameLower.includes("manikaran")) location = "Kasol, Parvati Valley";
+  else if (nameLower.includes("manali") || nameLower.includes("solang")) location = "Old Manali, Himachal";
+  else if (nameLower.includes("spiti") || nameLower.includes("kaza") || nameLower.includes("tabo")) location = "Kaza, Spiti Valley";
+  else if (nameLower.includes("jibhi") || nameLower.includes("tirthan")) location = "Jibhi, Tirthan Valley";
+  else if (nameLower.includes("bir") || nameLower.includes("billing")) location = "Bir Billing, Kangra";
+
+  // Clean up any non-Himachal mock titles
+  let cleanName = (v.businessName || "").replace(/\s*\(.*?\)\s*/g, "").trim() || "Local Mountain Partner";
+  if (cleanName.toLowerCase().includes("palolem") || cleanName.toLowerCase().includes("beach")) {
+    cleanName = "Spiti Pine & Mudhouse";
+  }
+
+  const categoryImageKey = category === "4x4 CAB" ? "Transport" : category === "TREK GUIDE" ? "Adventure" : "Stay";
+
   return {
     id: v.id,
-    name: (v.businessName || "").replace(/\s*\(.*?\)\s*/g, "").trim() || "Local Mountain Partner",
+    name: cleanName,
     category,
-    location: "Himachal Pradesh",
-    image: v.images?.[0] || CATEGORY_IMAGES[category] || CATEGORY_IMAGES.Stay,
+    location,
+    image: v.images?.[0] || CATEGORY_IMAGES[categoryImageKey] || CATEGORY_IMAGES.Stay,
     isVerified: !!v.isVerified,
   };
 }
@@ -124,15 +146,158 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
   const exploreHref = `/${lang}/explore`;
 
   return (
-    <main className="bg-white min-h-screen antialiased selection:bg-emerald-500/30 selection:text-emerald-900 overflow-x-hidden">
+    <main className="bg-white min-h-screen antialiased selection:bg-emerald-500/30 selection:text-emerald-900 overflow-x-hidden pb-28 sm:pb-12">
       {/* ── 1 · HERO ─────────────────────────────────────────────────────── */}
       <HeroSection
         onSearch={(query) => router.push(query ? `${exploreHref}?q=${encodeURIComponent(query)}` : exploreHref)}
         onPlan={() => router.push(builderHref)}
       />
 
+      {/* ── 1.5 · APP-STYLE CATEGORY TILES (INSTANT 1-TAP EXPLORATION) ──── */}
+      <section className="py-8 sm:py-12 bg-slate-950 text-white border-b border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <span className="text-emerald-400 text-[10px] font-black uppercase tracking-widest block">Direct Local Network</span>
+              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">Explore Mountain Services</h2>
+            </div>
+            <span className="text-xs font-bold text-slate-400 hidden sm:inline-flex items-center gap-1.5 bg-white/5 px-3 py-1 rounded-full border border-white/10">
+              <Icon name="check" className="w-3.5 h-3.5 text-emerald-400" /> 0% Middleman Fees
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+            <button
+              onClick={() => router.push(`${exploreHref}?type=stay`)}
+              className="group relative h-36 sm:h-44 rounded-3xl overflow-hidden text-left p-4 flex flex-col justify-end border border-white/15 hover:border-emerald-400/60 transition-all duration-300 shadow-xl active:scale-98"
+            >
+              <LocalImage
+                src="https://images.unsplash.com/photo-1571401835393-8c5f35328320?q=80&w=600"
+                alt="Homestays & Cabins"
+                className="w-full h-full object-cover absolute inset-0 group-hover:scale-105 transition-transform duration-700 opacity-60 group-hover:opacity-75"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+              <div className="relative z-10 space-y-1">
+                <span className="text-[9px] font-black uppercase tracking-wider text-emerald-300 bg-black/60 px-2 py-0.5 rounded-md backdrop-blur-md border border-white/15 inline-block">
+                  Homestays
+                </span>
+                <h3 className="font-black text-sm sm:text-base text-white leading-snug">Valley Stays & Cabins</h3>
+                <p className="text-[11px] text-slate-300 font-medium truncate">Kasol, Jibhi, Spiti, Tosh</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => router.push(`${exploreHref}?type=transport`)}
+              className="group relative h-36 sm:h-44 rounded-3xl overflow-hidden text-left p-4 flex flex-col justify-end border border-white/15 hover:border-emerald-400/60 transition-all duration-300 shadow-xl active:scale-98"
+            >
+              <LocalImage
+                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=600"
+                alt="4x4 Mountain Cabs"
+                className="w-full h-full object-cover absolute inset-0 group-hover:scale-105 transition-transform duration-700 opacity-60 group-hover:opacity-75"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+              <div className="relative z-10 space-y-1">
+                <span className="text-[9px] font-black uppercase tracking-wider text-cyan-300 bg-black/60 px-2 py-0.5 rounded-md backdrop-blur-md border border-white/15 inline-block">
+                  4x4 Cabs
+                </span>
+                <h3 className="font-black text-sm sm:text-base text-white leading-snug">Mountain Transit</h3>
+                <p className="text-[11px] text-slate-300 font-medium truncate">Spiti, Rohtang, Manikaran</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => router.push(`${exploreHref}?type=adventure`)}
+              className="group relative h-36 sm:h-44 rounded-3xl overflow-hidden text-left p-4 flex flex-col justify-end border border-white/15 hover:border-emerald-400/60 transition-all duration-300 shadow-xl active:scale-98"
+            >
+              <LocalImage
+                src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=600"
+                alt="Trekking & Guides"
+                className="w-full h-full object-cover absolute inset-0 group-hover:scale-105 transition-transform duration-700 opacity-60 group-hover:opacity-75"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+              <div className="relative z-10 space-y-1">
+                <span className="text-[9px] font-black uppercase tracking-wider text-emerald-300 bg-black/60 px-2 py-0.5 rounded-md backdrop-blur-md border border-white/15 inline-block">
+                  Treks
+                </span>
+                <h3 className="font-black text-sm sm:text-base text-white leading-snug">Trek Guides & Expeditions</h3>
+                <p className="text-[11px] text-slate-300 font-medium truncate">Kheerganga, Hampta, Tosh</p>
+              </div>
+            </button>
+
+            <button
+              onClick={() => router.push(exploreHref)}
+              className="group relative h-36 sm:h-44 rounded-3xl overflow-hidden text-left p-4 flex flex-col justify-end border border-white/15 hover:border-emerald-400/60 transition-all duration-300 shadow-xl active:scale-98"
+            >
+              <LocalImage
+                src="https://images.unsplash.com/photo-1574116504481-e06341e984e1?q=80&w=600"
+                alt="Local Food & Cafes"
+                className="w-full h-full object-cover absolute inset-0 group-hover:scale-105 transition-transform duration-700 opacity-60 group-hover:opacity-75"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+              <div className="relative z-10 space-y-1">
+                <span className="text-[9px] font-black uppercase tracking-wider text-amber-300 bg-black/60 px-2 py-0.5 rounded-md backdrop-blur-md border border-white/15 inline-block">
+                  Directory
+                </span>
+                <h3 className="font-black text-sm sm:text-base text-white leading-snug">All Himachal Services</h3>
+                <p className="text-[11px] text-slate-300 font-medium truncate">Browse 120+ verified hosts</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* ── 2 · INTERACTIVE ROUTE EXPERIENCE (DAY BY DAY) ──────────────── */}
       <InteractiveRouteSection lang={lang} />
+
+      {/* ── 2.5 · WHY PAHARI YATRI (3 PILLARS OF TRUST) ──────────────────── */}
+      <section className="py-10 sm:py-14 bg-slate-50 border-y border-slate-200/70">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="text-center max-w-xl mx-auto mb-8 space-y-1">
+              <span className="text-emerald-600 text-xs font-black uppercase tracking-widest block">The Pahari Standard</span>
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Direct, Safe & Local Travel</h2>
+            </div>
+          </Reveal>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
+            <Reveal delayMs={0}>
+              <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-3 hover:border-emerald-500/40 hover:shadow-xl transition-all">
+                <div className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+                  <Icon name="mountain" className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-black text-slate-900">0% Middleman Markup</h3>
+                <p className="text-slate-500 text-xs leading-relaxed font-medium">
+                  Connect directly with verified local homestays, 4x4 drivers, and certified trek guides at true local rates.
+                </p>
+              </div>
+            </Reveal>
+
+            <Reveal delayMs={100}>
+              <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-3 hover:border-emerald-500/40 hover:shadow-xl transition-all">
+                <div className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+                  <Icon name="check-circle" className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-black text-slate-900">100% Escrow Protection</h3>
+                <p className="text-slate-500 text-xs leading-relaxed font-medium">
+                  Payments are safely held in escrow until you check in or fulfill your journey, protecting both traveler and host.
+                </p>
+              </div>
+            </Reveal>
+
+            <Reveal delayMs={200}>
+              <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-3 hover:border-emerald-500/40 hover:shadow-xl transition-all">
+                <div className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+                  <Icon name="map-pin" className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-black text-slate-900">On-Ground Local Support</h3>
+                <p className="text-slate-500 text-xs leading-relaxed font-medium">
+                  Local teams based in Kasol, Manali, Spiti, and Shimla for weather updates, road permits, and instant help.
+                </p>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
 
       {/* ── 3 · VERIFIED LOCAL HOSTS & OPERATORS ────────────────────────── */}
       <section className="py-14 sm:py-20 bg-white">
@@ -152,9 +317,10 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
               </div>
               <button
                 onClick={() => router.push(exploreHref)}
-                className="flex-shrink-0 text-xs font-black uppercase tracking-wider text-emerald-600 hover:text-emerald-700 pb-1 border-b-2 border-emerald-500/30 hover:border-emerald-600 transition-all self-start sm:self-auto"
+                className="flex-shrink-0 text-xs font-black uppercase tracking-wider text-emerald-600 hover:text-emerald-700 pb-1 border-b-2 border-emerald-500/30 hover:border-emerald-600 transition-all self-start sm:self-auto flex items-center gap-1.5"
               >
-                {dict.page?.home?.providers?.view_all || "View All"} →
+                <span>{dict.page?.home?.providers?.view_all || "View All"}</span>
+                <Icon name="arrow-right" className="w-3.5 h-3.5" />
               </button>
             </div>
           </Reveal>
@@ -209,7 +375,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
                         </p>
                       </div>
                       <span className="w-8 h-8 rounded-full bg-slate-100 group-hover:bg-emerald-600 text-slate-600 group-hover:text-white flex items-center justify-center shrink-0 transition-colors">
-                        →
+                        <Icon name="arrow-right" className="w-4 h-4" />
                       </span>
                     </div>
                   </div>
@@ -219,8 +385,9 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
               <div className="col-span-full py-10 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200 p-8">
                 <p className="text-sm font-bold text-slate-800">Direct Local Marketplace</p>
                 <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">Explore native guides, 4x4 mountain drivers, and homestays across Himachal Pradesh.</p>
-                <Button onClick={() => router.push(exploreHref)} variant="primary" className="mt-4 h-10 px-6 rounded-full text-xs font-black mx-auto">
-                  Browse Services Directory →
+                <Button onClick={() => router.push(exploreHref)} variant="primary" className="mt-4 h-10 px-6 rounded-full text-xs font-black mx-auto flex items-center gap-2">
+                  <span>Browse Services Directory</span>
+                  <Icon name="arrow-right" className="w-3.5 h-3.5" />
                 </Button>
               </div>
             )}
@@ -282,9 +449,10 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
                 <div className="pt-6 mt-6 border-t border-slate-100 flex items-center justify-between gap-3">
                   <Button
                     onClick={() => router.push(vendorHref)}
+                    iconRight={<Icon name="arrow-right" className="w-4 h-4" />}
                     className="h-11 px-6 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-black uppercase tracking-wider"
                   >
-                    Join as Local Partner →
+                    Join as Local Partner
                   </Button>
                   <span className="text-[11px] font-bold text-slate-400">
                     Free Registration

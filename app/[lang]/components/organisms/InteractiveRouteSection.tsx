@@ -140,9 +140,10 @@ export default function InteractiveRouteSection({ lang }: { lang: string }) {
                 </div>
 
                 <div className="p-5 space-y-3">
-                  <div className="flex items-center justify-between text-xs font-semibold text-slate-500 bg-slate-50 px-3.5 py-2 rounded-xl">
-                    <span>Distance: <strong className="text-slate-800 font-bold">{preset.totalDistance}</strong></span>
-                    <span>Max Altitude: <strong className="text-slate-800 font-bold">{preset.maxAltitude}</strong></span>
+                  <div className="flex flex-wrap items-center justify-between gap-1 text-xs font-semibold text-slate-500 bg-slate-50 px-3.5 py-2 rounded-xl">
+                    <span>Distance <strong className="text-slate-900 font-bold ml-1">{preset.totalDistance}</strong></span>
+                    <span className="text-slate-300">•</span>
+                    <span>Altitude <strong className="text-slate-900 font-bold ml-1">{preset.maxAltitude}</strong></span>
                   </div>
                 </div>
               </div>
