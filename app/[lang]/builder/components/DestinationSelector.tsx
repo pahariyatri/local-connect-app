@@ -138,11 +138,11 @@ export default function DestinationSelector({
             <input
               ref={inputRef}
               type="text"
-              placeholder={b.origin_placeholder || "Where are you starting? (e.g. Delhi)"}
+              placeholder={b.origin_placeholder || "Starting city (e.g. Delhi)"}
               value={originPoint}
               onChange={(e) => handleOriginChange(e.target.value)}
               onFocus={() => setShowOriginSuggestions(true)}
-              className="w-full h-16 pl-14 pr-6 bg-slate-50 border-2 border-transparent rounded-[1.5rem] focus:bg-white focus:border-slate-900 transition-all font-black text-lg uppercase tracking-tight italic"
+              className="w-full h-16 pl-14 pr-6 bg-slate-50 border-2 border-transparent rounded-[1.5rem] focus:bg-white focus:border-slate-900 transition-all font-black text-base sm:text-lg uppercase tracking-tight italic"
             />
             <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-slate-900 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>

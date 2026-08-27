@@ -241,17 +241,17 @@ export default function ProfilePage() {
                     )}
                 </section>
 
-                {/* Switch to vendor dashboard — only shown when this account actually owns a vendor */}
+                {/* Switch to vendor profile — only shown when this account actually owns a vendor */}
                 {vendorId && (
                     <button
-                        onClick={() => router.push(`/${lang}/vendor/dashboard`)}
+                        onClick={() => router.push(`/${lang}/profile/vendor`)}
                         className="w-full flex items-center gap-4 p-5 rounded-[2rem] bg-slate-900 hover:bg-black text-white transition-all group animate-in fade-in slide-in-from-bottom-3 duration-700 delay-200"
                     >
                         <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center flex-shrink-0">
                             <Icon name="briefcase" className="w-5 h-5" />
                         </div>
                         <div className="flex-1 text-left">
-                            <p className="font-black text-sm">Switch to vendor dashboard</p>
+                            <p className="font-black text-sm">Switch to vendor profile</p>
                             <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest mt-0.5">Manage services &amp; bookings</p>
                         </div>
                         <Icon name="compass" className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" />

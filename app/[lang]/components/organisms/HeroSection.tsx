@@ -89,7 +89,7 @@ export default function HeroSection({ onSearch }: { onSearch: (query?: string) =
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Where are you going? (Kasol, Manali, Spiti...)"
+                  placeholder="Where to? (Kasol, Manali...)"
                   aria-label="Search destination"
                   className="w-full bg-transparent text-xs sm:text-base font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
                 />

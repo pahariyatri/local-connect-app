@@ -301,28 +301,33 @@ export default function ExplorePage() {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                     />
 
-                    {/* Category & Location Badges */}
-                    <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                      <span className="px-2.5 py-1 bg-white/95 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-wider text-slate-900 shadow-sm">
-                        {CAT_LABEL_BY_SERVICE_CATEGORY[service.category] || service.category}
-                      </span>
-                      <span
-                        data-testid="explore-result-location"
-                        className="px-2.5 py-1 bg-slate-900/90 text-white backdrop-blur-md rounded-full text-[10px] font-bold shadow-sm flex items-center gap-1"
-                      >
-                        <Icon name="map-pin" className="w-2.5 h-2.5 text-emerald-400" />
-                        <span>{service.location.city}</span>
-                      </span>
-                    </div>
-
-                    {/* Verified Host Tag */}
-                    {service.vendor.verified && (
-                      <div className="absolute top-3 right-3">
-                        <span className="px-2.5 py-1 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider rounded-full shadow-sm">
-                          Verified Host
+                    {/* Category & Location Badges + Verified Host Tag — one flex
+                        row so the two sides split the available width instead of
+                        each being independently `absolute`-positioned from an
+                        opposite edge, which let a long category/location badge
+                        overlap and clip the "Verified Host" pill on narrow
+                        (mobile) cards. */}
+                    <div className="absolute top-3 left-3 right-3 flex items-start justify-between gap-1.5">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="shrink-0 px-2.5 py-1 bg-white/95 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-wider text-slate-900 shadow-sm">
+                          {CAT_LABEL_BY_SERVICE_CATEGORY[service.category] || service.category}
+                        </span>
+                        <span
+                          data-testid="explore-result-location"
+                          className="min-w-0 px-2.5 py-1 bg-slate-900/90 text-white backdrop-blur-md rounded-full text-[10px] font-bold shadow-sm flex items-center gap-1"
+                        >
+                          <Icon name="map-pin" className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
+                          <span className="truncate max-w-[15vw] sm:max-w-[80px]">{service.location.city}</span>
                         </span>
                       </div>
-                    )}
+
+                      {/* Verified Host Tag */}
+                      {service.vendor.verified && (
+                        <span className="shrink-0 whitespace-nowrap px-2.5 py-1 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider rounded-full shadow-sm">
+                          Verified Host
+                        </span>
+                      )}
+                    </div>
 
                     {/* Gradient Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent pointer-events-none" />

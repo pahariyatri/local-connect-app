@@ -33,7 +33,11 @@ export default function LangLayout({
       className="bg-white min-h-screen overflow-x-hidden flex flex-col justify-between"
     >
       {!isAuthRoute && !hasOwnTopNav && <Header />}
-      <div className="page-fade-in">{children}</div>
+      {/* BottomNavigation is `fixed bottom-0` and overlays page content on
+          mobile — without this, its ~80px bar (incl. safe-area-inset-bottom
+          on notched phones) hides the last row of any page that ends in
+          <PublicFooter> (copyright/tagline) or otherwise abuts the bottom. */}
+      <div className={`page-fade-in ${showBottomNav ? "pb-24 md:pb-0" : ""}`}>{children}</div>
       {showBottomNav && (
         <BottomNavigation onToggleLanguage={(l) => switchLanguage(l as any)} />
       )}
