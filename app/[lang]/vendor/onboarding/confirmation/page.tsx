@@ -7,6 +7,7 @@ import Button from "../../../components/atoms/Button";
 import Loading from "@/app/loading";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { api } from "@/lib/apiClient";
 
 export default function Confirmation() {
     const { lang, dict, loading } = useLocalizationContext();
@@ -14,15 +15,19 @@ export default function Confirmation() {
     const router = useRouter();
     const [checking, setChecking] = useState(false);
     // The onboarding page already tries a silent token refresh right after
-    // role promotion (see vendor/onboarding/page.tsx) — but that refresh can
-    // itself fail (e.g. the backend's single-use refresh-token rotation
-    // rejecting a concurrent/second attempt), leaving the session's access
-    // token still saying the pre-promotion role. That produces a silent 403
-    // the moment this vendor tries their first real action — confusing for
-    // a persona SIMPLICITY.md describes as unfamiliar with "session" as a
-    // concept. Re-verify here before handing them into the dashboard, and
-    // fall back to an explicit, plain-language re-login rather than a
-    // dashboard that quietly doesn't work.
+    // role promotion (see vendor/onboarding/page.tsx) — reproduced live that
+    // this refresh reliably fails: the backend's single-use refresh-token
+    // rotation revokes the whole session instead of minting a token with the
+    // new role. GET /users/me (what refreshUser() checks) is NOT a reliable
+    // signal here — it reads the role fresh from the DB regardless of the
+    // access token's own baked-in claim, so it reports "Vendor" correctly
+    // even while RolesGuard (which reads the JWT claim, not the DB) still
+    // 403s every vendor-only write. The only signal that actually reflects
+    // what RolesGuard will see is a real refresh attempt: if the backend
+    // accepts it, the new access token is guaranteed to carry the current
+    // DB role (see auth-flow.service.ts refreshSession()); if it rejects it
+    // (401 AUTH_SESSION_EXPIRED), the session is genuinely broken and only a
+    // real login can recover it.
     const [needsRelogin, setNeedsRelogin] = useState(false);
 
     if (loading || !dict) return <Loading />;
@@ -32,10 +37,16 @@ export default function Confirmation() {
 
     const handleContinue = async () => {
         setChecking(true);
-        const updated = await refreshUser();
-        const isVendor = !!updated && /vendor|host|broker/i.test(updated.role || "");
+        let refreshedOk = false;
+        try {
+            await api.post('/auth/token/refresh');
+            refreshedOk = true;
+        } catch {
+            refreshedOk = false;
+        }
+        if (refreshedOk) await refreshUser();
         setChecking(false);
-        if (isVendor) {
+        if (refreshedOk) {
             router.push(dashboardHref);
         } else {
             setNeedsRelogin(true);
