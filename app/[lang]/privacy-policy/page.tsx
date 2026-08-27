@@ -37,10 +37,10 @@ export default function PrivacyPolicyPage() {
     {
       icon: "wallet" as const,
       num: "03",
-      title: "Payment Security & Escrow Protection",
+      title: "Payment Security",
       summary: "Bank-grade encryption protects all platform transactions and reservation deposits.",
       items: [
-        "Escrow safeguarding: Booking deposits are held securely in platform escrow until check-in or trip kickoff.",
+        "Reservation fees: Your booking reservation fee is processed securely through our encrypted payment gateway. The remaining trip cost is paid directly to your local host or driver — never routed through the platform.",
         "PCI-DSS compliance: All online transactions are processed through certified payment gateways.",
         "End-to-end encrypted sessions for all communication on the platform.",
       ],

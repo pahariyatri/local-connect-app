@@ -278,7 +278,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
                 <div className="relative pt-8 mt-6 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-4 text-slate-300 text-xs font-bold">
                     <span className="flex items-center gap-1.5"><Icon name="check" className="w-4 h-4 text-emerald-400" /> 0% Markup</span>
-                    <span className="flex items-center gap-1.5"><Icon name="check" className="w-4 h-4 text-emerald-400" /> Escrow Safe</span>
+                    <span className="flex items-center gap-1.5"><Icon name="check" className="w-4 h-4 text-emerald-400" /> Reserve, Pay Direct</span>
                   </div>
                   <Button
                     onClick={() => router.push(builderHref)}

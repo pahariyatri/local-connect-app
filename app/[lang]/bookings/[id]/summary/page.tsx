@@ -126,7 +126,7 @@ export default function BookingSummaryPage() {
                             </Button>
                             <p className="text-center text-[9px] font-bold text-slate-400 uppercase mt-3 tracking-widest flex items-center justify-center gap-1.5">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                                Secure Escrow Payment
+                                Secure Reservation Payment
                             </p>
                         </div>
                     </div>

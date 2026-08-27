@@ -19,7 +19,7 @@ export default function AboutPage() {
   const stats = [
     { value: "100%", label: "Direct Local Match", sub: "No agency markups" },
     { value: "6+", label: "Mountain Circuits", sub: "Manali, Spiti, Kasol & more" },
-    { value: "100%", label: "Escrow Protected", sub: "Held securely until arrival" },
+    { value: "Bank-Grade", label: "Encrypted Checkout", sub: "Powered by Razorpay" },
     { value: "24/7", label: "Mountain Helpline", sub: "Direct support on-route" },
   ];
 
@@ -70,8 +70,8 @@ export default function AboutPage() {
     },
     {
       icon: "wallet" as const,
-      title: "Escrow Reservation Protection",
-      desc: "Your booking deposit is safely held by the platform and released to the host only when your trip commences smoothly.",
+      title: "Secure Reservation Payment",
+      desc: "A small reservation fee confirms your booking through our encrypted payment gateway. The rest of your trip cost is paid directly to your host or driver, exactly as agreed.",
     },
     {
       icon: "compass" as const,

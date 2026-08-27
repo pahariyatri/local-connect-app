@@ -20,8 +20,8 @@ export default function TermsConditionsPage() {
     {
       icon: "wallet" as const,
       num: "02",
-      title: "Booking, Pricing & Escrow Protection",
-      text: "All listings and package pricing are provided directly by verified local partners. When requesting a booking, the platform holds reservation deposits in secure escrow until check-in or service commencement. Remaining balances are settled directly with the host according to the agreed terms.",
+      title: "Booking, Pricing & Payments",
+      text: "All listings and package pricing are provided directly by verified local partners. When requesting a booking, you pay a reservation fee directly to the platform through a secure, encrypted payment gateway to confirm your slot. The remaining trip balance is paid directly to the host or driver on arrival, according to the agreed terms.",
     },
     {
       icon: "alert-circle" as const,
@@ -78,7 +78,7 @@ export default function TermsConditionsPage() {
             <div>
               <h2 className="text-sm font-black text-slate-900">Summary of Key Principles</h2>
               <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1 leading-relaxed">
-                Pahari Yatri connects you directly with verified locals. We don't take hidden cuts from operators. Your bookings are protected with escrow safety and 24/7 mountain support.
+                Pahari Yatri connects you directly with verified locals. We don't take hidden cuts from operators. Your reservation payments are processed through a secure gateway, and our team backs every booking with 24/7 mountain support.
               </p>
             </div>
           </div>

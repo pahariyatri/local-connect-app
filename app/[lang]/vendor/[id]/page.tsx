@@ -181,7 +181,7 @@ export default function VendorProfilePage() {
                     response.isVerified && "Verified Local Partner",
                     response.isInstantBooking && "Instant Direct Booking",
                     typeof response.acceptanceRate === "number" && `${response.acceptanceRate}% Acceptance Rate`,
-                    "100% Escrow Protected",
+                    "Secure Reservation Payment",
                 ].filter(Boolean) as string[];
 
                 setProfile({

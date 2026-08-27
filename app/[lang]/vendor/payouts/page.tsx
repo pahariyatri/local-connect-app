@@ -6,7 +6,7 @@ import Button from "../../components/atoms/Button";
 
 const MOCK_TRANSACTIONS = [
   { id: "tx_1", date: "2026-02-14", amount: 12500, status: "Paid", method: "Razorpay Payout", journey: "Manali Mystic Expedition" },
-  { id: "tx_2", date: "2026-02-12", amount: 4500, status: "Pending", method: "Local Escrow", journey: "Beas Kund Trek Assist" },
+  { id: "tx_2", date: "2026-02-12", amount: 4500, status: "Pending", method: "Bank Transfer", journey: "Beas Kund Trek Assist" },
   { id: "tx_3", date: "2026-02-10", amount: 8200, status: "Paid", method: "Razorpay Payout", journey: "Solang Activity Package" },
   { id: "tx_4", date: "2024-02-08", amount: 15000, status: "Paid", method: "Direct Bank", journey: "Luxury Stay - 4 nights" },
 ];
