@@ -8,6 +8,9 @@ import MetricsCard from "../components/organisms/MetricsCard";
 import {
     getAdminVendors,
     verifyVendor,
+    getPendingServices,
+    approveService,
+    rejectService,
     getDashboard,
     getConversionFunnel,
     getTrafficSources,
@@ -25,6 +28,15 @@ import { toApiUiError } from "@/utils/apiErrors";
 type Tab = "overview" | "growth" | "campaigns" | "supply_demand" | "referrals";
 
 type Vendor = { id: string; businessName: string; type: string; isVerified: boolean; createdAt: string };
+type PendingService = {
+    id: number;
+    name: string;
+    description: string;
+    thumbnail: string | null;
+    createdAt: string;
+    vendor?: { id: string; businessName: string };
+    prices?: { price: number }[];
+};
 type Dashboard = { revenue: { total: number; currency: string }; users: { total: number }; vendors: { pendingVerification: number } };
 
 export default function AdminDashboard() {
@@ -33,6 +45,8 @@ export default function AdminDashboard() {
     const [dashboard, setDashboard] = useState<Dashboard | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [approvingId, setApprovingId] = useState<string | null>(null);
+    const [pendingServices, setPendingServices] = useState<PendingService[]>([]);
+    const [serviceActionId, setServiceActionId] = useState<number | null>(null);
 
     // Analytics state
     const [funnelData, setFunnelData] = useState<any>(null);
@@ -66,12 +80,14 @@ export default function AdminDashboard() {
 
     const loadOverview = useCallback(async () => {
         try {
-            const [vendorResult, dashboardResult] = await Promise.all([
+            const [vendorResult, dashboardResult, pendingServicesResult] = await Promise.all([
                 getAdminVendors(1, 50),
                 getDashboard(),
+                getPendingServices(),
             ]);
             setVendors(Array.isArray(vendorResult?.data) ? vendorResult.data : []);
             setDashboard(dashboardResult);
+            setPendingServices(Array.isArray(pendingServicesResult) ? pendingServicesResult : []);
         } catch (err) {
             setErrorMessage(toApiUiError(err, "We could not load the dashboard.").message);
         }
@@ -140,6 +156,30 @@ export default function AdminDashboard() {
             setErrorMessage(toApiUiError(err, "We could not approve this vendor.").message);
         } finally {
             setApprovingId(null);
+        }
+    };
+
+    const handleApproveService = async (serviceId: number) => {
+        setServiceActionId(serviceId);
+        try {
+            await approveService(serviceId);
+            setPendingServices((prev) => prev.filter((s) => s.id !== serviceId));
+        } catch (err) {
+            setErrorMessage(toApiUiError(err, "We could not approve this service.").message);
+        } finally {
+            setServiceActionId(null);
+        }
+    };
+
+    const handleRejectService = async (serviceId: number) => {
+        setServiceActionId(serviceId);
+        try {
+            await rejectService(serviceId);
+            setPendingServices((prev) => prev.filter((s) => s.id !== serviceId));
+        } catch (err) {
+            setErrorMessage(toApiUiError(err, "We could not reject this service.").message);
+        } finally {
+            setServiceActionId(null);
         }
     };
 
@@ -288,6 +328,70 @@ export default function AdminDashboard() {
                                 icon={<span className="text-2xl">⏳</span>}
                             />
                         </div>
+
+                        <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
+                            <Typography variant="h3" className="text-base font-black text-indigo-400 uppercase tracking-widest mb-4">
+                                Pending Service Approvals ({pendingServices.length})
+                            </Typography>
+                            {pendingServices.length === 0 ? (
+                                <div className="text-center py-12 border border-dashed border-slate-800 rounded-2xl">
+                                    <p className="text-sm text-slate-500 font-medium">No services awaiting review.</p>
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-xs border-collapse">
+                                        <thead>
+                                            <tr className="border-b border-slate-800 text-slate-400 font-bold uppercase tracking-wider">
+                                                <th className="pb-3">Vendor</th>
+                                                <th className="pb-3">Service</th>
+                                                <th className="pb-3">Description</th>
+                                                <th className="pb-3">Price</th>
+                                                <th className="pb-3">Photo</th>
+                                                <th className="pb-3 text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {pendingServices.map((service) => (
+                                                <tr key={service.id} className="border-b border-slate-800/50 text-slate-300 align-top">
+                                                    <td className="py-3 font-semibold text-slate-100 whitespace-nowrap">{service.vendor?.businessName || "—"}</td>
+                                                    <td className="py-3 font-semibold text-slate-100 whitespace-nowrap">{service.name}</td>
+                                                    <td className="py-3 text-slate-400 max-w-xs">{service.description}</td>
+                                                    <td className="py-3 text-slate-100 whitespace-nowrap">
+                                                        {service.prices?.[0]?.price != null ? `₹${service.prices[0].price}` : "—"}
+                                                    </td>
+                                                    <td className="py-3">
+                                                        {service.thumbnail ? (
+                                                            // eslint-disable-next-line @next/next/no-img-element
+                                                            <img src={service.thumbnail} alt={service.name} className="w-16 h-12 object-cover rounded-lg" />
+                                                        ) : (
+                                                            <span className="text-slate-600">No image</span>
+                                                        )}
+                                                    </td>
+                                                    <td className="py-3 text-right whitespace-nowrap">
+                                                        <div className="flex gap-2 justify-end">
+                                                            <Button
+                                                                onClick={() => handleApproveService(service.id)}
+                                                                disabled={serviceActionId === service.id}
+                                                                className="h-9 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold disabled:opacity-50"
+                                                            >
+                                                                {serviceActionId === service.id ? "…" : "Approve"}
+                                                            </Button>
+                                                            <Button
+                                                                onClick={() => handleRejectService(service.id)}
+                                                                disabled={serviceActionId === service.id}
+                                                                className="h-9 px-4 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold disabled:opacity-50"
+                                                            >
+                                                                {serviceActionId === service.id ? "…" : "Reject"}
+                                                            </Button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </section>
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             <section className="bg-slate-900 border border-slate-800 rounded-3xl p-6">

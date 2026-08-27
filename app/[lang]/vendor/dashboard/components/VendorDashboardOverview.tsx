@@ -190,7 +190,7 @@ export default function VendorDashboardOverview({ dict }: VendorDashboardOvervie
                 <div key={booking.id} className="flex items-center justify-between p-6 bg-white rounded-[2rem] border border-slate-100 shadow-sm transition-all duration-500 hover:border-indigo-100 group">
                   <div className="flex-1 min-w-0">
                     <div className="font-black text-slate-900 uppercase tracking-tighter text-[11px] group-hover:text-indigo-600 transition-colors truncate">{customerName}</div>
-                    <div className="text-[10px] font-bold text-slate-400 mt-0.5 truncate">{booking.package?.name || "Trip package"}</div>
+                    <div className="text-[10px] font-bold text-slate-400 mt-0.5 truncate">{booking.directService?.name || booking.package?.name || "Trip package"}</div>
                   </div>
                   <div className={`px-4 py-1 rounded-full text-[8px] font-black uppercase tracking-widest flex-shrink-0 ${
                     bucket === "confirmed" ? "bg-emerald-500 text-white" :

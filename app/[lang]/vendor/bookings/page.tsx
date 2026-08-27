@@ -365,7 +365,7 @@ export default function ManageBookingsPage() {
                           </div>
                           <div className="min-w-0">
                             <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1.5">{res.card.id} #{booking.id}</p>
-                            <h3 className="text-lg font-black text-slate-900 leading-tight uppercase tracking-tighter truncate">{booking.package?.name || "Trip package"}</h3>
+                            <h3 className="text-lg font-black text-slate-900 leading-tight uppercase tracking-tighter truncate">{booking.directService?.name || booking.package?.name || "Trip package"}</h3>
                           </div>
                         </div>
                         <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm flex-shrink-0 ${STATUS_BADGE[filterKey]}`}>
