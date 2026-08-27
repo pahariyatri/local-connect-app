@@ -48,6 +48,12 @@ export const rejectService = async (serviceId: number) => {
   return (raw as any)?.data ?? raw;
 };
 
+export const bulkApproveServices = async () => {
+  const raw = await api.patch('/admin/services/bulk-approve');
+  return (raw as any)?.data ?? raw;
+};
+
+
 // ═══════════════════ REVENUE ═══════════════════
 
 export const getRevenue = async (startDate?: string, endDate?: string) => {

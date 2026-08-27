@@ -13,14 +13,25 @@ type TypographyProps = {
     ...props
   }: TypographyProps) {
     const variants = {
-      h1: "text-4xl sm:text-5xl font-black text-slate-900 tracking-tight",
-      h2: "text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight",
-      h3: "text-xl font-bold text-slate-800",
-      p: "text-base text-slate-600 leading-relaxed",
+      h1: "text-4xl sm:text-5xl font-black tracking-tight",
+      h2: "text-2xl sm:text-3xl font-bold tracking-tight",
+      h3: "text-xl font-bold",
+      p: "text-base leading-relaxed",
     };
+
+    const defaultColors = {
+      h1: "text-slate-900",
+      h2: "text-slate-800",
+      h3: "text-slate-800",
+      p: "text-slate-600",
+    };
+
+    const hasTextColor = /\btext-(?:[a-z0-9]+|\[.+\])/.test(className);
+    const colorClass = hasTextColor ? "" : defaultColors[variant];
   
     const Component = variant;
   
-    return <Component className={`${variants[variant]} ${className}`} {...props}>{children}</Component>;
+    return <Component className={`${variants[variant]} ${colorClass} ${className}`.trim()} {...props}>{children}</Component>;
   }
+
   
