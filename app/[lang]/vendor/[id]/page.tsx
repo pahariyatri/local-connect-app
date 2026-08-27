@@ -360,7 +360,7 @@ export default function VendorProfilePage() {
                 endDate: bookingEndDate || undefined,
                 guestCount: bookingGuestCount,
                 notes: bookingNotes || undefined,
-            });
+            }, { destination: profile?.hometown });
             showNotification(result.message || "Booking request sent successfully!", "success");
             setBookingModalService(null);
             setActiveDetailModal(null);

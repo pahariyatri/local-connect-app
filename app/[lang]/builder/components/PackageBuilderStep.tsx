@@ -246,6 +246,16 @@ export default function PackageBuilderStep({
       });
       const id = (pkg as any)?.id;
       if (id) {
+        // The only real "a trip was built" signal in the whole funnel — until
+        // now nothing fired here, so every admin/campaign/referral report
+        // that counts trip builds always read zero regardless of real
+        // activity. `destination` (singular, first stop) is what the
+        // by-city demand aggregation in getSupplyDemandReport groups on.
+        sessionTracker.track('trip_builder_completed', {
+          entityType: 'package',
+          entityId: String(id),
+          metadata: { destination: destinations?.[0], destinations, origin },
+        });
         const params = new URLSearchParams();
         params.set("packageId", String(id));
         router.push(`/${lang}/results?${params.toString()}`);

@@ -5,12 +5,17 @@
 import { api } from '@/lib/apiClient';
 import { sessionTracker } from './sessionService';
 
-export const createBooking = async (bookingData: {
-  packageId: number;
-  userId?: string;
-  travelDate: string;
-  guestCount: number;
-}) => {
+export const createBooking = async (
+  bookingData: {
+    packageId: number;
+    userId?: string;
+    travelDate: string;
+    guestCount: number;
+  },
+  /** Tracking-only context, never sent to the API — `destination` feeds the
+   * admin demand report's by-city aggregation on the resulting booking_completed event. */
+  trackingMeta?: { destination?: string },
+) => {
 
   // Track booking started
   sessionTracker.track('booking_started', {
@@ -33,7 +38,11 @@ export const createBooking = async (bookingData: {
     sessionTracker.track('booking_completed', {
       entityType: 'booking',
       entityId: String(result.bookingId),
-      metadata: { reservationFeeAmount: result.reservationFeeAmount, currency: result.currency },
+      metadata: {
+        reservationFeeAmount: result.reservationFeeAmount,
+        currency: result.currency,
+        destination: trackingMeta?.destination,
+      },
     });
   }
 
@@ -180,7 +189,11 @@ export interface DirectBookingResult {
   isDuplicate?: boolean;
 }
 
-export const createDirectBooking = async (data: CreateDirectBookingData): Promise<DirectBookingResult> => {
+export const createDirectBooking = async (
+  data: CreateDirectBookingData,
+  /** Tracking-only context, never sent to the API — see createBooking(). */
+  trackingMeta?: { destination?: string },
+): Promise<DirectBookingResult> => {
   sessionTracker.track('booking_started', {
     entityType: 'service',
     entityId: String(data.serviceId),
@@ -194,7 +207,12 @@ export const createDirectBooking = async (data: CreateDirectBookingData): Promis
     sessionTracker.track('booking_completed', {
       entityType: 'booking',
       entityId: String(result.bookingId),
-      metadata: { reservationFeeAmount: result.reservationFeeAmount, currency: result.currency, source: 'direct' },
+      metadata: {
+        reservationFeeAmount: result.reservationFeeAmount,
+        currency: result.currency,
+        source: 'direct',
+        destination: trackingMeta?.destination,
+      },
     });
   }
 

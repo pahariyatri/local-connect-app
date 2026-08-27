@@ -372,7 +372,7 @@ export default function ResultsPage() {
       };
 
       const { createBooking } = await import("@/services/bookingService");
-      const result = await createBooking(bookingData);
+      const result = await createBooking(bookingData, { destination: destinations?.[0] });
 
       // Reservation-fee model: creating a booking only sends the request to
       // each local partner — it no longer creates a payment order. { bookingId,
