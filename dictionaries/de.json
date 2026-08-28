@@ -321,7 +321,7 @@
       "itinerary": {
         "day": "Tag {day}",
         "add_stop": "+ Schneller Stopp",
-        "explore_more": "Erkunde Anbieter &quot;auf dem Weg&quot;...",
+        "explore_more": "Erkunde Anbieter \"auf dem Weg\"...",
         "near_origin": "Lade mehr Dhabas & Abenteuerspots in der Nähe von {origin}"
       },
       "footer": {

@@ -326,7 +326,7 @@ export default function TripBuilderPage() {
   };
 
   return (
-      <main className="max-w-6xl mx-auto px-4 pt-6 sm:pt-10 pb-24 sm:pb-32">
+      <main className="max-w-6xl mx-auto px-4 pt-6 sm:pt-10 pb-36 sm:pb-44 md:pb-48">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
             {/* Sidebar - Premium Promise */}

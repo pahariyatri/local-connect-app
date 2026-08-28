@@ -321,7 +321,7 @@
       "itinerary": {
         "day": "Día {day}",
         "add_stop": "+ Parada rápida",
-        "explore_more": "Explorando vendedores &quot;en el camino&quot;...",
+        "explore_more": "Explorando vendedores \"en el camino\"...",
         "near_origin": "Cargando más dhabas y lugares de aventura cerca de {origin}"
       },
       "footer": {

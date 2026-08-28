@@ -9,7 +9,7 @@ import { useTripStore } from "@/store/useTripStore";
 import { prepTracker } from "@/lib/prepTracker";
 import { formatINRWithSymbol } from "@/utils/price";
 import { useAuth } from "@/contexts/AuthContext";
-import TopNavigation from "../components/organisms/TopNavigation";
+import Header from "../components/organisms/Header";
 
 import Typography from "../components/atoms/Typography";
 import DayItinerary from "./components/DayItinerary";
@@ -398,7 +398,7 @@ export default function ResultsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-44">
-      <TopNavigation title="Your Legend Path" />
+      <Header />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-24 text-slate-900">
         {/* ── 1 · HERO HEADER BANNER ───────────────────────────────────────── */}

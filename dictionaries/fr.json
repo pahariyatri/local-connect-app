@@ -321,7 +321,7 @@
       "itinerary": {
         "day": "Jour {day}",
         "add_stop": "+ Ajout rapide d'arrêt",
-        "explore_more": "Exploration des vendeurs &quot;sur la route&quot;...",
+        "explore_more": "Exploration des vendeurs \"sur la route\"...",
         "near_origin": "Chargement de plus de dhabas et de lieux d'aventure près de {origin}"
       },
       "footer": {

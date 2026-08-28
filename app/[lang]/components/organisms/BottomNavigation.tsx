@@ -27,6 +27,16 @@ export default function BottomNavigation({
 
   const isVendor = !!user && /vendor|host|broker/i.test(user.role || "");
 
+  // Hide bottom navigation bar on transactional flows where a dedicated sticky footer action bar exists
+  const isTransactionalFlow =
+    pathname.startsWith(`/${lang}/builder`) ||
+    pathname.startsWith(`/${lang}/results`) ||
+    pathname.startsWith(`/${lang}/journey`);
+
+  if (isTransactionalFlow) {
+    return null;
+  }
+
   const navDict = dict?.nav || {};
   const commonDict = dict?.page?.common?.actions || {};
 
