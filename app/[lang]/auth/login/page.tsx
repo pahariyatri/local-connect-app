@@ -7,6 +7,7 @@ import Button from "../../components/atoms/Button";
 import { sanitizePhone, isValidPhone, PHONE_LENGTH } from "@/utils/validation";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthShell from "../components/AuthShell";
+import { getTravelerDictionary } from "@/lib/travelerDictionary";
 
 /** Only ever follow a same-site relative path — never an absolute/external URL. */
 const safeRedirect = (raw: string | null, lang: string): string => {
@@ -24,6 +25,7 @@ export default function LoginPage() {
     const { user } = useAuth();
     const [phone, setPhone] = useState("");
     const [touched, setTouched] = useState(false);
+    const t = getTravelerDictionary(String(lang)).auth.phoneEntry;
 
     // Already signed in (e.g. straight after signup, where the session is
     // established by /auth/pin/signup): don't ask for the PIN a second time.
@@ -52,9 +54,9 @@ export default function LoginPage() {
     return (
         <AuthShell
             lang={String(lang)}
-            eyebrow="Direct Local Booking"
-            title={<>Sign In or <span className="text-emerald-500">Sign Up</span></>}
-            subtitle="Enter your 10-digit mobile number to get started."
+            eyebrow={t.eyebrow}
+            title={<>{t.titlePrefix} <span className="text-emerald-500">{t.titleHighlight}</span></>}
+            subtitle={t.subtitle}
         >
             <div className="space-y-5">
                 <div>
@@ -72,7 +74,7 @@ export default function LoginPage() {
                             name="phone"
                             autoFocus
                             className="flex-1 h-full px-4 text-base sm:text-lg font-bold tracking-wider placeholder:text-slate-300 placeholder:font-normal bg-transparent text-slate-900 border-0 outline-none focus:outline-none focus:ring-0"
-                            placeholder="98765 43210"
+                            placeholder={t.phonePlaceholder}
                             type="tel"
                             inputMode="numeric"
                             autoComplete="tel-national"
@@ -87,7 +89,7 @@ export default function LoginPage() {
                     </div>
                     {showInvalid && (
                         <p id="phone-error" role="alert" className="text-xs text-red-500 font-semibold mt-2">
-                            Please enter a valid 10-digit mobile number.
+                            {t.invalidPhone}
                         </p>
                     )}
                 </div>
@@ -97,15 +99,15 @@ export default function LoginPage() {
                     disabled={!phoneValid}
                     className="w-full h-13 sm:h-14 rounded-2xl text-xs sm:text-sm font-black uppercase tracking-[0.15em] bg-slate-900 hover:bg-black text-white shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[0.98]"
                 >
-                    Continue
+                    {t.continueButton}
                 </Button>
             </div>
 
             <p className="mt-8 text-[11px] sm:text-xs text-slate-400 leading-relaxed text-center font-medium">
-                By continuing, you agree to our{" "}
-                <Link href={`/${lang}/terms-conditions`} className="text-slate-700 font-bold underline underline-offset-2 hover:text-slate-900">Terms</Link>
-                {" "}and{" "}
-                <Link href={`/${lang}/privacy-policy`} className="text-slate-700 font-bold underline underline-offset-2 hover:text-slate-900">Privacy Policy</Link>.
+                {t.termsPrefix}{" "}
+                <Link href={`/${lang}/terms-conditions`} className="text-slate-700 font-bold underline underline-offset-2 hover:text-slate-900">{t.termsLink}</Link>
+                {" "}{t.and}{" "}
+                <Link href={`/${lang}/privacy-policy`} className="text-slate-700 font-bold underline underline-offset-2 hover:text-slate-900">{t.privacyLink}</Link>.
             </p>
         </AuthShell>
     );

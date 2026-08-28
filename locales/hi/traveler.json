@@ -1,0 +1,81 @@
+{
+  "auth": {
+    "phoneEntry": {
+      "eyebrow": "डायरेक्ट लोकल बुकिंग",
+      "titlePrefix": "साइन इन करें या",
+      "titleHighlight": "साइन अप करें",
+      "subtitle": "जारी रखने के लिए अपना 10 अंकों का मोबाइल नंबर डालें।",
+      "phonePlaceholder": "98765 43210",
+      "invalidPhone": "कृपया मान्य 10 अंकों का मोबाइल नंबर डालें।",
+      "continueButton": "जारी रखें",
+      "termsPrefix": "जारी रखकर, आप हमारी",
+      "termsLink": "शर्तों",
+      "and": "और",
+      "privacyLink": "गोपनीयता नीति"
+    },
+    "pinSetup": {
+      "stepOfLabel": "चरण {current} / {total}",
+      "resetLabel": "पिन रीसेट करें",
+      "titlePrefix": "अपना",
+      "titleHighlight": "4 अंकों का पिन बनाएं",
+      "subtitle": "अगली बार साइन इन करने के लिए आप इसी पिन का उपयोग करेंगे।",
+      "confirmTitlePrefix": "अपने",
+      "confirmTitleHighlight": "पिन की पुष्टि करें",
+      "confirmSubtitle": "पुष्टि के लिए 4 अंकों का पिन दोबारा डालें।",
+      "continueButton": "जारी रखें",
+      "createAccountButton": "खाता बनाएं",
+      "saveNewPinButton": "नया पिन सेव करें",
+      "errorIncomplete": "सभी {length} अंक डालें।",
+      "errorIncompleteConfirm": "अपना {length} अंकों का पिन डालें और पुष्टि करें।",
+      "errorTooSimple": "ऐसा पिन चुनें जिसे अंदाज़ा लगाना मुश्किल हो — 1234 या 0000 से बचें।",
+      "errorMismatch": "पिन मेल नहीं खा रहे। कृपया फिर से कोशिश करें।",
+      "changeNumberPrefix": "यह आपका नंबर नहीं है?",
+      "changeNumberLink": "नंबर बदलें",
+      "successAccountCreated": "खाता बन गया! रीडायरेक्ट हो रहा है...",
+      "successPinReset": "पिन रीसेट हो गया! साइन इन पर भेजा जा रहा है..."
+    },
+    "pinLogin": {
+      "eyebrow": "पिन लॉगिन",
+      "titlePrefix": "अपना",
+      "titleHighlight": "पिन डालें",
+      "subtitle": "+91 {maskedPhone} के लिए",
+      "errorIncomplete": "अपना {length} अंकों का पिन डालें।",
+      "signInButton": "साइन इन करें",
+      "forgotPinPrefix": "पिन भूल गए?",
+      "forgotPinLink": "OTP से रीसेट करें",
+      "successWelcomeBack": "वापसी पर स्वागत है! रीडायरेक्ट हो रहा है..."
+    },
+    "sessionExpired": {
+      "title": "सेशन समाप्त हो गया",
+      "subtitle": "यह लिंक अधूरा है या समय सीमा पार कर चुका है। कृपया दोबारा शुरू करें।",
+      "backButton": "साइन इन पर जाएं"
+    },
+    "checkingPhone": {
+      "title": "एक क्षण रुकें",
+      "subtitle": "आपका नंबर जांचा जा रहा है..."
+    },
+    "genericError": {
+      "title": "कुछ गड़बड़ हो गई",
+      "subtitle": "हम वह नंबर जांच नहीं सके। कृपया फिर से कोशिश करें।",
+      "backButton": "वापस जाएं",
+      "profileLoadFailed": "साइन इन हो गया, लेकिन आपकी प्रोफ़ाइल लोड नहीं हो सकी। कृपया फिर से कोशिश करें।"
+    },
+    "errors": {
+      "AUTH_PHONE_INVALID": "कृपया मान्य मोबाइल नंबर डालें।",
+      "AUTH_OTP_INVALID": "यह कोड मान्य नहीं है। कृपया जांचकर फिर से कोशिश करें।",
+      "AUTH_OTP_EXPIRED": "यह कोड समय सीमा पार कर चुका है। कृपया नया कोड मांगें।",
+      "AUTH_OTP_RATE_LIMITED": "बहुत सारे प्रयास हो गए। कृपया थोड़ी देर बाद फिर कोशिश करें।",
+      "AUTH_INVALID_CREDENTIALS": "यह पिन इस नंबर से मेल नहीं खाता। फिर से कोशिश करें या नीचे रीसेट करें।",
+      "AUTH_PIN_WEAK": "यह पिन आसानी से अंदाज़ा लगाया जा सकता है। कृपया कोई और पिन चुनें।",
+      "AUTH_PIN_MISMATCH": "आपके डाले गए पिन मेल नहीं खाते।",
+      "AUTH_RESET_TICKET_INVALID": "यह अनुरोध अब मान्य नहीं है। कृपया दोबारा शुरू करें।",
+      "AUTH_SESSION_EXPIRED": "आपका सेशन समाप्त हो गया है। कृपया फिर से साइन इन करें।",
+      "AUTH_PROVIDER_UNAVAILABLE": "अभी पिन रीसेट उपलब्ध नहीं है — कृपया कुछ मिनट बाद फिर कोशिश करें।",
+      "AUTH_USER_EXISTS": "इस नंबर के लिए पहले से खाता मौजूद है। कृपया साइन इन करें।",
+      "AUTH_FEATURE_DISABLED": "यह सुविधा अभी उपलब्ध नहीं है।",
+      "RATE_LIMITED": "बहुत सारे प्रयास हो गए। कृपया थोड़ी देर बाद फिर कोशिश करें।",
+      "OFFLINE": "कोई कनेक्शन नहीं। कृपया अपना नेटवर्क जांचें और फिर कोशिश करें।",
+      "GENERIC": "कुछ गड़बड़ हो गई। कृपया फिर से कोशिश करें।"
+    }
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "auth": {
+    "phoneEntry": {
+      "eyebrow": "Direct Local Booking",
+      "titlePrefix": "Sign In or",
+      "titleHighlight": "Sign Up",
+      "subtitle": "Enter your 10-digit mobile number to continue.",
+      "phonePlaceholder": "98765 43210",
+      "invalidPhone": "Please enter a valid 10-digit mobile number.",
+      "continueButton": "Continue",
+      "termsPrefix": "By continuing, you agree to our",
+      "termsLink": "Terms",
+      "and": "and",
+      "privacyLink": "Privacy Policy"
+    },
+    "pinSetup": {
+      "stepOfLabel": "Step {current} of {total}",
+      "resetLabel": "Reset PIN",
+      "titlePrefix": "Set your",
+      "titleHighlight": "4-digit PIN",
+      "subtitle": "You'll use this PIN to sign in next time.",
+      "confirmTitlePrefix": "Confirm your",
+      "confirmTitleHighlight": "PIN",
+      "confirmSubtitle": "Re-enter the 4-digit PIN to confirm.",
+      "continueButton": "Continue",
+      "createAccountButton": "Create Account",
+      "saveNewPinButton": "Save New PIN",
+      "errorIncomplete": "Enter all {length} digits.",
+      "errorIncompleteConfirm": "Enter and confirm your {length}-digit PIN.",
+      "errorTooSimple": "Choose a PIN that's harder to guess — avoid 1234 or 0000.",
+      "errorMismatch": "PINs don't match. Please try again.",
+      "changeNumberPrefix": "Not your number?",
+      "changeNumberLink": "Change number",
+      "successAccountCreated": "Account created! Redirecting...",
+      "successPinReset": "PIN reset! Redirecting to sign in..."
+    },
+    "pinLogin": {
+      "eyebrow": "PIN Login",
+      "titlePrefix": "Enter your",
+      "titleHighlight": "PIN",
+      "subtitle": "For +91 {maskedPhone}",
+      "errorIncomplete": "Enter your {length}-digit PIN.",
+      "signInButton": "Sign In",
+      "forgotPinPrefix": "Forgot your PIN?",
+      "forgotPinLink": "Reset via OTP",
+      "successWelcomeBack": "Welcome back! Redirecting..."
+    },
+    "sessionExpired": {
+      "title": "Session expired",
+      "subtitle": "This link is incomplete or has expired. Please start over.",
+      "backButton": "Go to sign in"
+    },
+    "checkingPhone": {
+      "title": "One moment",
+      "subtitle": "Checking your number..."
+    },
+    "genericError": {
+      "title": "Something went wrong",
+      "subtitle": "We could not check that number. Please try again.",
+      "backButton": "Go back",
+      "profileLoadFailed": "Signed in, but your profile could not be loaded. Please try again."
+    },
+    "errors": {
+      "AUTH_PHONE_INVALID": "Please enter a valid mobile number.",
+      "AUTH_OTP_INVALID": "That code is not valid. Please check and try again.",
+      "AUTH_OTP_EXPIRED": "That code has expired. Please request a new one.",
+      "AUTH_OTP_RATE_LIMITED": "Too many attempts. Please wait a moment and try again.",
+      "AUTH_INVALID_CREDENTIALS": "That PIN doesn't match this number. Try again or reset it below.",
+      "AUTH_PIN_WEAK": "That PIN is too easy to guess. Please choose a different one.",
+      "AUTH_PIN_MISMATCH": "The PINs you entered do not match.",
+      "AUTH_RESET_TICKET_INVALID": "This request is no longer valid. Please start again.",
+      "AUTH_SESSION_EXPIRED": "Your session has expired. Please sign in again.",
+      "AUTH_PROVIDER_UNAVAILABLE": "PIN reset isn't available right now — please try again in a few minutes.",
+      "AUTH_USER_EXISTS": "An account already exists for this number. Please sign in instead.",
+      "AUTH_FEATURE_DISABLED": "This feature is not available right now.",
+      "RATE_LIMITED": "Too many attempts. Please wait a moment and try again.",
+      "OFFLINE": "No connection. Please check your network and try again.",
+      "GENERIC": "Something went wrong. Please try again."
+    }
+  }
+}

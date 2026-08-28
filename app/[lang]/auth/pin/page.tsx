@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { PIN_LENGTH, isWeakPin } from '@/utils/validation';
 import Button from '../../components/atoms/Button';
 import AuthShell from '../components/AuthShell';
+import { getTravelerDictionary, format } from '@/lib/travelerDictionary';
 
 /**
  * Explicit state machine — the backend's phone/check result (or an OTP-
@@ -110,6 +111,7 @@ export default function PinPage() {
   const { lang } = useParams() as { lang: string };
   const searchParams = useSearchParams();
   const { login } = useAuth();
+  const t = getTravelerDictionary(lang).auth;
 
   const rawMode = searchParams.get('mode');
   const phoneNumber = searchParams.get('phone') || '';
@@ -142,7 +144,7 @@ export default function PinPage() {
   const completeAuth = async (welcome: string) => {
     const profile = await fetchCurrentUser();
     if (!profile?.id) {
-      throw new Error('Signed in, but your profile could not be loaded. Please try again.');
+      throw new Error(t.genericError.profileLoadFailed);
     }
     login({
       id: profile.id,
@@ -157,7 +159,7 @@ export default function PinPage() {
   };
 
   const failWith = (err: unknown, fallbackFlow: FlowState) => {
-    const ui = toAuthUiError(err);
+    const ui = toAuthUiError(err, t.errors);
     setError(ui.retryAfterSeconds ? `${ui.message} (wait ~${ui.retryAfterSeconds}s)` : ui.message);
     setFlow(fallbackFlow);
     submitLockRef.current = false;
@@ -188,13 +190,13 @@ export default function PinPage() {
   const handleLogin = async () => {
     if (submitLockRef.current) return;
     const pinStr = pin.join('');
-    if (pinStr.length < PIN_LENGTH) { setError(`Enter your ${PIN_LENGTH}-digit PIN.`); return; }
+    if (pinStr.length < PIN_LENGTH) { setError(format(t.pinLogin.errorIncomplete, { length: PIN_LENGTH })); return; }
     submitLockRef.current = true;
     setFlow('SUBMITTING');
     setError(null);
     try {
       await loginWithPin(phoneNumber, pinStr);
-      await completeAuth('Welcome back! Redirecting...');
+      await completeAuth(t.pinLogin.successWelcomeBack);
     } catch (err) {
       setPinDigits(empty());
       failWith(err, 'EXISTING_USER_PIN');
@@ -204,11 +206,11 @@ export default function PinPage() {
   const handleStep1Continue = () => {
     const pinStr = pin.join('');
     if (pinStr.length < PIN_LENGTH) {
-      setError(`Enter all ${PIN_LENGTH} digits.`);
+      setError(format(t.pinSetup.errorIncomplete, { length: PIN_LENGTH }));
       return;
     }
     if (isWeakPin(pinStr)) {
-      setError('That PIN is too simple. Please choose a different PIN.');
+      setError(t.pinSetup.errorTooSimple);
       return;
     }
     setError(null);
@@ -219,9 +221,9 @@ export default function PinPage() {
   const validateNewPin = (): string | null => {
     const pinStr = pin.join('');
     const confirmStr = confirm.join('');
-    if (pinStr.length < PIN_LENGTH || confirmStr.length < PIN_LENGTH) return `Enter and confirm your ${PIN_LENGTH}-digit PIN.`;
-    if (pinStr !== confirmStr) return 'PINs do not match. Please try again.';
-    if (isWeakPin(pinStr)) return 'That PIN is too easy to guess. Please choose a different one.';
+    if (pinStr.length < PIN_LENGTH || confirmStr.length < PIN_LENGTH) return format(t.pinSetup.errorIncompleteConfirm, { length: PIN_LENGTH });
+    if (pinStr !== confirmStr) return t.pinSetup.errorMismatch;
+    if (isWeakPin(pinStr)) return t.pinSetup.errorTooSimple;
     return null;
   };
 
@@ -246,12 +248,12 @@ export default function PinPage() {
       } else {
         await signupWithPin(phoneNumber, pinStr, confirmStr);
       }
-      await completeAuth('Account created! Redirecting...');
+      await completeAuth(t.pinSetup.successAccountCreated);
     } catch (err) {
       if (err instanceof ApiClientError && err.code === 'AUTH_USER_EXISTS') {
         clearPinState();
         setFlow('EXISTING_USER_PIN');
-        setError('This number is already registered. Please sign in with your PIN.');
+        setError(t.errors.AUTH_USER_EXISTS);
         submitLockRef.current = false;
         if (rawMode !== 'login') {
           router.replace(`/${lang}/auth/pin?mode=login&phone=${phoneNumber}${redirectSuffix}`);
@@ -272,7 +274,7 @@ export default function PinPage() {
     try {
       await resetPin(ticket, pin.join(''), confirm.join(''));
       clearPinState();
-      setSuccess('PIN reset! Redirecting to sign in...');
+      setSuccess(t.pinSetup.successPinReset);
       setTimeout(() => router.replace(`/${lang}/auth/login`), 900);
     } catch (err) {
       failWith(err, 'RESET_PIN');
@@ -289,7 +291,7 @@ export default function PinPage() {
         `/${lang}/auth/verify-otp?purpose=forgot&phone=${phoneNumber}&challengeId=${encodeURIComponent(challenge.challengeId)}&resendAfter=${challenge.resendAfterSeconds}${redirectSuffix}`,
       );
     } catch (err) {
-      const ui = toAuthUiError(err);
+      const ui = toAuthUiError(err, t.errors);
       setError(ui.message);
       submitLockRef.current = false;
     }
@@ -318,9 +320,9 @@ export default function PinPage() {
     (isTicketSignup && !ticket)
   ) {
     return (
-      <AuthShell lang={lang} title="Session expired" subtitle="This link is incomplete or has expired. Please start over.">
+      <AuthShell lang={lang} title={t.sessionExpired.title} subtitle={t.sessionExpired.subtitle}>
         <Button onClick={() => router.push(`/${lang}/auth/login`)} className="w-full h-12 rounded-xl bg-slate-900 hover:bg-black text-white text-sm font-semibold transition-colors">
-          Go to sign in
+          {t.sessionExpired.backButton}
         </Button>
       </AuthShell>
     );
@@ -329,7 +331,7 @@ export default function PinPage() {
   // Loading state while phone/check resolves
   if (flow === 'CHECKING_PHONE') {
     return (
-      <AuthShell lang={lang} title="One moment" subtitle="Checking your number...">
+      <AuthShell lang={lang} title={t.checkingPhone.title} subtitle={t.checkingPhone.subtitle}>
         <div className="flex justify-center py-6">
           <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
         </div>
@@ -339,9 +341,9 @@ export default function PinPage() {
 
   if (flow === 'ERROR') {
     return (
-      <AuthShell lang={lang} title="Something went wrong" subtitle={error || 'We could not check that number. Please try again.'}>
+      <AuthShell lang={lang} title={t.genericError.title} subtitle={error || t.genericError.subtitle}>
         <Button onClick={() => router.push(`/${lang}/auth/login`)} className="w-full h-12 rounded-xl bg-slate-900 hover:bg-black text-white text-sm font-semibold transition-colors">
-          Go back
+          {t.genericError.backButton}
         </Button>
       </AuthShell>
     );
@@ -351,19 +353,19 @@ export default function PinPage() {
   const busy = flow === 'SUBMITTING';
 
   // Dynamic titles and subtitles based on step
-  let pageEyebrow = 'PIN Login';
-  let pageTitle: React.ReactNode = <>Enter your <span className="text-emerald-500">PIN</span></>;
-  let pageSubtitle = phoneNumber ? `For +91 ${maskPhone(phoneNumber)}` : '';
+  let pageEyebrow = t.pinLogin.eyebrow;
+  let pageTitle: React.ReactNode = <>{t.pinLogin.titlePrefix} <span className="text-emerald-500">{t.pinLogin.titleHighlight}</span></>;
+  let pageSubtitle = phoneNumber ? format(t.pinLogin.subtitle, { maskedPhone: maskPhone(phoneNumber) }) : '';
 
   if (isNewPinFlow) {
     if (newPinStep === 1) {
-      pageEyebrow = flow === 'RESET_PIN' ? 'Reset PIN' : 'Step 1 of 2';
-      pageTitle = <>Set your <span className="text-emerald-500">4-digit PIN</span></>;
-      pageSubtitle = 'Create a secure PIN for your account';
+      pageEyebrow = flow === 'RESET_PIN' ? t.pinSetup.resetLabel : format(t.pinSetup.stepOfLabel, { current: 1, total: 2 });
+      pageTitle = <>{t.pinSetup.titlePrefix} <span className="text-emerald-500">{t.pinSetup.titleHighlight}</span></>;
+      pageSubtitle = t.pinSetup.subtitle;
     } else {
-      pageEyebrow = flow === 'RESET_PIN' ? 'Reset PIN' : 'Step 2 of 2';
-      pageTitle = <>Confirm your <span className="text-emerald-500">PIN</span></>;
-      pageSubtitle = 'Re-enter the 4-digit PIN to confirm';
+      pageEyebrow = flow === 'RESET_PIN' ? t.pinSetup.resetLabel : format(t.pinSetup.stepOfLabel, { current: 2, total: 2 });
+      pageTitle = <>{t.pinSetup.confirmTitlePrefix} <span className="text-emerald-500">{t.pinSetup.confirmTitleHighlight}</span></>;
+      pageSubtitle = t.pinSetup.confirmSubtitle;
     }
   }
 
@@ -446,11 +448,11 @@ export default function PinPage() {
           >
             {isNewPinFlow
               ? newPinStep === 1
-                ? 'Continue'
+                ? t.pinSetup.continueButton
                 : flow === 'RESET_PIN'
-                ? 'Save New PIN'
-                : 'Create Account'
-              : 'Sign In'}
+                ? t.pinSetup.saveNewPinButton
+                : t.pinSetup.createAccountButton
+              : t.pinLogin.signInButton}
           </Button>
 
           {flow === 'EXISTING_USER_PIN' && (
@@ -461,7 +463,7 @@ export default function PinPage() {
                 onClick={handleForgotPin}
                 className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors disabled:opacity-50"
               >
-                Forgot your PIN? <span className="text-emerald-700 underline underline-offset-2">Reset via OTP</span>
+                {t.pinLogin.forgotPinPrefix} <span className="text-emerald-700 underline underline-offset-2">{t.pinLogin.forgotPinLink}</span>
               </button>
             </div>
           )}
@@ -474,7 +476,7 @@ export default function PinPage() {
                 onClick={changeNumber}
                 className="text-xs text-slate-400 hover:text-slate-700 transition-colors disabled:opacity-50 font-medium"
               >
-                Not your number? <span className="underline underline-offset-2">Change number</span>
+                {t.pinSetup.changeNumberPrefix} <span className="underline underline-offset-2">{t.pinSetup.changeNumberLink}</span>
               </button>
             </div>
           )}
