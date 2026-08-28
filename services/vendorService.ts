@@ -35,7 +35,7 @@ export function mapServicesToVendors(services: any[]): Record<string, Vendor[]> 
   services.forEach((s: any) => {
     // Prioritize service item's own category/subcategory over vendor's primary registration type
     const rawCategory = resolveServiceCategory(s);
-    const type = vendorTypeToPreference(rawCategory);
+    const type = vendorTypeToPreference(rawCategory, s.name);
     const priceVal = Array.isArray(s.prices) && s.prices.length > 0 ? Number(s.prices[0]?.price) : 1500;
     const mapped: Vendor = {
       id: s.id.toString(),
@@ -69,13 +69,25 @@ export interface DiscoveryParams {
 }
 
 // Maps backend vendor type or service category → frontend preference key used in VendorSelectionCard
-export function vendorTypeToPreference(vendorType?: string): 'stay' | 'travel' | 'activity' | 'food' {
+export function vendorTypeToPreference(vendorType?: string, serviceName?: string): 'stay' | 'travel' | 'activity' | 'food' {
+  if (serviceName) {
+    const sName = serviceName.toLowerCase();
+    if (sName.includes('walk') || sName.includes('trek') || sName.includes('tour') || sName.includes('guide') || sName.includes('safari') || sName.includes('rafting') || sName.includes('paragliding') || sName.includes('expedition') || sName.includes('trail')) {
+      return 'activity';
+    }
+    if (sName.includes('taxi') || sName.includes('cab') || sName.includes('transfer') || sName.includes('ride') || sName.includes('bike rental')) {
+      return 'travel';
+    }
+    if (sName.includes('breakfast') || sName.includes('dinner') || sName.includes('lunch') || sName.includes('meal') || sName.includes('tasting')) {
+      return 'food';
+    }
+  }
   if (!vendorType) return 'stay';
   const t = vendorType.toLowerCase();
-  if (t.includes('hotel') || t.includes('homestay') || t.includes('accommodation') || t.includes('stay')) return 'stay';
+  if (t.includes('activity') || t.includes('activities') || t.includes('trek') || t.includes('guide') || t.includes('adventure') || t.includes('rafting') || t.includes('paragliding') || t.includes('walk') || t.includes('tour') || t.includes('experience')) return 'activity';
+  if (t.includes('hotel') || t.includes('homestay') || t.includes('accommodation') || t.includes('stay') || t.includes('resort') || t.includes('villa') || t.includes('room')) return 'stay';
   if (t.includes('taxi') || t.includes('cab') || t.includes('transport') || t.includes('travel')) return 'travel';
   if (t.includes('food') || t.includes('restaurant') || t.includes('meal') || t.includes('cafe') || t.includes('culinary')) return 'food';
-  if (t.includes('activity') || t.includes('activities') || t.includes('trek') || t.includes('guide') || t.includes('adventure') || t.includes('rafting') || t.includes('paragliding')) return 'activity';
   return 'stay';
 }
 
