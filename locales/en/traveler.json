@@ -60,6 +60,15 @@
       "backButton": "Go back",
       "profileLoadFailed": "Signed in, but your profile could not be loaded. Please try again."
     },
+    "nameCollection": {
+      "titlePrefix": "What's your",
+      "titleHighlight": "name?",
+      "subtitle": "So local hosts and drivers know who they're welcoming.",
+      "placeholder": "Full name",
+      "continueButton": "Continue",
+      "errorRequired": "Please enter your name.",
+      "errorSaveFailed": "Could not save your name. Please try again."
+    },
     "errors": {
       "AUTH_PHONE_INVALID": "Please enter a valid mobile number.",
       "AUTH_OTP_INVALID": "That code is not valid. Please check and try again.",

@@ -149,9 +149,6 @@ export default function ServiceListPage() {
         <div className="text-center py-20 bg-slate-50 rounded-[3rem] border border-dashed border-slate-200">
           <Typography variant="h3" className="text-xl font-black text-slate-900 mb-2">No services yet</Typography>
           <p className="text-slate-400 text-sm mb-8">Add your first service so travelers can find and book it.</p>
-          <Button onClick={() => router.push(`/${lang}/vendor/services/new`)} className="h-12 px-6 rounded-xl bg-slate-900 text-white font-bold text-sm">
-            Add a service
-          </Button>
         </div>
       )}
 

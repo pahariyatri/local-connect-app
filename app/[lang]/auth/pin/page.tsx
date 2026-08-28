@@ -141,6 +141,9 @@ export default function PinPage() {
 
   const goToDestination = () => router.replace(safeRedirect(redirectTo));
 
+  /** findOrCreateVerifiedUser's placeholder sentinel — never a real traveler's actual name. */
+  const needsName = (firstName?: string, lastName?: string) => firstName === 'User' && !lastName;
+
   const completeAuth = async (welcome: string) => {
     const profile = await fetchCurrentUser();
     if (!profile?.id) {
@@ -155,7 +158,13 @@ export default function PinPage() {
     });
     clearPinState();
     setSuccess(welcome);
-    setTimeout(goToDestination, 700);
+    // New account (or a legacy one that never went through this) still carries
+    // the placeholder name — collect a real one before this session ever sees
+    // the app, instead of letting "User" reach any screen or notification.
+    const goNext = needsName(profile.firstName, profile.lastName)
+      ? () => router.replace(`/${lang}/auth/name?redirectTo=${encodeURIComponent(safeRedirect(redirectTo))}`)
+      : goToDestination;
+    setTimeout(goNext, 700);
   };
 
   const failWith = (err: unknown, fallbackFlow: FlowState) => {
