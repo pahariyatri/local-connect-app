@@ -73,8 +73,9 @@ export default function AdminDashboard() {
     // Loading states
     const [isLoading, setIsLoading] = useState(true);
 
-    // Modal state for Campaign Creation
+    // Modal states
     const [showCampaignModal, setShowCampaignModal] = useState(false);
+    const [showBulkConfirmModal, setShowBulkConfirmModal] = useState(false);
     const [newCampaign, setNewCampaign] = useState({
         name: "",
         channel: "google_ads",
@@ -202,6 +203,7 @@ export default function AdminDashboard() {
         try {
             await bulkApproveServices();
             setPendingServices([]);
+            setShowBulkConfirmModal(false);
             const dash = await getDashboard();
             setDashboard(dash?.data || dash);
         } catch (err) {
@@ -395,11 +397,13 @@ export default function AdminDashboard() {
                                 </div>
                                 {pendingServices.length > 0 && (
                                     <Button
-                                        onClick={handleBulkApproveServices}
+                                        type="button"
+                                        onClick={() => setShowBulkConfirmModal(true)}
                                         disabled={isBulkApproving}
-                                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-xl text-xs disabled:opacity-50"
+                                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 px-4 rounded-xl text-xs disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-md shadow-emerald-950/40"
                                     >
-                                        {isBulkApproving ? "Approving All..." : `Approve All (${pendingServices.length})`}
+                                        <span>⚡</span>
+                                        {isBulkApproving ? "Approving All..." : `Bulk Approve All (${pendingServices.length})`}
                                     </Button>
                                 )}
                             </div>
@@ -1144,6 +1148,50 @@ export default function AdminDashboard() {
                                 </Button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Bulk Approval Safety Confirmation Modal */}
+            {showBulkConfirmModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+                    <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-6 relative shadow-2xl space-y-4">
+                        <button
+                            type="button"
+                            onClick={() => setShowBulkConfirmModal(false)}
+                            className="absolute top-4 right-4 text-slate-400 hover:text-slate-200 font-bold text-sm"
+                        >
+                            ✕
+                        </button>
+                        <div className="flex items-center gap-3 text-amber-400">
+                            <div className="p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xl">
+                                ⚠️
+                            </div>
+                            <div>
+                                <h3 className="text-base font-black text-slate-100">Confirm Bulk Approval</h3>
+                                <p className="text-xs text-slate-400">Operational Oversight Check</p>
+                            </div>
+                        </div>
+                        <p className="text-xs text-slate-300 leading-relaxed bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                            You are about to bulk-approve <strong className="text-emerald-400 font-black">{pendingServices.length} pending services</strong> simultaneously. Approved services will instantly become searchable and bookable by travelers.
+                        </p>
+                        <div className="flex justify-end gap-3 pt-2">
+                            <Button
+                                type="button"
+                                onClick={() => setShowBulkConfirmModal(false)}
+                                className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-4 rounded-xl text-xs"
+                            >
+                                Cancel &amp; Review Manually
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={handleBulkApproveServices}
+                                disabled={isBulkApproving}
+                                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-5 rounded-xl text-xs shadow-md shadow-emerald-900/40 disabled:opacity-50"
+                            >
+                                {isBulkApproving ? "Approving All..." : "Yes, Approve All"}
+                            </Button>
+                        </div>
                     </div>
                 </div>
             )}
