@@ -10,7 +10,7 @@ import Textarea from "../../../components/atoms/Textarea";
 import LocationAutocomplete from "../../../components/molecules/LocationAutocomplete";
 import { getMyVendor } from "@/services/vendorService";
 import { getCategories, getSubcategories, createService } from "@/services/catalogService";
-import { uploadMedia, deleteMedia, validateImage } from "@/services/mediaService";
+import { uploadMedia, deleteMedia, getMediaKeyFromUrl, validateImage } from "@/services/mediaService";
 import { toApiUiError } from "@/utils/apiErrors";
 import Loading from "@/app/loading";
 import { useTouchedFields } from "@/hooks/useTouchedFields";
@@ -157,8 +157,8 @@ export default function NewServicePage() {
   const [exclusionsText, setExclusionsText] = useState("");
   const [cancellationPolicy, setCancellationPolicy] = useState("");
 
-  // Step 4 — Media / Photos
-  const [images, setImages] = useState<string[]>([]);
+  // Step 4 — Media / Photos: store {url, key} pairs so deletion can use the key
+  const [images, setImages] = useState<{ url: string; key: string }[]>([]);
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [mediaError, setMediaError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -215,20 +215,20 @@ export default function NewServicePage() {
     setUploadingMedia(true);
     setMediaError(null);
 
-    const uploadedUrls: string[] = [];
+    const uploadedUrls: { url: string; key: string }[] = [];
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const validation = validateImage(file);
-      if (!validation.valid) {
-        setMediaError(validation.error || "Invalid file format or size.");
+      const validationError = validateImage(file);
+      if (validationError) {
+        setMediaError(validationError);
         continue;
       }
       try {
         const result = await uploadMedia(file, "service-images");
         if (result?.url) {
-          uploadedUrls.push(result.url);
+          uploadedUrls.push({ url: result.url, key: result.key });
         }
-      } catch (err) {
+      } catch {
         setMediaError("Failed to upload image. Please try again.");
       }
     }
@@ -241,10 +241,11 @@ export default function NewServicePage() {
   };
 
   const handleRemoveImage = async (indexToRemove: number) => {
-    const urlToRemove = images[indexToRemove];
+    const item = images[indexToRemove];
     setImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
     try {
-      await deleteMedia(urlToRemove);
+      const key = item.key || getMediaKeyFromUrl(item.url);
+      if (key) await deleteMedia(key);
     } catch {
       // non-fatal if backend cleanup fails
     }
@@ -279,7 +280,7 @@ export default function NewServicePage() {
         subcategoryId,
         capacity: Number(capacity),
         pricingUnit,
-        ...(images.length > 0 ? { thumbnail: images[0], images } : {}),
+        ...(images.length > 0 ? { thumbnail: images[0].url, images: images.map((i) => i.url) } : {}),
         ...(inclusionsList.length > 0 ? { inclusions: inclusionsList } : {}),
         ...(exclusionsList.length > 0 ? { exclusions: exclusionsList } : {}),
         ...(cancellationPolicy.trim() ? { cancellationPolicy: cancellationPolicy.trim() } : {}),
@@ -587,10 +588,10 @@ export default function NewServicePage() {
                 <span className="text-[10px] text-slate-400 mt-1">JPG, PNG, WEBP</span>
               </button>
 
-              {images.map((url, idx) => (
-                <div key={url} className="relative h-36 sm:h-40 rounded-3xl overflow-hidden group border border-slate-100 shadow-sm bg-slate-900">
+              {images.map((item, idx) => (
+                <div key={item.url} className="relative h-36 sm:h-40 rounded-3xl overflow-hidden group border border-slate-100 shadow-sm bg-slate-900">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  <img src={item.url} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   {idx === 0 && (
                     <span className="absolute top-3 left-3 bg-emerald-500 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-md shadow-sm">
                       Cover Photo
@@ -646,10 +647,10 @@ export default function NewServicePage() {
                 <div className="pt-4">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Photos ({images.length})</span>
                   <div className="flex gap-2 overflow-x-auto pb-2">
-                    {images.map((url, i) => (
+                    {images.map((item, i) => (
                       <div key={i} className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={url} alt={`Preview ${i + 1}`} className="w-full h-full object-cover" />
+                        <img src={item.url} alt={`Preview ${i + 1}`} className="w-full h-full object-cover" />
                       </div>
                     ))}
                   </div>
