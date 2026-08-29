@@ -276,25 +276,25 @@
         }
       },
       "confirmation": {
-        "title": "Protocol Initialized",
-        "subtitle": "Your vendor request has entered the verification stream.",
+        "title": "Almost there.",
+        "subtitle": "We're checking your details before travelers see your listing.",
         "pipeline": {
           "step1": {
-            "title": "Submission Received",
-            "sub": "Awaiting initial handshake."
+            "title": "Application received",
+            "sub": "We have everything you submitted."
           },
           "step2": {
-            "title": "Compliance Scan",
-            "sub": "Validating legal documentation."
+            "title": "Under review",
+            "sub": "Usually takes less than 24 hours."
           },
           "step3": {
-            "title": "Dashboard Access",
-            "sub": "Full terminal activation."
+            "title": "You go live",
+            "sub": "Travelers can discover and book you."
           }
         },
-        "cta": "Enter Command Center",
-        "support": "Requires Assistance?",
-        "contact": "Contact Support"
+        "cta": "Go to dashboard",
+        "support": "Need help?",
+        "contact": "Contact support"
       },
       "layout": {
         "back": "Back to Previous",

@@ -68,9 +68,13 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 type DocEntry = UploadedMedia & { label: string; uploading?: boolean };
 
 const TOTAL_STEPS = 5;
-const STEP_LABELS = ["Basic info", "Category", "About", "Documents", "Review"];
+const STEP_LABELS = ["Basic info", "Category", "About", "Documents & Payout", "Review"];
 
-type FieldName = "contactFirstName" | "businessName" | "phone" | "email" | "types" | "description";
+type PayoutMethod = "upi" | "bank";
+
+type FieldName =
+  | "contactFirstName" | "businessName" | "phone" | "email" | "types" | "description"
+  | "payoutMethod" | "upiId" | "accountHolderName" | "accountNumber" | "ifsc";
 
 // Which fields belong to each step — drives markAllTouched on "Continue" so
 // every error on the step surfaces at once, including button-group fields
@@ -79,7 +83,7 @@ const STEP_FIELDS: Record<number, FieldName[]> = {
   1: ["contactFirstName", "businessName", "phone", "email"],
   2: ["types"],
   3: ["description"],
-  4: [],
+  4: ["payoutMethod", "upiId", "accountHolderName", "accountNumber", "ifsc"],
   5: [],
 };
 
@@ -132,6 +136,13 @@ export default function VendorOnboardingPage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Step 4 — payout details (Vendor.payoutDetails, jsonb — see create-vendor.dto.ts)
+  const [payoutMethod, setPayoutMethod] = useState<PayoutMethod | "">("");
+  const [upiId, setUpiId] = useState("");
+  const [accountHolderName, setAccountHolderName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [ifsc, setIfsc] = useState("");
+
   // Submission
   const { touched, markTouched, markAllTouched } = useTouchedFields<FieldName>();
   const [submitting, setSubmitting] = useState(false);
@@ -151,6 +162,11 @@ export default function VendorOnboardingPage() {
     email: email.trim().length > 0 && !EMAIL_RE.test(email) ? "Enter a valid email address." : undefined,
     types: types.length === 0 ? "Select at least one category." : undefined,
     description: description.trim().length < 10 ? "Add a few more words (at least 10 characters)." : undefined,
+    payoutMethod: !payoutMethod ? "Choose how you'd like to get paid." : undefined,
+    upiId: payoutMethod === "upi" && upiId.trim().length < 3 ? "Enter a valid UPI ID." : undefined,
+    accountHolderName: payoutMethod === "bank" && accountHolderName.trim().length < 1 ? "Account holder name is required." : undefined,
+    accountNumber: payoutMethod === "bank" && accountNumber.trim().length < 6 ? "Enter a valid account number." : undefined,
+    ifsc: payoutMethod === "bank" && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc.trim().toUpperCase()) ? "Enter a valid IFSC code." : undefined,
   };
 
   const isStepValid = (s: number) => {
@@ -158,7 +174,9 @@ export default function VendorOnboardingPage() {
       case 1: return !errors.contactFirstName && !errors.businessName && !errors.phone && !errors.email;
       case 2: return !errors.types;
       case 3: return !errors.description;
-      case 4: return true; // documents are optional
+      case 4:
+        if (errors.payoutMethod) return false;
+        return payoutMethod === "upi" ? !errors.upiId : !errors.accountHolderName && !errors.accountNumber && !errors.ifsc;
       case 5: return true;
       default: return false;
     }
@@ -230,11 +248,18 @@ export default function VendorOnboardingPage() {
           if (d.url) acc[d.label || d.key] = d.url;
           return acc;
         }, {});
+        const payoutDetails: Record<string, string> =
+          payoutMethod === "upi"
+            ? { method: "upi", upiId: upiId.trim() }
+            : payoutMethod === "bank"
+            ? { method: "bank", accountHolderName: accountHolderName.trim(), accountNumber: accountNumber.trim(), ifsc: ifsc.trim().toUpperCase() }
+            : {};
         const vendor = await createVendor({
           businessName: businessName.trim(),
           description: description.trim(),
           types,
           ...(Object.keys(documentsMap).length > 0 ? { documents: documentsMap } : {}),
+          ...(Object.keys(payoutDetails).length > 0 ? { payoutDetails } : {}),
         });
         vendorId = vendor?.id;
         if (!vendorId) throw new Error("Vendor was created but no id was returned.");
@@ -266,7 +291,7 @@ export default function VendorOnboardingPage() {
       isSubmittingRef.current = false;
       setSubmitting(false);
     }
-  }, [createdVendorId, documents, businessName, description, types, contactFirstName, contactLastName, phone, email, lang, router]);
+  }, [createdVendorId, documents, businessName, description, types, contactFirstName, contactLastName, phone, email, payoutMethod, upiId, accountHolderName, accountNumber, ifsc, lang, router]);
 
   // ─── Step content ──────────────────────────────────────────────────────
   // The step number + title live in the progress indicator (below), so each
@@ -448,6 +473,76 @@ export default function VendorOnboardingPage() {
                 ))}
               </ul>
             )}
+
+            <div className="mt-8 pt-6 border-t border-slate-100">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2 mb-3">How should we pay you?</p>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                {(["upi", "bank"] as PayoutMethod[]).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => { setPayoutMethod(m); markTouched("payoutMethod"); }}
+                    aria-pressed={payoutMethod === m}
+                    className={`h-14 rounded-2xl border-2 text-sm font-bold transition-all active:scale-95 ${
+                      payoutMethod === m ? "border-slate-900 bg-slate-900 text-white" : "border-slate-100 bg-slate-50/50 text-slate-600 hover:border-slate-200"
+                    }`}
+                  >
+                    {m === "upi" ? "UPI" : "Bank transfer"}
+                  </button>
+                ))}
+              </div>
+              <FieldError message={touched.payoutMethod ? errors.payoutMethod : undefined} />
+
+              {payoutMethod === "upi" && (
+                <div className="mt-3 animate-fade-in">
+                  <Input
+                    label="UPI ID"
+                    name="upiId"
+                    value={upiId}
+                    onChange={(e) => setUpiId(e.target.value)}
+                    onBlur={() => markTouched("upiId")}
+                    placeholder="e.g. yourname@bank"
+                    error={touched.upiId ? errors.upiId : undefined}
+                  />
+                </div>
+              )}
+
+              {payoutMethod === "bank" && (
+                <div className="mt-3 space-y-4 animate-fade-in">
+                  <Input
+                    label="Account holder name"
+                    name="accountHolderName"
+                    value={accountHolderName}
+                    onChange={(e) => setAccountHolderName(e.target.value)}
+                    onBlur={() => markTouched("accountHolderName")}
+                    placeholder="As it appears on your bank account"
+                    error={touched.accountHolderName ? errors.accountHolderName : undefined}
+                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      label="Account number"
+                      name="accountNumber"
+                      value={accountNumber}
+                      onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ""))}
+                      onBlur={() => markTouched("accountNumber")}
+                      inputMode="numeric"
+                      placeholder="0000000000"
+                      error={touched.accountNumber ? errors.accountNumber : undefined}
+                    />
+                    <Input
+                      label="IFSC code"
+                      name="ifsc"
+                      value={ifsc}
+                      onChange={(e) => setIfsc(e.target.value.toUpperCase())}
+                      onBlur={() => markTouched("ifsc")}
+                      placeholder="e.g. HDFC0001234"
+                      error={touched.ifsc ? errors.ifsc : undefined}
+                    />
+                  </div>
+                </div>
+              )}
+              <p className="text-[11px] text-slate-400 mt-3 pl-2">Used only to send your payouts — never shown to travelers.</p>
+            </div>
           </div>
         );
       case 5:
@@ -464,6 +559,11 @@ export default function VendorOnboardingPage() {
                 value={types.map((t) => CATEGORY_OPTIONS.find((c) => c.id === t)?.label || t).join(", ") || "—"}
               />
               <ReviewRow icon="file" label="Documents" value={documents.filter((d) => !d.uploading).length ? `${documents.filter((d) => !d.uploading).length} uploaded` : "None"} />
+              <ReviewRow
+                icon="check"
+                label="Payout"
+                value={payoutMethod === "upi" ? `UPI · ${upiId}` : payoutMethod === "bank" ? `Bank · ${accountNumber ? `••••${accountNumber.slice(-4)}` : ""}` : "—"}
+              />
             </div>
             <div className="rounded-[2rem] border border-slate-100 bg-white shadow-sm p-5 sm:p-6 mt-4">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Description</p>

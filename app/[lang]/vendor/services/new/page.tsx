@@ -419,8 +419,13 @@ export default function NewServicePage() {
                 }}
                 onSelect={(loc) => {
                   setCity(loc.name);
-                  setLatitude(loc.latitude);
-                  setLongitude(loc.longitude);
+                  // loc.latitude/longitude are `number | null` — many real
+                  // locations in the system (e.g. Kasol) have no coordinates
+                  // populated yet. Normalize null to undefined so the
+                  // "Coordinates locked" summary below correctly hides
+                  // itself instead of crashing on null.toFixed().
+                  setLatitude(loc.latitude ?? undefined);
+                  setLongitude(loc.longitude ?? undefined);
                   markTouched("city");
                 }}
                 placeholder="Search city (e.g. Manali, Kasol, Shimla)..."
@@ -459,7 +464,7 @@ export default function NewServicePage() {
               />
             </div>
 
-            {latitude !== undefined && longitude !== undefined && (
+            {typeof latitude === "number" && typeof longitude === "number" && (
               <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-2 text-xs font-semibold text-emerald-800">
                 <Icon name="check" className="w-4 h-4 text-emerald-600" /> Coordinates locked: {latitude.toFixed(4)}, {longitude.toFixed(4)}
               </div>
