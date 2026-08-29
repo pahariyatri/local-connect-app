@@ -22,7 +22,7 @@ export default function LoginPage() {
     const { lang } = useParams();
     const searchParams = useSearchParams();
     const redirectTo = searchParams.get("redirectTo");
-    const { user } = useAuth();
+    const { user, authStatus } = useAuth();
     const [phone, setPhone] = useState("");
     const [touched, setTouched] = useState(false);
     const t = getTravelerDictionary(String(lang)).auth.phoneEntry;
@@ -32,6 +32,22 @@ export default function LoginPage() {
     useEffect(() => {
         if (user) router.replace(safeRedirect(redirectTo, String(lang)));
     }, [user, redirectTo, lang, router]);
+
+    // While we're still determining auth state (loading user_meta + backend
+    // verification), show a neutral spinner rather than the login form — this
+    // prevents the flash of the login screen for users who are already signed in
+    // and were redirected here (e.g. after a cookie renewal or middleware gate).
+    if (authStatus === 'hydrating') {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
+            </div>
+        );
+    }
+
+    // If user is already set, let the useEffect above handle the redirect.
+    // Render nothing here so there's no login-form flash.
+    if (user) return null;
 
     const phoneValid = isValidPhone(phone);
     // Only nudge the user once they've started typing and moved on, never while empty.
