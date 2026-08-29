@@ -57,19 +57,32 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 // Fetch services server-side for SEO
+//
+// WEBMCP_READINESS_AUDIT.md P0-6 fix (2026-08-29 remediation): this
+// previously JSON.stringify()'d destinations/categories into single query
+// values (e.g. `destinations=%5B%22Kasol%22%5D`). The backend's
+// ServiceDiscoverDto only unwraps a single scalar into a 1-element array
+// (see its `toArray` transform) — it does not JSON.parse a string — so the
+// literal string '["Kasol"]' (brackets and quotes included) was being used
+// as the filter value, which never matches a real city name. Fixed to use
+// the same repeated-key URLSearchParams.append() convention the rest of the
+// app's discoverServices() helper already uses correctly. Also fixed the
+// response parsing below: GET /service/discover returns `{ data: Service[] }`
+// (data is the array itself), not `{ data: { services: Service[] } }` — the
+// old `data?.data?.services` access was always undefined, so this page
+// always rendered zero results regardless of the query-param bug.
 async function fetchServices(destination: string, category: string) {
   try {
     const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000') + '/api/v1';
-    const params = new URLSearchParams({
-      destinations: JSON.stringify([destination]),
-      categories: JSON.stringify([category]),
-    });
+    const params = new URLSearchParams();
+    params.append('destinations', destination);
+    params.append('categories', category);
     const res = await fetch(`${API_BASE}/service/discover?${params}`, {
       next: { revalidate: 3600 }, // ISR: revalidate every hour
     });
     if (!res.ok) return [];
     const data = await res.json();
-    return data?.data?.services || data?.services || [];
+    return Array.isArray(data?.data) ? data.data : (data?.data?.services ?? data?.services ?? []);
   } catch {
     return [];
   }

@@ -212,7 +212,7 @@ export const deleteVendor = async (id: string) => {
  * contact fields, which the Vendor endpoint silently drops (whitelist-only
  * validation strips any field CreateVendorDto doesn't declare).
  */
-export const createPointOfContact = async (data: { vendorId: string; name: string; email?: string; phone: string }) => {
+export const createPointOfContact = async (data: { vendorId: string; firstName: string; lastName?: string; email?: string; phone: string }) => {
   const raw = await api.post('/point-of-contact', data);
   return (raw as any)?.data ?? raw;
 };

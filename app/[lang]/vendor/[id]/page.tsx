@@ -172,7 +172,15 @@ export default function VendorProfilePage() {
                 const vendorType = response.types?.[0] || "";
                 const category = VENDOR_TYPE_TO_CATEGORY[vendorType.toLowerCase()] || "Local Partner";
                 const cleanName = response.businessName.replace(/\s*\(.*?\)\s*/g, "").trim();
-                const contactPerson = response.pointOfContact?.name || response.user?.name || "Himachal Local Host";
+                // Real data only: response.pointOfContacts is the actual
+                // relation this endpoint returns (see vendor.service.ts
+                // findOne()). Previously read response.pointOfContact/
+                // response.user — fields this endpoint has never returned —
+                // so this always fell through to a fabricated "Himachal
+                // Local Host" name. Falls back to the vendor's own real
+                // business name (never an invented person) when no contact
+                // is on file.
+                const contactPerson = response.pointOfContacts?.[0]?.name || cleanName;
                 const minPrice = servicesList.length > 0 ? Math.min(...servicesList.map((s) => s.price)) : null;
 
                 const offeredCategories = Array.from(new Set(servicesList.map((s) => s.category).filter(Boolean)));

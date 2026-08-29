@@ -8,7 +8,6 @@ import { sanitizePhone, isValidPhone, PHONE_LENGTH, toNationalDigits } from "@/u
 import { toApiUiError } from "@/utils/apiErrors";
 import { createVendor, createPointOfContact, getMyVendor } from "@/services/vendorService";
 import { uploadMedia, deleteMedia, validateImage, type UploadedMedia } from "@/services/mediaService";
-import { api } from "@/lib/apiClient";
 import { useTouchedFields } from "@/hooks/useTouchedFields";
 import Typography from "../../components/atoms/Typography";
 import Button from "../../components/atoms/Button";
@@ -71,13 +70,13 @@ type DocEntry = UploadedMedia & { label: string; uploading?: boolean };
 const TOTAL_STEPS = 5;
 const STEP_LABELS = ["Basic info", "Category", "About", "Documents", "Review"];
 
-type FieldName = "contactName" | "businessName" | "phone" | "email" | "types" | "description";
+type FieldName = "contactFirstName" | "businessName" | "phone" | "email" | "types" | "description";
 
 // Which fields belong to each step — drives markAllTouched on "Continue" so
 // every error on the step surfaces at once, including button-group fields
 // (like `types`) that have no blur event to touch them individually.
 const STEP_FIELDS: Record<number, FieldName[]> = {
-  1: ["contactName", "businessName", "phone", "email"],
+  1: ["contactFirstName", "businessName", "phone", "email"],
   2: ["types"],
   3: ["description"],
   4: [],
@@ -87,7 +86,7 @@ const STEP_FIELDS: Record<number, FieldName[]> = {
 export default function VendorOnboardingPage() {
   const { lang } = useParams();
   const router = useRouter();
-  const { user, refreshUser } = useAuth();
+  const { user } = useAuth();
 
   const [step, setStep] = useState(1);
   const [isMounted, setIsMounted] = useState(false);
@@ -116,7 +115,8 @@ export default function VendorOnboardingPage() {
   }, [lang, router]);
 
   // Step 1 — basic info
-  const [contactName, setContactName] = useState("");
+  const [contactFirstName, setContactFirstName] = useState("");
+  const [contactLastName, setContactLastName] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [phone, setPhone] = useState(user?.phone ? toNationalDigits(user.phone) : "");
   const [email, setEmail] = useState(user?.email || "");
@@ -145,7 +145,7 @@ export default function VendorOnboardingPage() {
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const errors = {
-    contactName: contactName.trim().length < 1 ? "Your name is required." : undefined,
+    contactFirstName: contactFirstName.trim().length < 1 ? "First name is required." : undefined,
     businessName: businessName.trim().length < 1 ? "Business name is required." : undefined,
     phone: !isValidPhone(phone) ? `Enter a valid ${PHONE_LENGTH}-digit mobile number.` : undefined,
     email: email.trim().length > 0 && !EMAIL_RE.test(email) ? "Enter a valid email address." : undefined,
@@ -155,7 +155,7 @@ export default function VendorOnboardingPage() {
 
   const isStepValid = (s: number) => {
     switch (s) {
-      case 1: return !errors.contactName && !errors.businessName && !errors.phone && !errors.email;
+      case 1: return !errors.contactFirstName && !errors.businessName && !errors.phone && !errors.email;
       case 2: return !errors.types;
       case 3: return !errors.description;
       case 4: return true; // documents are optional
@@ -243,18 +243,19 @@ export default function VendorOnboardingPage() {
 
       await createPointOfContact({
         vendorId,
-        name: contactName.trim(),
+        firstName: contactFirstName.trim(),
+        ...(contactLastName.trim() ? { lastName: contactLastName.trim() } : {}),
         phone,
         ...(email.trim() ? { email: email.trim() } : {}),
       });
 
-      // Rotate session refresh token to receive updated Role.Vendor claim in JWT,
-      // and refresh local AuthContext state.
-      try {
-        await api.post('/auth/token/refresh');
-        await refreshUser();
-      } catch { /* storage/network fallback */ }
-
+      // The refresh-token rotation to pick up the new Role.Vendor JWT claim
+      // happens exactly once, on the confirmation page (see its handleContinue)
+      // — not here too. A second call in a row hit the backend's reuse
+      // detection (single-use refresh tokens: a token used twice is treated
+      // as a stolen/replayed token and revokes the whole session), which is
+      // what forced travelers into an unnecessary second login right after
+      // successfully submitting this form. Don't call token/refresh here.
       try { window.localStorage.setItem("vendorId", vendorId); } catch { /* storage unavailable — non-fatal */ }
 
       router.replace(`/${lang}/vendor/onboarding/confirmation`);
@@ -265,7 +266,7 @@ export default function VendorOnboardingPage() {
       isSubmittingRef.current = false;
       setSubmitting(false);
     }
-  }, [createdVendorId, documents, businessName, description, types, contactName, phone, email, lang, router, refreshUser]);
+  }, [createdVendorId, documents, businessName, description, types, contactFirstName, contactLastName, phone, email, lang, router]);
 
   // ─── Step content ──────────────────────────────────────────────────────
   // The step number + title live in the progress indicator (below), so each
@@ -277,16 +278,25 @@ export default function VendorOnboardingPage() {
       case 1:
         return (
           <div key={step} className="animate-fade-in space-y-5">
-            <Input
-              label="Your name"
-              name="contactName"
-              value={contactName}
-              onChange={(e) => setContactName(e.target.value)}
-              onBlur={() => markTouched("contactName")}
-              placeholder="e.g. Priya Sharma"
-              autoFocus
-              error={touched.contactName ? errors.contactName : undefined}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="First name"
+                name="contactFirstName"
+                value={contactFirstName}
+                onChange={(e) => setContactFirstName(e.target.value)}
+                onBlur={() => markTouched("contactFirstName")}
+                placeholder="e.g. Priya"
+                autoFocus
+                error={touched.contactFirstName ? errors.contactFirstName : undefined}
+              />
+              <Input
+                label="Last name (optional)"
+                name="contactLastName"
+                value={contactLastName}
+                onChange={(e) => setContactLastName(e.target.value)}
+                placeholder="e.g. Sharma"
+              />
+            </div>
             <Input
               label="Business or provider name"
               name="businessName"
@@ -444,7 +454,7 @@ export default function VendorOnboardingPage() {
         return (
           <div key={step} className="animate-fade-in">
             <div className="rounded-[2rem] border border-slate-100 bg-white shadow-sm divide-y divide-slate-100 overflow-hidden">
-              <ReviewRow icon="user" label="Contact" value={contactName} />
+              <ReviewRow icon="user" label="Contact" value={contactLastName.trim() ? `${contactFirstName} ${contactLastName}` : contactFirstName} />
               <ReviewRow icon="home" label="Business" value={businessName} />
               <ReviewRow icon="phone" label="Phone" value={`+91 ${toNationalDigits(phone)}`} />
               {email && <ReviewRow icon="mail" label="Email" value={email} />}

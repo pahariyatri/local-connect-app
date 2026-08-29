@@ -9,6 +9,7 @@ import Input from "../../../components/atoms/Input";
 import Textarea from "../../../components/atoms/Textarea";
 import { getMyVendor } from "@/services/vendorService";
 import { getCategories, getSubcategories, createService } from "@/services/catalogService";
+import { uploadMedia, deleteMedia, validateImage, type UploadedMedia } from "@/services/mediaService";
 import { toApiUiError } from "@/utils/apiErrors";
 import Loading from "@/app/loading";
 import { useTouchedFields } from "@/hooks/useTouchedFields";
@@ -16,13 +17,15 @@ import FieldError from "../../../components/atoms/FieldError";
 
 // ─── Icon system — same inline-stroke-SVG convention used across the app ───
 
-type IconName = "check" | "map-pin" | "users" | "tag";
+type IconName = "check" | "map-pin" | "users" | "tag" | "upload" | "trash";
 
 const ICON_PATHS: Record<IconName, React.ReactNode> = {
   check: <path d="M20 6 9 17l-5-5" />,
   "map-pin": <><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></>,
   users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,
   tag: <><path d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.42 0l8.58-8.58a1 1 0 0 0 0-1.42Z" /><circle cx="7" cy="7" r="1" /></>,
+  upload: <><path d="M12 3v12" /><path d="m7 8 5-5 5 5" /><path d="M5 21h14" /></>,
+  trash: <><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></>,
 };
 
 function Icon({ name, className = "" }: { name: IconName; className?: string }) {
@@ -35,10 +38,44 @@ function Icon({ name, className = "" }: { name: IconName; className?: string }) 
 
 type Category = { id: number; name: string };
 
-const TOTAL_STEPS = 4;
-const STEP_LABELS = ["Basics", "Location", "Pricing", "Review"];
+// Mirrors backend/src/feature/service/entities/service.entity.ts's
+// ServicePricingUnit enum — see PricingService.quoteServiceEntity() for how
+// each one is actually charged.
+type PricingUnit = "PER_ROOM_NIGHT" | "PER_PERSON_NIGHT" | "PER_VEHICLE_TRIP" | "PER_PERSON_ACTIVITY" | "FIXED";
+
+const PRICING_UNIT_OPTIONS: { id: PricingUnit; label: string; hint: string }[] = [
+  { id: "PER_ROOM_NIGHT", label: "Per room, per night", hint: "Stays — capacity is guests included per room." },
+  { id: "PER_PERSON_NIGHT", label: "Per person, per night", hint: "Multi-night stays priced per head, e.g. dorm beds." },
+  { id: "PER_VEHICLE_TRIP", label: "Per vehicle / per trip", hint: "Taxis and transfers — one price per trip." },
+  { id: "PER_PERSON_ACTIVITY", label: "Per person", hint: "Treks, activities, guided experiences." },
+  { id: "FIXED", label: "Fixed price", hint: "One flat price regardless of guests, e.g. a set meal." },
+];
+
+// Category name -> sensible pricing-unit default + what "Capacity" actually
+// means for that category. Categories are real, backend-driven data (see
+// getCategories() below), not a fixed enum, so this is a best-guess keyword
+// match — the vendor can still override the pricing unit explicitly in Step 3.
+function defaultsForCategory(categoryName: string | undefined): { unit: PricingUnit; capacityLabel: string; capacityHint: string } {
+  const n = (categoryName || "").toLowerCase();
+  if (/taxi|transport|cab|vehicle|car|bike/.test(n)) {
+    return { unit: "PER_VEHICLE_TRIP", capacityLabel: "Seats", capacityHint: "How many passengers fit per trip" };
+  }
+  if (/food|restaurant|dining|meal|cafe/.test(n)) {
+    return { unit: "FIXED", capacityLabel: "Covers", capacityHint: "How many guests you can seat at once" };
+  }
+  if (/adventure|activity|trek|guide|experience|tour/.test(n)) {
+    return { unit: "PER_PERSON_ACTIVITY", capacityLabel: "Group size", capacityHint: "Maximum people per group/session" };
+  }
+  // Default: stay/hotel/homestay and anything unrecognized.
+  return { unit: "PER_ROOM_NIGHT", capacityLabel: "Guests", capacityHint: "Guests included per room at the base price" };
+}
+
+const TOTAL_STEPS = 5;
+const STEP_LABELS = ["Basics", "Location", "Pricing", "Photos", "Review"];
 
 type FieldName = "name" | "subcategoryId" | "description" | "city" | "state" | "street" | "postalCode" | "weekdayPrice" | "capacity";
+
+type DocEntry = UploadedMedia & { label: string; uploading?: boolean };
 
 // Which fields belong to each step — drives markAllTouched on "Continue" so
 // every error on the step surfaces at once, including button-group fields
@@ -48,6 +85,7 @@ const STEP_FIELDS: Record<number, FieldName[]> = {
   2: ["city", "state", "street", "postalCode"],
   3: ["weekdayPrice", "capacity"],
   4: [],
+  5: [],
 };
 
 export default function NewServicePage() {

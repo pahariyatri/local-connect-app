@@ -7,14 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLocalizationContext } from '@/contexts/LocalizationContext';
 import { Locale } from '@/i18n-config';
 import { BRAND_CONFIG } from '@/config/brandConfig';
-
-/** First letter of the display name, or a neutral fallback — never a fabricated name. */
-function initialOf(name?: string, phone?: string) {
-  const trimmed = (name || '').trim();
-  if (trimmed && trimmed.toLowerCase() !== 'user') return trimmed[0].toUpperCase();
-  const digits = (phone || '').replace(/\D/g, '');
-  return digits ? digits.slice(-1) : 'Y';
-}
+import { userAvatarInitial } from '@/utils/text';
 
 const SUPPORTED_LANGUAGES: { code: Locale; label: string; flag: string; nativeName: string }[] = [
   { code: 'en', label: 'English', flag: '🇬🇧', nativeName: 'English' },
@@ -206,7 +199,7 @@ export default function Header() {
                   className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                 >
                   <span className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[11px] font-black shadow-sm flex-shrink-0">
-                    {initialOf(user.name, user.phone)}
+                    {userAvatarInitial(user.name, user.phone)}
                   </span>
                   <span className="text-xs font-bold text-slate-800 max-w-[120px] truncate">
                     {accountLabel}
@@ -243,7 +236,7 @@ export default function Header() {
                 aria-label="Your account"
                 className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-black shadow-sm active:scale-95 transition-transform"
               >
-                {initialOf(user.name, user.phone)}
+                {userAvatarInitial(user.name, user.phone)}
               </Link>
             ) : null}
           </div>

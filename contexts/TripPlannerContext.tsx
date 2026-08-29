@@ -17,6 +17,15 @@ export interface ItineraryStop {
 export type ServiceType = "stay" | "activity" | "travel" | "food";
 export type CarType = "sedan" | "suv" | "hatchback" | "auto" | "bike" | "none";
 
+/** Structured shape returned by GET /locations/search — see catalogService.ts:searchLocations */
+export interface SelectedLocation {
+    id: number;
+    name: string;
+    slug: string;
+    latitude: number | null;
+    longitude: number | null;
+}
+
 interface TripPlannerContextType {
     origin: string;
     destinations: string[];
@@ -24,6 +33,7 @@ interface TripPlannerContextType {
     destinationPoint: string; // e.g., "Manali"
     selectedOriginCity: string; // Selected origin city from dropdown
     selectedDestinationCities: string[]; // Selected destination cities
+    selectedOriginLocation: SelectedLocation | null; // Structured record (name/slug/lat/lng) for the chosen origin, from the real location search
     distance: number; // in km
     startDate: string;
     endDate: string;
@@ -41,7 +51,7 @@ interface TripPlannerContextType {
     setEndDate: (date: string) => void;
     setBasicInfo: (origin: string, destinations: string[], startDate: string, endDate: string) => void;
     setRouteInfo: (originPoint: string, destinationPoint: string, distance: number) => void;
-    setSelectedCities: (originCity: string, destinationCities: string[]) => void;
+    setSelectedCities: (originCity: string, destinationCities: string[], originLocation?: SelectedLocation | null) => void;
     setPreferences: (car: CarType) => void;
     setServicePreferences: (types: ServiceType[]) => void;
     setGeneratedTripId: (id: number | null) => void;
@@ -65,6 +75,7 @@ export const TripPlannerProvider = ({ children }: { children: ReactNode }) => {
     const [destinationPoint, setDestinationPoint] = useState("");
     const [selectedOriginCity, setSelectedOriginCity] = useState("");
     const [selectedDestinationCities, setSelectedDestinationCities] = useState<string[]>([]);
+    const [selectedOriginLocation, setSelectedOriginLocation] = useState<SelectedLocation | null>(null);
     const [distance, setDistance] = useState(0);
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
@@ -105,9 +116,14 @@ export const TripPlannerProvider = ({ children }: { children: ReactNode }) => {
         setStops((prev) => prev.filter((s) => s.id !== id));
     }, []);
 
-    const setSelectedCities = useCallback((originCity: string, destinationCities: string[]) => {
+    const setSelectedCities = useCallback((originCity: string, destinationCities: string[], originLocation?: SelectedLocation | null) => {
         setSelectedOriginCity(originCity);
         setSelectedDestinationCities(destinationCities);
+        // Only overwrite the structured record when this call actually carries
+        // one (a real pick from location search) — a plain string update (e.g.
+        // destinations-only) must not silently clear a previously-selected
+        // origin's coordinates.
+        if (originLocation !== undefined) setSelectedOriginLocation(originLocation);
     }, []);
 
     const clearItinerary = useCallback(() => {
