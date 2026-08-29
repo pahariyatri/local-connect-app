@@ -7,17 +7,18 @@ import Typography from "../../../components/atoms/Typography";
 import Button from "../../../components/atoms/Button";
 import Input from "../../../components/atoms/Input";
 import Textarea from "../../../components/atoms/Textarea";
+import LocationAutocomplete from "../../../components/molecules/LocationAutocomplete";
 import { getMyVendor } from "@/services/vendorService";
 import { getCategories, getSubcategories, createService } from "@/services/catalogService";
-import { uploadMedia, deleteMedia, validateImage, type UploadedMedia } from "@/services/mediaService";
+import { uploadMedia, deleteMedia, validateImage } from "@/services/mediaService";
 import { toApiUiError } from "@/utils/apiErrors";
 import Loading from "@/app/loading";
 import { useTouchedFields } from "@/hooks/useTouchedFields";
 import FieldError from "../../../components/atoms/FieldError";
 
-// ─── Icon system — same inline-stroke-SVG convention used across the app ───
+// ─── Icon system — standard inline SVG ───
 
-type IconName = "check" | "map-pin" | "users" | "tag" | "upload" | "trash";
+type IconName = "check" | "map-pin" | "users" | "tag" | "upload" | "trash" | "image" | "info" | "shield";
 
 const ICON_PATHS: Record<IconName, React.ReactNode> = {
   check: <path d="M20 6 9 17l-5-5" />,
@@ -26,6 +27,9 @@ const ICON_PATHS: Record<IconName, React.ReactNode> = {
   tag: <><path d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.42 0l8.58-8.58a1 1 0 0 0 0-1.42Z" /><circle cx="7" cy="7" r="1" /></>,
   upload: <><path d="M12 3v12" /><path d="m7 8 5-5 5 5" /><path d="M5 21h14" /></>,
   trash: <><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></>,
+  image: <><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></>,
+  info: <><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></>,
+  shield: <><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /></>,
 };
 
 function Icon({ name, className = "" }: { name: IconName; className?: string }) {
@@ -38,9 +42,6 @@ function Icon({ name, className = "" }: { name: IconName; className?: string }) 
 
 type Category = { id: number; name: string };
 
-// Mirrors backend/src/feature/service/entities/service.entity.ts's
-// ServicePricingUnit enum — see PricingService.quoteServiceEntity() for how
-// each one is actually charged.
 type PricingUnit = "PER_ROOM_NIGHT" | "PER_PERSON_NIGHT" | "PER_VEHICLE_TRIP" | "PER_PERSON_ACTIVITY" | "FIXED";
 
 const PRICING_UNIT_OPTIONS: { id: PricingUnit; label: string; hint: string }[] = [
@@ -51,10 +52,6 @@ const PRICING_UNIT_OPTIONS: { id: PricingUnit; label: string; hint: string }[] =
   { id: "FIXED", label: "Fixed price", hint: "One flat price regardless of guests, e.g. a set meal." },
 ];
 
-// Category name -> sensible pricing-unit default + what "Capacity" actually
-// means for that category. Categories are real, backend-driven data (see
-// getCategories() below), not a fixed enum, so this is a best-guess keyword
-// match — the vendor can still override the pricing unit explicitly in Step 3.
 function defaultsForCategory(categoryName: string | undefined): { unit: PricingUnit; capacityLabel: string; capacityHint: string } {
   const n = (categoryName || "").toLowerCase();
   if (/taxi|transport|cab|vehicle|car|bike/.test(n)) {
@@ -66,20 +63,14 @@ function defaultsForCategory(categoryName: string | undefined): { unit: PricingU
   if (/adventure|activity|trek|guide|experience|tour/.test(n)) {
     return { unit: "PER_PERSON_ACTIVITY", capacityLabel: "Group size", capacityHint: "Maximum people per group/session" };
   }
-  // Default: stay/hotel/homestay and anything unrecognized.
   return { unit: "PER_ROOM_NIGHT", capacityLabel: "Guests", capacityHint: "Guests included per room at the base price" };
 }
 
 const TOTAL_STEPS = 5;
-const STEP_LABELS = ["Basics", "Location", "Pricing", "Photos", "Review"];
+const STEP_LABELS = ["Basics", "Location", "Pricing & Unit", "Photos", "Review & Publish"];
 
 type FieldName = "name" | "subcategoryId" | "description" | "city" | "state" | "street" | "postalCode" | "weekdayPrice" | "capacity";
 
-type DocEntry = UploadedMedia & { label: string; uploading?: boolean };
-
-// Which fields belong to each step — drives markAllTouched on "Continue" so
-// every error on the step surfaces at once, including button-group fields
-// (subcategoryId, capacity) that have no blur event to touch them individually.
 const STEP_FIELDS: Record<number, FieldName[]> = {
   1: ["name", "subcategoryId", "description"],
   2: ["city", "state", "street", "postalCode"],
@@ -92,7 +83,6 @@ export default function NewServicePage() {
   const router = useRouter();
   const { lang } = useParams();
 
-  // Vendor resolution — same pattern as the services list page.
   const [vendorId, setVendorId] = useState<string | null>(null);
   const [resolvingVendor, setResolvingVendor] = useState(true);
 
@@ -120,7 +110,7 @@ export default function NewServicePage() {
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => setIsMounted(true), []);
 
-  // Categories — backend-driven, not invented.
+  // Categories
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Category[]>([]);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
@@ -136,31 +126,46 @@ export default function NewServicePage() {
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [subcategoryId, setSubcategoryId] = useState<number | null>(null);
   const [description, setDescription] = useState("");
+  const [shortDescription, setShortDescription] = useState("");
 
   useEffect(() => {
     if (!categoryId) { setSubcategories([]); setSubcategoryId(null); return; }
     getSubcategories(categoryId)
       .then((subs) => setSubcategories(Array.isArray(subs) ? subs : []))
       .catch(() => setSubcategories([]));
-  }, [categoryId]);
+
+    const selectedCategory = categories.find((c) => c.id === categoryId);
+    if (selectedCategory) {
+      setPricingUnit(defaultsForCategory(selectedCategory.name).unit);
+    }
+  }, [categoryId, categories]);
 
   // Step 2 — location
   const [city, setCity] = useState("");
-  const [state, setState] = useState("");
+  const [state, setState] = useState("Himachal Pradesh");
   const [street, setStreet] = useState("");
   const [postalCode, setPostalCode] = useState("");
+  const [latitude, setLatitude] = useState<number | undefined>();
+  const [longitude, setLongitude] = useState<number | undefined>();
 
-  // Step 3 — pricing & capacity
+  // Step 3 — pricing unit & details
+  const [pricingUnit, setPricingUnit] = useState<PricingUnit>("PER_ROOM_NIGHT");
   const [weekdayPrice, setWeekdayPrice] = useState("");
   const [weekendPrice, setWeekendPrice] = useState("");
   const [capacity, setCapacity] = useState("2");
+  const [inclusionsText, setInclusionsText] = useState("");
+  const [exclusionsText, setExclusionsText] = useState("");
+  const [cancellationPolicy, setCancellationPolicy] = useState("");
 
-  // Submission
+  // Step 4 — Media / Photos
+  const [images, setImages] = useState<string[]>([]);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Submission & Validation
   const { touched, markTouched, markAllTouched } = useTouchedFields<FieldName>();
 
-  // Button groups have no blur event — the moment sub-category chips appear
-  // is the equivalent "you've reached this field" signal, so the error can
-  // show/clear reactively as the user picks one, same as a text field on blur.
   useEffect(() => {
     if (categoryId && subcategories.length > 0) markTouched("subcategoryId");
   }, [categoryId, subcategories.length, markTouched]);
@@ -172,7 +177,7 @@ export default function NewServicePage() {
   const errors = {
     name: name.trim().length < 3 ? "Give this service a clear name (at least 3 characters)." : undefined,
     subcategoryId: !subcategoryId ? "Choose a category and sub-category." : undefined,
-    description: description.trim().length < 10 ? "Add a few more words (at least 10 characters)." : undefined,
+    description: description.trim().length < 10 ? "Add a detailed description (at least 10 characters)." : undefined,
     city: city.trim().length < 1 ? "City is required." : undefined,
     state: state.trim().length < 1 ? "State is required." : undefined,
     street: street.trim().length < 1 ? "Street or area is required." : undefined,
@@ -187,6 +192,7 @@ export default function NewServicePage() {
       case 2: return !errors.city && !errors.state && !errors.street && !errors.postalCode;
       case 3: return !errors.weekdayPrice && !errors.capacity;
       case 4: return true;
+      case 5: return true;
       default: return false;
     }
   };
@@ -202,6 +208,48 @@ export default function NewServicePage() {
     else router.back();
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingMedia(true);
+    setMediaError(null);
+
+    const uploadedUrls: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const validation = validateImage(file);
+      if (!validation.valid) {
+        setMediaError(validation.error || "Invalid file format or size.");
+        continue;
+      }
+      try {
+        const result = await uploadMedia(file, "service-images");
+        if (result?.url) {
+          uploadedUrls.push(result.url);
+        }
+      } catch (err) {
+        setMediaError("Failed to upload image. Please try again.");
+      }
+    }
+
+    if (uploadedUrls.length > 0) {
+      setImages((prev) => [...prev, ...uploadedUrls]);
+    }
+    setUploadingMedia(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleRemoveImage = async (indexToRemove: number) => {
+    const urlToRemove = images[indexToRemove];
+    setImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+    try {
+      await deleteMedia(urlToRemove);
+    } catch {
+      // non-fatal if backend cleanup fails
+    }
+  };
+
   const handleSubmit = useCallback(async () => {
     if (isSubmittingRef.current || !vendorId || !subcategoryId) return;
     isSubmittingRef.current = true;
@@ -212,13 +260,40 @@ export default function NewServicePage() {
         { price: Number(weekdayPrice), dayType: "weekday" as const },
         ...(weekendPrice ? [{ price: Number(weekendPrice), dayType: "weekend" as const }] : []),
       ];
+
+      const inclusionsList = inclusionsText
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const exclusionsList = exclusionsText
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
       await createService(vendorId, {
         name: name.trim(),
         description: description.trim(),
+        ...(shortDescription.trim() ? { shortDescription: shortDescription.trim() } : {}),
         isAvailable: true,
         subcategoryId,
         capacity: Number(capacity),
-        addresses: [{ city: city.trim(), state: state.trim(), street: street.trim(), postalCode: postalCode.trim(), country: "India", isPrimary: true }],
+        pricingUnit,
+        ...(images.length > 0 ? { thumbnail: images[0], images } : {}),
+        ...(inclusionsList.length > 0 ? { inclusions: inclusionsList } : {}),
+        ...(exclusionsList.length > 0 ? { exclusions: exclusionsList } : {}),
+        ...(cancellationPolicy.trim() ? { cancellationPolicy: cancellationPolicy.trim() } : {}),
+        addresses: [{
+          name: street.trim(),
+          street: street.trim(),
+          city: city.trim(),
+          state: state.trim(),
+          postalCode: postalCode.trim(),
+          country: "India",
+          ...(latitude !== undefined ? { latitude } : {}),
+          ...(longitude !== undefined ? { longitude } : {}),
+          isPrimary: true,
+        }],
         prices,
       });
       router.replace(`/${lang}/vendor/services`);
@@ -229,7 +304,7 @@ export default function NewServicePage() {
       isSubmittingRef.current = false;
       setSubmitting(false);
     }
-  }, [vendorId, subcategoryId, name, description, capacity, city, state, street, postalCode, weekdayPrice, weekendPrice, lang, router]);
+  }, [vendorId, subcategoryId, name, description, shortDescription, capacity, pricingUnit, images, inclusionsText, exclusionsText, cancellationPolicy, city, state, street, postalCode, latitude, longitude, weekdayPrice, weekendPrice, lang, router]);
 
   if (resolvingVendor) return <Loading />;
 
@@ -243,6 +318,9 @@ export default function NewServicePage() {
     );
   }
 
+  const selectedCategory = categories.find((c) => c.id === categoryId);
+  const categoryConfig = defaultsForCategory(selectedCategory?.name);
+
   const renderStep = () => {
     switch (step) {
       case 1:
@@ -254,9 +332,17 @@ export default function NewServicePage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               onBlur={() => markTouched("name")}
-              placeholder="e.g. Deluxe Room with Mountain View"
+              placeholder="e.g. Deluxe Riverside Room / Solang Valley Paragliding"
               autoFocus
               error={touched.name ? errors.name : undefined}
+            />
+
+            <Input
+              label="One-line summary (optional)"
+              name="shortDescription"
+              value={shortDescription}
+              onChange={(e) => setShortDescription(e.target.value)}
+              placeholder="e.g. Cozy wooden room with private balcony & river view"
             />
 
             {categoriesError && <p className="text-xs text-red-500">{categoriesError}</p>}
@@ -302,12 +388,12 @@ export default function NewServicePage() {
             )}
 
             <Textarea
-              label="Description"
+              label="Detailed description"
               name="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               onBlur={() => markTouched("description")}
-              placeholder="What does a traveler get with this service?"
+              placeholder="Describe your service in detail (amenities, location highlights, experience)..."
               rows={4}
               error={touched.description ? errors.description : undefined}
             />
@@ -316,28 +402,103 @@ export default function NewServicePage() {
       case 2:
         return (
           <div key={step} className="animate-fade-in space-y-5">
-            <p className="text-xs text-slate-400 font-medium flex items-center gap-2">
-              <Icon name="map-pin" className="w-4 h-4" /> Where can travelers find this service?
+            <p className="text-xs text-slate-500 font-semibold flex items-center gap-2">
+              <Icon name="map-pin" className="w-4 h-4 text-emerald-500" /> Search city for real location lookup & coordinates.
             </p>
-            <Input label="Street / area" name="street" value={street} onChange={(e) => setStreet(e.target.value)} onBlur={() => markTouched("street")} placeholder="e.g. Old Manali Road" autoFocus error={touched.street ? errors.street : undefined} />
-            <div className="grid grid-cols-2 gap-4">
-              <Input label="City" name="city" value={city} onChange={(e) => setCity(e.target.value)} onBlur={() => markTouched("city")} placeholder="e.g. Manali" error={touched.city ? errors.city : undefined} />
-              <Input label="State" name="state" value={state} onChange={(e) => setState(e.target.value)} onBlur={() => markTouched("state")} placeholder="e.g. Himachal Pradesh" error={touched.state ? errors.state : undefined} />
+
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2 mb-2">
+                City / Destination
+              </label>
+              <LocationAutocomplete
+                value={city}
+                onChange={(val) => {
+                  setCity(val);
+                  markTouched("city");
+                }}
+                onSelect={(loc) => {
+                  setCity(loc.name);
+                  setLatitude(loc.latitude);
+                  setLongitude(loc.longitude);
+                  markTouched("city");
+                }}
+                placeholder="Search city (e.g. Manali, Kasol, Shimla)..."
+              />
+              <div className="mt-1"><FieldError message={touched.city ? errors.city : undefined} /></div>
             </div>
-            <Input label="Postal code" name="postalCode" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} onBlur={() => markTouched("postalCode")} placeholder="e.g. 175131" error={touched.postalCode ? errors.postalCode : undefined} />
+
+            <Input
+              label="Street address / landmark"
+              name="street"
+              value={street}
+              onChange={(e) => setStreet(e.target.value)}
+              onBlur={() => markTouched("street")}
+              placeholder="e.g. Near Mall Road, Old Manali"
+              error={touched.street ? errors.street : undefined}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="State"
+                name="state"
+                value={state}
+                onChange={(e) => setState(e.target.value)}
+                onBlur={() => markTouched("state")}
+                placeholder="e.g. Himachal Pradesh"
+                error={touched.state ? errors.state : undefined}
+              />
+              <Input
+                label="Postal code"
+                name="postalCode"
+                value={postalCode}
+                onChange={(e) => setPostalCode(e.target.value)}
+                onBlur={() => markTouched("postalCode")}
+                placeholder="e.g. 175131"
+                error={touched.postalCode ? errors.postalCode : undefined}
+              />
+            </div>
+
+            {latitude !== undefined && longitude !== undefined && (
+              <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-2 text-xs font-semibold text-emerald-800">
+                <Icon name="check" className="w-4 h-4 text-emerald-600" /> Coordinates locked: {latitude.toFixed(4)}, {longitude.toFixed(4)}
+              </div>
+            )}
           </div>
         );
       case 3:
         return (
           <div key={step} className="animate-fade-in space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <Input label="Weekday price (₹)" name="weekdayPrice" type="number" value={weekdayPrice} onChange={(e) => setWeekdayPrice(e.target.value)} onBlur={() => markTouched("weekdayPrice")} placeholder="0" autoFocus error={touched.weekdayPrice ? errors.weekdayPrice : undefined} />
-              <Input label="Weekend price (₹, optional)" name="weekendPrice" type="number" value={weekendPrice} onChange={(e) => setWeekendPrice(e.target.value)} placeholder="Same as weekday" />
-            </div>
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2 mb-2 flex items-center gap-2">
-                <Icon name="users" className="w-3.5 h-3.5" /> Capacity (guests)
+                <Icon name="tag" className="w-3.5 h-3.5" /> Pricing Model
               </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {PRICING_UNIT_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setPricingUnit(opt.id)}
+                    className={`p-4 rounded-2xl border-2 text-left transition-all ${
+                      pricingUnit === opt.id ? "border-slate-900 bg-slate-900 text-white shadow-md" : "border-slate-100 bg-slate-50/50 text-slate-700 hover:border-slate-200"
+                    }`}
+                  >
+                    <div className="font-bold text-sm">{opt.label}</div>
+                    <div className={`text-[11px] mt-1 ${pricingUnit === opt.id ? "text-slate-300" : "text-slate-400"}`}>{opt.hint}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Input label="Base / Weekday price (₹)" name="weekdayPrice" type="number" value={weekdayPrice} onChange={(e) => setWeekdayPrice(e.target.value)} onBlur={() => markTouched("weekdayPrice")} placeholder="1500" error={touched.weekdayPrice ? errors.weekdayPrice : undefined} />
+              <Input label="Weekend price (₹, optional)" name="weekendPrice" type="number" value={weekendPrice} onChange={(e) => setWeekendPrice(e.target.value)} placeholder="Same as weekday" />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2 mb-1 flex items-center gap-2">
+                <Icon name="users" className="w-3.5 h-3.5" /> {categoryConfig.capacityLabel}
+              </label>
+              <p className="text-xs text-slate-400 font-medium pl-2 mb-2">{categoryConfig.capacityHint}</p>
               <div className="flex flex-wrap gap-3">
                 {[1, 2, 4, 6, 8, 12].map((num) => (
                   <button
@@ -354,18 +515,154 @@ export default function NewServicePage() {
               </div>
               <div className="mt-2"><FieldError message={touched.capacity ? errors.capacity : undefined} /></div>
             </div>
+
+            <div className="pt-4 border-t border-slate-100 space-y-4">
+              <Textarea
+                label="Inclusions (one item per line)"
+                name="inclusions"
+                value={inclusionsText}
+                onChange={(e) => setInclusionsText(e.target.value)}
+                placeholder="Breakfast included&#10;Free High Speed Wi-Fi&#10;Hot water 24/7"
+                rows={3}
+              />
+
+              <Textarea
+                label="Exclusions (optional, one item per line)"
+                name="exclusions"
+                value={exclusionsText}
+                onChange={(e) => setExclusionsText(e.target.value)}
+                placeholder="Personal laundry&#10;Adventure gear rental"
+                rows={2}
+              />
+
+              <Textarea
+                label="Cancellation policy (optional)"
+                name="cancellationPolicy"
+                value={cancellationPolicy}
+                onChange={(e) => setCancellationPolicy(e.target.value)}
+                placeholder="Full refund up to 48 hours before check-in/activity date."
+                rows={2}
+              />
+            </div>
           </div>
         );
-      case 4: {
-        const category = categories.find((c) => c.id === categoryId);
-        const subcategory = subcategories.find((s) => s.id === subcategoryId);
+      case 4:
         return (
-          <div key={step} className="animate-fade-in space-y-2 bg-white rounded-[1.5rem] border border-slate-100 divide-y divide-slate-50 overflow-hidden">
-            <ReviewRow icon="tag" label="Name" value={name} />
-            <ReviewRow icon="tag" label="Category" value={`${category?.name || "—"} › ${subcategory?.name || "—"}`} />
-            <ReviewRow icon="map-pin" label="Location" value={`${city}, ${state}`} />
-            <ReviewRow icon="users" label="Capacity" value={`${capacity} guests`} />
-            <ReviewRow icon="tag" label="Price" value={`₹${weekdayPrice}${weekendPrice ? ` weekday · ₹${weekendPrice} weekend` : ""}`} />
+          <div key={step} className="animate-fade-in space-y-6">
+            <div>
+              <Typography variant="h3" className="text-sm font-bold text-slate-900 mb-1">
+                Listing Photos
+              </Typography>
+              <p className="text-xs text-slate-400 font-medium">
+                Upload clear images of your property, vehicle, or activity. First image will be used as the cover photo.
+              </p>
+            </div>
+
+            {mediaError && <p className="text-xs text-red-500 bg-red-50 border border-red-100 rounded-xl p-3">{mediaError}</p>}
+
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              className="hidden"
+            />
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingMedia}
+                className="h-36 sm:h-40 rounded-3xl border-2 border-dashed border-slate-200 hover:border-slate-900 bg-slate-50/50 hover:bg-slate-50 flex flex-col items-center justify-center p-4 transition-all group disabled:opacity-50"
+              >
+                {uploadingMedia ? (
+                  <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-900 rounded-full animate-spin mb-2" />
+                ) : (
+                  <Icon name="upload" className="w-7 h-7 text-slate-400 group-hover:text-slate-900 mb-2 transition-colors" />
+                )}
+                <span className="text-xs font-bold text-slate-700 group-hover:text-slate-900">
+                  {uploadingMedia ? "Uploading..." : "Add Photos"}
+                </span>
+                <span className="text-[10px] text-slate-400 mt-1">JPG, PNG, WEBP</span>
+              </button>
+
+              {images.map((url, idx) => (
+                <div key={url} className="relative h-36 sm:h-40 rounded-3xl overflow-hidden group border border-slate-100 shadow-sm bg-slate-900">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  {idx === 0 && (
+                    <span className="absolute top-3 left-3 bg-emerald-500 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-md shadow-sm">
+                      Cover Photo
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(idx)}
+                    className="absolute top-3 right-3 w-8 h-8 rounded-xl bg-black/60 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow-md"
+                    title="Remove photo"
+                  >
+                    <Icon name="trash" className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case 5: {
+        const subcategory = subcategories.find((s) => s.id === subcategoryId);
+        const selectedPricingOpt = PRICING_UNIT_OPTIONS.find((p) => p.id === pricingUnit);
+        return (
+          <div key={step} className="animate-fade-in space-y-6">
+            <div className="bg-white rounded-[2rem] border border-slate-100 p-6 shadow-sm space-y-4 divide-y divide-slate-100">
+              <div className="pb-4">
+                <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase rounded-full tracking-wider">
+                  {selectedCategory?.name || "Service"} › {subcategory?.name}
+                </span>
+                <h3 className="text-xl font-black text-slate-900 tracking-tight mt-2">{name}</h3>
+                {shortDescription && <p className="text-xs text-slate-500 font-medium mt-1 italic">{shortDescription}</p>}
+              </div>
+
+              <div className="pt-4 grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Pricing Unit</span>
+                  <span className="text-xs font-bold text-slate-800">{selectedPricingOpt?.label}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Base Rate</span>
+                  <span className="text-sm font-black text-slate-900">₹{weekdayPrice}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Capacity</span>
+                  <span className="text-xs font-bold text-slate-800">{capacity} {categoryConfig.capacityLabel.toLowerCase()}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Location</span>
+                  <span className="text-xs font-bold text-slate-800">{city}, {state}</span>
+                </div>
+              </div>
+
+              {images.length > 0 && (
+                <div className="pt-4">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Photos ({images.length})</span>
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                    {images.map((url, i) => (
+                      <div key={i} className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt={`Preview ${i + 1}`} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-3">
+              <Icon name="shield" className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+              <p className="text-xs text-emerald-900 font-semibold leading-relaxed">
+                Services start as <span className="font-bold">Pending Review</span> for quality control before appearing in public traveler search results.
+              </p>
+            </div>
           </div>
         );
       }
@@ -416,9 +713,9 @@ export default function NewServicePage() {
                   {submitting ? (
                     <div className="flex items-center justify-center gap-3">
                       <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                      <span>Saving…</span>
+                      <span>Publishing…</span>
                     </div>
-                  ) : "Add service"}
+                  ) : "Add & Publish Service"}
                 </Button>
               ) : (
                 <Button
@@ -438,14 +735,3 @@ export default function NewServicePage() {
   );
 }
 
-function ReviewRow({ icon, label, value }: { icon: IconName; label: string; value: string }) {
-  return (
-    <div className="flex items-center gap-3 p-4">
-      <span className="w-9 h-9 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center flex-shrink-0">
-        <Icon name={icon} className="w-4 h-4" />
-      </span>
-      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest w-20 flex-shrink-0">{label}</span>
-      <span className="text-sm font-medium text-slate-900 truncate">{value}</span>
-    </div>
-  );
-}
