@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { Icon } from "../components/atoms/Icon";
 import LocalImage from "../components/atoms/Image";
 import PublicFooter from "../components/organisms/PublicFooter";
@@ -42,6 +42,7 @@ function readUrlParam(name: string): string | null {
 export default function ExplorePage() {
   const router = useRouter();
   const { lang } = useParams<{ lang: string }>();
+  const searchParams = useSearchParams();
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [activeCategory, setActiveCategory] = useState("all");
   // Lazy initializers (not a post-mount effect): searchQuery/selectedLocation
@@ -53,7 +54,26 @@ export default function ExplorePage() {
   // would first run an unfiltered, platform-wide search (mixing in every
   // location) and only later replace it with the real Kasol-filtered one.
   // Reading the URL here instead means the first search is already correct.
-  const [searchQuery, setSearchQuery] = useState(() => readUrlParam("q") || readUrlParam("location") || "");
+  // Sourced from Next's useSearchParams(), not raw window.location.search:
+  // during a client-side transition (e.g. router.push from the Hero search),
+  // React renders this component with the new route's params available via
+  // useSearchParams() before the actual browser URL/history commit catches
+  // up, so window.location.search could still read the *previous* page's
+  // query at the exact moment this lazy initializer runs.
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get("q") || searchParams.get("location") || "");
+  // useState's lazy initializer only runs on first mount. A client-side
+  // navigation *into* this route from elsewhere in the app (Hero search,
+  // browser back/forward) with a new ?q= doesn't necessarily remount this
+  // component, so without this sync the query silently drops and results
+  // never filter — see AUDIT: Hero search → Explore handoff lost the query.
+  const lastSyncedParamRef = useRef(searchParams.get("q") || searchParams.get("location") || "");
+  useEffect(() => {
+    const paramQuery = searchParams.get("q") || searchParams.get("location") || "";
+    if (paramQuery !== lastSyncedParamRef.current) {
+      lastSyncedParamRef.current = paramQuery;
+      setSearchQuery(paramQuery);
+    }
+  }, [searchParams]);
   const [services, setServices] = useState<DiscoveryService[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
