@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useParams, useRouter } from "next/navigation";
 import LocalImage from "../../components/atoms/Image";
@@ -17,6 +17,11 @@ import { Icon } from "../../components/atoms/Icon";
 import { toLocalDateString } from "@/lib/travelDate";
 
 import FeedbackReviewModal, { ReviewItem } from "../../components/molecules/FeedbackReviewModal";
+
+// sessionStorage key for a booking mid-fill when the traveler is bounced
+// through sign-in (PIN → possibly name collection) — see the Sign In button
+// below and the restore effect that reopens the modal with these values.
+const PENDING_BOOKING_KEY = "py_pending_booking";
 
 const CATEGORY_IMAGES: Record<string, string> = {
     "Homestays": "https://images.unsplash.com/photo-1587061949409-02df41d5e562?q=80&w=1200",
@@ -257,6 +262,34 @@ export default function VendorProfilePage() {
             clearTimeout(timer);
         };
     }, [bookingModalService, bookingTravelDate, bookingEndDate, bookingGuestCount]);
+
+    // Restore a booking that was mid-fill when the traveler was sent through
+    // sign-in (see the Sign In button's onClick) — runs once the services
+    // list and an authenticated user are both available, so it can reopen
+    // the modal on the exact service with the same dates/guests/notes
+    // instead of leaving the traveler to start over from a bare vendor page.
+    const restoredPendingBookingRef = useRef(false);
+    useEffect(() => {
+        if (restoredPendingBookingRef.current) return;
+        if (!user || !profile?.services?.length) return;
+        restoredPendingBookingRef.current = true;
+        try {
+            const raw = sessionStorage.getItem(PENDING_BOOKING_KEY);
+            if (!raw) return;
+            sessionStorage.removeItem(PENDING_BOOKING_KEY);
+            const pending = JSON.parse(raw);
+            if (pending?.vendorId !== id) return;
+            const service = profile.services.find((s: DetailedService) => s.id === pending.serviceId);
+            if (!service) return;
+            setBookingModalService(service);
+            setBookingTravelDate(pending.travelDate || "");
+            setBookingEndDate(pending.endDate || "");
+            setBookingGuestCount(pending.guestCount || 1);
+            setBookingNotes(pending.notes || "");
+        } catch {
+            // Malformed/unavailable sessionStorage — just skip the restore, sign-in itself already succeeded
+        }
+    }, [user, profile, id]);
 
     if (isLoading) {
         return (
@@ -876,7 +909,27 @@ export default function VendorProfilePage() {
                                     </div>
                                     <button
                                         type="button"
-                                        onClick={() => router.push(`/${lang}/auth/login?redirectTo=${encodeURIComponent(window.location.pathname)}`)}
+                                        onClick={() => {
+                                            // Signing in is a multi-screen detour (PIN → possibly name
+                                            // collection) that lands back on this exact page — without
+                                            // this, whatever the traveler already picked (dates, guests,
+                                            // notes) was silently lost and they had to redo it from scratch.
+                                            if (bookingModalService) {
+                                                try {
+                                                    sessionStorage.setItem(PENDING_BOOKING_KEY, JSON.stringify({
+                                                        vendorId: id,
+                                                        serviceId: bookingModalService.id,
+                                                        travelDate: bookingTravelDate,
+                                                        endDate: bookingEndDate,
+                                                        guestCount: bookingGuestCount,
+                                                        notes: bookingNotes,
+                                                    }));
+                                                } catch {
+                                                    // sessionStorage unavailable (private mode, etc.) — sign-in still works, just without resume
+                                                }
+                                            }
+                                            router.push(`/${lang}/auth/login?redirectTo=${encodeURIComponent(window.location.pathname)}`);
+                                        }}
                                         className="px-3 py-1.5 rounded-xl bg-amber-900 hover:bg-amber-950 text-white text-[10px] font-black uppercase tracking-wider shrink-0 transition-all active:scale-95"
                                     >
                                         Sign In
