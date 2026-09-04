@@ -231,6 +231,28 @@ export default function ExplorePage() {
                 </button>
               )}
             </form>
+
+            {/* Category chip row — filters services by real backend category,
+                already wired via activeCategory/runSearch above; this just
+                surfaces it as tappable chips (previously fetched and used
+                internally but never rendered anywhere, so the traveler had
+                no way to actually filter by category). */}
+            <div className="mt-3 flex items-center gap-2 overflow-x-auto no-scrollbar">
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setActiveCategory(cat.id)}
+                  className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                    activeCategory === cat.id
+                      ? "bg-emerald-600 text-white"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
           </div>
         </section>
 
