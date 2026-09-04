@@ -8,10 +8,12 @@ import Button from "../../../../components/atoms/Button";
 import Textarea from "../../../../components/atoms/Textarea";
 import Input from "../../../../components/atoms/Input";
 import { getServiceById, updateService, getCategories, getSubcategories } from "@/services/catalogService";
+import { getMediaKeyFromUrl } from "@/services/mediaService";
+import MediaManager, { type MediaItem } from "../../../../components/molecules/MediaManager";
 import { toApiUiError } from "@/utils/apiErrors";
 import Loading from "@/app/loading";
 
-type Tab = "details" | "location" | "pricing" | "description";
+type Tab = "details" | "location" | "pricing" | "photos" | "description";
 type Category = { id: number; name: string };
 
 export default function EditServicePage() {
@@ -37,6 +39,7 @@ export default function EditServicePage() {
   const [postalCode, setPostalCode] = useState("");
   const [subcategoryId, setSubcategoryId] = useState<number | null>(null);
   const [subcategoryName, setSubcategoryName] = useState<string | null>(null);
+  const [images, setImages] = useState<MediaItem[]>([]);
 
   // Category/subcategory picker — only fetched if the vendor opens it to change category.
   const [changingCategory, setChangingCategory] = useState(false);
@@ -60,6 +63,9 @@ export default function EditServicePage() {
       setIsAvailable(data.isAvailable ?? true);
       setSubcategoryId(data.subcategory?.id ?? null);
       setSubcategoryName(data.subcategory?.name ?? null);
+      // images[0] is always the cover — the create flow stores it that way,
+      // and the backend has no separate "cover" concept beyond array order.
+      setImages(((data.images || []) as string[]).map((url: string) => ({ url, key: getMediaKeyFromUrl(url) || "" })));
       const primaryAddress = data.addresses?.find((a: any) => a.isPrimary) || data.addresses?.[0];
       setStreet(primaryAddress?.street || "");
       setCity(primaryAddress?.city || "");
@@ -100,6 +106,8 @@ export default function EditServicePage() {
         description: description.trim(),
         capacity: Number(capacity),
         isAvailable,
+        thumbnail: images[0]?.url ?? null,
+        images: images.map((i) => i.url),
         ...(subcategoryId ? { subcategoryId } : {}),
         // Only send addresses if location was actually filled in — CreateAddressDto
         // requires city/state/street/postalCode, so a half-empty address would fail.
@@ -142,7 +150,7 @@ export default function EditServicePage() {
         {/* Sticky (not fixed) so it never fights the global site header's stacking. */}
         <div className="sticky top-0 z-10 -mx-6 px-6 py-3 mb-6 bg-white/90 backdrop-blur-xl border-b border-slate-50">
           <div className="flex gap-2 overflow-x-auto no-scrollbar">
-            {(["details", "location", "pricing", "description"] as Tab[]).map((t) => (
+            {(["details", "location", "pricing", "photos", "description"] as Tab[]).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -259,6 +267,12 @@ export default function EditServicePage() {
             <div className="grid grid-cols-2 gap-4 animate-fade-in">
               <Input label="Weekday price (₹)" name="weekdayPrice" type="number" value={weekdayPrice} onChange={(e) => setWeekdayPrice(e.target.value)} />
               <Input label="Weekend price (₹)" name="weekendPrice" type="number" value={weekendPrice} onChange={(e) => setWeekendPrice(e.target.value)} placeholder="Same as weekday" />
+            </div>
+          )}
+
+          {tab === "photos" && (
+            <div className="animate-fade-in">
+              <MediaManager value={images} onChange={setImages} folder="service-images" label="" minWidth={480} minHeight={320} />
             </div>
           )}
 

@@ -10,7 +10,7 @@ import Textarea from "../../../components/atoms/Textarea";
 import LocationAutocomplete from "../../../components/molecules/LocationAutocomplete";
 import { getMyVendor } from "@/services/vendorService";
 import { getCategories, getSubcategories, createService } from "@/services/catalogService";
-import { uploadMedia, deleteMedia, getMediaKeyFromUrl, validateImage } from "@/services/mediaService";
+import MediaManager, { type MediaItem } from "../../../components/molecules/MediaManager";
 import { toApiUiError } from "@/utils/apiErrors";
 import Loading from "@/app/loading";
 import { useTouchedFields } from "@/hooks/useTouchedFields";
@@ -158,10 +158,7 @@ export default function NewServicePage() {
   const [cancellationPolicy, setCancellationPolicy] = useState("");
 
   // Step 4 — Media / Photos: store {url, key} pairs so deletion can use the key
-  const [images, setImages] = useState<{ url: string; key: string }[]>([]);
-  const [uploadingMedia, setUploadingMedia] = useState(false);
-  const [mediaError, setMediaError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [images, setImages] = useState<MediaItem[]>([]);
 
   // Submission & Validation
   const { touched, markTouched, markAllTouched } = useTouchedFields<FieldName>();
@@ -206,49 +203,6 @@ export default function NewServicePage() {
   const handleBack = () => {
     if (step > 1) setStep(step - 1);
     else router.back();
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    setUploadingMedia(true);
-    setMediaError(null);
-
-    const uploadedUrls: { url: string; key: string }[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const validationError = validateImage(file);
-      if (validationError) {
-        setMediaError(validationError);
-        continue;
-      }
-      try {
-        const result = await uploadMedia(file, "service-images");
-        if (result?.url) {
-          uploadedUrls.push({ url: result.url, key: result.key });
-        }
-      } catch {
-        setMediaError("Failed to upload image. Please try again.");
-      }
-    }
-
-    if (uploadedUrls.length > 0) {
-      setImages((prev) => [...prev, ...uploadedUrls]);
-    }
-    setUploadingMedia(false);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  const handleRemoveImage = async (indexToRemove: number) => {
-    const item = images[indexToRemove];
-    setImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
-    try {
-      const key = item.key || getMediaKeyFromUrl(item.url);
-      if (key) await deleteMedia(key);
-    } catch {
-      // non-fatal if backend cleanup fails
-    }
   };
 
   const handleSubmit = useCallback(async () => {
@@ -565,55 +519,7 @@ export default function NewServicePage() {
               </p>
             </div>
 
-            {mediaError && <p className="text-xs text-red-500 bg-red-50 border border-red-100 rounded-xl p-3">{mediaError}</p>}
-
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileUpload}
-              accept="image/jpeg,image/png,image/webp"
-              multiple
-              className="hidden"
-            />
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingMedia}
-                className="h-36 sm:h-40 rounded-3xl border-2 border-dashed border-slate-200 hover:border-slate-900 bg-slate-50/50 hover:bg-slate-50 flex flex-col items-center justify-center p-4 transition-all group disabled:opacity-50"
-              >
-                {uploadingMedia ? (
-                  <div className="w-8 h-8 border-2 border-slate-300 border-t-slate-900 rounded-full animate-spin mb-2" />
-                ) : (
-                  <Icon name="upload" className="w-7 h-7 text-slate-400 group-hover:text-slate-900 mb-2 transition-colors" />
-                )}
-                <span className="text-xs font-bold text-slate-700 group-hover:text-slate-900">
-                  {uploadingMedia ? "Uploading..." : "Add Photos"}
-                </span>
-                <span className="text-[10px] text-slate-400 mt-1">JPG, PNG, WEBP</span>
-              </button>
-
-              {images.map((item, idx) => (
-                <div key={item.url} className="relative h-36 sm:h-40 rounded-3xl overflow-hidden group border border-slate-100 shadow-sm bg-slate-900">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={item.url} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                  {idx === 0 && (
-                    <span className="absolute top-3 left-3 bg-emerald-500 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-md shadow-sm">
-                      Cover Photo
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveImage(idx)}
-                    className="absolute top-3 right-3 w-8 h-8 rounded-xl bg-black/60 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow-md"
-                    title="Remove photo"
-                  >
-                    <Icon name="trash" className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
+            <MediaManager value={images} onChange={setImages} folder="service-images" label="" minWidth={480} minHeight={320} />
           </div>
         );
       case 5: {

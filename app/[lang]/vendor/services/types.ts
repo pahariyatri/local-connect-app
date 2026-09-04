@@ -43,5 +43,7 @@ export type Service = {
   availability?: string;
   status?: string;
   additionalData?: { images?: string[]; [key: string]: any } | null;
+  thumbnail?: string | null;
+  images?: string[] | null;
   addresses?: ServiceAddress[];
 };
