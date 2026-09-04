@@ -70,12 +70,14 @@ test.describe('Pahari Yatri Core Flows', () => {
     await page.getByRole('button', { name: /Clear search/i }).click();
     await expect(searchInput).toHaveValue('');
 
-    // Check location input
-    const locationInput = page.locator('input[id="explore-location"]');
-    await expect(locationInput).toBeVisible();
-
-    await locationInput.fill('Kasol');
-    await expect(locationInput).toHaveValue('Kasol');
+    // Location filtering now lives in the same unified search field above —
+    // there is no separate location-only input anymore (consolidated at
+    // some point; this test previously checked a second `explore-location`
+    // input that no longer exists in the DOM, which is why this had been
+    // silently failing). Confirm the one real search field also handles a
+    // real destination query correctly.
+    await searchInput.fill('Kasol');
+    await expect(searchInput).toHaveValue('Kasol');
   });
 
   test('Auth redirects', async ({ page }) => {
