@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useParams, useRouter } from "next/navigation";
 import LocalImage from "../../components/atoms/Image";
@@ -11,17 +11,10 @@ import SupportContact from "../../components/molecules/SupportContact";
 import { getVendorById } from "@/services/vendorService";
 import { ApiClientError } from "@/lib/apiClient";
 import { searchDiscoveryServices } from "@/services/searchService";
-import { createDirectBooking, getUserBookings } from "@/services/bookingService";
-import { getServiceQuote, ServiceQuote } from "@/services/catalogService";
+import { getUserBookings } from "@/services/bookingService";
 import { Icon } from "../../components/atoms/Icon";
-import { toLocalDateString } from "@/lib/travelDate";
 
 import FeedbackReviewModal, { ReviewItem } from "../../components/molecules/FeedbackReviewModal";
-
-// sessionStorage key for a booking mid-fill when the traveler is bounced
-// through sign-in (PIN → possibly name collection) — see the Sign In button
-// below and the restore effect that reopens the modal with these values.
-const PENDING_BOOKING_KEY = "py_pending_booking";
 
 const CATEGORY_IMAGES: Record<string, string> = {
     "Homestays": "https://images.unsplash.com/photo-1587061949409-02df41d5e562?q=80&w=1200",
@@ -90,16 +83,6 @@ export default function VendorProfilePage() {
     useEffect(() => {
         setIsMounted(true);
     }, []);
-    const [bookingModalService, setBookingModalService] = useState<DetailedService | null>(null);
-    const [bookingTravelDate, setBookingTravelDate] = useState("");
-    const [bookingEndDate, setBookingEndDate] = useState("");
-    const [isBookingCalendarOpen, setIsBookingCalendarOpen] = useState(false);
-    const [bookingCalendarMonth, setBookingCalendarMonth] = useState(new Date());
-    const [bookingGuestCount, setBookingGuestCount] = useState(1);
-    const [bookingNotes, setBookingNotes] = useState("");
-    const [bookingQuote, setBookingQuote] = useState<ServiceQuote | null>(null);
-    const [isQuoting, setIsQuoting] = useState(false);
-    const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
     const [profile, setProfile] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState<"not_found" | "error" | null>(null);
@@ -230,67 +213,6 @@ export default function VendorProfilePage() {
         fetchProfile();
     }, [id]);
 
-    // Live price quote from the real pricing engine (room allocation,
-    // per-person/per-night/per-trip rules — see backend PricingService) —
-    // replaces a naive price × guestCount estimate that didn't multiply by
-    // nights at all, so it silently showed a wrong total before submit.
-    // Declared above the loading/error early-returns below so hook order
-    // stays stable across renders (Rules of Hooks).
-    useEffect(() => {
-        if (!bookingModalService || !bookingTravelDate) {
-            setBookingQuote(null);
-            return;
-        }
-        let cancelled = false;
-        setIsQuoting(true);
-        const timer = setTimeout(async () => {
-            try {
-                const quote = await getServiceQuote(bookingModalService.id, {
-                    dateFrom: bookingTravelDate,
-                    dateTo: bookingEndDate || undefined,
-                    guests: bookingGuestCount,
-                });
-                if (!cancelled) setBookingQuote(quote);
-            } catch {
-                if (!cancelled) setBookingQuote(null);
-            } finally {
-                if (!cancelled) setIsQuoting(false);
-            }
-        }, 250);
-        return () => {
-            cancelled = true;
-            clearTimeout(timer);
-        };
-    }, [bookingModalService, bookingTravelDate, bookingEndDate, bookingGuestCount]);
-
-    // Restore a booking that was mid-fill when the traveler was sent through
-    // sign-in (see the Sign In button's onClick) — runs once the services
-    // list and an authenticated user are both available, so it can reopen
-    // the modal on the exact service with the same dates/guests/notes
-    // instead of leaving the traveler to start over from a bare vendor page.
-    const restoredPendingBookingRef = useRef(false);
-    useEffect(() => {
-        if (restoredPendingBookingRef.current) return;
-        if (!user || !profile?.services?.length) return;
-        restoredPendingBookingRef.current = true;
-        try {
-            const raw = sessionStorage.getItem(PENDING_BOOKING_KEY);
-            if (!raw) return;
-            sessionStorage.removeItem(PENDING_BOOKING_KEY);
-            const pending = JSON.parse(raw);
-            if (pending?.vendorId !== id) return;
-            const service = profile.services.find((s: DetailedService) => s.id === pending.serviceId);
-            if (!service) return;
-            setBookingModalService(service);
-            setBookingTravelDate(pending.travelDate || "");
-            setBookingEndDate(pending.endDate || "");
-            setBookingGuestCount(pending.guestCount || 1);
-            setBookingNotes(pending.notes || "");
-        } catch {
-            // Malformed/unavailable sessionStorage — just skip the restore, sign-in itself already succeeded
-        }
-    }, [user, profile, id]);
-
     if (isLoading) {
         return (
             <div className="min-h-screen bg-slate-50 pb-32 animate-pulse">
@@ -347,112 +269,12 @@ export default function VendorProfilePage() {
         );
     }
 
-    const openBookingModal = (service: DetailedService) => {
-        setBookingModalService(service);
-        setBookingTravelDate("");
-        setBookingEndDate("");
-        setIsBookingCalendarOpen(false);
-        setBookingCalendarMonth(new Date());
-        setBookingGuestCount(1);
-        setBookingNotes("");
-        setBookingQuote(null);
-    };
-
-    const bookingNights = (() => {
-        if (!bookingTravelDate || !bookingEndDate) return 0;
-        const start = new Date(bookingTravelDate);
-        const end = new Date(bookingEndDate);
-        return Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-    })();
-
-    const handleBookingDateClick = (dateStr: string) => {
-        if (!bookingTravelDate || (bookingTravelDate && bookingEndDate)) {
-            setBookingTravelDate(dateStr);
-            setBookingEndDate("");
-            return;
-        }
-        if (dateStr < bookingTravelDate) {
-            setBookingEndDate(bookingTravelDate);
-            setBookingTravelDate(dateStr);
-        } else {
-            setBookingEndDate(dateStr);
-        }
-        setIsBookingCalendarOpen(false);
-    };
-
-    const renderBookingCalendarDays = () => {
-        const year = bookingCalendarMonth.getFullYear();
-        const month = bookingCalendarMonth.getMonth();
-        const totalDays = new Date(year, month + 1, 0).getDate();
-        const startOffset = new Date(year, month, 1).getDay();
-        const todayStr = toLocalDateString(new Date());
-
-        const cells = [];
-        for (let i = 0; i < startOffset; i++) {
-            cells.push(<div key={`empty-${i}`} className="h-9 sm:h-10 w-full" />);
-        }
-        for (let d = 1; d <= totalDays; d++) {
-            const dateStr = toLocalDateString(new Date(year, month, d));
-            const isPast = dateStr < todayStr;
-            const isSelected = dateStr === bookingTravelDate || dateStr === bookingEndDate;
-            const isBetween = !!bookingTravelDate && !!bookingEndDate && dateStr > bookingTravelDate && dateStr < bookingEndDate;
-            cells.push(
-                <button
-                    key={d}
-                    type="button"
-                    disabled={isPast}
-                    onClick={() => handleBookingDateClick(dateStr)}
-                    className={`h-9 w-full sm:h-10 relative flex items-center justify-center rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all ${
-                        isPast ? "text-slate-200 cursor-not-allowed" :
-                        isSelected ? "bg-slate-900 text-white shadow-lg scale-105 z-10" :
-                        isBetween ? "bg-emerald-50 text-emerald-600 rounded-none" :
-                        "text-slate-600 hover:bg-slate-100"
-                    }`}
-                >
-                    {d}
-                    {dateStr === todayStr && !isSelected && (
-                        <div className="absolute bottom-1 w-1 h-1 bg-emerald-500 rounded-full" />
-                    )}
-                </button>
-            );
-        }
-        return cells;
-    };
-
-    const handleSubmitBooking = async () => {
-        if (!bookingModalService) return;
-        if (!user) {
-            showNotification("Please sign in to send a booking request to this host.", "info");
-            const redirectUrl = `/${lang}/auth/login?redirectTo=${encodeURIComponent(window.location.pathname)}`;
-            router.push(redirectUrl);
-            return;
-        }
-        if (!bookingTravelDate) {
-            return showNotification("Please choose a travel date", "error");
-        }
-        setIsSubmittingBooking(true);
-        try {
-            const result = await createDirectBooking({
-                serviceId: Number(bookingModalService.id),
-                travelDate: bookingTravelDate,
-                endDate: bookingEndDate || undefined,
-                guestCount: bookingGuestCount,
-                notes: bookingNotes || undefined,
-            }, { destination: profile?.hometown });
-            showNotification(result.message || "Booking request sent successfully!", "success");
-            setBookingModalService(null);
-            setActiveDetailModal(null);
-            router.push(`/${lang}/bookings/${result.bookingId}`);
-        } catch (err: any) {
-            if (err instanceof ApiClientError && err.statusCode === 401) {
-                showNotification("Your session expired. Please sign in to submit your booking.", "error");
-                router.push(`/${lang}/auth/login?redirectTo=${encodeURIComponent(window.location.pathname)}`);
-                return;
-            }
-            showNotification(err instanceof ApiClientError ? err.message : "Could not submit your booking request. Please try again.", "error");
-        } finally {
-            setIsSubmittingBooking(false);
-        }
+    // Booking is now a dedicated page (was a modal here) — see
+    // vendor/[id]/book/[serviceId]/page.tsx. Keeps its own date/guest/quote
+    // state and the sign-in-detour resume logic, so this profile page no
+    // longer needs any of that.
+    const goToBooking = (service: DetailedService) => {
+        router.push(`/${lang}/vendor/${id}/book/${service.id}`);
     };
 
     const handleSharePortfolio = () => {
@@ -605,15 +427,10 @@ export default function VendorProfilePage() {
                     ) : (
                         <div className="space-y-4">
                             {profile.services.map((service: DetailedService) => {
-                                const isSelected = bookingModalService?.id === service.id;
                                 return (
                                     <div
                                         key={service.id}
-                                        className={`bg-white rounded-3xl overflow-hidden border-2 transition-all duration-200 shadow-sm hover:shadow-md ${
-                                            isSelected
-                                                ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/10"
-                                                : "border-slate-200/80 hover:border-slate-300"
-                                        }`}
+                                        className="bg-white rounded-3xl overflow-hidden border-2 border-slate-200/80 hover:border-slate-300 transition-all duration-200 shadow-sm hover:shadow-md"
                                     >
                                         <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                             <div className="flex items-start gap-4 min-w-0">
@@ -664,7 +481,7 @@ export default function VendorProfilePage() {
                                                         Details
                                                     </button>
                                                     <button
-                                                        onClick={() => openBookingModal(service)}
+                                                        onClick={() => goToBooking(service)}
                                                         className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-emerald-600 text-white text-xs font-black uppercase tracking-wider transition-all shadow-sm active:scale-95"
                                                     >
                                                         Request to Book
@@ -855,281 +672,10 @@ export default function VendorProfilePage() {
                                 Back
                             </button>
                             <button
-                                onClick={() => openBookingModal(activeDetailModal)}
+                                onClick={() => goToBooking(activeDetailModal)}
                                 className="w-2/3 h-12 rounded-2xl bg-slate-900 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all"
                             >
                                 Request to Book →
-                            </button>
-                        </div>
-                    </div>
-                </div>,
-                document.body
-            )}
-
-            {/* ── DIRECT BOOKING REQUEST MODAL (STREAMLINED UX) ───────────────────────── */}
-            {isMounted && bookingModalService && createPortal(
-                <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-                    <div
-                        className="relative bg-white w-full max-w-md max-h-[80vh] sm:max-h-[85vh] rounded-3xl overflow-hidden shadow-2xl flex flex-col my-auto border border-slate-100 animate-in fade-in zoom-in-95 duration-200"
-                        role="dialog"
-                        aria-modal="true"
-                    >
-                        {/* Header */}
-                        <div className="p-4 sm:p-5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800 shrink-0">
-                            <div className="flex items-center gap-3 min-w-0">
-                                <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-800 shrink-0 border border-slate-700">
-                                    <LocalImage
-                                        src={bookingModalService.image}
-                                        alt={bookingModalService.name}
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-                                <div className="min-w-0">
-                                    <span className="text-[9px] font-black uppercase text-emerald-400 tracking-wider block">Direct Request</span>
-                                    <h3 className="text-sm font-black truncate text-white">{bookingModalService.name}</h3>
-                                    <p className="text-[10px] text-slate-300 truncate">Host: {profile.name}</p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setBookingModalService(null)}
-                                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xs font-bold transition-all shrink-0 ml-2"
-                                aria-label="Close"
-                            >
-                                ✕
-                            </button>
-                        </div>
-
-                        {/* Scrollable Form Body */}
-                        <div className="p-5 sm:p-6 space-y-4 overflow-y-auto grow">
-                            {/* Sign-in Callout if unauthenticated */}
-                            {!user && (
-                                <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200/80 flex items-center justify-between gap-2 shadow-2xs">
-                                    <div className="text-xs font-bold text-amber-950">
-                                        <span>🔒 Sign in required to complete request.</span>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            // Signing in is a multi-screen detour (PIN → possibly name
-                                            // collection) that lands back on this exact page — without
-                                            // this, whatever the traveler already picked (dates, guests,
-                                            // notes) was silently lost and they had to redo it from scratch.
-                                            if (bookingModalService) {
-                                                try {
-                                                    sessionStorage.setItem(PENDING_BOOKING_KEY, JSON.stringify({
-                                                        vendorId: id,
-                                                        serviceId: bookingModalService.id,
-                                                        travelDate: bookingTravelDate,
-                                                        endDate: bookingEndDate,
-                                                        guestCount: bookingGuestCount,
-                                                        notes: bookingNotes,
-                                                    }));
-                                                } catch {
-                                                    // sessionStorage unavailable (private mode, etc.) — sign-in still works, just without resume
-                                                }
-                                            }
-                                            router.push(`/${lang}/auth/login?redirectTo=${encodeURIComponent(window.location.pathname)}`);
-                                        }}
-                                        className="px-3 py-1.5 rounded-xl bg-amber-900 hover:bg-amber-950 text-white text-[10px] font-black uppercase tracking-wider shrink-0 transition-all active:scale-95"
-                                    >
-                                        Sign In
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* Date Selection — input-like trigger that opens a range calendar */}
-                            <div className="space-y-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsBookingCalendarOpen((o) => !o)}
-                                    className={`w-full flex items-center justify-between h-11 px-3.5 rounded-2xl border text-left transition-all ${
-                                        isBookingCalendarOpen ? "border-slate-900 bg-white" : "border-slate-200 bg-slate-50/50 hover:border-slate-300"
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-1.5 min-w-0 text-xs font-bold text-slate-800">
-                                        <span className={bookingTravelDate ? "" : "text-slate-400"}>
-                                            {bookingTravelDate
-                                                ? new Date(bookingTravelDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })
-                                                : "Check-in"}
-                                        </span>
-                                        <span className="text-slate-300">→</span>
-                                        <span className={bookingEndDate ? "" : "text-slate-400"}>
-                                            {bookingEndDate
-                                                ? new Date(bookingEndDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })
-                                                : "Check-out"}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        {bookingNights > 0 && (
-                                            <span className="text-[10px] font-black text-emerald-600">
-                                                {bookingNights} {bookingNights === 1 ? "Night" : "Nights"}
-                                            </span>
-                                        )}
-                                        <span className={`text-[10px] transition-transform ${isBookingCalendarOpen ? "rotate-180" : ""}`}>▾</span>
-                                    </div>
-                                </button>
-
-                                {isBookingCalendarOpen && (
-                                    <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-3 sm:p-4 animate-in fade-in duration-200">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <h4 className="font-black text-slate-900 text-[10px] sm:text-xs tracking-widest uppercase">
-                                                {bookingCalendarMonth.toLocaleString("default", { month: "long", year: "numeric" })}
-                                            </h4>
-                                            <div className="flex gap-1.5">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setBookingCalendarMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
-                                                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white flex items-center justify-center text-[10px] border border-slate-200 hover:bg-slate-100 transition-all active:scale-95"
-                                                    aria-label="Previous month"
-                                                >←</button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setBookingCalendarMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
-                                                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white flex items-center justify-center text-[10px] border border-slate-200 hover:bg-slate-100 transition-all active:scale-95"
-                                                    aria-label="Next month"
-                                                >→</button>
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-7 text-center mb-1">
-                                            {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-                                                <div key={`${d}-${i}`} className="text-[9px] font-black text-slate-300">{d}</div>
-                                            ))}
-                                        </div>
-
-                                        <div className="grid grid-cols-7 gap-y-1 select-none">
-                                            {renderBookingCalendarDays()}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Guest Counter Stepper */}
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase tracking-wider text-slate-500 block">
-                                    Number of Guests (Max {bookingModalService.capacity})
-                                </label>
-                                <div className="flex items-center justify-between p-2 rounded-2xl border border-slate-200 bg-slate-50/50">
-                                    <button
-                                        type="button"
-                                        onClick={() => setBookingGuestCount((g) => Math.max(1, g - 1))}
-                                        disabled={bookingGuestCount <= 1}
-                                        className="w-9 h-9 rounded-xl bg-white border border-slate-200 disabled:opacity-30 text-slate-800 font-black text-sm flex items-center justify-center shadow-2xs hover:bg-slate-100 transition-all active:scale-95"
-                                    >
-                                        −
-                                    </button>
-                                    <div className="text-center">
-                                        <span className="text-sm font-black text-slate-900 block leading-tight">
-                                            {bookingGuestCount} {bookingGuestCount === 1 ? "Guest" : "Guests"}
-                                        </span>
-                                        <span className="text-[9px] font-bold text-slate-400">
-                                            Up to {bookingModalService.capacity} permitted
-                                        </span>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => setBookingGuestCount((g) => Math.min(bookingModalService.capacity, g + 1))}
-                                        disabled={bookingGuestCount >= bookingModalService.capacity}
-                                        className="w-9 h-9 rounded-xl bg-white border border-slate-200 disabled:opacity-30 text-slate-800 font-black text-sm flex items-center justify-center shadow-2xs hover:bg-slate-100 transition-all active:scale-95"
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Quick Special Requests Toggles */}
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase tracking-wider text-slate-500 block">
-                                    Quick Requests (Optional)
-                                </label>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {["Early Check-in", "Airport/Bus Taxi", "Veg Meals", "Pet Friendly"].map((tag) => {
-                                        const isChecked = bookingNotes.includes(tag);
-                                        return (
-                                            <button
-                                                key={tag}
-                                                type="button"
-                                                onClick={() => {
-                                                    if (isChecked) {
-                                                        setBookingNotes((prev) => prev.replace(tag, "").replace(/,\s*,/g, ",").trim());
-                                                    } else {
-                                                        setBookingNotes((prev) => (prev ? `${prev}, ${tag}` : tag));
-                                                    }
-                                                }}
-                                                className={`px-2.5 py-1 rounded-xl text-[10px] font-bold border transition-all ${
-                                                    isChecked
-                                                        ? "bg-slate-900 text-white border-slate-900"
-                                                        : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
-                                                }`}
-                                            >
-                                                {isChecked ? `✓ ${tag}` : `+ ${tag}`}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-
-                                <textarea
-                                    value={bookingNotes}
-                                    onChange={(e) => setBookingNotes(e.target.value)}
-                                    rows={2}
-                                    placeholder="Add any specific requests or note for host..."
-                                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 resize-none bg-slate-50/50 mt-1"
-                                />
-                            </div>
-
-                            {/* Price Summary Pill — real quote from the pricing engine
-                                (room allocation / per-night / per-person / flat rules),
-                                not a client-side price × guestCount guess. */}
-                            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-900 text-white shadow-sm">
-                                <div>
-                                    <span className="text-[9px] font-black uppercase text-emerald-400 tracking-wider block">Estimated Total</span>
-                                    <p className="text-base font-black">
-                                        {!bookingTravelDate ? (
-                                            <>₹{Math.round(bookingModalService.price).toLocaleString("en-IN")}</>
-                                        ) : isQuoting && !bookingQuote ? (
-                                            <span className="text-slate-400 text-sm font-semibold">Calculating…</span>
-                                        ) : bookingQuote ? (
-                                            <>₹{Math.round(bookingQuote.totalAmount).toLocaleString("en-IN")}</>
-                                        ) : (
-                                            <span className="text-slate-400 text-sm font-semibold">Unavailable — try again</span>
-                                        )}
-                                    </p>
-                                </div>
-                                {bookingQuote && (
-                                    <span className="text-[10px] font-bold text-slate-300 bg-white/10 px-2.5 py-1 rounded-lg">
-                                        {bookingQuote.nights > 0 && bookingModalService.unit.includes("night")
-                                            ? `₹${Math.round(bookingQuote.unitPrice).toLocaleString("en-IN")} × ${bookingQuote.nights} night${bookingQuote.nights > 1 ? "s" : ""}`
-                                            : `${bookingQuote.guestCount} guest${bookingQuote.guestCount > 1 ? "s" : ""}`}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Submit Button */}
-                        <div className="p-4 sm:p-5 bg-slate-50 border-t border-slate-100 shrink-0">
-                            <button
-                                onClick={handleSubmitBooking}
-                                disabled={isSubmittingBooking || !bookingTravelDate}
-                                className="w-full h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-600/25 active:scale-95 transition-all flex items-center justify-center gap-2"
-                            >
-                                {user ? (
-                                    isSubmittingBooking ? (
-                                        <>
-                                            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                            Sending Request...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <span>Confirm Booking Request</span>
-                                            <span>→</span>
-                                        </>
-                                    )
-                                ) : (
-                                    <>
-                                        <span>Sign In to Request Booking</span>
-                                        <span>→</span>
-                                    </>
-                                )}
                             </button>
                         </div>
                     </div>
