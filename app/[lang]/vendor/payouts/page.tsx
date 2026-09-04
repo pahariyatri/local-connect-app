@@ -1,127 +1,137 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Typography from "../../components/atoms/Typography";
-import Button from "../../components/atoms/Button";
+import { getMyVendor } from "@/services/vendorService";
+import { getVendorAccountingSummary, getVendorPayouts, Payout, VendorAccountingSummary } from "@/services/payoutService";
 
-const MOCK_TRANSACTIONS = [
-  { id: "tx_1", date: "2026-02-14", amount: 12500, status: "Paid", method: "Razorpay Payout", journey: "Manali Mystic Expedition" },
-  { id: "tx_2", date: "2026-02-12", amount: 4500, status: "Pending", method: "Bank Transfer", journey: "Beas Kund Trek Assist" },
-  { id: "tx_3", date: "2026-02-10", amount: 8200, status: "Paid", method: "Razorpay Payout", journey: "Solang Activity Package" },
-  { id: "tx_4", date: "2024-02-08", amount: 15000, status: "Paid", method: "Direct Bank", journey: "Luxury Stay - 4 nights" },
-];
+const STATUS_STYLE: Record<string, string> = {
+  paid: "bg-emerald-600 text-white",
+  processing: "bg-amber-500 text-white",
+  pending: "bg-slate-200 text-slate-600",
+  failed: "bg-red-400 text-white",
+  rejected: "bg-red-400 text-white",
+};
 
 export default function VendorPayouts() {
-  const [activeTab, setActiveTab] = useState<"balance" | "history">("balance");
+  const [vendorId, setVendorId] = useState<string | null>(null);
+  const [summary, setSummary] = useState<VendorAccountingSummary | null>(null);
+  const [payouts, setPayouts] = useState<Payout[]>([]);
+  const [state, setState] = useState<"loading" | "error" | "ready">("loading");
+
+  const load = useCallback(async () => {
+    setState("loading");
+    try {
+      const vendor = await getMyVendor();
+      if (!vendor?.id) { setState("ready"); return; }
+      setVendorId(vendor.id);
+      const [summaryResult, payoutsResult] = await Promise.all([
+        getVendorAccountingSummary(vendor.id),
+        getVendorPayouts(vendor.id),
+      ]);
+      setSummary(summaryResult);
+      setPayouts(payoutsResult);
+      setState("ready");
+    } catch {
+      setState("error");
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (state === "loading") {
+    return (
+      <div className="max-w-md mx-auto space-y-6 animate-pulse">
+        <div className="h-9 w-40 bg-slate-100 rounded-lg" />
+        <div className="h-40 rounded-3xl bg-slate-100" />
+        <div className="h-24 rounded-2xl bg-slate-100" />
+        <div className="h-24 rounded-2xl bg-slate-100" />
+      </div>
+    );
+  }
+
+  if (state === "error") {
+    return (
+      <div className="max-w-md mx-auto text-center py-16">
+        <p className="text-sm font-medium text-red-600 mb-4">Could not load your earnings.</p>
+        <button onClick={load} className="text-xs font-semibold text-slate-900 underline">Try again</button>
+      </div>
+    );
+  }
+
+  if (!vendorId) {
+    return (
+      <div className="max-w-md mx-auto text-center py-16">
+        <p className="text-sm font-medium text-slate-500">Complete vendor onboarding to see your earnings here.</p>
+      </div>
+    );
+  }
+
+  const currency = summary?.currency === "INR" ? "₹" : `${summary?.currency ?? ""} `;
 
   return (
     <div className="max-w-md mx-auto">
-        <header className="mb-6 sm:mb-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
-            <Typography variant="h1" className="text-4xl font-black text-slate-900 leading-tight">
-                Financial <span className="text-emerald-600">Hub.</span>
+        <header className="mb-6 animate-in fade-in slide-in-from-bottom-5 duration-700">
+            <Typography variant="h1" className="text-2xl sm:text-3xl font-bold text-slate-900">
+                Earnings
             </Typography>
-            <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em] mt-2">Manage your earnings & payouts</p>
+            <p className="text-slate-500 text-sm mt-1">Manage your earnings &amp; payouts</p>
         </header>
-        
-        {/* 💳 Balance Card */}
-        <div className="premium-card bg-slate-900 p-10 text-white shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] mb-10 relative overflow-hidden group animate-in fade-in slide-in-from-bottom-5 duration-700 delay-100">
+
+        {/* Balance card — real totals from the payout ledger */}
+        <div className="rounded-3xl bg-slate-900 p-8 text-white mb-6 relative overflow-hidden">
           <div className="relative z-10">
-            <Typography variant="h3" className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4">Available Balance</Typography>
-            <Typography variant="h1" className="text-5xl font-black mb-8 tracking-tighter italic">₹42,500</Typography>
-            
-            <div className="flex gap-2 items-center mb-10 translate-y-2 opacity-0 animate-in fade-in slide-in-from-bottom-2 duration-700 delay-500 fill-mode-forwards">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Verified and Ready for transfer</span>
+            <p className="text-xs font-medium text-slate-400 mb-2">Total Earnings</p>
+            <p className="text-3xl sm:text-4xl font-bold mb-6">{currency}{(summary?.totalEarnings ?? 0).toLocaleString()}</p>
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
+              <div>
+                <p className="text-xs font-medium text-slate-400">Paid Out</p>
+                <p className="text-lg font-bold text-emerald-400">{currency}{(summary?.totalPaid ?? 0).toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-slate-400">Pending</p>
+                <p className="text-lg font-bold text-amber-400">{currency}{((summary?.totalPending ?? 0) + (summary?.totalProcessing ?? 0)).toLocaleString()}</p>
+              </div>
             </div>
-
-            <Button className="w-full h-16 rounded-[1.75rem] bg-emerald-500 text-white font-black text-xs uppercase tracking-[0.1em] shadow-xl shadow-emerald-900/60 hover:bg-emerald-400 hover:scale-[1.02] transition-all active:scale-95 duration-500">
-              WITHDRAW TO BANK 🏔️
-            </Button>
           </div>
-          
-          {/* Ambient Background Glow */}
-          <div className="absolute -right-20 -bottom-20 w-72 h-72 bg-emerald-500/20 rounded-full blur-[80px] group-hover:bg-emerald-500/30 transition-all duration-1000"></div>
-          <div className="absolute -left-10 -top-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-[60px]"></div>
+          <div className="absolute -right-16 -bottom-16 w-56 h-56 bg-emerald-500/10 rounded-full blur-[70px]" />
         </div>
 
-        {/* 🛡️ Secure Provider Section */}
-        <div className="p-8 rounded-[3rem] bg-white border border-slate-100 mb-10 shadow-sm animate-in fade-in slide-in-from-bottom-5 duration-700 delay-200">
-            <div className="flex items-center justify-between mb-8 pb-6 border-b border-slate-50">
-                <div className="flex items-center gap-5">
-                    <div className="w-14 h-14 rounded-2xl bg-slate-900 flex items-center justify-center text-white text-xl shadow-xl shadow-slate-200 italic font-black">R</div>
-                    <div>
-                        <h3 className="text-xs font-black text-slate-900 uppercase tracking-tight">Razorpay Secure</h3>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Legion Verified Account</p>
-                    </div>
-                </div>
-                <div className="px-4 py-1.5 bg-emerald-50 rounded-full border border-emerald-100 flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                    <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest leading-none">ACTIVE</span>
-                </div>
+        {/* Payout history — real records, no fabricated per-booking labels
+            (a Payout is a ledger entry, not tied to a specific trip name). */}
+        <div className="space-y-3">
+          <Typography variant="h3" className="text-base font-bold text-slate-900 px-1">
+            Payout History
+          </Typography>
+
+          {payouts.length === 0 ? (
+            <div className="p-8 rounded-2xl bg-slate-50 border border-dashed border-slate-200 text-center">
+              <p className="text-sm font-medium text-slate-400">No payouts yet. They&apos;ll show up here once your bookings are settled.</p>
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-                <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 transition-all hover:bg-white hover:border-emerald-100 group">
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Compliance</p>
-                    <p className="text-xs font-black text-slate-900 flex items-center gap-2">Success <span className="text-emerald-500 group-hover:scale-125 transition-transform duration-500">✓</span></p>
+          ) : (
+            <div className="space-y-2.5">
+              {payouts.map((tx) => (
+                <div key={tx.id} className="flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-100 shadow-sm">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-900">
+                      {new Date(tx.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                    </p>
+                    {tx.transactionReference && (
+                      <p className="text-xs text-slate-400 mt-0.5 truncate">Ref: {tx.transactionReference}</p>
+                    )}
+                  </div>
+                  <div className="text-right shrink-0 ml-3">
+                    <p className="text-sm font-bold text-slate-900">
+                      {tx.currency === "INR" ? "₹" : `${tx.currency} `}{Number(tx.amount).toLocaleString()}
+                    </p>
+                    <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${STATUS_STYLE[tx.status] || STATUS_STYLE.pending}`}>
+                      {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
+                    </span>
+                  </div>
                 </div>
-                <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 transition-all hover:bg-white hover:border-emerald-100 group">
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Tax Ledger</p>
-                    <p className="text-xs font-black text-slate-900 flex items-center gap-2">Complete <span className="text-emerald-500 group-hover:scale-125 transition-transform duration-500">✓</span></p>
-                </div>
+              ))}
             </div>
-
-            <button className="w-full mt-8 py-3 text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] hover:text-emerald-600 transition-colors">
-                Update Payout Settings →
-            </button>
-        </div>
-
-        {/* 📊 Activity List */}
-        <div className="animate-in fade-in slide-in-from-bottom-5 duration-700 delay-300">
-            <div className="flex gap-10 mb-8 px-4 border-b border-slate-100">
-                <button 
-                    onClick={() => setActiveTab("balance")}
-                    className={`pb-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === "balance" ? "text-slate-900" : "text-slate-300"}`}
-                >
-                    Recent Trace
-                    {activeTab === "balance" && <span className="absolute bottom-0 left-0 w-full h-1 bg-slate-900 rounded-full animate-in slide-in-from-left-2 duration-300"></span>}
-                </button>
-                <button 
-                    onClick={() => setActiveTab("history")}
-                    className={`pb-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === "history" ? "text-slate-900" : "text-slate-300"}`}
-                >
-                    Full History
-                    {activeTab === "history" && <span className="absolute bottom-0 left-0 w-full h-1 bg-slate-900 rounded-full animate-in slide-in-from-left-2 duration-300"></span>}
-                </button>
-            </div>
-
-            <div className="space-y-4">
-                {MOCK_TRANSACTIONS.map((tx, idx) => (
-                    <div 
-                        key={tx.id} 
-                        className="group p-6 rounded-[2.5rem] bg-white border border-slate-100 flex items-center justify-between hover:border-emerald-100 transition-all duration-500 shadow-sm hover:shadow-xl hover:shadow-slate-100/50 animate-in fade-in slide-in-from-bottom-3 fill-mode-forwards"
-                        style={{ animationDelay: `${idx * 100 + 400}ms` }}
-                    >
-                        <div className="flex gap-4 items-center">
-                            <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-xl group-hover:bg-emerald-50 transition-all duration-500 group-hover:rotate-6">📦</div>
-                            <div>
-                                <h4 className="font-black text-slate-900 tracking-tight uppercase text-[11px] leading-tight group-hover:text-emerald-500 transition-colors">{tx.journey}</h4>
-                                <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mt-1.5">{tx.date} • {tx.method}</p>
-                            </div>
-                        </div>
-                        <div className="text-right">
-                            <p className="font-black text-slate-900 text-lg tracking-tighter transition-all duration-500 group-hover:scale-105">+₹{tx.amount.toLocaleString()}</p>
-                            <p className={`text-[8px] font-black uppercase tracking-widest mt-1 ${tx.status === "Paid" ? "text-emerald-500" : "text-emerald-500 animate-pulse"}`}>
-                                {tx.status}
-                            </p>
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
-
-        <div className="mt-10 sm:mt-12 text-center pb-8 opacity-30">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.5em]">Authorized SecOps Trace</p>
+          )}
         </div>
     </div>
   );

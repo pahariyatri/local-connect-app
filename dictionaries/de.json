@@ -103,9 +103,12 @@
       "routes": {
         "eyebrow": "Kuratierte Routen",
         "title": "Fertige Reisen.",
-        "subtitle": "Echte mehrtägige Routen durch Himachal — öffne eine im Builder und mach sie zu deiner eigenen.",
+        "subtitle": "Mehrtägige Routen durch Himachal — öffne eine im Builder und mach sie zu deiner eigenen.",
         "cta": "Diese Route planen",
         "days_unit": "Tage"
+      },
+      "destinations": {
+        "title": "Beliebte Reiseziele"
       }
     },
     "discover": {
@@ -478,7 +481,8 @@
         "days_word": "Tage",
         "day_abbr": "Tag",
         "depart_from": "Abreise ab"
-      }
+      },
+      "step_of": "Schritt {current} von {total}"
     },
     "common": {
       "support": {

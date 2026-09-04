@@ -5,7 +5,7 @@
       "hero": {
         "title": "Travel like you know <span class=\"text-emerald-400\">someone there.</span>",
         "subtitle": "Search real stays, rides, and guides from verified Himachal locals — direct, with no agency markup.",
-        "search_placeholder": "Where are you going? (Kasol, Manali, Tosh...)",
+        "search_placeholder": "Where are you going?",
         "search_cta": "Search",
         "plan_cta": "Or build a whole trip"
       },
@@ -103,9 +103,12 @@
       "routes": {
         "eyebrow": "Curated Routes",
         "title": "Ready-made journeys.",
-        "subtitle": "Real multi-day routes across Himachal — open one in the builder and make it yours.",
+        "subtitle": "Multi-day routes across Himachal — open one in the builder and make it yours.",
         "cta": "Plan this route",
         "days_unit": "days"
+      },
+      "destinations": {
+        "title": "Popular Destinations"
       }
     },
     "discover": {
@@ -478,7 +481,8 @@
         "verified": "100% Verified Vendors",
         "support": "24/7 On-Trip Support",
         "price": "Best Price Guarantee"
-      }
+      },
+      "step_of": "Step {current} of {total}"
     },
     "common": {
       "support": {

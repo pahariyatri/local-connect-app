@@ -596,21 +596,22 @@ export default function VendorOnboardingPage() {
         <p className="text-slate-400 font-medium mt-1 text-xs sm:text-sm">5 quick steps to start receiving bookings.</p>
       </header>
 
-      {/* Step progress: number, title, and how many are left, above a segmented bar. */}
+      {/* Step progress: "Step N of TOTAL" above a single continuous fill bar. */}
       <div className="mb-6 sm:mb-8">
         <div className="flex items-baseline justify-between mb-2">
-          <p className="text-xs sm:text-sm font-black text-slate-900">
-            Step {step}<span className="text-slate-300 font-bold"> / {TOTAL_STEPS}</span>
-            <span className="ml-2 text-slate-500 font-bold">{STEP_LABELS[step - 1]}</span>
+          <p className="text-xs sm:text-sm font-semibold text-slate-900">
+            Step {step} of {TOTAL_STEPS}
+            <span className="ml-2 text-slate-500 font-medium">{STEP_LABELS[step - 1]}</span>
           </p>
-          <p className="text-[10px] sm:text-xs font-bold text-slate-300 uppercase tracking-widest">
+          <p className="text-[10px] sm:text-xs font-medium text-slate-400">
             {step === TOTAL_STEPS ? "Last step" : `${TOTAL_STEPS - step} left`}
           </p>
         </div>
-        <div className="flex gap-1.5 sm:gap-2">
-          {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-            <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${i + 1 <= step ? "bg-slate-900" : "bg-slate-200"}`} />
-          ))}
+        <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-emerald-600 rounded-full transition-all duration-500"
+            style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
+          />
         </div>
       </div>
 
@@ -620,27 +621,27 @@ export default function VendorOnboardingPage() {
         <div className="builder-footer-safe-area fixed bottom-0 left-0 right-0 px-3 sm:px-6 pt-3 sm:pt-6 bg-white/90 backdrop-blur-xl border-t border-slate-100 z-50">
           <div className="max-w-2xl mx-auto px-2 sm:px-4 flex flex-col gap-2">
             <div className="flex items-center justify-between gap-3 sm:gap-4">
-              <Button variant="ghost" onClick={handleBack} className="w-fit px-6 sm:px-8 h-12 sm:h-16 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:bg-slate-100 text-[9px] sm:text-xs">
+              <Button variant="ghost" onClick={handleBack} className="w-fit px-6 sm:px-8 h-12 sm:h-16 rounded-xl sm:rounded-2xl font-semibold text-slate-400 hover:text-slate-900 hover:bg-slate-100 text-sm">
                 {step === 1 ? "Exit" : "Back"}
               </Button>
               {step === TOTAL_STEPS ? (
                 <Button
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="flex-1 h-12 sm:h-16 rounded-xl sm:rounded-2xl text-sm sm:text-lg font-black tracking-[0.15em] sm:tracking-[0.2em] transition-all uppercase bg-slate-900 hover:bg-black text-white shadow-2xl active:scale-[0.98] disabled:opacity-50"
+                  className="flex-1 h-12 sm:h-16 rounded-xl sm:rounded-2xl text-base sm:text-lg font-semibold transition-all bg-slate-900 hover:bg-black text-white shadow-2xl active:scale-[0.98] disabled:opacity-50"
                 >
                   {submitting ? (
                     <div className="flex items-center justify-center gap-3">
                       <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                      <span className="text-xs md:text-sm tracking-widest">Submitting…</span>
+                      <span className="text-sm">Submitting…</span>
                     </div>
-                  ) : "Submit Application"}
+                  ) : "Submit application"}
                 </Button>
               ) : (
                 <Button
                   onClick={handleNext}
                   disabled={!isStepValid(step)}
-                  className="flex-1 h-12 sm:h-16 rounded-xl sm:rounded-2xl text-sm sm:text-lg font-black tracking-[0.15em] sm:tracking-[0.2em] transition-all uppercase bg-slate-900 hover:bg-black text-white shadow-2xl active:scale-[0.98] disabled:opacity-40"
+                  className="flex-1 h-12 sm:h-16 rounded-xl sm:rounded-2xl text-base sm:text-lg font-semibold transition-all bg-slate-900 hover:bg-black text-white shadow-2xl active:scale-[0.98] disabled:opacity-40"
                 >
                   Continue
                 </Button>

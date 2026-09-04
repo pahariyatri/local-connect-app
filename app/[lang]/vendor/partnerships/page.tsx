@@ -42,7 +42,7 @@ export default function PartnershipsPage() {
                 <input 
                     type="text" 
                     placeholder="FIND PARTNERS..." 
-                    className="w-full h-14 bg-transparent outline-none px-4 text-[10px] font-black text-slate-900 placeholder:text-slate-300 uppercase tracking-widest"
+                    className="w-full h-14 bg-transparent outline-none px-4 text-base font-black text-slate-900 placeholder:text-slate-300 uppercase tracking-widest"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                 />

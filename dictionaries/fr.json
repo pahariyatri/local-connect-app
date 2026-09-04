@@ -103,9 +103,12 @@
       "routes": {
         "eyebrow": "Itinéraires sélectionnés",
         "title": "Des voyages prêts à l'emploi.",
-        "subtitle": "De vrais itinéraires de plusieurs jours à travers l'Himachal — ouvrez-en un dans le générateur et personnalisez-le.",
+        "subtitle": "Itinéraires de plusieurs jours à travers l'Himachal — ouvrez-en un dans le générateur et personnalisez-le.",
         "cta": "Planifier cet itinéraire",
         "days_unit": "jours"
+      },
+      "destinations": {
+        "title": "Destinations Populaires"
       }
     },
     "discover": {
@@ -478,7 +481,8 @@
         "days_word": "jours",
         "day_abbr": "Jour",
         "depart_from": "Départ de"
-      }
+      },
+      "step_of": "Étape {current} sur {total}"
     },
     "common": {
       "support": {

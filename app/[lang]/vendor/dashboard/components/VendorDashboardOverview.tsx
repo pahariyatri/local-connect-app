@@ -7,6 +7,7 @@ import Typography from "../../../components/atoms/Typography";
 import { getVendorBookings } from "@/services/bookingService";
 import { getVendorById, getMyVendor } from "@/services/vendorService";
 import { getServices } from "@/services/catalogService";
+import Badge from "../../../components/molecules/Badge";
 
 interface VendorDashboardOverviewProps {
   dict: any;
@@ -60,7 +61,7 @@ export default function VendorDashboardOverview({ dict }: VendorDashboardOvervie
   const [state, setState] = useState<"idle" | "loading" | "error" | "ready">("idle");
   const [bookings, setBookings] = useState<any[]>([]);
   const [totalBookings, setTotalBookings] = useState(0);
-  const [totalServices, setTotalServices] = useState<number | null>(null);
+  const [myServices, setMyServices] = useState<any[]>([]);
   const [rating, setRating] = useState<number | null>(null);
 
   const load = useCallback(async () => {
@@ -85,7 +86,7 @@ export default function VendorDashboardOverview({ dict }: VendorDashboardOvervie
       setBookings(bookingsResult.bookings);
       setTotalBookings(bookingsResult.total);
       setRating(typeof vendor?.trustScore === "number" ? vendor.trustScore : null);
-      setTotalServices(Array.isArray(services) ? services.filter((s: any) => s.vendor?.id === id).length : null);
+      setMyServices(Array.isArray(services) ? services.filter((s: any) => s.vendor?.id === id) : []);
       setState("ready");
     } catch {
       setState("error");
@@ -111,7 +112,7 @@ export default function VendorDashboardOverview({ dict }: VendorDashboardOvervie
     return (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="p-8 rounded-[2.5rem] bg-white border border-slate-100 h-40" />
+          <div key={i} className="p-6 rounded-3xl bg-white border border-slate-100 h-32" />
         ))}
       </div>
     );
@@ -121,17 +122,17 @@ export default function VendorDashboardOverview({ dict }: VendorDashboardOvervie
   // so a still-empty vendorId means this user genuinely has no vendor.
   if (!vendorId) {
     return (
-      <div className="p-10 rounded-[2.5rem] bg-white border border-slate-100 shadow-sm text-center">
-        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Complete vendor onboarding to see your business overview here.</p>
+      <div className="p-10 rounded-3xl bg-white border border-slate-100 shadow-sm text-center">
+        <p className="text-slate-400 text-sm font-medium">Complete vendor onboarding to see your business overview here.</p>
       </div>
     );
   }
 
   if (state === "error") {
     return (
-      <div className="p-10 rounded-[2.5rem] bg-white border border-red-100 text-center">
-        <p className="text-red-500 text-xs font-bold uppercase tracking-widest mb-4">Could not load your business overview.</p>
-        <button onClick={load} className="text-[10px] font-black text-slate-900 uppercase tracking-widest underline">Try again</button>
+      <div className="p-10 rounded-3xl bg-white border border-red-100 text-center">
+        <p className="text-red-500 text-sm font-medium mb-4">Could not load your business overview.</p>
+        <button onClick={load} className="text-xs font-semibold text-slate-900 underline">Try again</button>
       </div>
     );
   }
@@ -152,78 +153,110 @@ export default function VendorDashboardOverview({ dict }: VendorDashboardOvervie
   }
 
   return (
-    <div className="space-y-10">
-      {/* Visual Analytics Grid */}
+    <div className="space-y-8">
+      {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((stat, i) => (
-            <Link key={i} href={stat.route} className="p-8 rounded-[2.5rem] bg-white border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-100 transition-all duration-700 group">
-                <div className={`w-14 h-14 rounded-2xl ${stat.bg} flex items-center justify-center mb-6 shadow-inner group-hover:rotate-6 transition-transform duration-500`}>
-                    <DashIcon name={stat.icon} className={`w-6 h-6 ${stat.color}`} />
+            <Link key={i} href={stat.route} className="p-6 rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300 group">
+                <div className={`w-11 h-11 rounded-xl ${stat.bg} flex items-center justify-center mb-4`}>
+                    <DashIcon name={stat.icon} className={`w-5 h-5 ${stat.color}`} />
                 </div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-2">{stat.label}</p>
-                <p className={`text-2xl font-black ${stat.color} italic tracking-tighter`}>{stat.val}</p>
+                <p className="text-xs font-medium text-slate-400 mb-1">{stat.label}</p>
+                <p className={`text-xl font-bold ${stat.color}`}>{stat.val}</p>
             </Link>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Recent activity — real bookings, most recent first */}
-        <div className="space-y-6">
-          <div className="flex justify-between items-center px-2">
-            <Typography variant="h3" className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">
-                {res.recent_bookings.title}
-            </Typography>
-            <Link href={`/${lang}/vendor/bookings`} className="text-[9px] font-black text-indigo-500 uppercase tracking-widest hover:text-indigo-700 transition-colors">
-                View All →
-            </Link>
-          </div>
-          <div className="space-y-3">
-            {recentBookings.length === 0 && (
-              <div className="p-6 bg-white rounded-[2rem] border border-slate-100 text-center">
-                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">No bookings yet</p>
-              </div>
-            )}
-            {recentBookings.map((booking) => {
-              const bucket = STATUS_TO_BUCKET[booking.status] || "pending";
-              const customerName = [booking.user?.firstName, booking.user?.lastName].filter(Boolean).join(" ") || "Guest";
-              return (
-                <div key={booking.id} className="flex items-center justify-between p-6 bg-white rounded-[2rem] border border-slate-100 shadow-sm transition-all duration-500 hover:border-indigo-100 group">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-black text-slate-900 uppercase tracking-tighter text-[11px] group-hover:text-indigo-600 transition-colors truncate">{customerName}</div>
-                    <div className="text-[10px] font-bold text-slate-400 mt-0.5 truncate">{booking.directService?.name || booking.package?.name || "Trip package"}</div>
-                  </div>
-                  <div className={`px-4 py-1 rounded-full text-[8px] font-black uppercase tracking-widest flex-shrink-0 ${
-                    bucket === "confirmed" ? "bg-emerald-500 text-white" :
-                    bucket === "pending" ? "bg-indigo-600 text-white animate-pulse" :
-                    "bg-slate-100 text-slate-400"
-                  }`}>
-                    {getStatusLabel(bucket)}
-                  </div>
+      {/* Recent activity — real bookings, most recent first */}
+      <div className="space-y-3">
+        <div className="flex justify-between items-center px-1">
+          <Typography variant="h3" className="text-base font-bold text-slate-900">
+              {res.recent_bookings.title}
+          </Typography>
+          <Link href={`/${lang}/vendor/bookings`} className="text-xs font-semibold text-emerald-600 hover:text-emerald-700">
+              View All →
+          </Link>
+        </div>
+        <div className="space-y-2.5">
+          {recentBookings.length === 0 && (
+            <div className="p-6 bg-white rounded-2xl border border-slate-100 text-center">
+              <p className="text-slate-400 text-sm font-medium">No bookings yet</p>
+            </div>
+          )}
+          {recentBookings.map((booking) => {
+            const bucket = STATUS_TO_BUCKET[booking.status] || "pending";
+            const customerName = [booking.user?.firstName, booking.user?.lastName].filter(Boolean).join(" ") || "Guest";
+            return (
+              <div key={booking.id} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm transition-colors hover:border-emerald-100">
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-slate-900 text-sm truncate">{customerName}</div>
+                  <div className="text-xs text-slate-400 mt-0.5 truncate">{booking.directService?.name || booking.package?.name || "Trip package"}</div>
                 </div>
-              );
-            })}
-          </div>
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold shrink-0 ${
+                  bucket === "confirmed" ? "bg-emerald-600 text-white" :
+                  bucket === "pending" ? "bg-amber-500 text-white" :
+                  "bg-slate-100 text-slate-500"
+                }`}>
+                  {getStatusLabel(bucket)}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Efficiency Index — real completed/pending counts from actual bookings.
-          The old fixed "98%" satisfaction figure had no data behind it at all
-          (no review system exists), so it's dropped rather than faked. */}
-      <div className="bg-slate-900 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden group">
-        <Typography variant="h3" className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-10 relative z-10">
-          Business Activity
-        </Typography>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative z-10">
-          <div className="text-center md:border-r border-white/5 last:border-0">
-            <div className="text-3xl font-black text-emerald-400 mb-1.5 italic transition-all group-hover:scale-110 duration-700">{completedCount}</div>
-            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{res.performance.completed}</div>
+      {/* My Services preview — real listings with their real Active/Inactive state */}
+      <div className="space-y-3">
+        <div className="flex justify-between items-center px-1">
+          <Typography variant="h3" className="text-base font-bold text-slate-900">
+              My Services
+          </Typography>
+          <Link href={`/${lang}/vendor/services`} className="text-xs font-semibold text-emerald-600 hover:text-emerald-700">
+              View All →
+          </Link>
+        </div>
+        <div className="space-y-2.5">
+          {myServices.length === 0 && (
+            <div className="p-6 bg-white rounded-2xl border border-slate-100 text-center">
+              <p className="text-slate-400 text-sm font-medium mb-2">No services listed yet</p>
+              <Link href={`/${lang}/vendor/services/new`} className="text-xs font-semibold text-emerald-600 hover:text-emerald-700">
+                + Add your first service
+              </Link>
+            </div>
+          )}
+          {myServices.slice(0, 3).map((service) => (
+            <Link
+              key={service.id}
+              href={`/${lang}/vendor/services/${service.id}/edit`}
+              className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm transition-colors hover:border-emerald-100"
+            >
+              <span className="font-semibold text-slate-900 text-sm truncate">{service.name}</span>
+              <Badge
+                text={service.isAvailable ? (res.services?.filters?.active || "Active") : (res.services?.filters?.inactive || "Inactive")}
+                color={service.isAvailable ? "green" : "gray"}
+                className="shrink-0 ml-3"
+              />
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Business Activity — real completed/pending counts from actual
+          bookings. The old fixed "98%" satisfaction figure had no data
+          behind it at all (no review system exists), so it's dropped
+          rather than faked. */}
+      <div className="bg-slate-900 rounded-3xl p-6 sm:p-8">
+        <p className="text-xs font-semibold text-slate-400 mb-6">Business Activity</p>
+        <div className="grid grid-cols-2 gap-6">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-emerald-400 mb-1">{completedCount}</div>
+            <div className="text-xs font-medium text-slate-400">{res.performance.completed}</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-black text-indigo-400 mb-1.5 italic transition-all group-hover:scale-110 duration-700">{pendingCount}</div>
-            <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{res.performance.pending}</div>
+            <div className="text-2xl font-bold text-amber-400 mb-1">{pendingCount}</div>
+            <div className="text-xs font-medium text-slate-400">{res.performance.pending}</div>
           </div>
         </div>
-        <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-indigo-600/10 rounded-full blur-[80px] group-hover:bg-indigo-600/20 transition-all duration-1000"></div>
       </div>
     </div>
   );

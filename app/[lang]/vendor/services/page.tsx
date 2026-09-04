@@ -6,10 +6,12 @@ import { useRouter, useParams } from "next/navigation";
 import { Service } from "./types";
 import Typography from "../../components/atoms/Typography";
 import Button from "../../components/atoms/Button";
+import Card from "../../components/molecules/Card";
 import { getMyVendor } from "@/services/vendorService";
 import { getServicesByVendor } from "@/services/catalogService";
 import { toApiUiError } from "@/utils/apiErrors";
 import Loading from "@/app/loading";
+import { useLocalizationContext } from "@/contexts/LocalizationContext";
 
 // ─── Icon system — same inline-stroke-SVG convention used across the app ───
 
@@ -55,6 +57,8 @@ function ServiceCardSkeleton() {
 export default function ServiceListPage() {
   const router = useRouter();
   const { lang } = useParams();
+  const { dict } = useLocalizationContext();
+  const res = dict?.page?.vendor_dashboard?.services;
 
   const [vendorId, setVendorId] = useState<string | null>(null);
   const [resolvingVendor, setResolvingVendor] = useState(true);
@@ -117,17 +121,17 @@ export default function ServiceListPage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6">
       <header className="pt-2 sm:pt-4 pb-6 sm:pb-8 flex justify-between items-start">
         <div>
-          <Typography variant="h1" className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-            Your services
+          <Typography variant="h1" className="text-2xl sm:text-3xl font-bold text-slate-900">
+            {res?.title || "My Services"}
           </Typography>
-          <p className="text-slate-400 font-semibold text-xs mt-2">{services.length} listed</p>
+          <p className="text-slate-400 font-medium text-sm mt-1">{services.length} listed</p>
         </div>
         <button
           onClick={() => router.push(`/${lang}/vendor/services/new`)}
           aria-label="Add a service"
-          className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center text-white shadow-lg active:scale-95 transition-transform hover:bg-black"
+          className="w-12 h-12 bg-emerald-600 hover:bg-emerald-700 rounded-2xl flex items-center justify-center text-white shadow-lg active:scale-95 transition-all"
         >
-          <Icon name="plus" className="w-6 h-6" />
+          <Icon name="plus" className="w-5 h-5" />
         </button>
       </header>
 
@@ -139,88 +143,62 @@ export default function ServiceListPage() {
       )}
 
       {state === "error" && (
-        <div className="text-center py-16 bg-white rounded-[2.5rem] border border-red-100">
+        <div className="text-center py-16 bg-white rounded-3xl border border-red-100">
           <p className="text-sm text-red-600 mb-4">{errorMessage}</p>
-          <Button onClick={load} variant="outline" className="h-11 px-6 rounded-xl text-xs font-bold">Try again</Button>
+          <Button onClick={load} variant="outline" className="h-11 px-6 rounded-xl text-xs font-semibold">Try again</Button>
         </div>
       )}
 
       {state === "ready" && services.length === 0 && (
-        <div className="text-center py-20 bg-slate-50 rounded-[3rem] border border-dashed border-slate-200">
-          <Typography variant="h3" className="text-xl font-black text-slate-900 mb-2">No services yet</Typography>
-          <p className="text-slate-400 text-sm mb-8">Add your first service so travelers can find and book it.</p>
+        <div className="text-center py-20 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+          <Typography variant="h3" className="text-lg font-bold text-slate-900 mb-1">{res?.not_found || "No services yet"}</Typography>
+          <p className="text-slate-400 text-sm mb-8">{res?.empty_state || "Add your first service so travelers can find and book it."}</p>
         </div>
       )}
 
       {state === "ready" && services.length > 0 && (
-        <div className="space-y-8 pb-16">
+        <div className="space-y-5 pb-16">
           {services.map((service) => {
             const image = service.additionalData?.images?.[0];
             const primaryAddress = service.addresses?.find((a) => a.isPrimary) || service.addresses?.[0];
             const price = basePrice(service);
             return (
-              <div
+              <Card
                 key={service.id}
                 onClick={() => router.push(`/${lang}/vendor/services/${service.id}/edit`)}
-                className="group bg-white rounded-[2.5rem] overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl transition-shadow duration-500 cursor-pointer"
-              >
-                <div className="relative h-56 w-full overflow-hidden bg-slate-50">
-                  {image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={image} alt={service.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-300">
-                      <Icon name="image-off" className="w-8 h-8 mb-2" />
-                      <span className="text-[10px] font-bold uppercase tracking-widest">No image yet</span>
-                    </div>
-                  )}
-                  <div className="absolute top-5 left-5">
-                    <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wide shadow-sm ${
-                      service.isAvailable ? "bg-emerald-500 text-white" : "bg-slate-900/80 text-white"
-                    }`}>
-                      {service.isAvailable ? "Active" : "Inactive"}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-6 sm:p-8">
-                  <div className="flex justify-between items-start gap-4 mb-4">
-                    <div className="min-w-0">
-                      <h3 className="text-xl font-black text-slate-900 leading-tight truncate">{service.name}</h3>
-                      <div className="flex items-center gap-2 text-slate-400 mt-1.5 text-xs font-semibold">
-                        {primaryAddress && (
-                          <span className="flex items-center gap-1">
-                            <Icon name="map-pin" className="w-3.5 h-3.5" />
-                            {primaryAddress.city}
-                          </span>
-                        )}
-                        {service.subcategory && (
-                          <>
-                            {primaryAddress && <span className="w-1 h-1 bg-slate-200 rounded-full" />}
-                            <span>{service.subcategory.name}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    {price !== null && (
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-0.5">From</p>
-                        <p className="text-lg font-black text-slate-900">₹{price.toLocaleString()}</p>
-                      </div>
+                imageSrc={image}
+                imageAlt={service.name}
+                title={service.name}
+                subtitle={
+                  <>
+                    {primaryAddress && (
+                      <span className="flex items-center gap-1">
+                        <Icon name="map-pin" className="w-3.5 h-3.5" /> {primaryAddress.city}
+                      </span>
                     )}
-                  </div>
-
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                    <span className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-                      <Icon name="users" className="w-4 h-4" />
-                      {service.capacity} guest{service.capacity === 1 ? "" : "s"} capacity
-                    </span>
-                    <span className="text-xs font-bold text-slate-400 group-hover:text-slate-900 transition-colors">
-                      Edit →
-                    </span>
-                  </div>
-                </div>
-              </div>
+                    {service.subcategory && (
+                      <>
+                        {primaryAddress && <span className="w-1 h-1 bg-slate-300 rounded-full" />}
+                        <span>{service.subcategory.name}</span>
+                      </>
+                    )}
+                  </>
+                }
+                cornerBadge={
+                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold shadow-sm ${
+                    service.isAvailable ? "bg-emerald-600 text-white" : "bg-slate-700 text-white"
+                  }`}>
+                    {service.isAvailable ? (res?.filters?.active || "Active") : (res?.filters?.inactive || "Inactive")}
+                  </span>
+                }
+                priceLabel={price !== null ? `₹${price.toLocaleString()}` : undefined}
+                className="hover:shadow-lg transition-all"
+              >
+                <span className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                  <Icon name="users" className="w-3.5 h-3.5" />
+                  {service.capacity} guest{service.capacity === 1 ? "" : "s"} capacity
+                </span>
+              </Card>
             );
           })}
         </div>

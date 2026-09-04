@@ -103,9 +103,12 @@
       "routes": {
         "eyebrow": "Rutas seleccionadas",
         "title": "Viajes ya listos.",
-        "subtitle": "Rutas reales de varios días por Himachal: abre una en el creador y hazla tuya.",
+        "subtitle": "Rutas de varios días por Himachal: abre una en el creador y hazla tuya.",
         "cta": "Planificar esta ruta",
         "days_unit": "días"
+      },
+      "destinations": {
+        "title": "Destinos Populares"
       }
     },
     "discover": {
@@ -478,7 +481,8 @@
         "days_word": "días",
         "day_abbr": "Día",
         "depart_from": "Salida desde"
-      }
+      },
+      "step_of": "Paso {current} de {total}"
     },
     "common": {
       "support": {

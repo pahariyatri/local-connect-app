@@ -140,7 +140,7 @@ export default function FeedbackReviewModal({
               value={authorName}
               onChange={(e) => setAuthorName(e.target.value)}
               placeholder="e.g. Rahul S. (or leave empty for Verified Traveler)"
-              className="w-full h-11 px-4 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+              className="w-full h-11 px-4 rounded-xl border border-slate-200 text-base font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
             />
           </div>
 
@@ -160,7 +160,7 @@ export default function FeedbackReviewModal({
               value={publicComment}
               onChange={(e) => setPublicComment(e.target.value)}
               placeholder="Write a public review about your stay, driver, or trek..."
-              className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 resize-none"
+              className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-base font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 resize-none"
             />
           </div>
 
@@ -179,7 +179,7 @@ export default function FeedbackReviewModal({
               value={privateFeedback}
               onChange={(e) => setPrivateFeedback(e.target.value)}
               placeholder="Optional private suggestions or constructive feedback for the host to improve..."
-              className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 resize-none"
+              className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-base font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 resize-none"
             />
           </div>
 

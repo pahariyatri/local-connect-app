@@ -412,6 +412,7 @@ export default function NewServicePage() {
                 City / Destination
               </label>
               <LocationAutocomplete
+                name="city"
                 value={city}
                 onChange={(val) => {
                   setCity(val);
@@ -680,18 +681,19 @@ export default function NewServicePage() {
     <div className="max-w-2xl mx-auto px-4 pb-28">
       <div className="mb-10">
         <div className="flex items-baseline justify-between mb-2">
-          <p className="text-sm font-black text-slate-900">
-            Step {step}<span className="text-slate-300 font-bold"> / {TOTAL_STEPS}</span>
-            <span className="ml-2 text-slate-500 font-bold">{STEP_LABELS[step - 1]}</span>
+          <p className="text-sm font-semibold text-slate-900">
+            Step {step} of {TOTAL_STEPS}
+            <span className="ml-2 text-slate-500 font-medium">{STEP_LABELS[step - 1]}</span>
           </p>
-          <p className="text-xs font-bold text-slate-300 uppercase tracking-widest">
+          <p className="text-xs font-medium text-slate-400">
             {step === TOTAL_STEPS ? "Last step" : `${TOTAL_STEPS - step} left`}
           </p>
         </div>
-        <div className="flex gap-2">
-          {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-            <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${i + 1 <= step ? "bg-slate-900" : "bg-slate-200"}`} />
-          ))}
+        <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-emerald-600 rounded-full transition-all duration-500"
+            style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
+          />
         </div>
       </div>
 

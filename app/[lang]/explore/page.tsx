@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { Icon } from "../components/atoms/Icon";
-import LocalImage from "../components/atoms/Image";
 import PublicFooter from "../components/organisms/PublicFooter";
+import Card from "../components/molecules/Card";
 import { searchDiscoveryServices, DiscoveryService } from "@/services/searchService";
 import { sessionTracker } from "@/services/sessionService";
 
@@ -191,7 +191,7 @@ export default function ExplorePage() {
                   placeholder="Search location, stay, 4x4 driver, or trek (e.g. Kasol, Tosh, Manali)..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-10 py-2.5 sm:py-3 rounded-2xl bg-slate-100/90 hover:bg-slate-100 focus:bg-white border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-inner"
+                  className="w-full pl-10 pr-10 py-2.5 sm:py-3 rounded-2xl bg-slate-100/90 hover:bg-slate-100 focus:bg-white border border-slate-200 text-base text-slate-900 placeholder:text-slate-400 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all shadow-inner"
                 />
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
                   <Icon name="search" className="w-4 h-4" />
@@ -225,7 +225,7 @@ export default function ExplorePage() {
                 <button
                   type="button"
                   onClick={clearSearch}
-                  className="px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-2xl text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 transition-all shrink-0"
+                  className="px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-2xl text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 transition-all shrink-0"
                 >
                   Reset
                 </button>
@@ -234,9 +234,8 @@ export default function ExplorePage() {
 
             {/* Category chip row — filters services by real backend category,
                 already wired via activeCategory/runSearch above; this just
-                surfaces it as tappable chips (previously fetched and used
-                internally but never rendered anywhere, so the traveler had
-                no way to actually filter by category). */}
+                surfaces it as tappable chips (matches the reference's
+                Search & Filters category row). */}
             <div className="mt-3 flex items-center gap-2 overflow-x-auto no-scrollbar">
               {categories.map((cat) => (
                 <button
@@ -258,6 +257,14 @@ export default function ExplorePage() {
 
         {/* ── DIRECT OPERATORS CARDS BODY ─────────────────────────── */}
         <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          {/* Results count — real count of the services actually returned,
+              never a fabricated/static number. */}
+          {!isLoading && !error && services.length > 0 && (
+            <p className="text-sm font-semibold text-slate-500 mb-4">
+              {services.length} {services.length === 1 ? "result" : "results"} found
+            </p>
+          )}
+
           {/* ── CARDS GRID / STATES ───────────────────────────────── */}
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6" data-testid="explore-results-grid">
@@ -290,7 +297,7 @@ export default function ExplorePage() {
               <p className="text-slate-400 text-xs mb-6 font-medium">Please check your connection and try again.</p>
               <button
                 onClick={runSearch}
-                className="px-6 py-2.5 rounded-full bg-slate-900 hover:bg-black text-white text-xs font-black uppercase tracking-wider transition-colors shadow-sm"
+                className="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors shadow-sm"
               >
                 Try Again
               </button>
@@ -303,7 +310,7 @@ export default function ExplorePage() {
               <div className="w-14 h-14 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mx-auto mb-4">
                 <Icon name="search" className="w-6 h-6 text-slate-400" />
               </div>
-              <p className="text-slate-900 text-lg font-black mb-1">
+              <p className="text-slate-900 text-lg font-bold mb-1">
                 No direct listings found {searchQuery ? `for "${searchQuery}"` : ""}.
               </p>
               <p className="text-slate-500 text-xs max-w-md mx-auto mb-6 font-medium">
@@ -313,14 +320,14 @@ export default function ExplorePage() {
                 {searchQuery && (
                   <button
                     onClick={clearSearch}
-                    className="px-5 py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
+                    className="px-5 py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors"
                   >
                     Reset Search
                   </button>
                 )}
                 <button
                   onClick={() => router.push(`/${lang}/builder`)}
-                  className="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider transition-colors shadow-md shadow-emerald-600/20"
+                  className="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors shadow-md shadow-emerald-600/20"
                 >
                   Plan a trip instead →
                 </button>
@@ -329,84 +336,30 @@ export default function ExplorePage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6" data-testid="explore-results-grid">
               {services.map((service) => (
-                <article
+                <Card
                   key={service.id}
-                  data-testid="explore-result-card"
+                  testId="explore-result-card"
                   onClick={() => router.push(`/${lang}/vendor/${service.vendor.id}`)}
-                  className="group bg-white rounded-3xl overflow-hidden border border-slate-200/80 hover:border-slate-300 hover:shadow-xl cursor-pointer transition-all duration-300 flex flex-col justify-between"
+                  imageSrc={service.thumbnail}
+                  imageAlt={service.name}
+                  badgeText={CAT_LABEL_BY_SERVICE_CATEGORY[service.category] || service.category}
+                  verified={service.vendor.verified}
+                  title={service.vendor.publicName}
+                  subtitle={
+                    <>
+                      <Icon name="map-pin" className="w-3 h-3 text-slate-400 shrink-0" />
+                      <span data-testid="explore-result-location" className="truncate">{service.location.city}</span>
+                    </>
+                  }
+                  rating={service.vendor.rating}
+                  ratingTestId="explore-result-rating"
+                  priceLabel={`${service.pricing.currency === "INR" ? "₹" : `${service.pricing.currency} `}${Math.round(service.pricing.unitPrice).toLocaleString("en-IN")}${getUnitLabel(service.pricing) ? ` ${getUnitLabel(service.pricing)}` : ""}`}
+                  className="hover:shadow-xl hover:border-slate-300 transition-all duration-300"
                 >
-                  {/* Card Media Header */}
-                  <div className="relative h-52 w-full overflow-hidden bg-slate-100">
-                    <LocalImage
-                      src={service.thumbnail}
-                      alt={service.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    />
-
-                    {/* Category & Location Badges + Verified Host Tag — one flex
-                        row so the two sides split the available width instead of
-                        each being independently `absolute`-positioned from an
-                        opposite edge, which let a long category/location badge
-                        overlap and clip the "Verified Host" pill on narrow
-                        (mobile) cards. */}
-                    <div className="absolute top-3 left-3 right-3 flex items-start justify-between gap-1.5">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="shrink-0 px-2.5 py-1 bg-white/95 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-wider text-slate-900 shadow-sm">
-                          {CAT_LABEL_BY_SERVICE_CATEGORY[service.category] || service.category}
-                        </span>
-                        <span
-                          data-testid="explore-result-location"
-                          className="min-w-0 px-2.5 py-1 bg-slate-900/90 text-white backdrop-blur-md rounded-full text-[10px] font-bold shadow-sm flex items-center gap-1"
-                        >
-                          <Icon name="map-pin" className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
-                          <span className="truncate max-w-[15vw] sm:max-w-[80px]">{service.location.city}</span>
-                        </span>
-                      </div>
-
-                      {/* Verified Host Tag */}
-                      {service.vendor.verified && (
-                        <span className="shrink-0 whitespace-nowrap px-2.5 py-1 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider rounded-full shadow-sm">
-                          Verified Host
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent pointer-events-none" />
-
-                    {/* Host Name & Rating Overlay */}
-                    <div className="absolute bottom-3 left-4 right-4 text-white">
-                      <h3 className="text-base font-black tracking-tight leading-tight truncate group-hover:text-emerald-300 transition-colors">
-                        {service.vendor.publicName}
-                      </h3>
-                      {service.vendor.rating != null && (
-                        <p className="text-[11px] font-bold text-amber-300 mt-0.5" data-testid="explore-result-rating">
-                          ★ {service.vendor.rating.toFixed(1)}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Card Details & Pricing */}
-                  <div className="p-4 sm:p-5 flex items-center justify-between border-t border-slate-100 bg-white">
-                    <div className="min-w-0 pr-3">
-                      <p className="text-xs font-bold text-slate-900 truncate leading-snug">{service.name}</p>
-                      <p className="text-[11px] text-slate-400 font-medium truncate mt-0.5">
-                        {service.shortDescription || "Direct local operator"}
-                      </p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-[9px] text-slate-400 uppercase tracking-widest font-black">From</p>
-                      <p className="text-sm sm:text-base font-black text-slate-900 leading-none mt-0.5">
-                        {service.pricing.currency === "INR" ? "₹" : `${service.pricing.currency} `}
-                        {Math.round(service.pricing.unitPrice).toLocaleString("en-IN")}
-                        <span className="text-[10px] font-medium text-slate-400 ml-0.5">
-                          {getUnitLabel(service.pricing)}
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                </article>
+                  <p className="text-xs text-slate-500 truncate">
+                    {service.name}{service.shortDescription ? ` · ${service.shortDescription}` : ""}
+                  </p>
+                </Card>
               ))}
             </div>
           )}
@@ -414,10 +367,10 @@ export default function ExplorePage() {
           {/* Seamless Bottom Trip Planner Banner */}
           <div className="mt-10 rounded-3xl bg-slate-900 text-white p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-5 shadow-xl">
             <div className="space-y-1 text-center sm:text-left">
-              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400">
                 Custom Mountain Itinerary
               </span>
-              <h3 className="text-lg sm:text-xl font-black tracking-tight">Planning a multi-stop journey?</h3>
+              <h3 className="text-lg sm:text-xl font-bold tracking-tight">Planning a multi-stop journey?</h3>
               <p className="text-slate-300 text-xs font-medium max-w-lg">
                 Build your custom route and book verified local transit and stays seamlessly.
               </p>
@@ -425,7 +378,7 @@ export default function ExplorePage() {
             <button
               id="explore-plan-cta"
               onClick={() => router.push(`/${lang}/builder`)}
-              className="w-full sm:w-auto h-12 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-[0.15em] transition-all shadow-lg active:scale-95 shrink-0"
+              className="w-full sm:w-auto h-12 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-all shadow-lg active:scale-95 shrink-0"
             >
               Build My Route →
             </button>

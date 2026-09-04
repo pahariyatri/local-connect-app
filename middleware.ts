@@ -19,7 +19,13 @@ function getLocale(request: NextRequest): string | undefined {
 export function middleware(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
 
-    if (/\.(?:png|jpg|jpeg|svg|webp|ico|json|css|js|txt|xml|webmanifest)(?:\?.*)?$/.test(pathname)) {
+    // `html` added (2026-08-30): /offline.html — served by public/sw.js as
+    // the fetch-failure fallback for a page navigation — was missing from
+    // this bypass list, so it got caught by the locale-redirect logic below
+    // and 307'd to the nonexistent /en/offline.html instead of being served
+    // directly. A redirect needs a network round-trip, which is exactly
+    // what isn't available in the scenario this file exists for.
+    if (/\.(?:png|jpg|jpeg|svg|webp|ico|json|css|js|txt|xml|webmanifest|html)(?:\?.*)?$/.test(pathname)) {
         return;
     }
 

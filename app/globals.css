@@ -72,16 +72,30 @@
   --shadow-float: 0 25px 50px -12px rgba(15, 23, 42, 0.15);
 }
 
+html {
+  /* Defensive guard: a single stray wide element anywhere in the app (a
+   * fixed-width card, an un-scrolled carousel row, a long unbroken string)
+   * would otherwise widen the whole page and let it pan sideways on mobile —
+   * every intentional horizontal scroller in this app already opts in with
+   * its own `overflow-x-auto` container, so clipping at the root is safe. */
+  overflow-x: hidden;
+}
+
 body {
   @apply text-slate-900 antialiased selection:bg-emerald-500/30 selection:text-emerald-900;
   background-color: hsl(var(--background));
   min-height: 100vh;
+  overflow-x: hidden;
   font-family:
-    var(--font-geist-sans),
+    var(--font-sans),
     system-ui,
     -apple-system,
     sans-serif;
-  letter-spacing: -0.02em;
+  /* Poppins is a rounder, more geometric face than Geist — the old -0.02em
+   * tightening was tuned for Geist and reads cramped on Poppins, especially
+   * at the app's existing bold/uppercase weights. Normal tracking matches
+   * the calmer, friendlier tone of the approved reference design. */
+  letter-spacing: normal;
 }
 
 @layer components {
@@ -105,16 +119,37 @@ body {
     @apply bg-white/70 backdrop-blur-2xl border border-white/20;
   }
 
+  /* Re-theme (2026-08-30): was font-black + uppercase + tracking-widest at
+   * text-xs (12px all-caps) — reads as loud/shouty on Poppins and is a real
+   * mobile-legibility problem (tiny all-caps text scans worse than normal
+   * case, per this app's own SIMPLICITY.md guidance on "next billion users"
+   * readability). Calmer weight/case, larger base size, matches the
+   * reference design's button voice (sentence case, bold not black). */
   .btn-premium {
-    @apply px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all duration-300 active:scale-95 shadow-xl flex items-center justify-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500;
+    @apply px-8 py-4 rounded-2xl font-semibold text-sm transition-all duration-300 active:scale-95 shadow-xl flex items-center justify-center gap-3 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500;
   }
 
+  /* Re-theme (2026-08-30): the reference design's "Primary Button" sample is
+   * consistently the brand green (Search/Check Availability/Pay/Continue/
+   * Submit all use it) — this app's Button component instead defaulted
+   * `primary` to black/slate-900 and kept the actual brand-green styling as
+   * a `.btn-brand` class the component's TypeScript variant type didn't
+   * even expose ("brand" wasn't a valid `variant` value — dead code).
+   * `primary` now IS the brand green, matching the reference; the old black
+   * treatment moves to the explicit `dark` variant for the places that
+   * still want that particular contrast on purpose (see Button.tsx). */
   .btn-primary {
+    @apply btn-premium bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-100;
+  }
+
+  .btn-dark {
     @apply btn-premium bg-slate-900 text-white hover:bg-black shadow-slate-200;
   }
 
+  /* Kept as an alias — nothing outside Button.tsx should reference this
+   * directly, but a couple of places may still do `className="btn-brand"`. */
   .btn-brand {
-    @apply btn-premium bg-emerald-500 text-white hover:bg-emerald-600 shadow-emerald-100;
+    @apply btn-primary;
   }
 
   .btn-secondary {

@@ -160,7 +160,7 @@ export const TripPlannerProvider = ({ children }: { children: ReactNode }) => {
 
     return (
         <TripPlannerContext.Provider value={{ 
-            origin, destinations, originPoint, destinationPoint, selectedOriginCity, selectedDestinationCities, distance, 
+            origin, destinations, originPoint, destinationPoint, selectedOriginCity, selectedDestinationCities, selectedOriginLocation, distance,
             startDate, endDate, servicePreferences, carType, generatedTripId, stops, guestCount,
             selectedServices, tripStartPoint, tripEndPoint, routeStops, stopServicesByDay,
             setStartDate, setEndDate, setBasicInfo, setRouteInfo, setSelectedCities, setPreferences, setServicePreferences, setGeneratedTripId, addStop, removeStop, clearItinerary, setGuestCount,

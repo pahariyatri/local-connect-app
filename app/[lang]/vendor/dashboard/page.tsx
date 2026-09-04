@@ -5,6 +5,7 @@ import Link from "next/link";
 import Typography from "../../components/atoms/Typography";
 import VendorDashboardOverview from "./components/VendorDashboardOverview";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 import { Icon } from '../../components/atoms/Icon';
 
@@ -25,9 +26,12 @@ function DashIcon({ name, className = '' }: { name: DashIconName; className?: st
 
 export default function VendorDashboardPage() {
   const { dict, lang } = useLocalizationContext();
+  const { user } = useAuth();
 
   if (!dict) return <div className="min-h-screen bg-slate-50" />;
   const res = dict.page.vendor_dashboard;
+  const firstName = user?.name?.split(" ")[0] || "there";
+  const greeting = (res.welcome ?? "Welcome back, {name}! 👋").replace("{name}", firstName);
 
   const managementLinks: { name: string; icon: DashIconName; route: string; desc: string }[] = [
     { name: res.tabs.bookings, icon: "calendar", route: `/${lang}/vendor/bookings`, desc: "Manage guest bookings" },
@@ -39,10 +43,10 @@ export default function VendorDashboardPage() {
     <div className="max-w-5xl mx-auto px-4">
         {/* Hub Header */}
         <header className="mb-6 sm:mb-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
-            <Typography variant="h1" className="text-4xl font-black text-slate-900 leading-tight">
-                Control <span className="text-emerald-500">Center.</span>
+            <Typography variant="h1" className="text-2xl sm:text-3xl font-bold text-slate-900 leading-tight">
+                {greeting}
             </Typography>
-            <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em] mt-2 italic">Welcome back to your business hub</p>
+            <p className="text-slate-500 text-sm mt-1">Here&apos;s your business summary</p>
         </header>
 
         {/* Real-time Insights */}
@@ -50,9 +54,6 @@ export default function VendorDashboardPage() {
             <VendorDashboardOverview dict={dict} />
         </section>
         
-        <div className="mt-10 sm:mt-12 text-center pb-8 opacity-20">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.5em]">Command & Control v.2.5</p>
-        </div>
     </div>
   );
 }

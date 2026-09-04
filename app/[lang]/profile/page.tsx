@@ -150,7 +150,7 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="mt-4">
-                        <Typography variant="h1" className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">
+                        <Typography variant="h1" className="text-2xl sm:text-3xl font-bold text-slate-900">
                             {user?.name || `${(user as any)?.firstName || ''} ${(user as any)?.lastName || ''}`.trim() || "Yatri"}
                         </Typography>
                         {user?.phone && (
@@ -167,45 +167,43 @@ export default function ProfilePage() {
                         { label: "Spent", value: totalSpent > 0 ? `₹${(totalSpent / 1000).toFixed(1)}k` : "—" },
                     ].map((stat) => (
                         <div key={stat.label} className="bg-slate-50 rounded-2xl p-4 text-center border border-slate-100">
-                            <p className="text-2xl font-black text-slate-900 italic tracking-tighter">{stat.value}</p>
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">{stat.label}</p>
+                            <p className="text-xl font-bold text-slate-900">{stat.value}</p>
+                            <p className="text-[11px] font-medium text-slate-400 mt-1">{stat.label}</p>
                         </div>
                     ))}
                 </div>
 
                 {/* Recent Bookings */}
                 <section className="animate-in fade-in slide-in-from-bottom-3 duration-700 delay-200">
-                    <div className="flex justify-between items-end mb-6 px-1">
-                        <Typography variant="h2" className="text-xl font-black text-slate-900 uppercase tracking-tighter italic">
+                    <div className="flex justify-between items-end mb-4 px-1">
+                        <Typography variant="h2" className="text-base font-bold text-slate-900">
                             Recent Bookings
                         </Typography>
-                        <div className="flex items-center gap-3">
-                            <Link href={`/${lang}/bookings`} className="text-[10px] font-black text-emerald-500 uppercase tracking-widest underline underline-offset-4">
-                                All Trips
-                            </Link>
-                        </div>
+                        <Link href={`/${lang}/bookings`} className="text-xs font-semibold text-emerald-600 hover:text-emerald-700">
+                            All Trips
+                        </Link>
                     </div>
 
                     {bookings.length === 0 ? (
-                        <div className="py-10 text-center rounded-[2.5rem] bg-slate-50 border border-slate-100">
+                        <div className="py-10 text-center rounded-3xl bg-slate-50 border border-slate-100">
                             <Icon name="mountain" className="w-9 h-9 mx-auto mb-4 text-slate-300" />
                             <p className="text-slate-400 font-medium text-sm">No journeys yet.</p>
                             <button
                                 onClick={() => router.push(`/${lang}/builder`)}
-                                className="mt-4 text-[10px] font-black uppercase tracking-widest text-emerald-500 underline"
+                                className="mt-4 text-xs font-semibold text-emerald-600 underline"
                             >
                                 Plan your first trip
                             </button>
                         </div>
                     ) : (
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                             {bookings.map((booking) => (
                                 <div
                                     key={booking.id}
                                     onClick={() => router.push(`/${lang}/bookings/${booking.id}`)}
-                                    className="premium-card p-5 flex items-center gap-5 group cursor-pointer active:scale-[0.98] transition-all"
+                                    className="premium-card p-4 flex items-center gap-4 group cursor-pointer active:scale-[0.98] transition-all"
                                 >
-                                    <div className="w-18 h-16 w-16 rounded-2xl overflow-hidden shrink-0 shadow-lg shadow-slate-100">
+                                    <div className="w-16 h-16 rounded-2xl overflow-hidden shrink-0 shadow-sm">
                                         <LocalImage
                                             src={getTripImage(booking)}
                                             alt={getTripTitle(booking)}
@@ -213,72 +211,79 @@ export default function ProfilePage() {
                                         />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <h4 className="font-black text-slate-900 uppercase tracking-tight leading-none truncate text-sm">
+                                        <h4 className="font-semibold text-slate-900 leading-tight truncate text-sm">
                                             {getTripTitle(booking)}
                                         </h4>
-                                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1.5">
+                                        <p className="text-xs text-slate-400 font-medium mt-1">
                                             {booking.travelDate
                                                 ? new Date(booking.travelDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
                                                 : "Date TBD"}
                                         </p>
-                                        <div className="mt-2">
-                                            <span className={`px-2.5 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${STATUS_STYLE[booking.status] || STATUS_STYLE.CREATED}`}>
+                                        <div className="mt-1.5">
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${STATUS_STYLE[booking.status] || STATUS_STYLE.CREATED}`}>
                                                 {STATUS_LABEL[booking.status] || booking.status}
                                             </span>
                                         </div>
                                     </div>
-                                    <div className="text-right shrink-0">
-                                        <p className="text-sm font-black text-slate-900 italic">
-                                            ₹{Number(booking.totalAmount).toLocaleString()}
-                                        </p>
-                                        <button className="w-8 h-8 mt-2 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-emerald-500 group-hover:text-white transition-all text-xs ml-auto">
-                                            →
-                                        </button>
-                                    </div>
+                                    <p className="text-sm font-bold text-slate-900 shrink-0">
+                                        ₹{Number(booking.totalAmount).toLocaleString()}
+                                    </p>
                                 </div>
                             ))}
                         </div>
                     )}
                 </section>
 
-                {/* Switch to vendor profile — only shown when this account actually owns a vendor */}
-                {vendorId && (
-                    <button
-                        onClick={() => router.push(`/${lang}/profile/vendor`)}
-                        className="w-full flex items-center gap-4 p-5 rounded-[2rem] bg-slate-900 hover:bg-black text-white transition-all group animate-in fade-in slide-in-from-bottom-3 duration-700 delay-200"
-                    >
-                        <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center flex-shrink-0">
-                            <Icon name="briefcase" className="w-5 h-5" />
-                        </div>
-                        <div className="flex-1 text-left">
-                            <p className="font-black text-sm">Switch to vendor profile</p>
-                            <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest mt-0.5">Manage services &amp; bookings</p>
-                        </div>
-                        <Icon name="compass" className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" />
-                    </button>
-                )}
-
-                {/* Quick Actions */}
-                <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-3 duration-700 delay-300">
-                    {[
-                        { label: "Edit Profile", icon: "edit" as IconName, route: `/${lang}/profile/edit` },
-                        { label: "Help & Support", icon: "help" as IconName, route: `/${lang}/about` },
-                    ].map((act) => (
+                {/* Menu list — only real, working destinations; no placeholder links
+                    to pages that don't exist yet (Saved Places / Reviews / Payment
+                    Methods aren't built). */}
+                <section className="animate-in fade-in slide-in-from-bottom-3 duration-700 delay-300 rounded-3xl border border-slate-100 divide-y divide-slate-100 overflow-hidden">
+                    {vendorId && (
                         <button
-                            key={act.label}
-                            onClick={() => router.push(act.route)}
-                            className="flex flex-col items-center gap-4 p-7 rounded-[2.5rem] bg-white border border-slate-100 hover:border-emerald-100 hover:shadow-xl hover:shadow-emerald-50 transition-all group"
+                            onClick={() => router.push(`/${lang}/profile/vendor`)}
+                            className="w-full flex items-center gap-4 px-5 py-4 hover:bg-slate-50 transition-colors group"
                         >
-                            <span className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:text-emerald-500 group-hover:scale-110 transition-all">
-                                <Icon name={act.icon} className="w-5 h-5" />
+                            <span className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+                                <Icon name="briefcase" className="w-4 h-4" />
                             </span>
-                            <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest text-center">{act.label}</span>
+                            <span className="flex-1 text-left text-sm font-medium text-slate-900">Switch to vendor profile</span>
+                            <Icon name="compass" className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
                         </button>
-                    ))}
-                </div>
+                    )}
+                    <button
+                        onClick={() => router.push(`/${lang}/bookings`)}
+                        className="w-full flex items-center gap-4 px-5 py-4 hover:bg-slate-50 transition-colors group"
+                    >
+                        <span className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+                            <Icon name="mountain" className="w-4 h-4" />
+                        </span>
+                        <span className="flex-1 text-left text-sm font-medium text-slate-900">My Bookings</span>
+                        <Icon name="compass" className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
+                    </button>
+                    <button
+                        onClick={() => router.push(`/${lang}/profile/edit`)}
+                        className="w-full flex items-center gap-4 px-5 py-4 hover:bg-slate-50 transition-colors group"
+                    >
+                        <span className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+                            <Icon name="edit" className="w-4 h-4" />
+                        </span>
+                        <span className="flex-1 text-left text-sm font-medium text-slate-900">Edit Profile</span>
+                        <Icon name="compass" className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
+                    </button>
+                    <button
+                        onClick={() => router.push(`/${lang}/about`)}
+                        className="w-full flex items-center gap-4 px-5 py-4 hover:bg-slate-50 transition-colors group"
+                    >
+                        <span className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+                            <Icon name="help" className="w-4 h-4" />
+                        </span>
+                        <span className="flex-1 text-left text-sm font-medium text-slate-900">Help &amp; Support</span>
+                        <Icon name="compass" className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
+                    </button>
+                </section>
 
                 <Button
-                    className="w-full h-14 rounded-[2rem] bg-slate-50 text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] border border-slate-100 hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all"
+                    className="w-full h-12 rounded-2xl bg-slate-50 text-slate-500 font-semibold text-sm border border-slate-100 hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all"
                     onClick={handleLogout}
                 >
                     Sign Out

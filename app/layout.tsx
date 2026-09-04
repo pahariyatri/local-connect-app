@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Poppins } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { i18n, Locale } from "@/i18n-config";
@@ -11,10 +12,17 @@ import { TripPlannerProvider } from "@/contexts/TripPlannerContext";
 import { NotificationContainer } from "./[lang]/components/atoms/Toast";
 
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
+// Re-theme (2026-08-30): switched the app's primary typeface from Geist
+// Sans to Poppins to match the approved design reference — a rounder,
+// friendlier geometric sans that reads calmer at the app's existing bold
+// weights than Geist did. The CSS variable is renamed --font-sans (was
+// --font-geist-sans) so the name doesn't lie about which font it is;
+// tailwind.config.ts and globals.css are updated to match.
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-sans",
+  display: "swap",
 });
 const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
@@ -101,7 +109,7 @@ export default async function RootLayout(props: {
     // so a real mismatch anywhere else in the tree still warns normally.
     <html lang={lang} dir={lang === "he" ? "rtl" : "ltr"} suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${poppins.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
         <AuthProvider>

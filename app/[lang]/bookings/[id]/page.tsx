@@ -234,15 +234,15 @@ export default function BookingDetailPage() {
 
         {/* Header */}
         <div className="mb-6">
-          <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Booking YATRI-{id}</p>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight mt-1">{STATUS_LABELS[status]}</h1>
+          <p className="text-xs font-medium text-slate-400">Booking YATRI-{id}</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mt-1">{STATUS_LABELS[status]}</h1>
         </div>
 
         {/* Status banner */}
         <div className={`mb-6 p-4 rounded-2xl border flex items-center gap-3 ${STATUS_COLORS[status]}`}>
           {IN_FLIGHT.includes(status) && <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin flex-shrink-0" />}
           <div>
-            <p className="font-black text-sm">{STATUS_LABELS[status]}</p>
+            <p className="font-semibold text-sm">{STATUS_LABELS[status]}</p>
             <p className="text-xs opacity-70 font-medium mt-0.5">
               {status === 'CREATED' && "We've sent your request to each local partner. This usually takes a few minutes."}
               {status === 'REPLACEMENT_REQUIRED' && 'One or more partners couldn\'t confirm — pick a replacement below to continue.'}
@@ -258,27 +258,27 @@ export default function BookingDetailPage() {
 
         {error && (
           <div className="mb-4 p-4 bg-red-50 rounded-2xl border border-red-100">
-            <p className="text-red-700 text-sm font-bold">{error}</p>
-            <button onClick={fetchBooking} className="mt-2 text-xs font-bold text-red-600 underline">Retry</button>
+            <p className="text-red-700 text-sm font-semibold">{error}</p>
+            <button onClick={fetchBooking} className="mt-2 text-xs font-semibold text-red-600 underline">Retry</button>
           </div>
         )}
 
         {/* Day-wise items */}
         {activeItems.length > 0 && (
           <section className="mb-6">
-            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Trip services</h2>
+            <h2 className="text-xs font-semibold text-slate-400 mb-3 px-1">Trip services</h2>
             <div className="space-y-3">
               {activeItems.map((item) => (
                 <div key={item.id} className="p-4 rounded-2xl border border-slate-100 bg-white shadow-sm">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Day {item.day} · {item.category}</p>
-                      <p className="text-sm font-black text-slate-900 mt-0.5 truncate">{item.service?.name || 'Service'}</p>
-                      <p className="text-[10px] text-slate-400 font-medium mt-0.5">{item.vendor?.businessName}</p>
+                      <p className="text-xs font-medium text-slate-400">Day {item.day} · {item.category}</p>
+                      <p className="text-sm font-semibold text-slate-900 mt-0.5 truncate">{item.service?.name || 'Service'}</p>
+                      <p className="text-xs text-slate-400 font-medium mt-0.5">{item.vendor?.businessName}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-sm font-black text-slate-900">₹{Number(item.vendorPrice).toLocaleString('en-IN')}</p>
-                      <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${ITEM_STATUS_STYLE[item.status]}`}>
+                      <p className="text-sm font-bold text-slate-900">₹{Number(item.vendorPrice).toLocaleString('en-IN')}</p>
+                      <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${ITEM_STATUS_STYLE[item.status]}`}>
                         {item.status === 'PENDING' ? 'Awaiting confirmation' : item.status === 'ACCEPTED' ? 'Confirmed' : 'Declined'}
                       </span>
                     </div>
@@ -292,14 +292,14 @@ export default function BookingDetailPage() {
                         <button
                           onClick={() => openReplaceDrawer(item)}
                           disabled={busyItemId === item.id}
-                          className="flex-1 h-10 rounded-xl bg-slate-900 text-white text-xs font-black uppercase tracking-widest disabled:opacity-50"
+                          className="flex-1 h-10 rounded-xl bg-slate-900 text-white text-xs font-semibold disabled:opacity-50"
                         >
                           Pick replacement
                         </button>
                         <button
                           onClick={() => handleRemoveItem(item)}
                           disabled={busyItemId === item.id}
-                          className="h-10 px-4 rounded-xl bg-slate-50 text-slate-500 text-xs font-black uppercase tracking-widest disabled:opacity-50"
+                          className="h-10 px-4 rounded-xl bg-slate-50 text-slate-500 text-xs font-semibold disabled:opacity-50"
                         >
                           Remove
                         </button>
@@ -316,26 +316,26 @@ export default function BookingDetailPage() {
         {(vendorPayTotal > 0 || feeAmount != null) && (
           <section className="mb-6 p-6 bg-slate-50 rounded-3xl border border-slate-100 space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-xs font-bold text-slate-500">Estimated services total</span>
-              <span className="text-sm font-black text-slate-900">₹{vendorPayTotal.toLocaleString('en-IN')}</span>
+              <span className="text-xs font-medium text-slate-500">Estimated services total</span>
+              <span className="text-sm font-bold text-slate-900">₹{vendorPayTotal.toLocaleString('en-IN')}</span>
             </div>
             {feeAmount != null && (
               <div className="flex justify-between items-center pt-3 border-t border-slate-200">
-                <span className="text-xs font-bold text-slate-500">Platform reservation fee</span>
-                <span className="text-sm font-black text-emerald-600">₹{feeAmount.toLocaleString('en-IN')}</span>
+                <span className="text-xs font-medium text-slate-500">Platform reservation fee</span>
+                <span className="text-sm font-bold text-emerald-600">₹{feeAmount.toLocaleString('en-IN')}</span>
               </div>
             )}
             <div className="pt-3 border-t border-slate-200 space-y-1.5">
               <div className="flex justify-between items-center">
-                <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Pay now</span>
-                <span className="text-lg font-black text-slate-900 italic">₹{(feeAmount ?? 0).toLocaleString('en-IN')}</span>
+                <span className="text-xs font-semibold text-slate-900">Pay now</span>
+                <span className="text-lg font-bold text-slate-900">{feeAmount != null ? `₹${feeAmount.toLocaleString('en-IN')}` : "—"}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pay directly to local partners</span>
-                <span className="text-sm font-black text-slate-500">₹{vendorPayTotal.toLocaleString('en-IN')}</span>
+                <span className="text-xs font-medium text-slate-400">Pay directly to local partners</span>
+                <span className="text-sm font-semibold text-slate-500">₹{vendorPayTotal.toLocaleString('en-IN')}</span>
               </div>
             </div>
-            <p className="text-[10px] text-slate-400 font-medium pt-2 leading-relaxed">
+            <p className="text-xs text-slate-400 font-medium pt-2 leading-relaxed">
               Your reservation fee confirms and manages your booking through the platform. Remaining service amounts are paid directly to the respective local partners.
             </p>
           </section>
@@ -352,23 +352,25 @@ export default function BookingDetailPage() {
             <button
               onClick={handleConfirmAndProceedToPay}
               disabled={busyItemId !== null || !isReadyToReserve}
-              className={`w-full h-16 font-black text-base uppercase tracking-widest rounded-2xl shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${
+              className={`w-full h-14 font-semibold text-base rounded-2xl shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${
                 isReadyToReserve
-                  ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-500/25"
+                  ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/25"
                   : "bg-slate-100 text-slate-400 shadow-none cursor-not-allowed"
               }`}
             >
               {busyItemId === -1 ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : isReadyToReserve ? (
-                <span>Reserve · Pay ₹{(feeAmount ?? 276.85).toLocaleString('en-IN')}</span>
+                <span>{feeAmount != null ? `Reserve · Pay ₹${feeAmount.toLocaleString('en-IN')}` : "Reserve now"}</span>
               ) : (
                 <span>Waiting for partner confirmation…</span>
               )}
             </button>
-            <p className="text-center text-[10px] text-slate-400 font-medium">
+            <p className="text-center text-xs text-slate-400 font-medium">
               {isReadyToReserve
-                ? `Pay ₹${(feeAmount ?? 276.85).toLocaleString('en-IN')} platform reservation fee to confirm direct booking.`
+                ? (feeAmount != null
+                    ? `Pay ₹${feeAmount.toLocaleString('en-IN')} platform reservation fee to confirm direct booking.`
+                    : "Pay the platform reservation fee to confirm direct booking.")
                 : "You'll be able to pay as soon as a local partner confirms."}
             </p>
           </div>
@@ -377,7 +379,7 @@ export default function BookingDetailPage() {
         {/* Vendor contacts — unlocked only after CONFIRMED */}
         {isReserved && (
           <section className="mb-6">
-            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Local partner contacts</h2>
+            <h2 className="text-xs font-semibold text-slate-400 mb-3 px-1">Local partner contacts</h2>
             {contacts === null ? (
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 animate-pulse h-16" />
             ) : contacts.length === 0 ? (
@@ -386,11 +388,11 @@ export default function BookingDetailPage() {
               <div className="space-y-3">
                 {contacts.map((c, i) => (
                   <div key={i} className="p-4 rounded-2xl border border-slate-100 bg-white shadow-sm">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Day {c.day} · {c.category}</p>
-                    <p className="text-sm font-black text-slate-900 mt-0.5">{c.businessName}</p>
+                    <p className="text-xs font-medium text-slate-400">Day {c.day} · {c.category}</p>
+                    <p className="text-sm font-semibold text-slate-900 mt-0.5">{c.businessName}</p>
                     {c.contactName && <p className="text-xs text-slate-500 font-medium mt-1">{c.contactName}</p>}
                     {c.phone && (
-                      <a href={`tel:${c.phone}`} className="inline-block mt-2 text-xs font-black text-emerald-600">{c.phone}</a>
+                      <a href={`tel:${c.phone}`} className="inline-block mt-2 text-xs font-semibold text-emerald-600">{c.phone}</a>
                     )}
                   </div>
                 ))}
@@ -402,7 +404,7 @@ export default function BookingDetailPage() {
         {isDeadEnd && (
           <button
             onClick={() => router.push(`/${lang}/builder`)}
-            className="w-full h-14 bg-emerald-500 text-white font-black text-sm uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-500/20 active:scale-95 transition-all"
+            className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm rounded-2xl shadow-lg active:scale-95 transition-all"
           >
             Build a new trip
           </button>

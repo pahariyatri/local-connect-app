@@ -368,13 +368,19 @@ export default function TripBuilderPage() {
  
             {/* Main Content - Stepper */}
             <div className="lg:col-span-8">
-                {/* Progress Bar */}
-                <div className="flex gap-1.5 sm:gap-2 mb-6 sm:mb-8">
-                  {[1, 2, 3, 4, 5, 6].map(stepNum => (
-                    <div key={stepNum} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
-                      stepNum <= currentStep ? "bg-slate-900" : "bg-slate-200"
-                    }`} />
-                  ))}
+                {/* Progress Bar — "Step N of 6" above a single continuous fill bar. */}
+                <div className="mb-6 sm:mb-8">
+                  <p className="text-xs sm:text-sm font-semibold text-slate-900 mb-2">
+                    {(builder.step_of ?? "Step {current} of {total}")
+                      .replace("{current}", String(currentStep))
+                      .replace("{total}", "6")}
+                  </p>
+                  <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-600 rounded-full transition-all duration-500"
+                      style={{ width: `${(currentStep / 6) * 100}%` }}
+                    />
+                  </div>
                 </div>
   
                 {renderStepContent()}

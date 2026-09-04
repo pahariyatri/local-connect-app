@@ -3,6 +3,7 @@
 import React, { useRef } from "react";
 import { useRouter } from "next/navigation";
 import LocalImage from "../atoms/Image";
+import Typography from "../atoms/Typography";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { Icon } from "../atoms/Icon";
 
@@ -72,14 +73,14 @@ export default function InteractiveRouteSection({ lang }: { lang: string }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div className="space-y-1">
-            <span className="text-emerald-600 text-xs font-black uppercase tracking-widest block">
+            <Typography variant="eyebrow">
               {t.eyebrow || "Curated Routes"}
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+            </Typography>
+            <Typography variant="h2">
               {t.title || "Ready-made journeys."}
-            </h2>
+            </Typography>
             <p className="text-slate-500 text-xs sm:text-sm font-medium max-w-xl">
-              {t.subtitle || "Real multi-day routes across Himachal — open one in the builder and make it yours."}
+              {t.subtitle || "Multi-day routes across Himachal — open one in the builder and make it yours."}
             </p>
           </div>
 

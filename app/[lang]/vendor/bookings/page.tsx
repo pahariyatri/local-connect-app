@@ -211,65 +211,65 @@ export default function ManageBookingsPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6">
-      <header className="mb-6 sm:mb-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
-        <Typography variant="h1" className="text-4xl font-black text-slate-900 leading-tight">
-          Guests <span className="text-emerald-500">&</span> Assists.
+      <header className="mb-6 animate-in fade-in slide-in-from-bottom-5 duration-700">
+        <Typography variant="h1" className="text-2xl sm:text-3xl font-bold text-slate-900">
+          Booking Requests
         </Typography>
-        <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em] mt-2">{res.subtitle}</p>
+        <p className="text-slate-500 text-sm mt-1">{res.subtitle}</p>
       </header>
 
       {/* View Switcher: List vs Calendar */}
-      <div className="flex items-center justify-between bg-slate-100 p-1.5 rounded-2xl mb-8">
+      <div className="flex items-center justify-between bg-slate-100 p-1.5 rounded-2xl mb-6">
         <button
           onClick={() => setViewMode("list")}
-          className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
-            viewMode === "list" ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-900"
+          className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+            viewMode === "list" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"
           }`}
         >
           List View
         </button>
         <button
           onClick={() => setViewMode("calendar")}
-          className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
-            viewMode === "calendar" ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-900"
+          className={`flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+            viewMode === "calendar" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"
           }`}
         >
-          📅 Calendar View
+          Calendar View
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-10">
-        <div className="p-8 bg-white rounded-[2.5rem] border border-slate-100 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] flex flex-col justify-between h-36">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{res.stats.total_rev}</p>
-          <p className="text-3xl font-black text-slate-900 italic">₹{totalRevenue.toLocaleString()}</p>
+      <div className="grid grid-cols-2 gap-4 mb-8">
+        <div className="p-6 bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between h-28">
+          <p className="text-xs font-medium text-slate-400">{res.stats.total_rev}</p>
+          <p className="text-2xl font-bold text-slate-900">₹{totalRevenue.toLocaleString()}</p>
         </div>
-        <div className="p-8 bg-white rounded-[2.5rem] border border-slate-100 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] flex flex-col justify-between h-36">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{res.stats.active}</p>
-          <p className="text-3xl font-black text-emerald-500 italic">{total}</p>
+        <div className="p-6 bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between h-28">
+          <p className="text-xs font-medium text-slate-400">{res.stats.active}</p>
+          <p className="text-2xl font-bold text-emerald-600">{total}</p>
         </div>
       </div>
 
       {/* LIST VIEW */}
       {viewMode === "list" && (
         <>
-          <div className="flex gap-2 overflow-x-auto pb-2 mb-8 no-scrollbar">
+          <div className="flex gap-2 overflow-x-auto pb-2 mb-6 no-scrollbar">
             <button
               onClick={() => setFilter("requests")}
-              className={`px-5 py-2.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${
-                filter === "requests" ? "bg-slate-900 text-white" : "bg-orange-50 text-orange-600 border border-orange-100 hover:bg-orange-100"
+              className={`px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
+                filter === "requests" ? "bg-slate-900 text-white" : "bg-amber-50 text-amber-700 border border-amber-100 hover:bg-amber-100"
               }`}
             >
-              Requests <span className="ml-1 opacity-70">[{filterCounts.requests}]</span>
+              Requests <span className="ml-1 opacity-70">({filterCounts.requests})</span>
             </button>
             {(["all", "pending", "confirmed", "completed", "cancelled"] as FilterKey[]).map((key) => (
               <button
                 key={key}
                 onClick={() => setFilter(key)}
-                className={`px-5 py-2.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${
-                  filter === key ? "bg-slate-900 text-white" : "bg-white text-slate-400 border border-slate-100 hover:bg-slate-50"
+                className={`px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
+                  filter === key ? "bg-slate-900 text-white" : "bg-white text-slate-500 border border-slate-100 hover:bg-slate-50"
                 }`}
               >
-                {bookingRes.filters[key]} <span className="ml-1 opacity-50">[{filterCounts[key]}]</span>
+                {bookingRes.filters[key]} <span className="ml-1 opacity-60">({filterCounts[key]})</span>
               </button>
             ))}
           </div>
@@ -290,37 +290,37 @@ export default function ManageBookingsPage() {
                 </div>
               )}
               {itemsState === "ready" && pendingItems.length === 0 && (
-                <div className="text-center py-20 bg-slate-50 rounded-[3rem] border border-dashed border-slate-200">
-                  <Typography variant="h3" className="text-xl font-black text-slate-900 uppercase tracking-tighter italic mb-2">
+                <div className="text-center py-16 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                  <Typography variant="h3" className="text-lg font-bold text-slate-900 mb-1">
                     All caught up
                   </Typography>
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">No pending requests right now.</p>
+                  <p className="text-slate-400 text-sm font-medium">No pending requests right now.</p>
                 </div>
               )}
               {itemsState === "ready" && pendingItems.map((item) => {
                 const guestName = [item.booking?.user?.firstName, item.booking?.user?.lastName].filter(Boolean).join(" ") || "Guest";
                 const busy = respondingId === item.id;
                 return (
-                  <div key={item.id} className="premium-card p-6 bg-white">
-                    <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest mb-1">Day {item.day} · {item.category}</p>
-                    <h3 className="text-base font-black text-slate-900">{item.service?.name || "Service"}</h3>
+                  <div key={item.id} className="premium-card p-5 bg-white">
+                    <p className="text-xs font-semibold text-emerald-600 mb-1">Day {item.day} · {item.category}</p>
+                    <h3 className="text-base font-bold text-slate-900">{item.service?.name || "Service"}</h3>
                     <p className="text-xs text-slate-400 font-medium mt-1">
                       {guestName} · {item.booking?.guestCount} guest{item.booking?.guestCount === 1 ? "" : "s"} · {item.booking?.travelDate ? new Date(item.booking.travelDate).toLocaleDateString() : "—"}
                     </p>
                     <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-50">
-                      <span className="text-lg font-black text-emerald-600">₹{Number(item.vendorPrice || 0).toLocaleString()}</span>
+                      <span className="text-lg font-bold text-emerald-600">₹{Number(item.vendorPrice || 0).toLocaleString()}</span>
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleRespond(item.id, "reject")}
                           disabled={busy}
-                          className="h-10 px-4 rounded-xl bg-slate-50 text-slate-500 text-xs font-black uppercase tracking-widest disabled:opacity-50"
+                          className="h-10 px-4 rounded-xl bg-slate-50 text-slate-500 text-xs font-semibold disabled:opacity-50"
                         >
                           Decline
                         </button>
                         <button
                           onClick={() => handleRespond(item.id, "accept")}
                           disabled={busy}
-                          className="h-10 px-5 rounded-xl bg-emerald-500 text-white text-xs font-black uppercase tracking-widest disabled:opacity-50"
+                          className="h-10 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold disabled:opacity-50"
                         >
                           {busy ? "..." : "Accept"}
                         </button>
@@ -354,58 +354,56 @@ export default function ManageBookingsPage() {
                 return (
                   <div
                     key={booking.id}
-                    className="premium-card p-1 bg-white relative overflow-hidden group hover:border-emerald-100 transition-all active:scale-[0.98] animate-in fade-in slide-in-from-bottom-5 duration-700"
+                    className="premium-card p-6 bg-white relative overflow-hidden group hover:border-emerald-100 transition-all animate-in fade-in slide-in-from-bottom-5 duration-700"
                     style={{ animationDelay: `${idx * 80}ms` }}
                   >
-                    <div className="p-8">
-                      <div className="flex justify-between items-start mb-8">
-                        <div className="flex gap-5 items-center min-w-0">
-                          <div className="w-16 h-16 rounded-[1.5rem] bg-slate-50 flex items-center justify-center text-slate-300 flex-shrink-0 group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-all duration-500">
-                            <PackageIcon className="w-6 h-6" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1.5">{res.card.id} #{booking.id}</p>
-                            <h3 className="text-lg font-black text-slate-900 leading-tight uppercase tracking-tighter truncate">{booking.directService?.name || booking.package?.name || "Trip package"}</h3>
-                          </div>
+                    <div className="flex justify-between items-start mb-5">
+                      <div className="flex gap-4 items-center min-w-0">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 flex-shrink-0 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
+                          <PackageIcon className="w-5 h-5" />
                         </div>
-                        <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm flex-shrink-0 ${STATUS_BADGE[filterKey]}`}>
-                          {bookingRes.filters[filterKey]}
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-emerald-600 mb-0.5">{res.card.id} #{booking.id}</p>
+                          <h3 className="text-base font-bold text-slate-900 leading-tight truncate">{booking.directService?.name || booking.package?.name || "Trip package"}</h3>
                         </div>
                       </div>
-
-                      <div className="grid grid-cols-2 gap-y-6 mb-10 pt-6 border-t border-slate-50">
-                        <div>
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{res.card.guest}</p>
-                          <p className="text-sm font-black text-slate-900">{customerName}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Group size</p>
-                          <p className="text-sm font-black text-slate-900">{booking.guestCount} guest{booking.guestCount === 1 ? "" : "s"}</p>
-                        </div>
-                        <div>
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{res.card.date}</p>
-                          <p className="text-sm font-black text-slate-900">{booking.travelDate ? new Date(booking.travelDate).toLocaleDateString() : "—"}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{res.card.earnings}</p>
-                          <p className="text-lg font-black text-emerald-600">₹{Number(booking.totalAmount || 0).toLocaleString()}</p>
-                        </div>
-                      </div>
-
-                      <Button variant="ghost" className="w-full h-14 rounded-[1.5rem] bg-slate-50 hover:bg-white hover:border-emerald-100 text-slate-900 font-black text-[11px] uppercase tracking-[0.2em] border border-slate-100 transition-all active:scale-95">
-                        {res.card.details}
-                      </Button>
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-semibold shrink-0 ${STATUS_BADGE[filterKey]}`}>
+                        {bookingRes.filters[filterKey]}
+                      </span>
                     </div>
+
+                    <div className="grid grid-cols-2 gap-y-4 mb-5 pt-5 border-t border-slate-50">
+                      <div>
+                        <p className="text-xs font-medium text-slate-400 mb-0.5">{res.card.guest}</p>
+                        <p className="text-sm font-semibold text-slate-900">{customerName}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-medium text-slate-400 mb-0.5">Group size</p>
+                        <p className="text-sm font-semibold text-slate-900">{booking.guestCount} guest{booking.guestCount === 1 ? "" : "s"}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-slate-400 mb-0.5">{res.card.date}</p>
+                        <p className="text-sm font-semibold text-slate-900">{booking.travelDate ? new Date(booking.travelDate).toLocaleDateString() : "—"}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-medium text-slate-400 mb-0.5">{res.card.earnings}</p>
+                        <p className="text-base font-bold text-emerald-600">₹{Number(booking.totalAmount || 0).toLocaleString()}</p>
+                      </div>
+                    </div>
+
+                    <Button variant="ghost" className="w-full h-11 rounded-xl bg-slate-50 hover:bg-white hover:border-emerald-100 text-slate-900 font-semibold text-sm border border-slate-100 transition-all">
+                      {res.card.details}
+                    </Button>
                   </div>
                 );
               })}
 
               {filtered.length === 0 && (
-                <div className="text-center py-20 bg-slate-50 rounded-[3rem] border border-dashed border-slate-200">
-                  <Typography variant="h3" className="text-xl font-black text-slate-900 uppercase tracking-tighter italic mb-2">
+                <div className="text-center py-16 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                  <Typography variant="h3" className="text-lg font-bold text-slate-900 mb-1">
                     {bookingRes.not_found}
                   </Typography>
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">
+                  <p className="text-slate-400 text-sm font-medium">
                     {filter === "all" ? bookingRes.empty_state : bookingRes.empty_filter.replace("{filter}", bookingRes.filters[filter])}
                   </p>
                 </div>
@@ -419,8 +417,8 @@ export default function ManageBookingsPage() {
       {viewMode === "calendar" && (
         <div className="space-y-6 animate-in fade-in duration-500">
           {/* Month Header Selector */}
-          <div className="flex items-center justify-between bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
-            <Typography variant="h2" className="text-xl font-black text-slate-900 uppercase tracking-tighter italic">
+          <div className="flex items-center justify-between bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+            <Typography variant="h2" className="text-lg font-bold text-slate-900">
               {MONTH_NAMES[month]} {year}
             </Typography>
             <div className="flex gap-2">
@@ -482,10 +480,10 @@ export default function ManageBookingsPage() {
           <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <Typography variant="h3" className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">
-                  Agenda for {MONTH_NAMES[month].substring(0, 3)} {selectedDay}, {year}
+                <Typography variant="h3" className="text-xs font-semibold text-emerald-600">
+                  {MONTH_NAMES[month].substring(0, 3)} {selectedDay}, {year}
                 </Typography>
-                <p className="text-lg font-black text-slate-900 uppercase tracking-tighter">
+                <p className="text-base font-bold text-slate-900">
                   {selectedDayBookings.length ? `${selectedDayBookings.length} Scheduled Booking${selectedDayBookings.length === 1 ? "" : "s"}` : "No Scheduled Bookings"}
                 </p>
               </div>
@@ -523,9 +521,6 @@ export default function ManageBookingsPage() {
         </div>
       )}
 
-      <div className="mt-10 sm:mt-12 text-center pb-8">
-        <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em]">End of feed</p>
-      </div>
     </div>
   );
 }
