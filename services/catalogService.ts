@@ -118,6 +118,34 @@ export const searchLocations = async (q: string, limit = 8) => {
   return (raw as any)?.data ?? raw ?? [];
 };
 
+export interface ServiceQuote {
+  serviceId: number;
+  unitPrice: number;
+  totalAmount: number;
+  currency: string;
+  quantity: number;
+  guestCount: number;
+  nights: number;
+}
+
+/**
+ * Same pricing engine (room allocation, per-person/per-night/per-trip rules)
+ * that computes the real booking total server-side — used here so a
+ * pre-submit "Estimated Total" is never a naive client-side guess that can
+ * diverge from what the booking is actually created at.
+ */
+export const getServiceQuote = async (
+  serviceId: number | string,
+  params: { dateFrom?: string; dateTo?: string; guests?: number },
+): Promise<ServiceQuote> => {
+  const query = new URLSearchParams();
+  if (params.dateFrom) query.set('dateFrom', params.dateFrom);
+  if (params.dateTo) query.set('dateTo', params.dateTo);
+  if (params.guests) query.set('guests', String(params.guests));
+  const raw = await api.get(`/pricing/quote/${serviceId}?${query.toString()}`, { skipAuth: true, skipCache: true });
+  return ((raw as any)?.data ?? raw) as ServiceQuote;
+};
+
 // ═══════════════════ ITINERARY ═══════════════════
 
 export const generateItinerary = async (packageId: number) => {

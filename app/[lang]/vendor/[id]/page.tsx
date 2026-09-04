@@ -12,6 +12,7 @@ import { getVendorById } from "@/services/vendorService";
 import { ApiClientError } from "@/lib/apiClient";
 import { searchDiscoveryServices } from "@/services/searchService";
 import { createDirectBooking, getUserBookings } from "@/services/bookingService";
+import { getServiceQuote, ServiceQuote } from "@/services/catalogService";
 import { Icon } from "../../components/atoms/Icon";
 import { toLocalDateString } from "@/lib/travelDate";
 
@@ -91,6 +92,8 @@ export default function VendorProfilePage() {
     const [bookingCalendarMonth, setBookingCalendarMonth] = useState(new Date());
     const [bookingGuestCount, setBookingGuestCount] = useState(1);
     const [bookingNotes, setBookingNotes] = useState("");
+    const [bookingQuote, setBookingQuote] = useState<ServiceQuote | null>(null);
+    const [isQuoting, setIsQuoting] = useState(false);
     const [isSubmittingBooking, setIsSubmittingBooking] = useState(false);
     const [profile, setProfile] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -222,6 +225,39 @@ export default function VendorProfilePage() {
         fetchProfile();
     }, [id]);
 
+    // Live price quote from the real pricing engine (room allocation,
+    // per-person/per-night/per-trip rules — see backend PricingService) —
+    // replaces a naive price × guestCount estimate that didn't multiply by
+    // nights at all, so it silently showed a wrong total before submit.
+    // Declared above the loading/error early-returns below so hook order
+    // stays stable across renders (Rules of Hooks).
+    useEffect(() => {
+        if (!bookingModalService || !bookingTravelDate) {
+            setBookingQuote(null);
+            return;
+        }
+        let cancelled = false;
+        setIsQuoting(true);
+        const timer = setTimeout(async () => {
+            try {
+                const quote = await getServiceQuote(bookingModalService.id, {
+                    dateFrom: bookingTravelDate,
+                    dateTo: bookingEndDate || undefined,
+                    guests: bookingGuestCount,
+                });
+                if (!cancelled) setBookingQuote(quote);
+            } catch {
+                if (!cancelled) setBookingQuote(null);
+            } finally {
+                if (!cancelled) setIsQuoting(false);
+            }
+        }, 250);
+        return () => {
+            cancelled = true;
+            clearTimeout(timer);
+        };
+    }, [bookingModalService, bookingTravelDate, bookingEndDate, bookingGuestCount]);
+
     if (isLoading) {
         return (
             <div className="min-h-screen bg-slate-50 pb-32 animate-pulse">
@@ -286,6 +322,7 @@ export default function VendorProfilePage() {
         setBookingCalendarMonth(new Date());
         setBookingGuestCount(1);
         setBookingNotes("");
+        setBookingQuote(null);
     };
 
     const bookingNights = (() => {
@@ -987,17 +1024,31 @@ export default function VendorProfilePage() {
                                 />
                             </div>
 
-                            {/* Price Summary Pill */}
+                            {/* Price Summary Pill — real quote from the pricing engine
+                                (room allocation / per-night / per-person / flat rules),
+                                not a client-side price × guestCount guess. */}
                             <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-900 text-white shadow-sm">
                                 <div>
                                     <span className="text-[9px] font-black uppercase text-emerald-400 tracking-wider block">Estimated Total</span>
                                     <p className="text-base font-black">
-                                        ₹{Math.round(bookingModalService.price * bookingGuestCount).toLocaleString("en-IN")}
+                                        {!bookingTravelDate ? (
+                                            <>₹{Math.round(bookingModalService.price).toLocaleString("en-IN")}</>
+                                        ) : isQuoting && !bookingQuote ? (
+                                            <span className="text-slate-400 text-sm font-semibold">Calculating…</span>
+                                        ) : bookingQuote ? (
+                                            <>₹{Math.round(bookingQuote.totalAmount).toLocaleString("en-IN")}</>
+                                        ) : (
+                                            <span className="text-slate-400 text-sm font-semibold">Unavailable — try again</span>
+                                        )}
                                     </p>
                                 </div>
-                                <span className="text-[10px] font-bold text-slate-300 bg-white/10 px-2.5 py-1 rounded-lg">
-                                    ₹{Math.round(bookingModalService.price).toLocaleString("en-IN")} × {bookingGuestCount}
-                                </span>
+                                {bookingQuote && (
+                                    <span className="text-[10px] font-bold text-slate-300 bg-white/10 px-2.5 py-1 rounded-lg">
+                                        {bookingQuote.nights > 0 && bookingModalService.unit.includes("night")
+                                            ? `₹${Math.round(bookingQuote.unitPrice).toLocaleString("en-IN")} × ${bookingQuote.nights} night${bookingQuote.nights > 1 ? "s" : ""}`
+                                            : `${bookingQuote.guestCount} guest${bookingQuote.guestCount > 1 ? "s" : ""}`}
+                                    </span>
+                                )}
                             </div>
                         </div>
 
