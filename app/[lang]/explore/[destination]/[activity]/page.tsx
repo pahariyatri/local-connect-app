@@ -28,13 +28,14 @@ const ACTIVITY_MAP: Record<string, { display: string; category: string; keyword:
 };
 
 interface PageProps {
-  params: { lang: string; destination: string; activity: string };
+  params: Promise<{ lang: string; destination: string; activity: string }>;
 }
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const dest = DESTINATION_MAP[params.destination];
-  const act = ACTIVITY_MAP[params.activity];
+  const resolvedParams = await params;
+  const dest = DESTINATION_MAP[resolvedParams.destination];
+  const act = ACTIVITY_MAP[resolvedParams.activity];
   if (!dest || !act) return {};
 
   // Corrected 2026-08: "Book Instantly" / "Instant booking" don't match the
@@ -55,7 +56,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       type: 'website',
     },
     alternates: {
-      canonical: `https://app.pahariyatri.com/${params.lang}/explore/${params.destination}/${params.activity}`,
+      canonical: `https://app.pahariyatri.com/${resolvedParams.lang}/explore/${resolvedParams.destination}/${resolvedParams.activity}`,
     },
   };
 }
@@ -93,8 +94,9 @@ async function fetchServices(destination: string, category: string) {
 }
 
 export default async function DestinationActivityPage({ params }: PageProps) {
-  const dest = DESTINATION_MAP[params.destination];
-  const act = ACTIVITY_MAP[params.activity];
+  const { lang, destination, activity } = await params;
+  const dest = DESTINATION_MAP[destination];
+  const act = ACTIVITY_MAP[activity];
 
   if (!dest || !act) notFound();
 
@@ -140,7 +142,7 @@ export default async function DestinationActivityPage({ params }: PageProps) {
               No travel agents needed.
             </p>
             <a
-              href={`/${params.lang}/builder`}
+              href={`/${lang}/builder`}
               className="inline-flex items-center gap-2 h-14 px-8 bg-emerald-500 text-white font-black text-sm uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-500/30 hover:bg-emerald-400 transition-colors"
             >
               Plan My Trip
@@ -161,7 +163,7 @@ export default async function DestinationActivityPage({ params }: PageProps) {
                 More {act.display} listings coming soon for {dest.display}.
               </p>
               <a
-                href={`/${params.lang}/builder`}
+                href={`/${lang}/builder`}
                 className="inline-flex items-center gap-2 h-12 px-6 bg-slate-900 text-white font-black text-xs uppercase tracking-widest rounded-xl"
               >
                 Plan Your Trip Instead
@@ -196,7 +198,7 @@ export default async function DestinationActivityPage({ params }: PageProps) {
                       </div>
                     </div>
                     <a
-                      href={`/${params.lang}/builder`}
+                      href={`/${lang}/builder`}
                       className="flex-shrink-0 h-10 px-4 bg-emerald-500 text-white font-black text-xs uppercase tracking-wide rounded-xl flex items-center hover:bg-emerald-400 transition-colors"
                     >
                       Book
@@ -216,7 +218,7 @@ export default async function DestinationActivityPage({ params }: PageProps) {
               Scan a vendor QR code or plan your full trip in 2 minutes.
             </p>
             <a
-              href={`/${params.lang}/builder`}
+              href={`/${lang}/builder`}
               className="inline-flex items-center gap-2 h-12 px-8 bg-emerald-500 text-white font-black text-sm uppercase tracking-widest rounded-xl"
             >
               Start Planning

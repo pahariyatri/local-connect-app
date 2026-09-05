@@ -1,17 +1,23 @@
-"use client";
-
-import { usePathname } from "next/navigation";
-import { useLocalizationContext } from "@/contexts/LocalizationContext";
+import { headers } from "next/headers";
 import Header from "./components/organisms/Header";
 import BottomNavigation from "./components/organisms/BottomNavigation";
 
-export default function LangLayout({
+// Converted from a client component (2026-09): it only ever used
+// usePathname() for these route-shape checks and useLocalizationContext()
+// for `lang` (available directly as a param here) and `switchLanguage`
+// (passed to BottomNavigation's onToggleLanguage prop, which that
+// component has never actually read — see BottomNavigation.tsx). Being
+// "use client" put a client-component boundary directly under the [lang]
+// segment, above EVERY page in the app.
+export default async function LangLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<{ lang: string }>;
 }) {
-  const { switchLanguage, lang } = useLocalizationContext();
-  const pathname = usePathname() || "";
+  const { lang } = await params;
+  const pathname = (await headers()).get("x-pathname") ?? "";
 
   // Auth screens (login/pin/verify-otp) are a focused flow
   const isAuthRoute = /^\/[^/]+\/auth(\/|$)/.test(pathname);
@@ -38,9 +44,7 @@ export default function LangLayout({
           on notched phones) hides the last row of any page that ends in
           <PublicFooter> (copyright/tagline) or otherwise abuts the bottom. */}
       <div className={`page-fade-in ${showBottomNav ? "pb-24 md:pb-0" : ""}`}>{children}</div>
-      {showBottomNav && (
-        <BottomNavigation onToggleLanguage={(l) => switchLanguage(l as any)} />
-      )}
+      {showBottomNav && <BottomNavigation />}
     </div>
   );
 }

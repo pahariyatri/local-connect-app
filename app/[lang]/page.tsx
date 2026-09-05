@@ -8,7 +8,7 @@ import LocalImage from "./components/atoms/Image";
 import Typography from "./components/atoms/Typography";
 import Card from "./components/molecules/Card";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
-import Loading from "../loading";
+import Loading from "./components/atoms/Loading";
 import { getVendors } from "@/services/vendorService";
 import { getLocations } from "@/services/catalogService";
 import { Icon, IconName } from "./components/atoms/Icon";

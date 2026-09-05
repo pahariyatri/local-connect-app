@@ -42,14 +42,30 @@ function resolveLang(paramsLang: string | undefined): Locale {
 }
 
 import { BRAND_CONFIG } from "@/config/brandConfig";
+import { headers } from "next/headers";
 
 const SITE_URL = BRAND_CONFIG.appUrl;
+
+// This layout sits above the [lang] segment, so Next.js never gives it
+// params.lang directly — it's always undefined here regardless of the
+// actual URL. middleware.ts forwards the real request path via x-pathname;
+// fall back to params (should middleware ever not run for some request) and
+// finally the default locale/root. Used by both generateMetadata (canonical/
+// hreflang/OG) and RootLayout itself (which resolves `dict`/`lang` for
+// LocalizationProvider's initial, server-rendered state).
+async function resolvePathAndLang(paramsLang: string | undefined) {
+  const forwardedPath = (await headers()).get("x-pathname") ?? undefined;
+  const pathSegments = forwardedPath?.split("/").filter(Boolean) ?? [];
+  const lang = resolveLang(pathSegments[0] ?? paramsLang);
+  const pagePath = forwardedPath ?? `/${lang}`;
+  return { lang, pagePath, pathSegments };
+}
 
 export async function generateMetadata(props: {
   params?: Promise<{ lang?: Locale }>;
 }): Promise<Metadata> {
   const params = props.params ? await props.params : undefined;
-  const lang = resolveLang(params?.lang);
+  const { pagePath, pathSegments } = await resolvePathAndLang(params?.lang);
 
   // The old copy here ("Himachal Journey Planner") framed the whole product
   // as a trip-planning tool, which undersells the direct-search path (a
@@ -61,20 +77,29 @@ export async function generateMetadata(props: {
   const description =
     'Search real homestays, 4x4 drivers, and local guides across Himachal Pradesh — verified locals, direct and with no agency markup. Or build a full multi-stop route with stays and transit in one place.';
 
+  // Same page, other locale prefixes — not "this page translated", since no
+  // locale but the default currently renders translated content. Still the
+  // structurally correct hreflang target per page (previously every page,
+  // not just the homepage, advertised only the locale *roots*).
+  const restOfPath = pathSegments.slice(1).join("/");
+  const languages = Object.fromEntries(
+    i18n.locales.map((l) => [l, `${SITE_URL}/${l}${restOfPath ? `/${restOfPath}` : ""}`]),
+  );
+
   return {
     // Absolute base for OG/Twitter/canonical URL resolution (production frontend).
     metadataBase: new URL(SITE_URL),
     title,
     description,
     alternates: {
-      canonical: `${SITE_URL}/${lang}`,
-      languages: Object.fromEntries(i18n.locales.map((l) => [l, `${SITE_URL}/${l}`])),
+      canonical: `${SITE_URL}${pagePath}`,
+      languages,
     },
     openGraph: {
       title,
       description,
       type: 'website',
-      url: `${SITE_URL}/${lang}`,
+      url: `${SITE_URL}${pagePath}`,
       siteName: BRAND_CONFIG.fullProductName,
     },
     twitter: {
@@ -97,7 +122,7 @@ export default async function RootLayout(props: {
   params?: Promise<{ lang?: Locale }>;
 }) {
   const params = props.params ? await props.params : undefined;
-  const lang = resolveLang(params?.lang);
+  const { lang } = await resolvePathAndLang(params?.lang);
   const dict = await getDictionary(lang);
 
   const { children } = props;

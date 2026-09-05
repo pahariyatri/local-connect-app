@@ -6,7 +6,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import Typography from "../../components/atoms/Typography";
 import Button from "../../components/atoms/Button";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
-import Loading from "@/app/loading";
+import Loading from "@/app/[lang]/components/atoms/Loading";
 import { getVendorBookings, getVendorItems, respondToBookingItem } from "@/services/bookingService";
 import { getMyVendor } from "@/services/vendorService";
 import { toApiUiError } from "@/utils/apiErrors";

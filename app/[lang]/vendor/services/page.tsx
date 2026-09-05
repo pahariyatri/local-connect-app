@@ -10,7 +10,7 @@ import Card from "../../components/molecules/Card";
 import { getMyVendor } from "@/services/vendorService";
 import { getServicesByVendor } from "@/services/catalogService";
 import { toApiUiError } from "@/utils/apiErrors";
-import Loading from "@/app/loading";
+import Loading from "@/app/[lang]/components/atoms/Loading";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 
 // ─── Icon system — same inline-stroke-SVG convention used across the app ───
