@@ -14,6 +14,16 @@ export interface DiscoveryService {
     /** Real inclusions, or the backend's own generic fallback when a service hasn't set any — never invented client-side. */
     inclusions: string[];
     exclusions: string[];
+    /**
+     * NOTE: as of this writing, the backend's discovery.service.ts fills
+     * these in with its own generic default text whenever the vendor hasn't
+     * set a real value (e.g. "Free cancellation up to 48 hours prior to
+     * arrival date.") rather than returning null/empty — so this field
+     * cannot always be trusted to mean "the vendor actually said this."
+     * Frontend code should still just display whatever the API returns
+     * (never invent a second, frontend-side default on top of it) — the
+     * fabrication itself needs a backend fix, tracked separately.
+     */
     cancellationPolicy: string;
     termsAndConditions: string;
     capacity: number;
@@ -48,18 +58,6 @@ export interface DiscoveryService {
          */
         priceUnit?: 'night' | 'service';
     };
-    /**
-     * NOTE: as of this writing, the backend's discovery.service.ts fills
-     * these in with its own generic default text whenever the vendor hasn't
-     * set a real value (e.g. "Free cancellation up to 48 hours prior to
-     * arrival date.") rather than returning null/empty — so this field
-     * cannot always be trusted to mean "the vendor actually said this."
-     * Frontend code should still just display whatever the API returns
-     * (never invent a second, frontend-side default on top of it) — the
-     * fabrication itself needs a backend fix, tracked separately.
-     */
-    cancellationPolicy?: string;
-    termsAndConditions?: string;
 }
 
 export interface DiscoverySearchParams {
