@@ -240,7 +240,9 @@ export default function BookServicePage() {
         notes: notes || undefined,
       }, { destination: host?.hometown });
       showNotification(result.message || "Booking request sent successfully!", "success");
-      router.push(`/${lang}/bookings/${result.bookingId}`);
+      // PAYMENT-FIRST MODEL (2026-09, see DECISION_LOG.md): pay immediately
+      // rather than waiting on the local partner to confirm first.
+      router.push(`/${lang}/checkout?bookingId=${result.bookingId}`);
     } catch (err: any) {
       if (err instanceof ApiClientError && err.statusCode === 401) {
         showNotification("Your session expired. Please sign in to submit your booking.", "error");
@@ -474,8 +476,11 @@ export default function BookServicePage() {
         </div>
       </main>
 
-      {/* Sticky Submit */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 sm:p-5 bg-white/95 backdrop-blur-md border-t border-slate-100 z-20">
+      {/* Sticky Submit — offset above the mobile bottom nav (fixed bottom-0,
+          z-50) for a logged-in traveler; BottomNavigation.tsx renders on
+          this route (only hidden on auth/builder routes) and was
+          intercepting clicks on this button since both sat at bottom-0. */}
+      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 p-4 sm:p-5 bg-white/95 backdrop-blur-md border-t border-slate-100 z-20">
         <div className="max-w-lg mx-auto">
           <button
             onClick={handleSubmit}

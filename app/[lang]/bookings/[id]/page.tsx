@@ -46,14 +46,18 @@ interface BookingData {
   createdAt: string;
 }
 
+// PAYMENT-FIRST MODEL (2026-09, see DECISION_LOG.md): a traveler pays the
+// reservation fee immediately after requesting a booking, without waiting on
+// any local partner response — so CREATED here means "payment not completed
+// yet" (never attempted, or abandoned), not "waiting on partners".
 const STATUS_LABELS: Record<BookingStatus, string> = {
-  CREATED: 'Waiting on local partners',
+  CREATED: 'Complete your payment',
   REPLACEMENT_REQUIRED: 'Action needed',
   VENDOR_REJECTED: 'Request declined',
   VENDOR_ACCEPTED: 'Ready to reserve!',
   PAYMENT_PENDING: 'Processing your payment...',
   PAYMENT_FAILED: 'Payment failed',
-  CONFIRMED: 'Reserved!',
+  CONFIRMED: 'Payment received ✓',
   TRAVEL_IN_PROGRESS: 'Trip in progress',
   COMPLETED: 'Completed',
   CANCELLED: 'Cancelled',
@@ -207,13 +211,19 @@ export default function BookingDetailPage() {
     }
   };
 
-  const handleConfirmAndProceedToPay = () => {
+  // PAYMENT-FIRST MODEL (2026-09): payment is available immediately — this
+  // no longer waits on VENDOR_ACCEPTED. Routes to /checkout, the actual
+  // payment page (bookings/[id]/payment is a legacy fallback, unused by any
+  // current flow).
+  const handlePayNow = () => {
     if (!booking) return;
-    router.push(`/${lang}/bookings/${id}/payment`);
+    router.push(`/${lang}/checkout?bookingId=${id}`);
   };
 
   const status = (booking?.status || 'UNKNOWN') as BookingStatus;
-  const isReadyToReserve = status === 'VENDOR_ACCEPTED';
+  // VENDOR_ACCEPTED is the legacy manual-approval path's own payable state;
+  // CREATED/PAYMENT_FAILED are the normal payment-first payable states.
+  const isPayable = ['CREATED', 'PAYMENT_FAILED', 'VENDOR_ACCEPTED'].includes(status);
   const isReserved = CONTACTS_UNLOCKED.includes(status);
   const isDeadEnd = ['CANCELLED', 'EXPIRED', 'VENDOR_REJECTED', 'ABANDONED'].includes(status);
   const activeItems = (booking?.items || []).filter((i) => i.status !== 'REPLACED' && i.status !== 'REMOVED');
@@ -245,11 +255,12 @@ export default function BookingDetailPage() {
           <div>
             <p className="font-semibold text-sm">{STATUS_LABELS[status]}</p>
             <p className="text-xs opacity-70 font-medium mt-0.5">
-              {status === 'CREATED' && "We've sent your request to each local partner. This usually takes a few minutes."}
+              {status === 'CREATED' && "Pay the reservation fee to lock in your booking — local partners are being notified in the background."}
+              {status === 'PAYMENT_FAILED' && "Your payment didn't go through. No charge was made — try again below."}
               {status === 'REPLACEMENT_REQUIRED' && 'One or more partners couldn\'t confirm — pick a replacement below to continue.'}
               {status === 'VENDOR_ACCEPTED' && 'Every local partner confirmed. Pay the reservation fee to lock it in.'}
               {status === 'PAYMENT_PENDING' && "We're confirming your payment with the bank."}
-              {status === 'CONFIRMED' && 'Your reservation is confirmed. Local partner contacts are below.'}
+              {status === 'CONFIRMED' && "Payment completed — we're handling the confirmations for you. Local partner contacts appear below as they confirm."}
               {status === 'VENDOR_REJECTED' && 'This booking could not be confirmed by local partners.'}
               {status === 'EXPIRED' && 'Local partners did not respond in time.'}
               {status === 'CANCELLED' && 'This booking was cancelled.'}
@@ -295,7 +306,7 @@ export default function BookingDetailPage() {
                     <div className="text-right shrink-0">
                       <p className="text-sm font-bold text-slate-900">₹{Number(item.vendorPrice).toLocaleString('en-IN')}</p>
                       <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${ITEM_STATUS_STYLE[item.status]}`}>
-                        {item.status === 'PENDING' ? 'Awaiting confirmation' : item.status === 'ACCEPTED' ? 'Confirmed' : 'Declined'}
+                        {item.status === 'PENDING' ? '⏳ Awaiting confirmation' : item.status === 'ACCEPTED' ? '✓ Confirmed' : '✕ Declined'}
                       </span>
                     </div>
                   </div>
@@ -357,37 +368,26 @@ export default function BookingDetailPage() {
           </section>
         )}
 
-        {/* Reserve & Pay CTA — only actionable once every partner has accepted.
-            The payment page itself rejects a CREATED-status booking ("not
-            ready for payment yet — waiting on local partner confirmation"),
-            so letting this button through in CREATED sent travelers into a
-            dead-end error. Kept visible (disabled) rather than hidden so the
-            fee amount and "why" stay in view while they wait. */}
-        {(status === 'CREATED' || isReadyToReserve) && (
+        {/* Pay CTA — payment-first: available immediately (CREATED),
+            retryable after a failed attempt (PAYMENT_FAILED), or the legacy
+            manual-approval path's own payable state (VENDOR_ACCEPTED). */}
+        {isPayable && (
           <div className="mb-6 space-y-2">
             <button
-              onClick={handleConfirmAndProceedToPay}
-              disabled={busyItemId !== null || !isReadyToReserve}
-              className={`w-full h-14 font-semibold text-base rounded-2xl shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${
-                isReadyToReserve
-                  ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/25"
-                  : "bg-slate-100 text-slate-400 shadow-none cursor-not-allowed"
-              }`}
+              onClick={handlePayNow}
+              disabled={busyItemId !== null}
+              className="w-full h-14 font-semibold text-base rounded-2xl shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/25 disabled:opacity-50"
             >
-              {busyItemId === -1 ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : isReadyToReserve ? (
-                <span>{feeAmount != null ? `Reserve · Pay ₹${feeAmount.toLocaleString('en-IN')}` : "Reserve now"}</span>
-              ) : (
-                <span>Waiting for partner confirmation…</span>
-              )}
+              <span>
+                {status === 'PAYMENT_FAILED'
+                  ? 'Try payment again'
+                  : feeAmount != null
+                    ? `Pay ₹${feeAmount.toLocaleString('en-IN')} reservation fee`
+                    : 'Pay reservation fee'}
+              </span>
             </button>
             <p className="text-center text-xs text-slate-400 font-medium">
-              {isReadyToReserve
-                ? (feeAmount != null
-                    ? `Pay ₹${feeAmount.toLocaleString('en-IN')} platform reservation fee to confirm direct booking.`
-                    : "Pay the platform reservation fee to confirm direct booking.")
-                : "You'll be able to pay as soon as a local partner confirms."}
+              Local partners are notified and confirmed separately — you don't need to wait for them to pay.
             </p>
           </div>
         )}

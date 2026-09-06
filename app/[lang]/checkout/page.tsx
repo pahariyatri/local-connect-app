@@ -14,12 +14,14 @@ const RAZORPAY_KEY_ID = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '';
 // Reservation-fee model: this page only ever charges the platform fee, never
 // the vendors' services total (that's paid directly, in person / per vendor
 // terms). It's reached with just a bookingId — the Razorpay order for the
-// fee is created here, on mount, via reserveBooking(), which the backend
-// only allows once every required vendor has confirmed (status
-// VENDOR_ACCEPTED). There is no slot-lock countdown on this page: by the
-// time a booking reaches VENDOR_ACCEPTED, vendors have already committed —
-// the urgency window that mattered was the earlier confirmation wait, not
-// this final payment step.
+// fee is created here, on mount, via reserveBooking().
+//
+// PAYMENT-FIRST MODEL (2026-09, see DECISION_LOG.md): this page is now
+// reached immediately after a booking request is created, before any local
+// partner has responded — the traveler is never blocked waiting on partner
+// confirmation before paying. The 'not-ready' state below is a legacy
+// fallback (kept for the manual-approval path reserve() still supports) and
+// should rarely if ever trigger under the current flow.
 type CheckoutState = 'preparing' | 'idle' | 'paying' | 'verifying' | 'success' | 'error' | 'not-ready';
 
 export default function CheckoutPage() {
@@ -150,9 +152,9 @@ export default function CheckoutPage() {
               <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
             </svg>
           </div>
-          <h1 className="text-xl font-black text-slate-900">Confirm Partners & Pay Fee</h1>
+          <h1 className="text-xl font-black text-slate-900">Ready to Pay</h1>
           <p className="text-slate-400 text-sm mt-2 font-medium">
-            Local partners are pending confirmation. Click below to confirm partner availability and pay your platform reservation fee.
+            Click below to prepare your platform reservation fee.
           </p>
           <button
             onClick={async () => {
@@ -170,7 +172,7 @@ export default function CheckoutPage() {
             }}
             className="mt-6 w-full h-14 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-sm uppercase tracking-widest rounded-2xl active:scale-95 transition-all shadow-lg shadow-emerald-500/20"
           >
-            Confirm Partners & Pay Fee
+            Continue to Payment
           </button>
         </div>
       </main>
@@ -189,7 +191,7 @@ export default function CheckoutPage() {
             </svg>
           </div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight">Reserve Your Booking</h1>
-          <p className="text-slate-400 text-sm mt-1 font-medium">Booking #{bookingId} · Every local partner has confirmed</p>
+          <p className="text-slate-400 text-sm mt-1 font-medium">Booking #{bookingId} · Pay now, we'll handle confirmation</p>
         </div>
 
         {/* Amount Card — explicit this is the FEE, not the trip total */}
@@ -201,7 +203,7 @@ export default function CheckoutPage() {
           <p className="text-slate-500 text-xs mt-2 font-medium">Pay now · {currency}</p>
         </div>
         <p className="text-center text-xs text-slate-400 font-medium mb-6 px-2">
-          This confirms and manages your reservation through the platform. The rest of your trip is paid directly to each local partner.
+          This confirms and manages your reservation through the platform. Local partners are notified and confirm shortly after — the rest of your trip is paid directly to each local partner.
         </p>
 
         {/* Trust Signals */}
@@ -241,10 +243,9 @@ export default function CheckoutPage() {
           </div>
         )}
 
-        {/* Payment-safety disclosure — by this point the booking is already
-            VENDOR_ACCEPTED (every partner confirmed), so this isn't a warning
-            that confirmation is pending; it's what's being charged and what
-            to check before paying it. */}
+        {/* Payment-safety disclosure — under the payment-first model this
+            traveler hasn't heard from a local partner yet, so this doubles
+            as the "what happens next" explainer, not just a pre-charge notice. */}
         {state !== 'success' && orderId && (
           <div className="mb-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
             <p className="text-xs text-slate-600 font-medium leading-relaxed">

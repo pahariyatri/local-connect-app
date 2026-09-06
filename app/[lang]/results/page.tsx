@@ -374,16 +374,19 @@ export default function ResultsPage() {
       const { createBooking } = await import("@/services/bookingService");
       const result = await createBooking(bookingData, { destination: destinations?.[0] });
 
-      // Reservation-fee model: creating a booking only sends the request to
-      // each local partner — it no longer creates a payment order. { bookingId,
-      // status, totalAmount, reservationFeeAmount, itemCount, message }.
+      // PAYMENT-FIRST MODEL (2026-09, see DECISION_LOG.md): creating a
+      // booking sends the request to each local partner AND is immediately
+      // payable — the traveler is never blocked waiting on a partner
+      // response before paying. { bookingId, status, totalAmount,
+      // reservationFeeAmount, itemCount, message }.
       if (!result?.bookingId) {
         throw new Error('Booking creation did not return a valid booking ID');
       }
 
-      // Step 2: go to the booking's status page — it shows vendor-confirmation
-      // progress and only offers "Reserve" (-> /checkout) once every partner accepts.
-      router.push(`/${lang}/bookings/${result.bookingId}`);
+      // Step 2: straight to payment — vendor confirmation now happens
+      // asynchronously in the background and is tracked on the booking
+      // status page the traveler lands on after paying.
+      router.push(`/${lang}/checkout?bookingId=${result.bookingId}`);
 
     } catch (error: any) {
       showNotification(error?.message || "Booking creation failed. Please try again.", "error");
