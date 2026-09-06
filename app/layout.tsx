@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Poppins } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { i18n, Locale } from "@/i18n-config";
@@ -41,14 +42,30 @@ function resolveLang(paramsLang: string | undefined): Locale {
 }
 
 import { BRAND_CONFIG } from "@/config/brandConfig";
+import { headers } from "next/headers";
 
 const SITE_URL = BRAND_CONFIG.appUrl;
+
+// This layout sits above the [lang] segment, so Next.js never gives it
+// params.lang directly — it's always undefined here regardless of the
+// actual URL. middleware.ts forwards the real request path via x-pathname;
+// fall back to params (should middleware ever not run for some request) and
+// finally the default locale/root. Used by both generateMetadata (canonical/
+// hreflang/OG) and RootLayout itself (which resolves `dict`/`lang` for
+// LocalizationProvider's initial, server-rendered state).
+async function resolvePathAndLang(paramsLang: string | undefined) {
+  const forwardedPath = (await headers()).get("x-pathname") ?? undefined;
+  const pathSegments = forwardedPath?.split("/").filter(Boolean) ?? [];
+  const lang = resolveLang(pathSegments[0] ?? paramsLang);
+  const pagePath = forwardedPath ?? `/${lang}`;
+  return { lang, pagePath, pathSegments };
+}
 
 export async function generateMetadata(props: {
   params?: Promise<{ lang?: Locale }>;
 }): Promise<Metadata> {
   const params = props.params ? await props.params : undefined;
-  const lang = resolveLang(params?.lang);
+  const { pagePath, pathSegments } = await resolvePathAndLang(params?.lang);
 
   // The old copy here ("Himachal Journey Planner") framed the whole product
   // as a trip-planning tool, which undersells the direct-search path (a
@@ -60,20 +77,29 @@ export async function generateMetadata(props: {
   const description =
     'Search real homestays, 4x4 drivers, and local guides across Himachal Pradesh — verified locals, direct and with no agency markup. Or build a full multi-stop route with stays and transit in one place.';
 
+  // Same page, other locale prefixes — not "this page translated", since no
+  // locale but the default currently renders translated content. Still the
+  // structurally correct hreflang target per page (previously every page,
+  // not just the homepage, advertised only the locale *roots*).
+  const restOfPath = pathSegments.slice(1).join("/");
+  const languages = Object.fromEntries(
+    i18n.locales.map((l) => [l, `${SITE_URL}/${l}${restOfPath ? `/${restOfPath}` : ""}`]),
+  );
+
   return {
     // Absolute base for OG/Twitter/canonical URL resolution (production frontend).
     metadataBase: new URL(SITE_URL),
     title,
     description,
     alternates: {
-      canonical: `${SITE_URL}/${lang}`,
-      languages: Object.fromEntries(i18n.locales.map((l) => [l, `${SITE_URL}/${l}`])),
+      canonical: `${SITE_URL}${pagePath}`,
+      languages,
     },
     openGraph: {
       title,
       description,
       type: 'website',
-      url: `${SITE_URL}/${lang}`,
+      url: `${SITE_URL}${pagePath}`,
       siteName: BRAND_CONFIG.fullProductName,
     },
     twitter: {
@@ -96,10 +122,12 @@ export default async function RootLayout(props: {
   params?: Promise<{ lang?: Locale }>;
 }) {
   const params = props.params ? await props.params : undefined;
-  const lang = resolveLang(params?.lang);
+  const { lang } = await resolvePathAndLang(params?.lang);
   const dict = await getDictionary(lang);
 
   const { children } = props;
+  const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
+
   return (
     // suppressHydrationWarning on html/body only: browser extensions (e.g.
     // Storylane, LocatorJS) inject attributes like class="js-storylane-extension"
@@ -112,6 +140,26 @@ export default async function RootLayout(props: {
         className={`${poppins.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
+        {/* GTM — loads only when NEXT_PUBLIC_GTM_ID is set. GTM owns GA4 pageviews
+            once a Configuration tag exists in the container; app code only ever
+            pushes named events to window.dataLayer via lib/analytics.ts, never a
+            raw page_view — see lib/analytics.ts for why. */}
+        {gtmId && (
+          <>
+            <Script id="gtm-loader" strategy="afterInteractive">
+              {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`}
+            </Script>
+            <noscript>
+              <iframe
+                src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}
+                height="0"
+                width="0"
+                style={{ display: "none", visibility: "hidden" }}
+                title="gtm-fallback"
+              />
+            </noscript>
+          </>
+        )}
         <AuthProvider>
           <NotificationProvider>
             <TripPlannerProvider>

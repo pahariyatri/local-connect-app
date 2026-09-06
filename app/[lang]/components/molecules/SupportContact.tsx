@@ -9,6 +9,7 @@ import {
   phoneHref,
   emailHref,
 } from '@/lib/supportConfig';
+import { trackWhatsappContactClick, trackPartnerContactClick } from '@/lib/analytics';
 
 /**
  * PY-004 — the one place the site offers a human to talk to.
@@ -27,6 +28,11 @@ interface SupportContactProps {
   /** Overrides the default "Need help?" lead-in on the inline/bar variants. */
   heading?: string;
   className?: string;
+  /** Set only when this instance sits on a specific partner's page (e.g. the
+   *  vendor profile). Fires partner_contact_click in addition to the generic
+   *  whatsapp_contact_click — leave unset on shared surfaces like the footer
+   *  or trip builder, which aren't about one partner. */
+  partnerContext?: { id: string; name?: string };
 }
 
 const FALLBACK = {
@@ -42,11 +48,17 @@ export default function SupportContact({
   reference,
   heading,
   className = '',
+  partnerContext,
 }: SupportContactProps) {
   const { dict } = useLocalizationContext();
   const t = { ...FALLBACK, ...(dict?.page?.common?.support ?? {}) };
 
   if (!hasAnySupportChannel) return null;
+
+  const handleChannelClick = (channelKey: string) => {
+    if (channelKey === 'whatsapp') trackWhatsappContactClick(reference);
+    if (partnerContext) trackPartnerContactClick(partnerContext.id, partnerContext.name, channelKey);
+  };
 
   const context = reference ? `Pahari Yatri — ${reference}` : 'Pahari Yatri support';
   const wa = whatsappHref(`Hi, I need help with ${context}.`);
@@ -111,6 +123,7 @@ export default function SupportContact({
                 href={c.href}
                 target={c.key === 'whatsapp' ? '_blank' : undefined}
                 rel={c.key === 'whatsapp' ? 'noopener noreferrer' : undefined}
+                onClick={() => handleChannelClick(c.key)}
                 className="text-xs text-slate-400 hover:text-white transition-colors inline-flex items-center gap-2"
               >
                 <span className="text-emerald-400">{c.icon}</span>
@@ -141,6 +154,7 @@ export default function SupportContact({
               href={c.href}
               target={c.key === 'whatsapp' ? '_blank' : undefined}
               rel={c.key === 'whatsapp' ? 'noopener noreferrer' : undefined}
+              onClick={() => handleChannelClick(c.key)}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-emerald-500 transition-all active:scale-95 text-[10px] font-black uppercase tracking-wider"
             >
               <span className="text-emerald-400">{c.icon}</span>
@@ -167,6 +181,7 @@ export default function SupportContact({
           href={c.href}
           target={c.key === 'whatsapp' ? '_blank' : undefined}
           rel={c.key === 'whatsapp' ? 'noopener noreferrer' : undefined}
+          onClick={() => handleChannelClick(c.key)}
           className="inline-flex items-center gap-1.5 text-[11px] font-black text-emerald-600 hover:text-emerald-700 transition-colors"
         >
           {c.icon}

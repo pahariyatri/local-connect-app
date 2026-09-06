@@ -9,12 +9,13 @@ import { Icon } from "./components/atoms/Icon";
 import Reveal from "./components/atoms/Reveal";
 import CountUp from "./components/atoms/CountUp";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
-import Loading from "../loading";
+import Loading from "./components/atoms/Loading";
 import { getVendors } from "@/services/vendorService";
 import { getLocations } from "@/services/catalogService";
 import PublicFooter from "./components/organisms/PublicFooter";
 import HeroSection from "./components/organisms/HeroSection";
 import InteractiveRouteSection from "./components/organisms/InteractiveRouteSection";
+import { trackAppLandingView, trackPortalCtaClick } from "@/lib/analytics";
 
 type HomeProps = {
   params: Promise<{ lang: Locale }>;
@@ -22,11 +23,14 @@ type HomeProps = {
 
 // ─── Vendor mapping ──────────────────────────────────────────────────────────
 
+// Rendered as ~80-112px round portraits (Local Connection section) — w=400
+// covers up to 3x DPR at that display size with real margin, no visible
+// quality loss, at a fraction of the w=900/q=80 payload.
 const CATEGORY_IMAGES: Record<string, string> = {
-  Stay: "https://images.unsplash.com/photo-1571401835393-8c5f35328320?q=80&w=900",
-  Adventure: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=900",
-  Transport: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=900",
-  Food: "https://images.unsplash.com/photo-1574116504481-e06341e984e1?q=80&w=900",
+  Stay: "https://images.unsplash.com/photo-1571401835393-8c5f35328320?q=65&w=400",
+  Adventure: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=65&w=400",
+  Transport: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=65&w=400",
+  Food: "https://images.unsplash.com/photo-1574116504481-e06341e984e1?q=65&w=400",
 };
 
 // Curated destination photography — the Location entity has no image field
@@ -99,6 +103,10 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
   const [isDestinationsLoading, setIsDestinationsLoading] = useState(true);
 
   useEffect(() => {
+    trackAppLandingView();
+  }, []);
+
+  useEffect(() => {
     if (!dict) return;
     let cancelled = false;
     (async () => {
@@ -161,7 +169,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
              one secondary "plan a whole trip" path into the Builder ──────── */}
       <HeroSection
         onSearch={(query) => router.push(query ? `${exploreHref}?q=${encodeURIComponent(query)}` : exploreHref)}
-        onPlan={() => router.push(builderHref)}
+        onPlan={() => { trackPortalCtaClick("hero_plan", builderHref); router.push(builderHref); }}
       />
 
       {/* ── 2 · DISCOVER — a few real places, large portrait photo cards,
@@ -280,7 +288,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
               </div>
               <div className="flex justify-center mt-8">
                 <button
-                  onClick={() => router.push(exploreHref)}
+                  onClick={() => { trackPortalCtaClick("view_all_operators", exploreHref); router.push(exploreHref); }}
                   className="group/link text-xs font-black uppercase tracking-wider text-emerald-600 hover:text-emerald-700 flex items-center gap-1.5"
                 >
                   <span className="relative pb-0.5">
@@ -296,7 +304,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
               <p className="text-sm font-bold text-slate-800">Direct Local Marketplace</p>
               <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">Explore native guides, 4x4 mountain drivers, and homestays across Himachal Pradesh.</p>
               <button
-                onClick={() => router.push(exploreHref)}
+                onClick={() => { trackPortalCtaClick("browse_services_directory", exploreHref); router.push(exploreHref); }}
                 className="mt-5 h-10 px-6 rounded-full bg-slate-900 hover:bg-emerald-600 text-white text-sm font-semibold mx-auto flex items-center gap-2 transition-colors"
               >
                 <span>Browse services directory</span>
@@ -328,14 +336,14 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
             </Typography>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm font-bold">
               <button
-                onClick={() => router.push(builderHref)}
+                onClick={() => { trackPortalCtaClick("start_planning", builderHref); router.push(builderHref); }}
                 className="group/link w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98]"
               >
                 <span>Plan a Trip</span>
                 <Icon name="arrow-right" className="w-3.5 h-3.5 transition-transform duration-300 group-hover/link:translate-x-1" />
               </button>
               <button
-                onClick={() => router.push(vendorHref)}
+                onClick={() => { trackPortalCtaClick("join_as_local_partner", vendorHref); router.push(vendorHref); }}
                 className="group/link w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full border border-white/30 hover:border-emerald-400 hover:bg-emerald-500/10 text-white transition-all active:scale-[0.98]"
               >
                 <span>Become a Local Partner</span>

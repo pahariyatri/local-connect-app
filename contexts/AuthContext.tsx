@@ -113,7 +113,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ user, authStatus, login, logout, refreshUser }}>
-      {!isLoading && children}
+      {/* Always render children — the `useEffect` above never runs during
+       * SSR, so `isLoading` is permanently true on the server. Gating
+       * children on it (as this used to) suppressed the ENTIRE app's
+       * server-rendered HTML on every request, contradicting the comment
+       * above about not blocking rendering. Consumers that need to
+       * distinguish "still checking" from "definitely logged out" have
+       * `authStatus` for exactly that. */}
+      {children}
     </AuthContext.Provider>
   );
 }

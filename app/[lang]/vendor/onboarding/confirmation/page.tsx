@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Typography from "../../../components/atoms/Typography";
 import Button from "../../../components/atoms/Button";
-import Loading from "@/app/loading";
+import Loading from "@/app/[lang]/components/atoms/Loading";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/apiClient";

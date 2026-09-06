@@ -43,6 +43,12 @@ export const BRAND_CONFIG = {
   // Official Explanatory Copy
   aboutSummary: "This travel platform is built by Pahari Yatri to help travelers discover trusted local stays, transport, guides and experiences.",
   missionShort: "Empowering the local people who make the Himachal mountains feel like home.",
+
+  // Brand-bridge trust line — ties this product back to the main Pahari Yatri
+  // story library without reading as a sales pitch. See CLAUDE.md ("Main
+  // Site + App Portal Operating System") in pahari-yatri-app for the rules
+  // this line is written against.
+  trustLine: "Built by Pahari Yatri for travellers who want local context, not package noise.",
 } as const;
 
 export type BrandConfig = typeof BRAND_CONFIG;

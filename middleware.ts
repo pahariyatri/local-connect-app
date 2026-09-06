@@ -29,22 +29,40 @@ export function middleware(request: NextRequest) {
         return;
     }
 
-    const locale = getLocale(request);
-
-    // Define protected routes that require authentication
-    const reservedVendorSubroutes = [
-        'bookings', 'calendar', 'contracts', 'dashboard', 'onboarding', 'partnerships', 'payouts', 'services'
-    ];
-    
-    const isProtectedVendorRoute = pathname.startsWith(`/${locale}/vendor`) && (
-        pathname === `/${locale}/vendor` ||
-        reservedVendorSubroutes.some(sub => pathname.startsWith(`/${locale}/vendor/${sub}`))
+    // SECURITY: route protection must key off the locale actually present in
+    // the URL path, never off Accept-Language / getLocale() (header
+    // negotiation). Using the negotiated locale here meant a request for
+    // /en/admin with `Accept-Language: hi` compared against `/hi/admin` —
+    // never matched — and sailed through with no auth check at all.
+    const pathLocale = (i18n.locales as unknown as string[]).find(
+        (l) => pathname === `/${l}` || pathname.startsWith(`/${l}/`),
     );
 
-    const isProtected = pathname.startsWith(`/${locale}/profile`) ||
-                        pathname.startsWith(`/${locale}/dashboard`) ||
-                        pathname.startsWith(`/${locale}/admin`) ||
-                        isProtectedVendorRoute;
+    // Define protected routes that require authentication.
+    // 'onboarding' is deliberately NOT here — sitemap.ts and robots.ts both
+    // already treat /vendor/onboarding as public (anyone can apply without
+    // an account first); this used to contradict that by redirecting it to
+    // login anyway. Founder decision (2026-09): keep it public.
+    const reservedVendorSubroutes = [
+        'bookings', 'calendar', 'contracts', 'dashboard', 'partnerships', 'payouts', 'services'
+    ];
+
+    const isProtectedVendorRoute = !!pathLocale && pathname.startsWith(`/${pathLocale}/vendor`) && (
+        pathname === `/${pathLocale}/vendor` ||
+        reservedVendorSubroutes.some(sub => pathname.startsWith(`/${pathLocale}/vendor/${sub}`))
+    );
+
+    const isProtected = !!pathLocale && (
+                        pathname.startsWith(`/${pathLocale}/profile`) ||
+                        pathname.startsWith(`/${pathLocale}/dashboard`) ||
+                        pathname.startsWith(`/${pathLocale}/admin`) ||
+                        // Payment surfaces — previously robots-disallowed only
+                        // (an indexing directive, not access control) with no
+                        // server-side check at all.
+                        pathname.startsWith(`/${pathLocale}/bookings`) ||
+                        pathname.startsWith(`/${pathLocale}/checkout`) ||
+                        isProtectedVendorRoute
+                        );
 
     // Check if the user is trying to access a protected route
     if (isProtected) {
@@ -53,13 +71,23 @@ export function middleware(request: NextRequest) {
 
         if (!token) {
             // Redirect to the login page if no token is found
-            const loginUrl = new URL(`/${locale}/auth/login`, request.url);
+            const loginUrl = new URL(`/${pathLocale}/auth/login`, request.url);
             loginUrl.searchParams.set("redirectTo", pathname);
             return NextResponse.redirect(loginUrl);
         }
     }
 
-    const response = NextResponse.next();
+    // The root layout (app/layout.tsx) sits ABOVE the [lang] dynamic segment,
+    // so Next.js never passes it a `lang` param — its generateMetadata always
+    // saw undefined and fell back to the default locale, which is why every
+    // page's canonical/hreflang/OG resolved to /en regardless of the actual
+    // URL. [lang]/layout.tsx can't fix this itself (it's a client component,
+    // "use client" for usePathname(), so it can't export generateMetadata).
+    // Forwarding the real path via a request header lets the root layout's
+    // generateMetadata read it with next/headers instead.
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-pathname", pathname);
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
 
     // Partner Tracking Persistence
     const ref = request.nextUrl.searchParams.get('ref');

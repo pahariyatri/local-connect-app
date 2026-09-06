@@ -401,6 +401,8 @@ export default function ResultsPage() {
       <Header />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-24 text-slate-900">
+        {/* Corrected 2026-08: badge was "SECRET GROUP ACCESS 🤫" — a false
+            exclusivity/scarcity claim (see CLAUDE.md banned-language rules). */}
         {/* ── 1 · HERO HEADER BANNER ───────────────────────────────────────── */}
         <header className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="relative bg-slate-950 text-white rounded-3xl p-6 sm:p-10 overflow-hidden shadow-2xl border border-slate-800">
@@ -413,7 +415,7 @@ export default function ResultsPage() {
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div className="flex items-center gap-2">
                   <span className="px-3 py-1 bg-emerald-500 text-white text-[9px] sm:text-[10px] font-black uppercase rounded-xl tracking-widest shadow-md">
-                    {packageIdParam ? "PUBLISHED TRIP CIRCUIT" : (res.access_badge || "SECRET GROUP ACCESS 🤫")}
+                    {packageIdParam ? "PUBLISHED TRIP CIRCUIT" : (res.access_badge || "YOUR YATRA PLAN")}
                   </span>
                   <span className="px-2.5 py-1 bg-white/10 text-slate-300 text-[9px] font-bold uppercase rounded-xl tracking-wider backdrop-blur-md">
                     ⚡ Verified Local Stays & Transit
@@ -479,7 +481,7 @@ export default function ResultsPage() {
 
         {packageIdParam && !packageLoading && !packageData ? (
           <div className="py-20 text-center bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
-            <p className="text-slate-500 font-medium">Package not found.</p>
+            <p className="text-slate-500 font-medium">Trip plan not found.</p>
             <a href={`/${pathLang}/builder`} className="text-emerald-600 font-bold mt-2 inline-block">Start planning</a>
           </div>
         ) : (servicesLoading || (packageIdParam && packageLoading)) ? (

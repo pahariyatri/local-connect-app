@@ -6,7 +6,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import Typography from "../../components/atoms/Typography";
 import Button from "../../components/atoms/Button";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
-import Loading from "@/app/loading";
+import Loading from "@/app/[lang]/components/atoms/Loading";
 import { getVendorBookings, getVendorItems, respondToBookingItem } from "@/services/bookingService";
 import { getMyVendor } from "@/services/vendorService";
 import { toApiUiError } from "@/utils/apiErrors";
@@ -364,7 +364,7 @@ export default function ManageBookingsPage() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-xs font-semibold text-emerald-600 mb-0.5">{res.card.id} #{booking.id}</p>
-                          <h3 className="text-base font-bold text-slate-900 leading-tight truncate">{booking.directService?.name || booking.package?.name || "Trip package"}</h3>
+                          <h3 className="text-base font-bold text-slate-900 leading-tight truncate">{booking.directService?.name || booking.package?.name || "Trip request"}</h3>
                         </div>
                       </div>
                       <span className={`px-3 py-1 rounded-full text-[10px] font-semibold shrink-0 ${STATUS_BADGE[filterKey]}`}>

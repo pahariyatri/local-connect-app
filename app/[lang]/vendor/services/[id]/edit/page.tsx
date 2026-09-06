@@ -11,7 +11,7 @@ import { getServiceById, updateService, getCategories, getSubcategories } from "
 import { getMediaKeyFromUrl } from "@/services/mediaService";
 import MediaManager, { type MediaItem } from "../../../../components/molecules/MediaManager";
 import { toApiUiError } from "@/utils/apiErrors";
-import Loading from "@/app/loading";
+import Loading from "@/app/[lang]/components/atoms/Loading";
 
 type Tab = "details" | "location" | "pricing" | "photos" | "description";
 type Category = { id: number; name: string };

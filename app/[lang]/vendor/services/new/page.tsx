@@ -12,7 +12,7 @@ import { getMyVendor } from "@/services/vendorService";
 import { getCategories, getSubcategories, createService } from "@/services/catalogService";
 import MediaManager, { type MediaItem } from "../../../components/molecules/MediaManager";
 import { toApiUiError } from "@/utils/apiErrors";
-import Loading from "@/app/loading";
+import Loading from "@/app/[lang]/components/atoms/Loading";
 import { useTouchedFields } from "@/hooks/useTouchedFields";
 import FieldError from "../../../components/atoms/FieldError";
 
