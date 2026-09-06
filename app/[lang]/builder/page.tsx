@@ -17,6 +17,7 @@ import ServiceInterestSelector from "./components/ServiceInterestSelector";
 import TravelingPartySelector from "./components/TravelingPartySelector";
 import NextStopSelector from "./components/NextStopSelector";
 import PackageBuilderStep from "./components/PackageBuilderStep";
+import JourneyProgress from "./components/JourneyProgress";
 import { TripStop, createTripStop } from "@/types/tripBuilder";
 import SupportContact from "../components/molecules/SupportContact";
 import { hasLiveSupportChannel } from "@/lib/supportConfig";
@@ -395,29 +396,23 @@ export default function TripBuilderPage() {
  
             {/* Main Content - Stepper */}
             <div className="lg:col-span-8">
-                {/* Progress Bar — "Step N of 6" above a single continuous fill bar. */}
+                {/* Journey progress — "Step N of 6" above an animated route/skyline
+                    that carries the traveler from city to mountains as they
+                    advance through the builder. Purely visual: currentStep is
+                    the same state driving handleNext/handleBack below. */}
                 <div className="mb-6 sm:mb-8">
                   <p className="text-xs sm:text-sm font-semibold text-slate-900 mb-2">
                     {(builder.step_of ?? "Step {current} of {total}")
                       .replace("{current}", String(currentStep))
                       .replace("{total}", "6")}
                   </p>
-                  <div className="relative h-1.5 w-full bg-slate-200 rounded-full overflow-visible">
-                    <div className="absolute inset-0 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-emerald-600 rounded-full transition-all duration-500"
-                        style={{ width: `${(currentStep / 6) * 100}%` }}
-                      />
-                    </div>
-                    {/* Traveler marker — a small waypoint pin riding the trail
-                        instead of a plain progress bar, echoing the same
-                        journey visual used on the landing page. */}
-                    <div
-                      className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 transition-all duration-500 w-4 h-4 rounded-full bg-emerald-600 border-2 border-white shadow-md"
-                      style={{ left: `${(currentStep / 6) * 100}%` }}
-                      aria-hidden="true"
-                    />
-                  </div>
+                  <JourneyProgress
+                    currentStep={currentStep}
+                    totalSteps={6}
+                    stepLabel={(builder.step_of ?? "Step {current} of {total}")
+                      .replace("{current}", String(currentStep))
+                      .replace("{total}", "6")}
+                  />
                 </div>
   
                 {renderStepContent()}
