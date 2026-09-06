@@ -103,10 +103,10 @@ export async function generateMetadata(props: {
       siteName: BRAND_CONFIG.fullProductName,
     },
     twitter: {
-      // No OG/share image asset exists yet (public/ has no og-image) —
-      // 'summary' degrades cleanly without one; switch to
-      // 'summary_large_image' once a real 1200x630 image is added.
-      card: 'summary',
+      // app/opengraph-image.tsx (server-rendered via next/og) supplies the
+      // actual 1200x630 image Next.js injects into both og:image and
+      // twitter:image automatically — summary_large_image is safe now.
+      card: 'summary_large_image',
       title,
       description,
     },

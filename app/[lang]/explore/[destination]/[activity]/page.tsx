@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
+import { BRAND_CONFIG } from '@/config/brandConfig';
 
 // Supported destinations and their canonical activity slugs
 const DESTINATION_MAP: Record<string, { display: string; state: string }> = {
@@ -47,6 +48,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     `Find verified ${act.keyword} in ${dest.display}, ${dest.state}. ` +
     `Transparent prices, local experts, request-based confirmation.`;
 
+  const canonicalUrl = `${BRAND_CONFIG.appUrl}/${resolvedParams.lang}/explore/${resolvedParams.destination}/${resolvedParams.activity}`;
+
   return {
     title,
     description,
@@ -54,9 +57,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title,
       description,
       type: 'website',
+      url: canonicalUrl,
+      siteName: BRAND_CONFIG.fullProductName,
+      // No route-specific asset for every destination/activity combination —
+      // falls through to the sitewide app/opengraph-image.tsx default rather
+      // than a fabricated per-destination photo that doesn't actually exist.
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
     },
     alternates: {
-      canonical: `https://app.pahariyatri.com/${resolvedParams.lang}/explore/${resolvedParams.destination}/${resolvedParams.activity}`,
+      canonical: canonicalUrl,
     },
   };
 }

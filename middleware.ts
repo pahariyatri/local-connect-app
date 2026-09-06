@@ -29,6 +29,15 @@ export function middleware(request: NextRequest) {
         return;
     }
 
+    // Next.js metadata-route conventions (app/opengraph-image.tsx, app/icon.tsx,
+    // etc.) are served at extensionless paths like /opengraph-image?<hash> —
+    // the extension check above doesn't catch them, so they fell through to
+    // the locale-redirect logic and 404'd under /en/opengraph-image instead
+    // of resolving directly (og:image/twitter:image tags pointed at a dead URL).
+    if (/^\/(opengraph-image|twitter-image|icon|apple-icon)(\d+)?(?:\?.*)?$/.test(pathname)) {
+        return;
+    }
+
     // SECURITY: route protection must key off the locale actually present in
     // the URL path, never off Accept-Language / getLocale() (header
     // negotiation). Using the negotiated locale here meant a request for
