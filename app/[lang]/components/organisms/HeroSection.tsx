@@ -11,7 +11,7 @@ import type { SelectedLocation } from "@/contexts/TripPlannerContext";
 // (DestinationSelector.tsx) — same backend endpoint, same convention.
 const SEARCH_DEBOUNCE_MS = 250;
 
-export default function HeroSection({ onSearch }: { onSearch: (query?: string) => void; onPlan?: () => void }) {
+export default function HeroSection({ onSearch, onPlan }: { onSearch: (query?: string) => void; onPlan?: () => void }) {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<SelectedLocation[]>([]);
   const [open, setOpen] = useState(false);
@@ -71,21 +71,66 @@ export default function HeroSection({ onSearch }: { onSearch: (query?: string) =
   };
 
   return (
-    <section className="bg-white pt-6 sm:pt-10 pb-1 px-4 sm:px-6">
-      <div className="max-w-2xl mx-auto">
+    <section className="relative min-h-[86vh] sm:min-h-[92vh] w-full flex items-center bg-slate-950">
+      {/* No photo — an illustrated mountain-range graphic instead: multi-tone
+          gradient sky + three layered silhouette ridges (near-black at the
+          base, lighter further back, real atmospheric-perspective logic)
+          plus drifting glows. Distinct from both the earlier flat-gradient
+          pass and the photo pass — a graphic, not a backdrop. overflow-hidden
+          lives on THIS wrapper only, not the section, so the search
+          suggestions dropdown below isn't clipped by it on any viewport. */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 gradient-mountain-dusk" />
+        {/* Slow diagonal light sweep — a quiet "alive" moment on load rather
+            than a static gradient sitting still. */}
+        <div className="absolute inset-0 hero-shimmer" aria-hidden="true" />
+        <div className="absolute -top-24 -right-24 w-[28rem] h-[28rem] rounded-full bg-emerald-500/20 blur-[120px] animate-drift-slow" />
+        <div className="absolute -bottom-32 -left-16 w-[24rem] h-[24rem] rounded-full bg-emerald-400/10 blur-[110px] animate-drift-slow" style={{ animationDelay: "-4s", animationDirection: "reverse" }} />
+
+        {/* Three layered ridgelines — furthest back is lightest/tallest,
+            nearest is darkest/lowest, the way real distant mountains fade. */}
+        <svg className="absolute bottom-0 left-0 w-full h-32 sm:h-52 text-emerald-800/30" viewBox="0 0 1440 260" preserveAspectRatio="none" aria-hidden="true">
+          <path fill="currentColor" d="M0,260 L0,160 L160,90 L320,150 L480,70 L640,140 L800,60 L960,130 L1120,75 L1280,145 L1440,90 L1440,260 Z" />
+        </svg>
+        <svg className="absolute bottom-0 left-0 w-full h-28 sm:h-44 text-emerald-950/55" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
+          <path fill="currentColor" d="M0,220 L0,140 L140,70 L260,120 L380,50 L520,110 L660,40 L780,100 L920,55 L1040,115 L1180,30 L1300,90 L1440,60 L1440,220 Z" />
+        </svg>
+        <svg className="absolute bottom-0 left-0 w-full h-20 sm:h-32 text-emerald-950/90" viewBox="0 0 1440 160" preserveAspectRatio="none" aria-hidden="true">
+          <path fill="currentColor" d="M0,160 L0,100 L200,45 L400,90 L600,25 L800,80 L1000,35 L1200,85 L1440,50 L1440,160 Z" />
+        </svg>
+
+        {/* A few drifting mist particles rising from the ridgeline, on top
+            of the mountains — small, soft, and quiet; a hint of life in the
+            air, not confetti. */}
+        {[
+          { left: "12%", size: 10, delay: "0s", dur: "9s" },
+          { left: "28%", size: 6, delay: "2.5s", dur: "11s" },
+          { left: "62%", size: 8, delay: "1s", dur: "10s" },
+          { left: "80%", size: 5, delay: "4s", dur: "8s" },
+        ].map((p, i) => (
+          <span
+            key={i}
+            className="hero-particle absolute bottom-16 sm:bottom-24 rounded-full bg-white/40 blur-[2px]"
+            style={{ left: p.left, width: p.size, height: p.size, animationDelay: p.delay, animationDuration: p.dur }}
+            aria-hidden="true"
+          />
+        ))}
+      </div>
+
+      <div className="relative w-full max-w-2xl sm:max-w-3xl lg:max-w-4xl mx-auto px-5 sm:px-6 py-10 sm:py-0 text-center">
         <Typography
           variant="h1"
-          className="text-xl sm:text-2xl leading-snug mb-4"
-          dangerouslySetInnerHTML={{ __html: hero?.title || "Travel like you know someone there." }}
+          className="text-white text-[2.35rem] leading-[1.12] sm:text-6xl sm:leading-[1.06] lg:text-7xl mb-8 sm:mb-10 tracking-tight drop-shadow-sm animate-slideUp"
+          dangerouslySetInnerHTML={{ __html: hero?.title || 'Discover Himachal <span class="text-emerald-400">like a local.</span>' }}
         />
 
-        <div className="relative">
+        <div className="relative text-left animate-slideUp" style={{ animationDelay: "0.1s", opacity: 0 }}>
           <form
             onSubmit={(e) => {
               e.preventDefault();
               submitSearch();
             }}
-            className="flex items-center gap-2.5 pl-4 pr-2 py-2 rounded-2xl bg-slate-100 border border-slate-200 focus-within:border-emerald-500/50 focus-within:bg-white transition-colors"
+            className="flex items-center gap-2.5 pl-4 pr-2 py-2 rounded-2xl bg-white/95 backdrop-blur-xl border border-white/40 shadow-2xl focus-within:bg-white transition-colors"
           >
             <input
               ref={inputRef}
@@ -132,11 +177,27 @@ export default function HeroSection({ onSearch }: { onSearch: (query?: string) =
                   </button>
                 ))
               ) : (
-                <div className="px-5 py-4 text-sm text-slate-400">No matching locations — try Explore instead.</div>
+                <div className="px-5 py-4 text-sm text-slate-400">No matching locations. Try Explore instead.</div>
               )}
             </div>
           )}
         </div>
+
+        {onPlan && (
+          <button
+            type="button"
+            onClick={onPlan}
+            className="group/plan mt-5 inline-flex items-center gap-1.5 text-white/90 hover:text-white text-sm font-bold animate-slideUp"
+            style={{ animationDelay: "0.2s", opacity: 0 }}
+          >
+            <span className="relative pb-0.5">
+              {hero?.plan_cta || "Or build a whole trip"}
+              <span className="absolute left-0 -bottom-px h-px w-full bg-current origin-left scale-x-0 group-hover/plan:scale-x-100 transition-transform duration-300" />
+            </span>
+            <Icon name="arrow-right" className="w-3.5 h-3.5 transition-transform duration-300 group-hover/plan:translate-x-1" />
+          </button>
+        )}
+
       </div>
     </section>
   );

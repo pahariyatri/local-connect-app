@@ -331,8 +331,8 @@ export default function TripBuilderPage() {
             
             {/* Sidebar - Premium Promise */}
             <div className="lg:col-span-4 hidden lg:block sticky top-28 space-y-6">
-                <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-500/20 rounded-full blur-[50px] pointer-events-none"></div>
+                <div className="gradient-mountain-dusk text-white p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-500/20 rounded-full blur-[50px] pointer-events-none animate-drift-slow"></div>
                     <h3 className="text-2xl font-black mb-1">{builder.promise.title}</h3>
                     <p className="text-slate-400 text-sm font-medium mb-6">{builder.promise.subtitle}</p>
                     
@@ -375,10 +375,20 @@ export default function TripBuilderPage() {
                       .replace("{current}", String(currentStep))
                       .replace("{total}", "6")}
                   </p>
-                  <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                  <div className="relative h-1.5 w-full bg-slate-200 rounded-full overflow-visible">
+                    <div className="absolute inset-0 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-emerald-600 rounded-full transition-all duration-500"
+                        style={{ width: `${(currentStep / 6) * 100}%` }}
+                      />
+                    </div>
+                    {/* Traveler marker — a small waypoint pin riding the trail
+                        instead of a plain progress bar, echoing the same
+                        journey visual used on the landing page. */}
                     <div
-                      className="h-full bg-emerald-600 rounded-full transition-all duration-500"
-                      style={{ width: `${(currentStep / 6) * 100}%` }}
+                      className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 transition-all duration-500 w-4 h-4 rounded-full bg-emerald-600 border-2 border-white shadow-md"
+                      style={{ left: `${(currentStep / 6) * 100}%` }}
+                      aria-hidden="true"
                     />
                   </div>
                 </div>
@@ -388,23 +398,13 @@ export default function TripBuilderPage() {
         </div>
   
         {/* Sticky Bottom Action — one Back + one primary Continue/Create on every step.
-            Step 6 additionally shows the live total as its own line, separate from
-            the button label (the button says only "Create My Package").
+            Step 6's primary button shows the live total in place of a static label
+            (e.g. "₹10,500") instead of a separate total row above the footer.
             Portaled to <body>: the page wrapper animates `transform` on mount, which
             would otherwise turn `position: fixed` into "fixed to the page". */}
         {isMounted && createPortal(
           <div className="builder-footer-safe-area fixed bottom-0 left-0 right-0 px-3 sm:px-6 pt-3 sm:pt-6 bg-white/90 backdrop-blur-xl border-t border-slate-100 z-50">
             <div className="max-w-6xl mx-auto px-2 sm:px-4">
-              {currentStep === 6 && step5Footer && (
-                <div className="flex items-baseline justify-between mb-2 sm:mb-3 px-1">
-                  <span className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-widest">
-                    {builder.buttons.total ?? "Total"}
-                  </span>
-                  <span className="text-lg sm:text-2xl font-black text-slate-900 tabular-nums">
-                    {formatINRWithSymbol(step5Footer.totalPrice)}
-                  </span>
-                </div>
-              )}
               <div className="flex items-center justify-between gap-3 sm:gap-4">
                 {currentStep > 1 && (
                     <Button variant="ghost" onClick={handleBack} className="w-fit px-6 sm:px-8 h-12 sm:h-16 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:bg-slate-100 text-[9px] sm:text-xs">
@@ -416,19 +416,23 @@ export default function TripBuilderPage() {
                     <Button
                       onClick={() => step5Footer.onCreatePackage()}
                       disabled={isGenerating || step5Footer.totalPrice <= 0}
+                      // Visual label is the price only (by design), but the
+                      // accessible name still carries the real action so
+                      // screen readers don't just hear a bare currency figure.
+                      aria-label={
+                        isGenerating
+                          ? `${builder.buttons.building ?? "Building trip"}, ${formatINRWithSymbol(step5Footer.totalPrice)}`
+                          : `${builder.buttons.createPackage ?? "Create My Package"}, ${formatINRWithSymbol(step5Footer.totalPrice)}`
+                      }
                       // Tighter type/tracking on mobile + nowrap so the primary
                       // CTA stays on one line at 360–390px instead of breaking
                       // to "CREATE MY / PACKAGE" (PY-033). Desktop unchanged.
                       className="flex-1 h-12 sm:h-16 px-3 rounded-xl sm:rounded-2xl text-[11px] sm:text-lg font-black tracking-[0.08em] sm:tracking-[0.2em] whitespace-nowrap transition-all uppercase bg-emerald-500 hover:bg-emerald-600 text-white shadow-2xl active:scale-[0.98] disabled:opacity-50"
                     >
-                      {isGenerating ? (
-                        <div className="flex items-center justify-center gap-3">
-                          <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                          <span className="text-xs md:text-sm tracking-widest">{builder.buttons.building}</span>
-                        </div>
-                      ) : (
-                        builder.buttons.createPackage ?? "Create My Package"
-                      )}
+                      <span className="tabular-nums flex items-center justify-center gap-3">
+                        {isGenerating && <span className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin shrink-0" />}
+                        {formatINRWithSymbol(step5Footer.totalPrice)}
+                      </span>
                     </Button>
                   )
                 ) : (

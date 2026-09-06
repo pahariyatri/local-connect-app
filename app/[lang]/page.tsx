@@ -1,17 +1,17 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Locale } from "@/i18n-config";
-import Button from "./components/atoms/Button";
 import LocalImage from "./components/atoms/Image";
 import Typography from "./components/atoms/Typography";
-import Card from "./components/molecules/Card";
+import { Icon } from "./components/atoms/Icon";
+import Reveal from "./components/atoms/Reveal";
+import CountUp from "./components/atoms/CountUp";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import Loading from "../loading";
 import { getVendors } from "@/services/vendorService";
 import { getLocations } from "@/services/catalogService";
-import { Icon, IconName } from "./components/atoms/Icon";
 import PublicFooter from "./components/organisms/PublicFooter";
 import HeroSection from "./components/organisms/HeroSection";
 import InteractiveRouteSection from "./components/organisms/InteractiveRouteSection";
@@ -20,78 +20,35 @@ type HomeProps = {
   params: Promise<{ lang: Locale }>;
 };
 
-// ─── Scroll-reveal animation wrapper ─────────────────────────────────────────
-
-function Reveal({ children, className = "", delayMs = 0 }: { children: React.ReactNode; className?: string; delayMs?: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          io.disconnect();
-        }
-      },
-      { threshold: 0.1 }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
-  return (
-    <div
-      ref={ref}
-      className={`transition-all duration-700 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"} ${className}`}
-      style={{ transitionDelay: visible ? `${delayMs}ms` : "0ms" }}
-    >
-      {children}
-    </div>
-  );
-}
-
 // ─── Vendor mapping ──────────────────────────────────────────────────────────
 
 const CATEGORY_IMAGES: Record<string, string> = {
-  Stay: "https://images.unsplash.com/photo-1571401835393-8c5f35328320?q=80&w=600",
-  Adventure: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=600",
-  Transport: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=600",
-  Food: "https://images.unsplash.com/photo-1574116504481-e06341e984e1?q=80&w=600",
+  Stay: "https://images.unsplash.com/photo-1571401835393-8c5f35328320?q=80&w=900",
+  Adventure: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=900",
+  Transport: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=900",
+  Food: "https://images.unsplash.com/photo-1574116504481-e06341e984e1?q=80&w=900",
 };
 
 // Curated destination photography — the Location entity has no image field
-// (confirmed: name/slug/type/lat/lng only), so real destination *names* come
-// from the API while the photo is decorative, same pattern as CATEGORY_IMAGES
-// above. Falls back to a generic mountain photo for any real destination not
-// in this small curated set.
+// (name/slug/type/lat/lng only, confirmed), so real destination *names*
+// come from the API while the photo is decorative, same pattern as
+// CATEGORY_IMAGES above. Deliberately excludes a "kasol" entry: that photo
+// ID was confirmed broken (404s) in an earlier live check this session —
+// unlisted slugs fall through to the verified-working default instead of
+// risking a second broken image.
 const DESTINATION_IMAGES: Record<string, string> = {
-  manali: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?q=80&w=800",
-  kasol: "https://images.unsplash.com/photo-1626016909671-13a2f16bb318?q=80&w=800",
-  shimla: "https://images.unsplash.com/photo-1626621340754-3f836c0a55c3?q=80&w=800",
-  spiti: "https://images.unsplash.com/photo-1518623001395-125242310d0c?q=80&w=800",
-  dharamshala: "https://images.unsplash.com/photo-1653853572809-ea537274c7f5?q=80&w=800",
-  tirthan: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?q=80&w=800",
+  manali: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?q=70&w=900",
+  shimla: "https://images.unsplash.com/photo-1626621340754-3f836c0a55c3?q=70&w=900",
+  spiti: "https://images.unsplash.com/photo-1518623001395-125242310d0c?q=70&w=900",
+  dharamshala: "https://images.unsplash.com/photo-1653853572809-ea537274c7f5?q=70&w=900",
 };
-const DEFAULT_DESTINATION_IMAGE = "https://images.unsplash.com/photo-1571401835393-8c5f35328320?q=80&w=800";
+const DEFAULT_DESTINATION_IMAGE = "https://images.unsplash.com/photo-1571401835393-8c5f35328320?q=70&w=900";
 
 interface DestinationItem {
   name: string;
   slug: string;
   image: string;
 }
-
-// Category icon row — keyed to real, already-localized dict.page.home.categories.items
-// entries (built but previously unwired). Picking a representative 4 rather
-// than all 8 to match a compact icon row.
-const CATEGORY_ROW: { key: string; icon: IconName }[] = [
-  { key: "homestays", icon: "home" },
-  { key: "transport", icon: "car" },
-  { key: "guides", icon: "users" },
-  { key: "adventures", icon: "compass" },
-];
 
 interface LocalProviderItem {
   id: string;
@@ -137,6 +94,7 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
 
   const [providersList, setProvidersList] = useState<LocalProviderItem[]>([]);
   const [isProvidersLoading, setIsProvidersLoading] = useState(true);
+  const [verifiedCount, setVerifiedCount] = useState<number | null>(null);
   const [destinations, setDestinations] = useState<DestinationItem[]>([]);
   const [isDestinationsLoading, setIsDestinationsLoading] = useState(true);
 
@@ -146,8 +104,15 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
     (async () => {
       try {
         const response = await getVendors();
+        // A large-card showcase reads best curated to a few — 3, not the
+        // whole directory. Explore is where someone browses all of them.
         if (!cancelled && Array.isArray(response) && response.length > 0) {
-          setProvidersList(response.slice(0, 4).map(mapBackendVendor));
+          setProvidersList(response.slice(0, 3).map(mapBackendVendor));
+          // Real count from the same response, not a separate/guessed number —
+          // GET /vendors returns the full unpaginated list, so this is the
+          // actual number of verified vendor accounts right now, not a
+          // fabricated "growing community" stat.
+          setVerifiedCount(response.filter((v: any) => v.isVerified).length);
         }
       } catch {
         // Backend unavailable or empty
@@ -192,218 +157,190 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
 
   return (
     <main className="bg-white min-h-screen antialiased selection:bg-emerald-500/30 selection:text-emerald-900 overflow-x-hidden">
-      {/* ── 1 · HERO ─────────────────────────────────────────────────────── */}
+      {/* ── 1 · HERO — gradient ground, short headline, one line, one search,
+             one secondary "plan a whole trip" path into the Builder ──────── */}
       <HeroSection
         onSearch={(query) => router.push(query ? `${exploreHref}?q=${encodeURIComponent(query)}` : exploreHref)}
         onPlan={() => router.push(builderHref)}
       />
 
-      {/* ── 1b · CATEGORIES ──────────────────────────────────────────────── */}
-      <section className="px-4 sm:px-6 pt-6 pb-2">
-        <div className="max-w-6xl mx-auto">
-          <Typography variant="h3" className="text-sm mb-3">
-            {dict.page?.home?.categories?.title || "Browse by Category"}
-          </Typography>
-          <div className="flex items-center gap-3 sm:gap-4 overflow-x-auto no-scrollbar">
-            {CATEGORY_ROW.map(({ key, icon }) => {
-              const label = dict.page?.home?.categories?.items?.[key] || key;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => router.push(`${exploreHref}?q=${encodeURIComponent(label)}`)}
-                  className="flex flex-col items-center gap-1.5 shrink-0 w-16 group"
-                >
-                  <span className="w-12 h-12 rounded-full bg-slate-100 group-hover:bg-emerald-50 text-slate-600 group-hover:text-emerald-600 flex items-center justify-center transition-colors">
-                    <Icon name={icon} className="w-5 h-5" />
-                  </span>
-                  <span className="text-[11px] font-medium text-slate-600 text-center leading-tight">{label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 1c · POPULAR DESTINATIONS ────────────────────────────────────── */}
+      {/* ── 2 · DISCOVER — a few real places, large portrait photo cards,
+             minimal text (name only). Real Location data (GET /locations,
+             filtered to type=DESTINATION) — replaces the removed "How It
+             Works" product explainer with an actual discovery moment
+             instead. Sized up (4:5 portrait, not a small square) for real
+             visual weight right after the Hero. ───────────────────────── */}
       {(isDestinationsLoading || destinations.length > 0) && (
-        <section className="px-4 sm:px-6 py-6">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-3">
-              <Typography variant="h3" className="text-sm">
-                {dict.page?.home?.destinations?.title || "Popular Destinations"}
-              </Typography>
-              <button
-                onClick={() => router.push(exploreHref)}
-                className="text-xs font-semibold text-emerald-600 hover:text-emerald-700"
-              >
-                {dict.page?.home?.providers?.view_all || "View All"}
-              </button>
-            </div>
-            <div className="flex items-center gap-3 sm:gap-4 overflow-x-auto no-scrollbar">
+        <section className="py-14 sm:py-24 bg-white">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <Reveal>
+              <div className="flex flex-col items-center text-center mb-8 sm:mb-12">
+                <Typography variant="eyebrow">Discover</Typography>
+                <Typography variant="h2" className="mt-1">Real places worth the drive.</Typography>
+              </div>
+            </Reveal>
+
+            <div className="flex sm:grid sm:grid-cols-3 gap-5 sm:gap-6 overflow-x-auto pb-2 snap-x snap-mandatory no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0">
               {isDestinationsLoading
                 ? Array.from({ length: 3 }).map((_, idx) => (
-                    <div key={idx} className="w-32 sm:w-40 h-24 sm:h-28 rounded-2xl bg-slate-200 animate-pulse shrink-0" />
+                    <div key={idx} className="aspect-[4/5] w-[280px] sm:w-auto shrink-0 rounded-3xl bg-slate-100 animate-pulse" />
                   ))
-                : destinations.map((d) => (
-                    <button
-                      key={d.slug}
-                      type="button"
-                      onClick={() => router.push(`${exploreHref}?location=${encodeURIComponent(d.name)}`)}
-                      className="relative w-32 sm:w-40 h-24 sm:h-28 rounded-2xl overflow-hidden shrink-0 group"
-                    >
-                      <LocalImage
-                        src={d.image}
-                        alt={d.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent" />
-                      <span className="absolute bottom-2 left-3 text-white text-sm font-bold drop-shadow-sm">{d.name}</span>
-                    </button>
+                : destinations.map((d, i) => (
+                    <Reveal key={d.slug} delayMs={i * 80} className="w-[280px] sm:w-auto shrink-0 snap-center">
+                      <button
+                        type="button"
+                        onClick={() => router.push(`${exploreHref}?location=${encodeURIComponent(d.name)}`)}
+                        aria-label={d.name}
+                        className="group relative w-full aspect-[4/5] rounded-3xl overflow-hidden hover:-translate-y-1 hover:shadow-[0_20px_50px_-15px_rgba(16,185,129,0.3)] transition-all duration-300"
+                      >
+                        <LocalImage src={d.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/10 to-transparent" />
+                        <h3 className="absolute bottom-6 left-6 right-6 text-white font-black text-2xl sm:text-3xl drop-shadow-sm">{d.name}</h3>
+                      </button>
+                    </Reveal>
                   ))}
             </div>
           </div>
         </section>
       )}
 
-      {/* ── 2 · INTERACTIVE ROUTE EXPERIENCE (DAY BY DAY) ──────────────── */}
-      <InteractiveRouteSection lang={lang} />
+      {/* ── 3 · FULL-BLEED MOMENT — one large cinematic photo as a rhythm
+             break between the card grids, the classic premium-editorial
+             technique (Airbnb/travel-editorial pattern: pause on one big
+             image rather than another row of cards). Real, already-verified
+             Unsplash photo used elsewhere at small scale — reused larger
+             here, not a new/unvetted asset. Minimal text: a place name and
+             nothing else. ─────────────────────────────────────────────── */}
+      <section className="relative h-[55vh] sm:h-[65vh] overflow-hidden">
+        <LocalImage
+          src="https://images.unsplash.com/photo-1518623001395-125242310d0c?q=65&w=1600&auto=format&fit=crop"
+          alt="A quiet highway winding through the golden high-altitude desert of Spiti Valley, Himachal Pradesh"
+          width={1600}
+          height={1000}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/10 to-transparent" />
+        <Reveal className="absolute bottom-8 sm:bottom-12 left-0 right-0 text-center">
+          <Typography variant="h2" className="text-white text-2xl sm:text-4xl drop-shadow-sm">Spiti Valley.</Typography>
+        </Reveal>
+      </section>
 
-
-
-      {/* ── 3 · VERIFIED LOCAL HOSTS & OPERATORS ────────────────────────── */}
-      <section className="py-14 sm:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* ── 4 · LOCAL CONNECTION — a quiet trust signal, not a marketplace
+             grid: a few real verified hosts, small format, one line in and
+             out. Real vendor data (GET /vendors); an honest empty state
+             when there is none, never a placeholder listing. ──────────── */}
+      <section className="py-14 sm:py-20 bg-gradient-to-b from-white via-white to-emerald-50/30">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal>
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-10">
-              <div className="space-y-1">
-                <Typography variant="eyebrow">
-                  {dict.page?.home?.providers?.eyebrow || "Verified Locals"}
-                </Typography>
-                <Typography variant="h2">
-                  {dict.page?.home?.providers?.title || "Trusted Local Partners"}
-                </Typography>
-                <p className="text-slate-500 text-xs sm:text-sm font-medium max-w-xl">
-                  Connect directly with verified mountain hosts, homestays, and 4x4 transport providers with 0% middleman markup.
+            <div className="flex flex-col items-center text-center gap-2 mb-8 sm:mb-10">
+              <Typography variant="eyebrow">Local Connection</Typography>
+              <Typography variant="h2" className="text-xl sm:text-2xl">A few of the real people behind it.</Typography>
+              {/* Real, present-tense count from the same fetch above — no
+                  "growing community" framing, since that implies a claim
+                  (trend over time) this single snapshot can't back up. */}
+              {!!verifiedCount && (
+                <p className="text-slate-500 text-sm font-semibold">
+                  <CountUp target={verifiedCount} className="text-emerald-600 font-black tabular-nums" /> verified locals on the ground right now.
                 </p>
-              </div>
-              <button
-                onClick={() => router.push(exploreHref)}
-                className="flex-shrink-0 text-xs font-black uppercase tracking-wider text-emerald-600 hover:text-emerald-700 pb-1 border-b-2 border-emerald-500/30 hover:border-emerald-600 transition-all self-start sm:self-auto flex items-center gap-1.5"
-              >
-                <span>{dict.page?.home?.providers?.view_all || "View All"}</span>
-                <Icon name="arrow-right" className="w-3.5 h-3.5" />
-              </button>
+              )}
             </div>
           </Reveal>
 
-          <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide no-scrollbar hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0">
-            {isProvidersLoading ? (
-              Array.from({ length: 4 }).map((_, idx) => (
-                <div key={idx} className="bg-white border border-slate-100 rounded-3xl p-5 space-y-3 animate-pulse">
-                  <div className="w-full h-48 rounded-2xl bg-slate-200" />
-                  <div className="h-4 bg-slate-200 rounded w-2/3" />
-                  <div className="h-3 bg-slate-200 rounded w-1/2" />
-                </div>
-              ))
-            ) : providersList.length > 0 ? (
-              providersList.map((p, i) => (
-                <Reveal key={p.id} delayMs={(i % 4) * 60} className="min-w-[270px] sm:min-w-0 shrink-0 snap-center">
-                  <Card
-                    onClick={() => router.push(`/${lang}/vendor/${p.id}`)}
-                    imageSrc={p.image}
-                    imageAlt={p.name}
-                    badgeText={p.category}
-                    verified={p.isVerified}
-                    title={p.name}
-                    className="hover:border-emerald-500/40 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
-                  >
-                    <p className="text-emerald-700 text-xs font-semibold">
-                      Direct Local Host
-                    </p>
-                  </Card>
-                </Reveal>
-              ))
-            ) : (
-              <div className="col-span-full py-10 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200 p-8">
-                <p className="text-sm font-bold text-slate-800">Direct Local Marketplace</p>
-                <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">Explore native guides, 4x4 mountain drivers, and homestays across Himachal Pradesh.</p>
-                <Button onClick={() => router.push(exploreHref)} variant="primary" className="mt-4 h-10 px-6 rounded-full text-sm font-semibold mx-auto flex items-center gap-2">
-                  <span>Browse services directory</span>
-                  <Icon name="arrow-right" className="w-3.5 h-3.5" />
-                </Button>
+          {isProvidersLoading ? (
+            <div className="flex items-center justify-center gap-6 sm:gap-10">
+              {Array.from({ length: 3 }).map((_, idx) => (
+                <div key={idx} className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-slate-100 animate-pulse" />
+              ))}
+            </div>
+          ) : providersList.length > 0 ? (
+            <>
+              {/* Deliberately small/quiet — round portraits, not a
+                  marketplace grid. A trust signal, not the pitch. */}
+              <div className="flex items-start justify-center gap-6 sm:gap-10">
+                {providersList.map((p, i) => (
+                  <Reveal key={p.id} delayMs={i * 80}>
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/${lang}/vendor/${p.id}`)}
+                      aria-label={[p.name, p.category, p.isVerified ? "Verified" : null].filter(Boolean).join(", ")}
+                      className="group flex flex-col items-center gap-2 w-20 sm:w-28"
+                    >
+                      <span className="relative block w-20 h-20 sm:w-28 sm:h-28 rounded-full overflow-hidden ring-2 ring-white shadow-md group-hover:shadow-lg transition-shadow">
+                        <LocalImage src={p.image} alt="" rounded className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        {p.isVerified && (
+                          <span className="absolute bottom-0 right-0 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center ring-2 ring-white">
+                            <Icon name="check" className="w-3 h-3" />
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-slate-800 text-center leading-tight line-clamp-2">{p.name}</span>
+                    </button>
+                  </Reveal>
+                ))}
               </div>
-            )}
-          </div>
+              <div className="flex justify-center mt-8">
+                <button
+                  onClick={() => router.push(exploreHref)}
+                  className="group/link text-xs font-black uppercase tracking-wider text-emerald-600 hover:text-emerald-700 flex items-center gap-1.5"
+                >
+                  <span className="relative pb-0.5">
+                    Meet more local hosts
+                    <span className="absolute left-0 -bottom-px h-px w-full bg-current origin-left scale-x-0 group-hover/link:scale-x-100 transition-transform duration-300" />
+                  </span>
+                  <Icon name="arrow-right" className="w-3.5 h-3.5 transition-transform duration-300 group-hover/link:translate-x-1" />
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="py-10 text-center">
+              <p className="text-sm font-bold text-slate-800">Direct Local Marketplace</p>
+              <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">Explore native guides, 4x4 mountain drivers, and homestays across Himachal Pradesh.</p>
+              <button
+                onClick={() => router.push(exploreHref)}
+                className="mt-5 h-10 px-6 rounded-full bg-slate-900 hover:bg-emerald-600 text-white text-sm font-semibold mx-auto flex items-center gap-2 transition-colors"
+              >
+                <span>Browse services directory</span>
+                <Icon name="arrow-right" className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
-      {/* ── 4 · VISUAL BENTO HUB (PLAN & HOST) ────────────────────────────── */}
-      <section className="px-4 sm:px-6 py-10 sm:py-16 bg-slate-50 border-t border-slate-200/80">
-        <div className="max-w-6xl mx-auto">
+      {/* ── 5 · CURATED JOURNEYS — visual storytelling. Real editorial routes
+             (no Book/Chapter/Story API exists in this codebase, confirmed;
+             this is the one real, honest content source for that role) ── */}
+      <InteractiveRouteSection lang={lang} />
+
+      {/* ── 6 · BRAND STATEMENT — one real claim, already used verbatim
+             elsewhere on this site (Hero subtitle, Verified Hosts copy):
+             verified locals, direct payment, zero agency markup. No new
+             claims invented here. ──────────────────────────────────────── */}
+      <section className="relative py-20 sm:py-32 overflow-hidden bg-slate-950">
+        {/* Same multi-tone gradient system as the Hero — indigo→slate→
+            emerald, no flat solid fill, for visual consistency across the page. */}
+        <div className="absolute inset-0 gradient-mountain-dusk" />
+        <div className="absolute -top-16 left-1/4 w-96 h-96 rounded-full bg-emerald-500/15 blur-[120px] animate-drift-slow" />
+        <div className="relative max-w-3xl mx-auto px-6 text-center">
           <Reveal>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              
-              {/* Card A: Start Planning (Dark Glassmorphism, Visual Hero) */}
-              <div className="lg:col-span-7 relative bg-slate-950 text-white rounded-3xl p-8 sm:p-10 overflow-hidden flex flex-col justify-between shadow-2xl">
-                <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/15 rounded-full blur-[100px] pointer-events-none" />
-                <div className="relative space-y-4">
-                  <Typography variant="eyebrow" className="text-emerald-400">
-                    Custom Mountain Circuits
-                  </Typography>
-                  <Typography variant="h2" className="text-white leading-tight">
-                    Build your Himachal route with local stays & transit.
-                  </Typography>
-                  <p className="text-slate-400 text-xs sm:text-sm max-w-md leading-relaxed">
-                    Select your starting point, favorite valleys, and connect directly with verified drivers and homestays.
-                  </p>
-                </div>
-
-                <div className="relative pt-8 mt-6 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-4 text-slate-300 text-xs font-bold">
-                    <span className="flex items-center gap-1.5"><Icon name="check" className="w-4 h-4 text-emerald-400" /> 0% Markup</span>
-                    <span className="flex items-center gap-1.5"><Icon name="check" className="w-4 h-4 text-emerald-400" /> Reserve, Pay Direct</span>
-                  </div>
-                  <Button
-                    onClick={() => router.push(builderHref)}
-                    variant="primary"
-                    iconRight={<Icon name="arrow-right" className="w-4 h-4" />}
-                    className="h-12 px-7 rounded-2xl text-sm font-semibold shrink-0"
-                  >
-                    Start planning
-                  </Button>
-                </div>
-              </div>
-
-              {/* Card B: Join As Partner (Clean, High Intent) */}
-              <div className="lg:col-span-5 bg-white border border-slate-200/80 rounded-3xl p-8 sm:p-10 flex flex-col justify-between shadow-md">
-                <div className="space-y-3">
-                  <Typography variant="eyebrow" className="text-slate-400">
-                    For Local Hosts
-                  </Typography>
-                  <Typography variant="h2" className="leading-snug">
-                    Offer your homestay, 4x4 cab, or trek.
-                  </Typography>
-                  <p className="text-slate-500 text-xs sm:text-sm leading-relaxed">
-                    List directly for travelers across India with zero upfront listing fees and direct payouts.
-                  </p>
-                </div>
-
-                <div className="pt-6 mt-6 border-t border-slate-100 flex items-center justify-between gap-3">
-                  <Button
-                    onClick={() => router.push(vendorHref)}
-                    variant="dark"
-                    iconRight={<Icon name="arrow-right" className="w-4 h-4" />}
-                    className="h-11 px-6 rounded-xl text-sm font-semibold"
-                  >
-                    Join as local partner
-                  </Button>
-                  <span className="text-[11px] font-bold text-slate-400">
-                    Free Registration
-                  </span>
-                </div>
-              </div>
-
+            <Typography variant="h2" className="text-white text-3xl sm:text-5xl leading-tight mb-10">
+              Verified locals. Direct booking.<br className="hidden sm:block" /> Zero agency markup.
+            </Typography>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm font-bold">
+              <button
+                onClick={() => router.push(builderHref)}
+                className="group/link w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98]"
+              >
+                <span>Plan a Trip</span>
+                <Icon name="arrow-right" className="w-3.5 h-3.5 transition-transform duration-300 group-hover/link:translate-x-1" />
+              </button>
+              <button
+                onClick={() => router.push(vendorHref)}
+                className="group/link w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full border border-white/30 hover:border-emerald-400 hover:bg-emerald-500/10 text-white transition-all active:scale-[0.98]"
+              >
+                <span>Become a Local Partner</span>
+                <Icon name="arrow-right" className="w-3.5 h-3.5 transition-transform duration-300 group-hover/link:translate-x-1" />
+              </button>
             </div>
           </Reveal>
         </div>

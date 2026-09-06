@@ -27,7 +27,10 @@ test.describe('Pahari Yatri Core Flows', () => {
   test('Landing page has exactly one hero — regression for the 2026-08-11 duplicate-hero bug', async ({ page }) => {
     await page.goto('/en');
     await expect(page.locator('h1')).toHaveCount(1);
-    await expect(page.locator('h1')).toContainText(/know/i);
+    // Headline copy is deliberately not asserted verbatim here — it's real
+    // product copy that gets revised (see landing-page redesign work); the
+    // actual regression this test guards is a duplicate <h1>, not the text.
+    await expect(page.locator('h1')).toContainText(/himachal/i);
   });
 
   test('Landing hero has a real destination search input', async ({ page }) => {

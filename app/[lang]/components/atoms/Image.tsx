@@ -14,6 +14,10 @@ type ImageProps = {
     height?: number;
     rounded?: boolean;
     loading?: 'lazy' | 'eager';
+    /** Marks this as the page's LCP image — skips lazy-loading and hints the
+     * browser to fetch it first. Use for at most one image per page (the
+     * full-bleed hero photo), never for below-the-fold cards. */
+    priority?: boolean;
 };
 
 /**
@@ -51,6 +55,7 @@ export default function LocalImage({
     height = 500,
     rounded = false,
     loading,
+    priority = false,
 }: ImageProps) {
     const [failed, setFailed] = useState(false);
 
@@ -72,7 +77,8 @@ export default function LocalImage({
             height={height}
             className={`object-cover ${rounded ? "rounded-full" : "rounded-lg"} ${className}`}
             unoptimized={isExternal}
-            loading={loading}
+            loading={priority ? undefined : loading}
+            priority={priority}
             onError={() => setFailed(true)}
         />
     );

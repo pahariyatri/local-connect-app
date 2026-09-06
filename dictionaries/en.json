@@ -3,8 +3,8 @@
     "home": {
       "badge": "Pahari Yatri Network",
       "hero": {
-        "title": "Travel like you know <span class=\"text-emerald-400\">someone there.</span>",
-        "subtitle": "Search real stays, rides, and guides from verified Himachal locals — direct, with no agency markup.",
+        "title": "Discover Himachal <span class=\"text-emerald-400\">like a local.</span>",
+        "subtitle": "Search real stays, rides, and guides from verified Himachal locals, direct and with no agency markup.",
         "search_placeholder": "Where are you going?",
         "search_cta": "Search",
         "plan_cta": "Or build a whole trip"
@@ -73,15 +73,15 @@
         "steps": [
           {
             "title": "Browse Locals",
-            "desc": "Search verified guides, hosts, and operators along your route."
+            "desc": "Verified guides, hosts & operators."
           },
           {
             "title": "Build & Request",
-            "desc": "Build your day-by-day trip and send it — local partners confirm what's available."
+            "desc": "Send your trip. Partners confirm."
           },
           {
             "title": "Reserve & Go",
-            "desc": "Pay a small reservation fee to lock it in. The rest is settled directly with each local partner."
+            "desc": "Small fee to lock it in. Pay the rest direct."
           }
         ],
         "step_label": "Step"
@@ -103,7 +103,7 @@
       "routes": {
         "eyebrow": "Curated Routes",
         "title": "Ready-made journeys.",
-        "subtitle": "Multi-day routes across Himachal — open one in the builder and make it yours.",
+        "subtitle": "Multi-day routes across Himachal. Open one in the builder and make it yours.",
         "cta": "Plan this route",
         "days_unit": "days"
       },
