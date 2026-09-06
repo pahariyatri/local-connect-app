@@ -5,6 +5,7 @@
  * Works WITHOUT login. Auto-starts on first page load.
  */
 import { api, ApiClientError } from '@/lib/apiClient';
+import { API_BASE_URL } from '@/utils/constants';
 
 export type SessionEventType =
   // Acquisition
@@ -93,9 +94,44 @@ export type SessionEventType =
 const SESSION_KEY = 'lc_session_id';
 const ANONYMOUS_ID_KEY = 'lc_anon_id';
 
+/** How long to hold events client-side before flushing as one batch. */
+const FLUSH_INTERVAL_MS = 4000;
+/** Flush early if the queue gets this big, rather than waiting out the interval. */
+const MAX_QUEUE_SIZE = 15;
+
+interface QueuedEvent {
+  eventType: SessionEventType;
+  page?: string;
+  entityType?: string;
+  entityId?: string;
+  metadata?: Record<string, any>;
+  durationMs?: number;
+}
+
 class SessionTracker {
   private sessionId: string | null = null;
   private initPromise: Promise<string> | null = null;
+
+  /**
+   * Events queued since the last flush. Batched instead of firing one
+   * `POST /sessions/event` per interaction — a page like /explore can emit a
+   * dozen tracked events (filters, card views, scroll depth) in a few
+   * seconds, and each was previously its own round trip straight to the
+   * backend. Flushed on a timer, when full, and (via sendBeacon) on unload.
+   */
+  private queue: QueuedEvent[] = [];
+  private flushTimer: ReturnType<typeof setTimeout> | null = null;
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      // pagehide fires reliably on tab close / navigation away, including on
+      // mobile Safari where 'beforeunload'/'unload' are unreliable.
+      window.addEventListener('pagehide', () => this.flush({ useBeacon: true }));
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') this.flush({ useBeacon: true });
+      });
+    }
+  }
 
   /**
    * Get or create a session
@@ -185,26 +221,58 @@ class SessionTracker {
       durationMs?: number;
     },
   ): Promise<void> {
-    try {
-      const sessionId = await this.getSessionId();
-      
-      // Push to GTM/GA4/Meta Pixel if configured
-      this.pushToThirdParty(eventType, options?.metadata);
+    // Push to GTM/GA4/Meta Pixel immediately — those are separate,
+    // client-side-only sinks and aren't the round-trip this batches.
+    this.pushToThirdParty(eventType, options?.metadata);
 
-      if (sessionId.startsWith('local-')) return; // Skip API log for fallback sessions
+    const sessionId = await this.getSessionId();
+    if (sessionId.startsWith('local-')) return; // Skip API log for fallback sessions
 
-      await api.post('/sessions/event', {
-        sessionId,
-        eventType,
-        page: options?.page || (typeof window !== 'undefined' ? window.location.pathname : undefined),
-        entityType: options?.entityType,
-        entityId: options?.entityId,
-        metadata: options?.metadata,
-        durationMs: options?.durationMs,
-      }, { skipAuth: true });
-    } catch (err) {
-      if (err instanceof ApiClientError && err.statusCode === 404) this.forgetSession();
+    this.queue.push({
+      eventType,
+      page: options?.page || (typeof window !== 'undefined' ? window.location.pathname : undefined),
+      entityType: options?.entityType,
+      entityId: options?.entityId,
+      metadata: options?.metadata,
+      durationMs: options?.durationMs,
+    });
+
+    if (this.queue.length >= MAX_QUEUE_SIZE) {
+      this.flush();
+    } else if (!this.flushTimer) {
+      this.flushTimer = setTimeout(() => this.flush(), FLUSH_INTERVAL_MS);
     }
+  }
+
+  /**
+   * Sends every queued event as one request. `useBeacon: true` (pagehide /
+   * tab-hide) uses navigator.sendBeacon, since a page that's unloading can't
+   * rely on an in-flight fetch to complete.
+   */
+  private flush(opts?: { useBeacon?: boolean }): void {
+    if (this.flushTimer) {
+      clearTimeout(this.flushTimer);
+      this.flushTimer = null;
+    }
+    if (!this.queue.length || !this.sessionId || this.sessionId.startsWith('local-')) return;
+
+    const events = this.queue;
+    this.queue = [];
+    const sessionId = this.sessionId;
+
+    if (opts?.useBeacon && typeof navigator !== 'undefined' && navigator.sendBeacon) {
+      const blob = new Blob([JSON.stringify({ sessionId, events })], { type: 'application/json' });
+      const sent = navigator.sendBeacon(`${API_BASE_URL}/sessions/events/batch`, blob);
+      if (!sent) {
+        // Beacon queue was full/refused — best effort fire-and-forget fallback.
+        api.post('/sessions/events/batch', { sessionId, events }, { skipAuth: true }).catch(() => {});
+      }
+      return;
+    }
+
+    api.post('/sessions/events/batch', { sessionId, events }, { skipAuth: true }).catch((err) => {
+      if (err instanceof ApiClientError && err.statusCode === 404) this.forgetSession();
+    });
   }
 
   /**

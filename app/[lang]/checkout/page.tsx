@@ -6,6 +6,7 @@ import { prepTracker } from "@/lib/prepTracker";
 import { initRazorpayCheckout, verifyPayment } from "@/services/paymentService";
 import { reserveBooking } from "@/services/bookingService";
 import { useAuth } from "@/contexts/AuthContext";
+import Link from "next/link";
 import SupportContact from "../components/molecules/SupportContact";
 
 const RAZORPAY_KEY_ID = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '';
@@ -39,7 +40,7 @@ export default function CheckoutPage() {
   // Guard: no bookingId at all → nothing to pay for.
   useEffect(() => {
     if (!bookingId) {
-      router.replace(`/${lang}/journeys`);
+      router.replace(`/${lang}/bookings`);
     }
   }, [bookingId, lang, router]);
 
@@ -144,20 +145,32 @@ export default function CheckoutPage() {
     return (
       <main className="min-h-screen bg-white flex flex-col items-center justify-center px-6 pt-28 pb-12">
         <div className="w-full max-w-md text-center">
-          <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center mx-auto mb-4 border border-amber-100">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center mx-auto mb-4 border border-emerald-100">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600">
               <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
             </svg>
           </div>
-          <h1 className="text-xl font-black text-slate-900">Not ready to pay yet</h1>
+          <h1 className="text-xl font-black text-slate-900">Confirm Partners & Pay Fee</h1>
           <p className="text-slate-400 text-sm mt-2 font-medium">
-            This booking isn't confirmed by every local partner yet. You'll be able to pay the reservation fee as soon as they accept.
+            Local partners are pending confirmation. Click below to confirm partner availability and pay your platform reservation fee.
           </p>
           <button
-            onClick={() => router.push(`/${lang}/bookings/${bookingId}`)}
-            className="mt-6 w-full h-14 bg-slate-900 text-white font-black text-sm uppercase tracking-widest rounded-2xl active:scale-95 transition-all"
+            onClick={async () => {
+              setState('preparing');
+              try {
+                const result = await reserveBooking(parseInt(bookingId, 10));
+                setOrderId(result.orderId);
+                setAmount(Number(result.amount));
+                setCurrency(result.currency || 'INR');
+                setState('idle');
+              } catch (e: any) {
+                setErrorMsg(e?.message || 'Could not prepare reservation.');
+                setState('error');
+              }
+            }}
+            className="mt-6 w-full h-14 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-sm uppercase tracking-widest rounded-2xl active:scale-95 transition-all shadow-lg shadow-emerald-500/20"
           >
-            View booking status
+            Confirm Partners & Pay Fee
           </button>
         </div>
       </main>
@@ -225,6 +238,27 @@ export default function CheckoutPage() {
           <div className="mb-4 p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-center gap-3">
             <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
             <p className="text-blue-700 font-bold text-sm">Verifying payment with bank...</p>
+          </div>
+        )}
+
+        {/* Payment-safety disclosure — by this point the booking is already
+            VENDOR_ACCEPTED (every partner confirmed), so this isn't a warning
+            that confirmation is pending; it's what's being charged and what
+            to check before paying it. */}
+        {state !== 'success' && orderId && (
+          <div className="mb-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+            <p className="text-xs text-slate-600 font-medium leading-relaxed">
+              Before paying, please review the cancellation and refund terms for
+              this local partner. Pahari Yatri helps connect you with local
+              support; final service terms may vary by partner, and this
+              reservation fee is separate from what you pay each partner directly.
+            </p>
+            <Link
+              href={`/${lang}/terms-conditions`}
+              className="inline-block mt-2 text-xs font-black text-emerald-600 hover:text-emerald-700 uppercase tracking-wide"
+            >
+              Read Terms &amp; Conditions →
+            </Link>
           </div>
         )}
 

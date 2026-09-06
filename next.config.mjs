@@ -17,9 +17,6 @@ const nextConfig = {
       process.env.NEXT_PUBLIC_API_BASE_URL ||
       (process.env.NODE_ENV === 'production' ? 'https://api.pahariyatri.com' : 'http://localhost:4000'),
   },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
 };
 
 export default nextConfig;

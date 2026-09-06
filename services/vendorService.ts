@@ -13,18 +13,29 @@ export const EMPTY_VENDORS: Record<string, Vendor[]> = {
 };
 
 /**
+ * Resolves the category string for a service item, prioritizing the service's own
+ * category/subcategory before falling back to vendor registration types.
+ */
+export function resolveServiceCategory(s: any): string {
+  if (typeof s.category === 'string' && s.category) return s.category;
+  if (s.category?.name && typeof s.category.name === 'string') return s.category.name;
+  if (s.subcategory?.parent?.name) return s.subcategory.parent.name;
+  if (s.subcategory?.name) return s.subcategory.name;
+  if (Array.isArray(s.vendor?.types) && s.vendor.types.length) return s.vendor.types[0];
+  if (s.vendor?.type) return s.vendor.type;
+  return 'stay';
+}
+
+/**
  * Categorizes raw /service/discover results into the Stay/Taxi/Adventure/Meals
  * buckets the builder and results pages both render.
  */
 export function mapServicesToVendors(services: any[]): Record<string, Vendor[]> {
   const categorized: Record<string, Vendor[]> = { stay: [], travel: [], activity: [], food: [] };
   services.forEach((s: any) => {
-    // Backend exposes vendor.types as an array (e.g. ["hotel"]); fall back to the
-    // legacy singular field / subcategory name for older payloads.
-    const vendorType = Array.isArray(s.vendor?.types) && s.vendor.types.length
-      ? s.vendor.types[0]
-      : (s.vendor?.type ?? s.subcategory?.parent?.name);
-    const type = vendorTypeToPreference(vendorType);
+    // Prioritize service item's own category/subcategory over vendor's primary registration type
+    const rawCategory = resolveServiceCategory(s);
+    const type = vendorTypeToPreference(rawCategory, s.name);
     const priceVal = Array.isArray(s.prices) && s.prices.length > 0 ? Number(s.prices[0]?.price) : 1500;
     const mapped: Vendor = {
       id: s.id.toString(),
@@ -57,15 +68,27 @@ export interface DiscoveryParams {
   endDate?: string;
 }
 
-// Maps backend vendor type → frontend preference key used in VendorSelectionCard
-export function vendorTypeToPreference(vendorType?: string): 'stay' | 'travel' | 'activity' | 'food' {
+// Maps backend vendor type or service category → frontend preference key used in VendorSelectionCard
+export function vendorTypeToPreference(vendorType?: string, serviceName?: string): 'stay' | 'travel' | 'activity' | 'food' {
+  if (serviceName) {
+    const sName = serviceName.toLowerCase();
+    if (sName.includes('walk') || sName.includes('trek') || sName.includes('tour') || sName.includes('guide') || sName.includes('safari') || sName.includes('rafting') || sName.includes('paragliding') || sName.includes('expedition') || sName.includes('trail')) {
+      return 'activity';
+    }
+    if (sName.includes('taxi') || sName.includes('cab') || sName.includes('transfer') || sName.includes('ride') || sName.includes('bike rental')) {
+      return 'travel';
+    }
+    if (sName.includes('breakfast') || sName.includes('dinner') || sName.includes('lunch') || sName.includes('meal') || sName.includes('tasting')) {
+      return 'food';
+    }
+  }
   if (!vendorType) return 'stay';
   const t = vendorType.toLowerCase();
-  if (t.includes('hotel') || t.includes('homestay') || t.includes('accommodation') || t.includes('stay')) return 'stay';
+  if (t.includes('activity') || t.includes('activities') || t.includes('trek') || t.includes('guide') || t.includes('adventure') || t.includes('rafting') || t.includes('paragliding') || t.includes('walk') || t.includes('tour') || t.includes('experience')) return 'activity';
+  if (t.includes('hotel') || t.includes('homestay') || t.includes('accommodation') || t.includes('stay') || t.includes('resort') || t.includes('villa') || t.includes('room')) return 'stay';
   if (t.includes('taxi') || t.includes('cab') || t.includes('transport') || t.includes('travel')) return 'travel';
-  if (t.includes('food') || t.includes('restaurant') || t.includes('meal') || t.includes('cafe')) return 'food';
-  // activity, guide, adventure, rafting, paragliding, etc.
-  return 'activity';
+  if (t.includes('food') || t.includes('restaurant') || t.includes('meal') || t.includes('cafe') || t.includes('culinary')) return 'food';
+  return 'stay';
 }
 
 // Maps vendor category preference → backend service category filter string
@@ -189,7 +212,7 @@ export const deleteVendor = async (id: string) => {
  * contact fields, which the Vendor endpoint silently drops (whitelist-only
  * validation strips any field CreateVendorDto doesn't declare).
  */
-export const createPointOfContact = async (data: { vendorId: string; name: string; email?: string; phone: string }) => {
+export const createPointOfContact = async (data: { vendorId: string; firstName: string; lastName?: string; email?: string; phone: string }) => {
   const raw = await api.post('/point-of-contact', data);
   return (raw as any)?.data ?? raw;
 };

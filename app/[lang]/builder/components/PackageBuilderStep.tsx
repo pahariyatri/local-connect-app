@@ -11,6 +11,7 @@ import { discoverServices, buildDiscoveryParams, mapServicesToVendors, EMPTY_VEN
 import { createPackage } from "@/services/packageService";
 import { toTitleCase } from "@/utils/text";
 import { sessionTracker } from "@/services/sessionService";
+import { trackTravellerRequestSubmit } from "@/lib/analytics";
 
 interface PackageBuilderStepProps {
   origin: string;
@@ -246,6 +247,19 @@ export default function PackageBuilderStep({
       });
       const id = (pkg as any)?.id;
       if (id) {
+        // The only real "a trip was built" signal in the whole funnel — until
+        // now nothing fired here, so every admin/campaign/referral report
+        // that counts trip builds always read zero regardless of real
+        // activity. `destination` (singular, first stop) is what the
+        // by-city demand aggregation in getSupplyDemandReport groups on.
+        sessionTracker.track('trip_builder_completed', {
+          entityType: 'package',
+          entityId: String(id),
+          metadata: { destination: destinations?.[0], destinations, origin },
+        });
+        // GTM/GA4 dataLayer stream (see CLAUDE.md §8) — a separate event
+        // vocabulary from sessionTracker above; both are intentionally kept.
+        trackTravellerRequestSubmit(id, totalPrice, destinations);
         const params = new URLSearchParams();
         params.set("packageId", String(id));
         router.push(`/${lang}/results?${params.toString()}`);
@@ -288,7 +302,7 @@ export default function PackageBuilderStep({
   return (
     <div className="animate-fade-in space-y-6">
       <header className="mb-6">
-        <Typography variant="h1" className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight" dangerouslySetInnerHTML={{ __html: builder?.step5?.title ?? "Build your <span class=\"text-emerald-600\">package</span>" }} />
+        <Typography variant="h1" className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight" dangerouslySetInnerHTML={{ __html: builder?.step5?.title ?? "Build your <span class=\"text-emerald-600\">Yatra plan</span>" }} />
         <p className="text-slate-400 font-medium mt-1 text-xs sm:text-sm">{builder?.step5?.subtitle ?? "Choose vendors for each day. Share or book when done."}</p>
       </header>
 

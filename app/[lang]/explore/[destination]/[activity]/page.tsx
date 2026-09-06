@@ -28,19 +28,24 @@ const ACTIVITY_MAP: Record<string, { display: string; category: string; keyword:
 };
 
 interface PageProps {
-  params: { lang: string; destination: string; activity: string };
+  params: Promise<{ lang: string; destination: string; activity: string }>;
 }
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const dest = DESTINATION_MAP[params.destination];
-  const act = ACTIVITY_MAP[params.activity];
+  const resolvedParams = await params;
+  const dest = DESTINATION_MAP[resolvedParams.destination];
+  const act = ACTIVITY_MAP[resolvedParams.activity];
   if (!dest || !act) return {};
 
-  const title = `${act.display} in ${dest.display} | Book Instantly | Pahari Yatri`;
+  // Corrected 2026-08: "Book Instantly" / "Instant booking" don't match the
+  // real flow (request → local partner confirms → reservation fee) — see
+  // booking.entity.ts's BookingStatus lifecycle. Don't put a claim in a
+  // <title>/<meta description> that the product itself doesn't do.
+  const title = `${act.display} in ${dest.display} | Pahari Yatri`;
   const description =
-    `Find and book verified ${act.keyword} in ${dest.display}, ${dest.state}. ` +
-    `Instant booking, transparent prices, local experts. No advance planning needed.`;
+    `Find verified ${act.keyword} in ${dest.display}, ${dest.state}. ` +
+    `Transparent prices, local experts, request-based confirmation.`;
 
   return {
     title,
@@ -51,33 +56,47 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       type: 'website',
     },
     alternates: {
-      canonical: `https://app.pahariyatri.com/${params.lang}/explore/${params.destination}/${params.activity}`,
+      canonical: `https://app.pahariyatri.com/${resolvedParams.lang}/explore/${resolvedParams.destination}/${resolvedParams.activity}`,
     },
   };
 }
 
 // Fetch services server-side for SEO
+//
+// WEBMCP_READINESS_AUDIT.md P0-6 fix (2026-08-29 remediation): this
+// previously JSON.stringify()'d destinations/categories into single query
+// values (e.g. `destinations=%5B%22Kasol%22%5D`). The backend's
+// ServiceDiscoverDto only unwraps a single scalar into a 1-element array
+// (see its `toArray` transform) — it does not JSON.parse a string — so the
+// literal string '["Kasol"]' (brackets and quotes included) was being used
+// as the filter value, which never matches a real city name. Fixed to use
+// the same repeated-key URLSearchParams.append() convention the rest of the
+// app's discoverServices() helper already uses correctly. Also fixed the
+// response parsing below: GET /service/discover returns `{ data: Service[] }`
+// (data is the array itself), not `{ data: { services: Service[] } }` — the
+// old `data?.data?.services` access was always undefined, so this page
+// always rendered zero results regardless of the query-param bug.
 async function fetchServices(destination: string, category: string) {
   try {
     const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000') + '/api/v1';
-    const params = new URLSearchParams({
-      destinations: JSON.stringify([destination]),
-      categories: JSON.stringify([category]),
-    });
+    const params = new URLSearchParams();
+    params.append('destinations', destination);
+    params.append('categories', category);
     const res = await fetch(`${API_BASE}/service/discover?${params}`, {
       next: { revalidate: 3600 }, // ISR: revalidate every hour
     });
     if (!res.ok) return [];
     const data = await res.json();
-    return data?.data?.services || data?.services || [];
+    return Array.isArray(data?.data) ? data.data : (data?.data?.services ?? data?.services ?? []);
   } catch {
     return [];
   }
 }
 
 export default async function DestinationActivityPage({ params }: PageProps) {
-  const dest = DESTINATION_MAP[params.destination];
-  const act = ACTIVITY_MAP[params.activity];
+  const { lang, destination, activity } = await params;
+  const dest = DESTINATION_MAP[destination];
+  const act = ACTIVITY_MAP[activity];
 
   if (!dest || !act) notFound();
 
@@ -119,11 +138,11 @@ export default async function DestinationActivityPage({ params }: PageProps) {
               {act.display} in {dest.display}
             </h1>
             <p className="text-slate-300 text-base font-medium mb-8">
-              Verified local {act.keyword.toLowerCase()} operators. Transparent prices. Instant booking.
-              No advance planning or travel agents needed.
+              Verified local {act.keyword.toLowerCase()} operators. Transparent prices. Request-based confirmation.
+              No travel agents needed.
             </p>
             <a
-              href={`/${params.lang}/builder`}
+              href={`/${lang}/builder`}
               className="inline-flex items-center gap-2 h-14 px-8 bg-emerald-500 text-white font-black text-sm uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-500/30 hover:bg-emerald-400 transition-colors"
             >
               Plan My Trip
@@ -144,7 +163,7 @@ export default async function DestinationActivityPage({ params }: PageProps) {
                 More {act.display} listings coming soon for {dest.display}.
               </p>
               <a
-                href={`/${params.lang}/builder`}
+                href={`/${lang}/builder`}
                 className="inline-flex items-center gap-2 h-12 px-6 bg-slate-900 text-white font-black text-xs uppercase tracking-widest rounded-xl"
               >
                 Plan Your Trip Instead
@@ -179,7 +198,7 @@ export default async function DestinationActivityPage({ params }: PageProps) {
                       </div>
                     </div>
                     <a
-                      href={`/${params.lang}/builder`}
+                      href={`/${lang}/builder`}
                       className="flex-shrink-0 h-10 px-4 bg-emerald-500 text-white font-black text-xs uppercase tracking-wide rounded-xl flex items-center hover:bg-emerald-400 transition-colors"
                     >
                       Book
@@ -199,7 +218,7 @@ export default async function DestinationActivityPage({ params }: PageProps) {
               Scan a vendor QR code or plan your full trip in 2 minutes.
             </p>
             <a
-              href={`/${params.lang}/builder`}
+              href={`/${lang}/builder`}
               className="inline-flex items-center gap-2 h-12 px-8 bg-emerald-500 text-white font-black text-sm uppercase tracking-widest rounded-xl"
             >
               Start Planning

@@ -6,13 +6,14 @@ import { useParams, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { Locale } from "@/i18n-config";
+import { userAvatarInitial } from "@/utils/text";
 
 /**
  * Mobile Bottom Navigation Bar
- * Standardized 5-tab mobile UX with context-aware states for:
- * 1. Logged-out Guests (Explore | Community | Plan Trip | Partner | Sign In)
- * 2. Logged-in Travelers (Explore | Community | Plan Trip | My Trips | Account)
- * 3. Logged-in Vendors (Dashboard | Services | Add Service | Bookings | Profile)
+ * Standardized 5-tab mobile UX, authenticated users only (see the `!user`
+ * early return below) — logged-out visitors get no bottom nav at all:
+ * 1. Logged-in Travelers (Explore | My Trips | Plan Trip | Partner | Account)
+ * 2. Logged-in Vendors (Overview | Services | Add Service | Bookings | Profile)
  */
 export default function BottomNavigation({
   onToggleLanguage, // eslint-disable-line @typescript-eslint/no-unused-vars
@@ -27,15 +28,28 @@ export default function BottomNavigation({
 
   const isVendor = !!user && /vendor|host|broker/i.test(user.role || "");
 
+  // Hide bottom navigation bar on transactional flows where a dedicated sticky footer action bar exists
+  const isTransactionalFlow =
+    pathname.startsWith(`/${lang}/builder`) ||
+    pathname.startsWith(`/${lang}/results`) ||
+    pathname.startsWith(`/${lang}/journey`);
+
+  if (isTransactionalFlow) {
+    return null;
+  }
+
+  // Logged-out visitors get no bottom nav — the guest-facing Explore/Plan/
+  // Sign-in tabs this bar used to show for `!user` are gone; those actions
+  // live in the top Header for anonymous visitors instead.
+  if (!user) {
+    return null;
+  }
+
   const navDict = dict?.nav || {};
   const commonDict = dict?.page?.common?.actions || {};
 
-  // Determine user avatar initial
-  const userInitial = user?.name
-    ? user.name.trim().charAt(0).toUpperCase()
-    : user?.phone
-    ? user.phone.slice(-1)
-    : "U";
+  // Same rule as Header.tsx's avatar — one shared helper for both.
+  const userInitial = userAvatarInitial(user.name, user.phone);
 
   // Check route active statuses
   const isExploreActive =
@@ -46,14 +60,16 @@ export default function BottomNavigation({
       !pathname.includes("/vendor/dashboard") &&
       !pathname.includes("/vendor/services") &&
       !pathname.includes("/vendor/onboarding") &&
-      !pathname.includes("/vendor/bookings"));
+      !pathname.includes("/vendor/bookings") &&
+      !pathname.includes("/vendor/community"));
 
-  const isCommunityActive = pathname.startsWith(`/${lang}/community`);
-  const isPlanActive = pathname.startsWith(`/${lang}/builder`) || pathname.startsWith(`/${lang}/journey`);
+  const isPlanActive =
+    pathname.startsWith(`/${lang}/builder`) ||
+    pathname.startsWith(`/${lang}/journey`);
+
   const isPartnerActive = pathname.startsWith(`/${lang}/vendor/onboarding`);
   const isBookingsActive = pathname.startsWith(`/${lang}/bookings`);
   const isProfileActive = pathname.startsWith(`/${lang}/profile`);
-  const isAuthActive = pathname.startsWith(`/${lang}/auth/`);
 
   // Vendor routes
   const isVendorDashboardActive = pathname === `/${lang}/vendor/dashboard`;
@@ -172,7 +188,7 @@ export default function BottomNavigation({
             </Link>
           </>
         ) : (
-          /* ─── CASE 2: TRAVELER (LOGGED IN OR GUEST) ─── */
+          /* ─── CASE 2: LOGGED-IN TRAVELER (guests never reach this component) ─── */
           <>
             {/* Tab 1: Explore */}
             <Link
@@ -189,28 +205,28 @@ export default function BottomNavigation({
                 {isExploreActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
               </div>
               <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
-                {navDict.explore || commonDict.explore || "Explore"}
+                {lang === "en" ? "Explore" : (navDict.explore || commonDict.explore || "Explore")}
               </span>
             </Link>
 
-            {/* Tab 2: Community */}
+            {/* Tab 2: My Trips / Bookings */}
             <Link
-              href={`/${lang}/community`}
+              href={`/${lang}/bookings`}
               className={`flex flex-col items-center justify-center w-full py-1 rounded-xl transition-all active:scale-90 ${
-                isCommunityActive ? "text-emerald-600 font-bold" : "text-slate-500 hover:text-slate-800"
+                isBookingsActive ? "text-emerald-600 font-bold" : "text-slate-500 hover:text-slate-800"
               }`}
             >
               <div className="relative">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isCommunityActive ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isBookingsActive ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
                 </svg>
-                {isCommunityActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
+                {isBookingsActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
               </div>
               <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
-                {navDict.community || commonDict.community || "Community"}
+                {commonDict.my_bookings || "My Trips"}
               </span>
             </Link>
 
@@ -249,86 +265,44 @@ export default function BottomNavigation({
               </span>
             </Link>
 
-            {/* Tab 4: Partner (if Guest) or My Trips (if Logged In Traveler) */}
-            {user ? (
-              <Link
-                href={`/${lang}/bookings`}
-                className={`flex flex-col items-center justify-center w-full py-1 rounded-xl transition-all active:scale-90 ${
-                  isBookingsActive ? "text-emerald-600 font-bold" : "text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                <div className="relative">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isBookingsActive ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                    <line x1="16" y1="2" x2="16" y2="6" />
-                    <line x1="8" y1="2" x2="8" y2="6" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                  </svg>
-                  {isBookingsActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
-                </div>
-                <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
-                  {commonDict.my_bookings || "My Trips"}
-                </span>
-              </Link>
-            ) : (
-              <Link
-                href={`/${lang}/vendor/onboarding`}
-                className={`flex flex-col items-center justify-center w-full py-1 rounded-xl transition-all active:scale-90 ${
-                  isPartnerActive ? "text-emerald-600 font-bold" : "text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                <div className="relative">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isPartnerActive ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                    <polyline points="9 22 9 12 15 12 15 22" />
-                  </svg>
-                  {isPartnerActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
-                </div>
-                <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
-                  {navDict.partner || "Partner"}
-                </span>
-              </Link>
-            )}
+            {/* Tab 4: Partner */}
+            <Link
+              href={`/${lang}/vendor/onboarding`}
+              className={`flex flex-col items-center justify-center w-full py-1 rounded-xl transition-all active:scale-90 ${
+                isPartnerActive ? "text-emerald-600 font-bold" : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <div className="relative">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isPartnerActive ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+                {isPartnerActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
+              </div>
+              <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
+                {navDict.partner || "Partner"}
+              </span>
+            </Link>
 
-            {/* Tab 5: Account (if logged in) or Sign In (if guest) */}
-            {user ? (
-              <Link
-                href={`/${lang}/profile`}
-                className={`flex flex-col items-center justify-center w-full py-1 rounded-xl transition-all active:scale-90 ${
-                  isProfileActive ? "text-emerald-600 font-bold" : "text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                <div className="relative">
-                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black leading-none ${
-                    isProfileActive ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-700"
-                  }`}>
-                    {userInitial}
-                  </span>
-                  {isProfileActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
-                </div>
-                <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
-                  {commonDict.profile || "Account"}
+            {/* Tab 5: Account */}
+            <Link
+              href={`/${lang}/profile`}
+              className={`flex flex-col items-center justify-center w-full py-1 rounded-xl transition-all active:scale-90 ${
+                isProfileActive ? "text-emerald-600 font-bold" : "text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <div className="relative">
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black leading-none ${
+                  isProfileActive ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-700"
+                }`}>
+                  {userInitial}
                 </span>
-              </Link>
-            ) : (
-              <Link
-                href={`/${lang}/auth/login`}
-                className={`flex flex-col items-center justify-center w-full py-1 rounded-xl transition-all active:scale-90 ${
-                  isAuthActive ? "text-emerald-600 font-bold" : "text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                <div className="relative">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={isAuthActive ? "2.5" : "2"} strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                  {isAuthActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
-                </div>
-                <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
-                  {navDict.sign_in || "Sign In"}
-                </span>
-              </Link>
-            )}
+                {isProfileActive && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-600" />}
+              </div>
+              <span className="text-[10px] tracking-tight mt-0.5 leading-none font-medium">
+                {commonDict.profile || "Account"}
+              </span>
+            </Link>
           </>
         )}
 

@@ -15,7 +15,6 @@ export default function PublicFooter() {
       links: [
         { label: 'Explore Directory', href: p('/explore') },
         { label: 'Trip Builder', href: p('/builder') },
-        { label: 'Community', href: p('/community') },
       ],
     },
     {
@@ -63,6 +62,9 @@ export default function PublicFooter() {
 
             <p className="text-slate-400 text-xs leading-relaxed">
               {BRAND_CONFIG.tagline}
+            </p>
+            <p className="text-slate-500 text-[11px] leading-relaxed">
+              {BRAND_CONFIG.trustLine}
             </p>
 
             <div className="pt-2 text-xs space-y-1.5 border-t border-white/5">

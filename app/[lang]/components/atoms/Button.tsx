@@ -3,7 +3,16 @@
 import React from "react";
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "secondary" | "outline" | "ghost";
+  /**
+   * "primary" is the brand green (matches the reference design's Primary
+   * Button — Search/Check Availability/Pay/Continue all use it). "dark" is
+   * the previous black/slate-900 treatment, kept as an explicit choice for
+   * places that want that specific contrast rather than the app's own
+   * default action color. "brand" is an alias for "primary" — was defined
+   * as a CSS class before but wasn't a valid value here, so nothing could
+   * actually select it; kept accepting it so no caller breaks.
+   */
+  variant?: "primary" | "brand" | "dark" | "secondary" | "outline" | "ghost";
   size?: "small" | "medium" | "large";
   icon?: React.ReactNode;
   iconRight?: React.ReactNode;
@@ -27,7 +36,8 @@ export default function Button({
   
   const variants = {
     primary: "btn-primary",
-    brand: "btn-brand",
+    brand: "btn-primary",
+    dark: "btn-dark",
     secondary: "btn-secondary",
     outline: "border-2 border-slate-900 text-slate-900 hover:bg-slate-50",
     ghost: "bg-transparent text-slate-500 hover:bg-slate-50 shadow-none",

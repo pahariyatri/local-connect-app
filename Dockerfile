@@ -3,6 +3,8 @@
 # Build:  docker build -t local-connect-frontend .
 # Run:    docker run -p 3000:3000 local-connect-frontend
 # Override for staging/local: --build-arg NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
+# Enable GTM tracking:         --build-arg NEXT_PUBLIC_GTM_ID=GTM-XXXXXXX
+#   (must be passed at BUILD time — see the ARG below for why)
 
 FROM node:22-alpine AS base
 RUN apk add --no-cache libc6-compat
@@ -25,6 +27,13 @@ ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
 # behavior) unless explicitly overridden at build time.
 ARG NEXT_PUBLIC_AUTH_MODE=otp
 ENV NEXT_PUBLIC_AUTH_MODE=$NEXT_PUBLIC_AUTH_MODE
+# GTM container ID for portal tracking (see lib/analytics.ts, app/layout.tsx).
+# No default — GTM stays off unless explicitly passed. NEXT_PUBLIC_* values
+# are compiled into the client bundle here, at build time; setting this on
+# the running container instead (docker run -e ...) has no effect, because
+# the bundle copied into the runner stage below has already been built.
+ARG NEXT_PUBLIC_GTM_ID=""
+ENV NEXT_PUBLIC_GTM_ID=$NEXT_PUBLIC_GTM_ID
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 

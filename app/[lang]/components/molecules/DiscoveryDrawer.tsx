@@ -55,7 +55,7 @@ const DiscoveryDrawer: React.FC<DiscoveryDrawerProps> = ({
                 Discover <span className="text-indigo-600">{category}</span>
               </Typography>
               <p className="text-slate-500 font-medium text-sm mt-1">
-                Hand-picked elite options for your journey
+                Hand-picked elite options for your trip
               </p>
             </div>
             <button 
@@ -95,7 +95,7 @@ const DiscoveryDrawer: React.FC<DiscoveryDrawerProps> = ({
                   <div className="flex items-center justify-between">
                     <p className="text-lg font-black text-slate-900">₹{vendor.price.toLocaleString()}</p>
                     <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      Add to Journey
+                      Select Option
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                     </span>
                   </div>

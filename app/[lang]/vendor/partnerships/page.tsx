@@ -19,7 +19,7 @@ export default function PartnershipsPage() {
 
     return (
         <div className="max-w-md mx-auto">
-            <header className="mb-10 animate-in fade-in slide-in-from-bottom-5 duration-700">
+            <header className="mb-6 sm:mb-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
                 <Typography variant="h1" className="text-4xl font-black text-slate-900 leading-tight">
                     Vendor <span className="text-emerald-500">Circle.</span>
                 </Typography>
@@ -42,7 +42,7 @@ export default function PartnershipsPage() {
                 <input 
                     type="text" 
                     placeholder="FIND PARTNERS..." 
-                    className="w-full h-14 bg-transparent outline-none px-4 text-[10px] font-black text-slate-900 placeholder:text-slate-300 uppercase tracking-widest"
+                    className="w-full h-14 bg-transparent outline-none px-4 text-base font-black text-slate-900 placeholder:text-slate-300 uppercase tracking-widest"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                 />
@@ -82,7 +82,7 @@ export default function PartnershipsPage() {
                 </div>
             )}
             
-            <div className="mt-16 text-center pb-12 opacity-20">
+            <div className="mt-10 sm:mt-12 text-center pb-8 opacity-20">
                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.5em]">Network Mesh v.1.2</p>
             </div>
         </div>

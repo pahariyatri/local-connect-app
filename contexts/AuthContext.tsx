@@ -20,6 +20,7 @@ interface AuthContextType {
   authStatus: AuthStatus;
   login: (userData: User) => void;
   logout: () => void;
+  refreshUser: () => Promise<User | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,6 +29,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const authStatus: AuthStatus = isLoading ? 'hydrating' : user ? 'authenticated' : 'unauthenticated';
+
+  const refreshUser = async (): Promise<User | null> => {
+    try {
+      const result = await getMe();
+      const userProfile = result?.data ?? result;
+      if (userProfile?.id) {
+        const mappedUser = {
+          id: userProfile.id,
+          name: userProfile.name || `${userProfile.firstName || ''} ${userProfile.lastName || ''}`.trim() || 'User',
+          email: userProfile.email || '',
+          phone: userProfile.phone || '',
+          role: userProfile.role || 'Guest',
+        };
+        setUser(mappedUser);
+        localStorage.setItem('user_meta', JSON.stringify(mappedUser));
+        return mappedUser;
+      }
+    } catch { /* storage or network error */ }
+    return null;
+  };
 
   useEffect(() => {
     const checkUser = async () => {
@@ -79,18 +100,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = (userData: User) => {
     setUser(userData);
     localStorage.setItem('user_meta', JSON.stringify(userData));
+    localStorage.removeItem('vendorId');
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user_meta');
+    localStorage.removeItem('vendorId');
     // Single logout path: revokes the server session + clears cookies + cache.
     void logoutApi();
   };
 
   return (
-    <AuthContext.Provider value={{ user, authStatus, login, logout }}>
-      {!isLoading && children}
+    <AuthContext.Provider value={{ user, authStatus, login, logout, refreshUser }}>
+      {/* Always render children — the `useEffect` above never runs during
+       * SSR, so `isLoading` is permanently true on the server. Gating
+       * children on it (as this used to) suppressed the ENTIRE app's
+       * server-rendered HTML on every request, contradicting the comment
+       * above about not blocking rendering. Consumers that need to
+       * distinguish "still checking" from "definitely logged out" have
+       * `authStatus` for exactly that. */}
+      {children}
     </AuthContext.Provider>
   );
 }

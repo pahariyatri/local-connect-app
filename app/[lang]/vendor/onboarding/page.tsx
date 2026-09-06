@@ -8,10 +8,13 @@ import { sanitizePhone, isValidPhone, PHONE_LENGTH, toNationalDigits } from "@/u
 import { toApiUiError } from "@/utils/apiErrors";
 import { createVendor, createPointOfContact, getMyVendor } from "@/services/vendorService";
 import { uploadMedia, deleteMedia, validateImage, type UploadedMedia } from "@/services/mediaService";
+import { useTouchedFields } from "@/hooks/useTouchedFields";
+import { trackVendorApplyStart, trackVendorApplySubmit } from "@/lib/analytics";
 import Typography from "../../components/atoms/Typography";
 import Button from "../../components/atoms/Button";
 import Input from "../../components/atoms/Input";
 import Textarea from "../../components/atoms/Textarea";
+import FieldError from "../../components/atoms/FieldError";
 
 // ─── Icon system — same inline-stroke-SVG convention used across the app ───
 
@@ -66,7 +69,24 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 type DocEntry = UploadedMedia & { label: string; uploading?: boolean };
 
 const TOTAL_STEPS = 5;
-const STEP_LABELS = ["Basic info", "Category", "About", "Documents", "Review"];
+const STEP_LABELS = ["Basic info", "Category", "About", "Documents & Payout", "Review"];
+
+type PayoutMethod = "upi" | "bank";
+
+type FieldName =
+  | "contactFirstName" | "businessName" | "phone" | "email" | "types" | "description"
+  | "payoutMethod" | "upiId" | "accountHolderName" | "accountNumber" | "ifsc";
+
+// Which fields belong to each step — drives markAllTouched on "Continue" so
+// every error on the step surfaces at once, including button-group fields
+// (like `types`) that have no blur event to touch them individually.
+const STEP_FIELDS: Record<number, FieldName[]> = {
+  1: ["contactFirstName", "businessName", "phone", "email"],
+  2: ["types"],
+  3: ["description"],
+  4: ["payoutMethod", "upiId", "accountHolderName", "accountNumber", "ifsc"],
+  5: [],
+};
 
 export default function VendorOnboardingPage() {
   const { lang } = useParams();
@@ -99,8 +119,15 @@ export default function VendorOnboardingPage() {
     return () => { cancelled = true; };
   }, [lang, router]);
 
+  // Fires once the form is actually shown — not for a user who turns out to
+  // already have a vendor record and gets redirected straight to their dashboard.
+  useEffect(() => {
+    if (onboardCheck === "needed") trackVendorApplyStart();
+  }, [onboardCheck]);
+
   // Step 1 — basic info
-  const [contactName, setContactName] = useState("");
+  const [contactFirstName, setContactFirstName] = useState("");
+  const [contactLastName, setContactLastName] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [phone, setPhone] = useState(user?.phone ? toNationalDigits(user.phone) : "");
   const [email, setEmail] = useState(user?.email || "");
@@ -116,8 +143,15 @@ export default function VendorOnboardingPage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Step 4 — payout details (Vendor.payoutDetails, jsonb — see create-vendor.dto.ts)
+  const [payoutMethod, setPayoutMethod] = useState<PayoutMethod | "">("");
+  const [upiId, setUpiId] = useState("");
+  const [accountHolderName, setAccountHolderName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [ifsc, setIfsc] = useState("");
+
   // Submission
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const { touched, markTouched, markAllTouched } = useTouchedFields<FieldName>();
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [createdVendorId, setCreatedVendorId] = useState<string | null>(null);
@@ -128,23 +162,28 @@ export default function VendorOnboardingPage() {
     if (user?.email && !email) setEmail(user.email);
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const markTouched = (field: string) => setTouched((t) => ({ ...t, [field]: true }));
-
   const errors = {
-    contactName: contactName.trim().length < 1 ? "Your name is required." : undefined,
+    contactFirstName: contactFirstName.trim().length < 1 ? "First name is required." : undefined,
     businessName: businessName.trim().length < 1 ? "Business name is required." : undefined,
     phone: !isValidPhone(phone) ? `Enter a valid ${PHONE_LENGTH}-digit mobile number.` : undefined,
     email: email.trim().length > 0 && !EMAIL_RE.test(email) ? "Enter a valid email address." : undefined,
     types: types.length === 0 ? "Select at least one category." : undefined,
     description: description.trim().length < 10 ? "Add a few more words (at least 10 characters)." : undefined,
+    payoutMethod: !payoutMethod ? "Choose how you'd like to get paid." : undefined,
+    upiId: payoutMethod === "upi" && upiId.trim().length < 3 ? "Enter a valid UPI ID." : undefined,
+    accountHolderName: payoutMethod === "bank" && accountHolderName.trim().length < 1 ? "Account holder name is required." : undefined,
+    accountNumber: payoutMethod === "bank" && accountNumber.trim().length < 6 ? "Enter a valid account number." : undefined,
+    ifsc: payoutMethod === "bank" && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc.trim().toUpperCase()) ? "Enter a valid IFSC code." : undefined,
   };
 
   const isStepValid = (s: number) => {
     switch (s) {
-      case 1: return !errors.contactName && !errors.businessName && !errors.phone && !errors.email;
+      case 1: return !errors.contactFirstName && !errors.businessName && !errors.phone && !errors.email;
       case 2: return !errors.types;
       case 3: return !errors.description;
-      case 4: return true; // documents are optional
+      case 4:
+        if (errors.payoutMethod) return false;
+        return payoutMethod === "upi" ? !errors.upiId : !errors.accountHolderName && !errors.accountNumber && !errors.ifsc;
       case 5: return true;
       default: return false;
     }
@@ -152,11 +191,14 @@ export default function VendorOnboardingPage() {
 
   const toggleType = (t: VendorType) => {
     setTypes((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]));
+    // Button groups have no blur event — touch on first interaction so the
+    // error can appear/clear reactively as the user (de)selects categories,
+    // same as a text field reacting to onBlur.
+    markTouched("types");
   };
 
   const handleNext = () => {
-    if (step === 1) setTouched((t) => ({ ...t, contactName: true, businessName: true, phone: true, email: true }));
-    if (step === 3) setTouched((t) => ({ ...t, description: true }));
+    markAllTouched(STEP_FIELDS[step] ?? []);
     if (!isStepValid(step)) return;
     if (step < TOTAL_STEPS) setStep(step + 1);
   };
@@ -213,11 +255,18 @@ export default function VendorOnboardingPage() {
           if (d.url) acc[d.label || d.key] = d.url;
           return acc;
         }, {});
+        const payoutDetails: Record<string, string> =
+          payoutMethod === "upi"
+            ? { method: "upi", upiId: upiId.trim() }
+            : payoutMethod === "bank"
+            ? { method: "bank", accountHolderName: accountHolderName.trim(), accountNumber: accountNumber.trim(), ifsc: ifsc.trim().toUpperCase() }
+            : {};
         const vendor = await createVendor({
           businessName: businessName.trim(),
           description: description.trim(),
           types,
           ...(Object.keys(documentsMap).length > 0 ? { documents: documentsMap } : {}),
+          ...(Object.keys(payoutDetails).length > 0 ? { payoutDetails } : {}),
         });
         vendorId = vendor?.id;
         if (!vendorId) throw new Error("Vendor was created but no id was returned.");
@@ -226,16 +275,22 @@ export default function VendorOnboardingPage() {
 
       await createPointOfContact({
         vendorId,
-        name: contactName.trim(),
+        firstName: contactFirstName.trim(),
+        ...(contactLastName.trim() ? { lastName: contactLastName.trim() } : {}),
         phone,
         ...(email.trim() ? { email: email.trim() } : {}),
       });
 
-      // No backend link between a logged-in user and their vendor record yet
-      // (see final report) — this is the pragmatic bridge so the dashboard
-      // can show the vendor that was *just* created in this session.
+      // The refresh-token rotation to pick up the new Role.Vendor JWT claim
+      // happens exactly once, on the confirmation page (see its handleContinue)
+      // — not here too. A second call in a row hit the backend's reuse
+      // detection (single-use refresh tokens: a token used twice is treated
+      // as a stolen/replayed token and revokes the whole session), which is
+      // what forced travelers into an unnecessary second login right after
+      // successfully submitting this form. Don't call token/refresh here.
       try { window.localStorage.setItem("vendorId", vendorId); } catch { /* storage unavailable — non-fatal */ }
 
+      trackVendorApplySubmit(vendorId, businessName.trim());
       router.replace(`/${lang}/vendor/onboarding/confirmation`);
     } catch (err) {
       const ui = toApiUiError(err, "We could not submit your application. Review the highlighted fields and try again.");
@@ -244,7 +299,7 @@ export default function VendorOnboardingPage() {
       isSubmittingRef.current = false;
       setSubmitting(false);
     }
-  }, [createdVendorId, documents, businessName, description, types, contactName, phone, email, lang, router]);
+  }, [createdVendorId, documents, businessName, description, types, contactFirstName, contactLastName, phone, email, payoutMethod, upiId, accountHolderName, accountNumber, ifsc, lang, router]);
 
   // ─── Step content ──────────────────────────────────────────────────────
   // The step number + title live in the progress indicator (below), so each
@@ -256,16 +311,25 @@ export default function VendorOnboardingPage() {
       case 1:
         return (
           <div key={step} className="animate-fade-in space-y-5">
-            <Input
-              label="Your name"
-              name="contactName"
-              value={contactName}
-              onChange={(e) => setContactName(e.target.value)}
-              onBlur={() => markTouched("contactName")}
-              placeholder="e.g. Priya Sharma"
-              autoFocus
-              error={touched.contactName ? errors.contactName : undefined}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="First name"
+                name="contactFirstName"
+                value={contactFirstName}
+                onChange={(e) => setContactFirstName(e.target.value)}
+                onBlur={() => markTouched("contactFirstName")}
+                placeholder="e.g. Priya"
+                autoFocus
+                error={touched.contactFirstName ? errors.contactFirstName : undefined}
+              />
+              <Input
+                label="Last name (optional)"
+                name="contactLastName"
+                value={contactLastName}
+                onChange={(e) => setContactLastName(e.target.value)}
+                placeholder="e.g. Sharma"
+              />
+            </div>
             <Input
               label="Business or provider name"
               name="businessName"
@@ -291,7 +355,7 @@ export default function VendorOnboardingPage() {
                   className="flex-1 h-full px-4 py-4 bg-transparent border-0 outline-none font-medium text-slate-900"
                 />
               </div>
-              {touched.phone && errors.phone && <p role="alert" className="text-xs text-red-500 mt-1.5 pl-2 animate-fade-in">{errors.phone}</p>}
+              <FieldError message={touched.phone ? errors.phone : undefined} />
             </div>
             <Input
               label="Email (optional)"
@@ -336,7 +400,7 @@ export default function VendorOnboardingPage() {
                 );
               })}
             </div>
-            {touched.types && errors.types && <p role="alert" className="text-xs text-red-500 pl-2 mt-3 animate-fade-in">{errors.types}</p>}
+            <div className="mt-3"><FieldError message={touched.types ? errors.types : undefined} /></div>
           </div>
         );
       case 3: {
@@ -352,7 +416,7 @@ export default function VendorOnboardingPage() {
                 onBlur={() => markTouched("description")}
                 placeholder="What do you offer, and what makes it worth booking?"
                 rows={6}
-                className="!bg-transparent !border-0 !p-0 focus:!bg-transparent"
+                className="!bg-transparent !border-0 px-2 py-2 focus:!bg-transparent"
                 error={touched.description ? errors.description : undefined}
               />
               {activeHints.length > 0 && !errors.description && (
@@ -417,13 +481,83 @@ export default function VendorOnboardingPage() {
                 ))}
               </ul>
             )}
+
+            <div className="mt-8 pt-6 border-t border-slate-100">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2 mb-3">How should we pay you?</p>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                {(["upi", "bank"] as PayoutMethod[]).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => { setPayoutMethod(m); markTouched("payoutMethod"); }}
+                    aria-pressed={payoutMethod === m}
+                    className={`h-14 rounded-2xl border-2 text-sm font-bold transition-all active:scale-95 ${
+                      payoutMethod === m ? "border-slate-900 bg-slate-900 text-white" : "border-slate-100 bg-slate-50/50 text-slate-600 hover:border-slate-200"
+                    }`}
+                  >
+                    {m === "upi" ? "UPI" : "Bank transfer"}
+                  </button>
+                ))}
+              </div>
+              <FieldError message={touched.payoutMethod ? errors.payoutMethod : undefined} />
+
+              {payoutMethod === "upi" && (
+                <div className="mt-3 animate-fade-in">
+                  <Input
+                    label="UPI ID"
+                    name="upiId"
+                    value={upiId}
+                    onChange={(e) => setUpiId(e.target.value)}
+                    onBlur={() => markTouched("upiId")}
+                    placeholder="e.g. yourname@bank"
+                    error={touched.upiId ? errors.upiId : undefined}
+                  />
+                </div>
+              )}
+
+              {payoutMethod === "bank" && (
+                <div className="mt-3 space-y-4 animate-fade-in">
+                  <Input
+                    label="Account holder name"
+                    name="accountHolderName"
+                    value={accountHolderName}
+                    onChange={(e) => setAccountHolderName(e.target.value)}
+                    onBlur={() => markTouched("accountHolderName")}
+                    placeholder="As it appears on your bank account"
+                    error={touched.accountHolderName ? errors.accountHolderName : undefined}
+                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input
+                      label="Account number"
+                      name="accountNumber"
+                      value={accountNumber}
+                      onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ""))}
+                      onBlur={() => markTouched("accountNumber")}
+                      inputMode="numeric"
+                      placeholder="0000000000"
+                      error={touched.accountNumber ? errors.accountNumber : undefined}
+                    />
+                    <Input
+                      label="IFSC code"
+                      name="ifsc"
+                      value={ifsc}
+                      onChange={(e) => setIfsc(e.target.value.toUpperCase())}
+                      onBlur={() => markTouched("ifsc")}
+                      placeholder="e.g. HDFC0001234"
+                      error={touched.ifsc ? errors.ifsc : undefined}
+                    />
+                  </div>
+                </div>
+              )}
+              <p className="text-[11px] text-slate-400 mt-3 pl-2">Used only to send your payouts — never shown to travelers.</p>
+            </div>
           </div>
         );
       case 5:
         return (
           <div key={step} className="animate-fade-in">
             <div className="rounded-[2rem] border border-slate-100 bg-white shadow-sm divide-y divide-slate-100 overflow-hidden">
-              <ReviewRow icon="user" label="Contact" value={contactName} />
+              <ReviewRow icon="user" label="Contact" value={contactLastName.trim() ? `${contactFirstName} ${contactLastName}` : contactFirstName} />
               <ReviewRow icon="home" label="Business" value={businessName} />
               <ReviewRow icon="phone" label="Phone" value={`+91 ${toNationalDigits(phone)}`} />
               {email && <ReviewRow icon="mail" label="Email" value={email} />}
@@ -433,6 +567,11 @@ export default function VendorOnboardingPage() {
                 value={types.map((t) => CATEGORY_OPTIONS.find((c) => c.id === t)?.label || t).join(", ") || "—"}
               />
               <ReviewRow icon="file" label="Documents" value={documents.filter((d) => !d.uploading).length ? `${documents.filter((d) => !d.uploading).length} uploaded` : "None"} />
+              <ReviewRow
+                icon="check"
+                label="Payout"
+                value={payoutMethod === "upi" ? `UPI · ${upiId}` : payoutMethod === "bank" ? `Bank · ${accountNumber ? `••••${accountNumber.slice(-4)}` : ""}` : "—"}
+              />
             </div>
             <div className="rounded-[2rem] border border-slate-100 bg-white shadow-sm p-5 sm:p-6 mt-4">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Description</p>
@@ -465,21 +604,22 @@ export default function VendorOnboardingPage() {
         <p className="text-slate-400 font-medium mt-1 text-xs sm:text-sm">5 quick steps to start receiving bookings.</p>
       </header>
 
-      {/* Step progress: number, title, and how many are left, above a segmented bar. */}
+      {/* Step progress: "Step N of TOTAL" above a single continuous fill bar. */}
       <div className="mb-6 sm:mb-8">
         <div className="flex items-baseline justify-between mb-2">
-          <p className="text-xs sm:text-sm font-black text-slate-900">
-            Step {step}<span className="text-slate-300 font-bold"> / {TOTAL_STEPS}</span>
-            <span className="ml-2 text-slate-500 font-bold">{STEP_LABELS[step - 1]}</span>
+          <p className="text-xs sm:text-sm font-semibold text-slate-900">
+            Step {step} of {TOTAL_STEPS}
+            <span className="ml-2 text-slate-500 font-medium">{STEP_LABELS[step - 1]}</span>
           </p>
-          <p className="text-[10px] sm:text-xs font-bold text-slate-300 uppercase tracking-widest">
+          <p className="text-[10px] sm:text-xs font-medium text-slate-400">
             {step === TOTAL_STEPS ? "Last step" : `${TOTAL_STEPS - step} left`}
           </p>
         </div>
-        <div className="flex gap-1.5 sm:gap-2">
-          {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-            <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${i + 1 <= step ? "bg-slate-900" : "bg-slate-200"}`} />
-          ))}
+        <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-emerald-600 rounded-full transition-all duration-500"
+            style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
+          />
         </div>
       </div>
 
@@ -487,32 +627,34 @@ export default function VendorOnboardingPage() {
 
       {isMounted && createPortal(
         <div className="builder-footer-safe-area fixed bottom-0 left-0 right-0 px-3 sm:px-6 pt-3 sm:pt-6 bg-white/90 backdrop-blur-xl border-t border-slate-100 z-50">
-          <div className="max-w-2xl mx-auto px-2 sm:px-4 flex items-center justify-between gap-3 sm:gap-4">
-            <Button variant="ghost" onClick={handleBack} className="w-fit px-6 sm:px-8 h-12 sm:h-16 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:bg-slate-100 text-[9px] sm:text-xs">
-              {step === 1 ? "Exit" : "Back"}
-            </Button>
-            {step === TOTAL_STEPS ? (
-              <Button
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="flex-1 h-12 sm:h-16 rounded-xl sm:rounded-2xl text-sm sm:text-lg font-black tracking-[0.15em] sm:tracking-[0.2em] transition-all uppercase bg-slate-900 hover:bg-black text-white shadow-2xl active:scale-[0.98] disabled:opacity-50"
-              >
-                {submitting ? (
-                  <div className="flex items-center justify-center gap-3">
-                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                    <span className="text-xs md:text-sm tracking-widest">Submitting…</span>
-                  </div>
-                ) : "Submit Application"}
+          <div className="max-w-2xl mx-auto px-2 sm:px-4 flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-3 sm:gap-4">
+              <Button variant="ghost" onClick={handleBack} className="w-fit px-6 sm:px-8 h-12 sm:h-16 rounded-xl sm:rounded-2xl font-semibold text-slate-400 hover:text-slate-900 hover:bg-slate-100 text-sm">
+                {step === 1 ? "Exit" : "Back"}
               </Button>
-            ) : (
-              <Button
-                onClick={handleNext}
-                disabled={!isStepValid(step)}
-                className="flex-1 h-12 sm:h-16 rounded-xl sm:rounded-2xl text-sm sm:text-lg font-black tracking-[0.15em] sm:tracking-[0.2em] transition-all uppercase bg-slate-900 hover:bg-black text-white shadow-2xl active:scale-[0.98] disabled:opacity-40"
-              >
-                Continue
-              </Button>
-            )}
+              {step === TOTAL_STEPS ? (
+                <Button
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="flex-1 h-12 sm:h-16 rounded-xl sm:rounded-2xl text-base sm:text-lg font-semibold transition-all bg-slate-900 hover:bg-black text-white shadow-2xl active:scale-[0.98] disabled:opacity-50"
+                >
+                  {submitting ? (
+                    <div className="flex items-center justify-center gap-3">
+                      <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                      <span className="text-sm">Submitting…</span>
+                    </div>
+                  ) : "Submit application"}
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleNext}
+                  disabled={!isStepValid(step)}
+                  className="flex-1 h-12 sm:h-16 rounded-xl sm:rounded-2xl text-base sm:text-lg font-semibold transition-all bg-slate-900 hover:bg-black text-white shadow-2xl active:scale-[0.98] disabled:opacity-40"
+                >
+                  Continue
+                </Button>
+              )}
+            </div>
           </div>
         </div>,
         document.body,

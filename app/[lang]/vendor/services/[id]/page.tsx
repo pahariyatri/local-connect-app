@@ -202,13 +202,23 @@ export default function VendorServiceDetailsPage() {
                         </div>
                     </div>
 
-                    {/* Cancellation Policy */}
+                    {/* Cancellation Policy — real per-service value from the backend
+                        (service.cancellationPolicy), or an honest hedge when the
+                        partner hasn't set one. Never a fabricated default. */}
                     <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/60">
-                        <h3 className="text-[10px] font-black uppercase tracking-wider text-amber-900 mb-1">Cancellation & Guarantee</h3>
+                        <h3 className="text-[10px] font-black uppercase tracking-wider text-amber-900 mb-1">Cancellation Policy</h3>
                         <p className="text-xs text-amber-800 font-medium leading-relaxed">
-                            Free cancellation up to 48 hours prior to the scheduled date. Direct local host coordination provided upon reservation.
+                            {(service.cancellationPolicy || "").trim() || "Ask this local partner about their cancellation policy before confirming."}
                         </p>
                     </div>
+                    {service.termsAndConditions && (
+                        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/70">
+                            <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">Service Terms</h3>
+                            <p className="text-xs text-slate-700 font-medium leading-relaxed">
+                                {service.termsAndConditions}
+                            </p>
+                        </div>
+                    )}
 
                     {/* Host Profile Bar */}
                     {service.vendor && (
@@ -240,7 +250,7 @@ export default function VendorServiceDetailsPage() {
                         onClick={handleAdd}
                         className="w-full h-14 rounded-2xl bg-slate-950 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-slate-950/15 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2"
                     >
-                        Add to Custom Trip Package →
+                        Add to My Yatra Plan →
                     </button>
                 </div>
 

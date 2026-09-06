@@ -10,6 +10,12 @@
  * - Bounded 401 handling: one silent refresh (deduplicated) then one replay;
  *   never for /auth/* endpoints themselves — no refresh loops.
  * - Opt-in sessionStorage caching for non-personal GETs only.
+ * - In-flight mutation dedup: a second identical POST/PUT/PATCH/DELETE
+ *   (same method+endpoint+body) fired while the first is still pending
+ *   reuses that same pending promise instead of opening a second network
+ *   request — the state-driven `disabled` prop on a submit button can't
+ *   prevent a double-click landing before React commits the re-render, so
+ *   this is enforced centrally rather than re-implemented per component.
  */
 
 import { API_BASE_URL } from '@/utils/constants';
@@ -61,6 +67,8 @@ class ApiClient {
   private baseUrl: string;
   /** Deduplicates concurrent silent-refresh attempts. */
   private refreshInFlight: Promise<boolean> | null = null;
+  /** Deduplicates concurrent identical mutations — see class docblock. */
+  private inFlightMutations = new Map<string, Promise<any>>();
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
@@ -139,6 +147,26 @@ class ApiClient {
   }
 
   async request<T = any>(endpoint: string, options: ApiOptions = {}): Promise<T> {
+    const method = options.method || 'GET';
+    if (method === 'GET') return this.performRequest<T>(endpoint, options);
+
+    // Same method+endpoint+body already in flight (double-click before the
+    // UI re-renders disabled, a duplicate effect firing, etc.) — return the
+    // pending promise instead of starting a second real request. Cleared as
+    // soon as that request settles, so a genuine retry after completion
+    // still fires fresh.
+    const dedupeKey = `${method}:${endpoint}:${typeof options.body === 'string' ? options.body : ''}`;
+    const existing = this.inFlightMutations.get(dedupeKey);
+    if (existing) return existing as Promise<T>;
+
+    const promise = this.performRequest<T>(endpoint, options).finally(() => {
+      this.inFlightMutations.delete(dedupeKey);
+    });
+    this.inFlightMutations.set(dedupeKey, promise);
+    return promise;
+  }
+
+  private async performRequest<T = any>(endpoint: string, options: ApiOptions = {}): Promise<T> {
     const {
       skipAuth: _skipAuth, // auth is cookie-driven; kept for call-site compatibility
       sessionCache = false,

@@ -37,10 +37,14 @@ export default function PrivacyPolicyPage() {
     {
       icon: "wallet" as const,
       num: "03",
-      title: "Payment Security & Escrow Protection",
-      summary: "Bank-grade encryption protects all platform transactions and reservation deposits.",
+      title: "Payment Security",
+      summary: "Bank-grade encryption protects all platform transactions and reservation fees.",
+      // Corrected 2026-08: previously described deposits held in "platform
+      // escrow" — that's not how payment works here (a Razorpay reservation
+      // fee, paid to Pahari Yatri; the trip cost goes directly to the local
+      // partner, not held by us either way).
       items: [
-        "Escrow safeguarding: Booking deposits are held securely in platform escrow until check-in or trip kickoff.",
+        "Reservation fee: paid securely through Razorpay to lock in a confirmed booking. The trip cost itself is paid directly to your local partner, not held by us.",
         "PCI-DSS compliance: All online transactions are processed through certified payment gateways.",
         "End-to-end encrypted sessions for all communication on the platform.",
       ],

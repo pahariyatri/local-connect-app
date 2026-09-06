@@ -4,37 +4,79 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Offline - Pahari Yatri</title>
+    <title>You're offline - Pahari Yatri</title>
     <style>
+        /* Standalone by design — this is served straight from the service
+         * worker cache with zero network, so it can't load the app's own
+         * Poppins font files or Tailwind build. Matches the app's actual
+         * dark-hero brand colors (see app/globals.css --primary/--brand)
+         * with a system-font stack chosen to read close to Poppins
+         * (rounded, geometric) rather than the previous generic Arial. */
+        :root {
+            color-scheme: dark;
+        }
+        * { box-sizing: border-box; }
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, "Segoe UI Rounded", "Segoe UI", Roboto, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
-            background-color: #f3f4f6;
-            color: #333;
+            background: #0f172a;
+            color: #f7f5f0;
+            padding: 1.5rem;
         }
-
         .container {
             text-align: center;
+            max-width: 22rem;
         }
-
+        .mark {
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 1.25rem;
+            background: #2c7764;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-weight: 800;
+            font-size: 1.25rem;
+            letter-spacing: 0.02em;
+        }
         h1 {
-            font-size: 2rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0 0 0.5rem;
         }
-
         p {
-            font-size: 1rem;
+            font-size: 0.9rem;
+            color: #9fada6;
+            line-height: 1.5;
+            margin: 0 0 1.75rem;
         }
+        button {
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #fff;
+            background: #2c7764;
+            border: none;
+            border-radius: 1rem;
+            padding: 0.9rem 2rem;
+            cursor: pointer;
+        }
+        button:hover { background: #205a4c; }
+        button:active { transform: scale(0.98); }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>You are offline</h1>
-        <p>It seems you have lost your internet connection. Please try again later.</p>
+        <div class="mark">PY</div>
+        <h1>You're offline</h1>
+        <p>Looks like you've lost your connection. Check your network and try again — everything you were doing is still here.</p>
+        <button onclick="location.reload()">Try again</button>
     </div>
 </body>
 

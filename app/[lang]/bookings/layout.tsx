@@ -12,7 +12,7 @@ export default function BookingLayout({ children }: { children: ReactNode }) {
         title="Bookings"
         leftButton={{ label: "Home", onClick: () => router.push("/") }}
       />
-      <main className="">{children}</main>
+      <main className="pt-20 sm:pt-24">{children}</main>
     </div>
   );
 }

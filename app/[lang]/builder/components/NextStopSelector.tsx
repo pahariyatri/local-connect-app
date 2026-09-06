@@ -260,47 +260,6 @@ export default function NextStopSelector({
         </div>
       </div>
 
-      {/* Selected stops — editable cards */}
-      {selectedCount > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">{b.order_title || "Your stops"}</h3>
-              <p className="text-xs text-slate-400 font-medium mt-0.5">{b.order_subtitle || "Set the day, type and timing for each. Reorder to match your route."}</p>
-            </div>
-            <button
-              onClick={() => onStopsChange([])}
-              className="flex-shrink-0 text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition-colors"
-            >
-              {b.clear || "Clear"}
-            </button>
-          </div>
-          <ol className="space-y-3">
-            {stops.map((stop, i) => (
-              <StopCard
-                key={stop.id}
-                stop={stop}
-                index={i}
-                total={stops.length}
-                onChange={(patch) => patchAt(i, patch)}
-                onRemove={() => removeAt(i)}
-                onDuplicate={() => duplicateAt(i)}
-                onMoveUp={() => moveStop(i, i - 1)}
-                onMoveDown={() => moveStop(i, i + 1)}
-              />
-            ))}
-          </ol>
-        </div>
-      )}
-
-      {/* Day-wise plan preview */}
-      {selectedCount > 0 && (
-        <div>
-          <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight mb-3">{b.preview_title || "Your day-by-day plan"}</h3>
-          <PlanPreview origin={origin} destinationLabels={destinationLabels} stops={stops} />
-        </div>
-      )}
-
       {/* Section heading + live counter */}
       <div className="flex items-end justify-between gap-3">
         <div>
@@ -389,6 +348,39 @@ export default function NextStopSelector({
         <p className="text-center text-[11px] font-medium text-slate-400">
           {b.skip_hint || "Optional. Skip anytime and go straight to your plan."}
         </p>
+      )}
+
+      {/* Selected stops — editable cards */}
+      {selectedCount > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">{b.order_title || "Your stops"}</h3>
+              <p className="text-xs text-slate-400 font-medium mt-0.5">{b.order_subtitle || "Set the day, type and timing for each. Reorder to match your route."}</p>
+            </div>
+            <button
+              onClick={() => onStopsChange([])}
+              className="flex-shrink-0 text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition-colors"
+            >
+              {b.clear || "Clear"}
+            </button>
+          </div>
+          <ol className="space-y-3">
+            {stops.map((stop, i) => (
+              <StopCard
+                key={stop.id}
+                stop={stop}
+                index={i}
+                total={stops.length}
+                onChange={(patch) => patchAt(i, patch)}
+                onRemove={() => removeAt(i)}
+                onDuplicate={() => duplicateAt(i)}
+                onMoveUp={() => moveStop(i, i - 1)}
+                onMoveDown={() => moveStop(i, i + 1)}
+              />
+            ))}
+          </ol>
+        </div>
       )}
     </div>
   );

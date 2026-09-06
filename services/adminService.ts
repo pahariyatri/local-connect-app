@@ -31,6 +31,29 @@ export const verifyVendor = async (vendorId: string) => {
   return (raw as any)?.data ?? raw;
 };
 
+// ═══════════════════ SERVICE APPROVALS ═══════════════════
+
+export const getPendingServices = async () => {
+  const raw = await api.get('/admin/services/pending', { skipCache: true });
+  return (raw as any)?.data ?? raw;
+};
+
+export const approveService = async (serviceId: number) => {
+  const raw = await api.patch(`/admin/services/${serviceId}/approve`);
+  return (raw as any)?.data ?? raw;
+};
+
+export const rejectService = async (serviceId: number) => {
+  const raw = await api.patch(`/admin/services/${serviceId}/reject`);
+  return (raw as any)?.data ?? raw;
+};
+
+export const bulkApproveServices = async () => {
+  const raw = await api.patch('/admin/services/bulk-approve');
+  return (raw as any)?.data ?? raw;
+};
+
+
 // ═══════════════════ REVENUE ═══════════════════
 
 export const getRevenue = async (startDate?: string, endDate?: string) => {

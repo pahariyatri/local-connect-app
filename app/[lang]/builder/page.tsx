@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import { useTripPlanner, ServiceType } from "@/contexts/TripPlannerContext";
 import { useTripStore } from "@/store/useTripStore";
@@ -20,10 +20,64 @@ import PackageBuilderStep from "./components/PackageBuilderStep";
 import { TripStop, createTripStop } from "@/types/tripBuilder";
 import SupportContact from "../components/molecules/SupportContact";
 import { hasLiveSupportChannel } from "@/lib/supportConfig";
+import {
+  trackTravellerRequestStart,
+  trackTravellerDestinationSelect,
+  trackTravellerDateSelect,
+  trackTravellerPeopleSelect,
+  trackTravellerNeedSelect,
+  trackTravellerStopAdd,
+  trackTravellerPlanPreview,
+} from "@/lib/analytics";
+
+const DESTINATION_ID_MAP: Record<string, string> = {
+  manali: "manali",
+  sissu: "manali",
+  kullu: "manali",
+  shimla: "shimla",
+  kufri: "shimla",
+  chail: "shimla",
+  kasauli: "shimla",
+  kasol: "kasol",
+  malana: "kasol",
+  parvati: "kasol",
+  dharamshala: "dharamshala",
+  mcleodganj: "dharamshala",
+  "mcleod ganj": "dharamshala",
+  bir: "dharamshala",
+  billing: "dharamshala",
+  pathankot: "dharamshala",
+  kangra: "dharamshala",
+  tirthan: "tirthan",
+  jibhi: "tirthan",
+  jalori: "tirthan",
+  shoja: "tirthan",
+  spiti: "spiti",
+  kalpa: "spiti",
+  nako: "spiti",
+  tabo: "spiti",
+  kaza: "spiti",
+  sangla: "spiti",
+  chandratal: "spiti",
+};
+
+function normalizeDestinationParams(raw: string[]): string[] {
+  const matched = new Set<string>();
+  for (const item of raw) {
+    const key = item.toLowerCase().trim();
+    if (DESTINATION_ID_MAP[key]) {
+      matched.add(DESTINATION_ID_MAP[key]);
+    } else {
+      matched.add(key);
+    }
+  }
+  return Array.from(matched);
+}
 
 export default function TripBuilderPage() {
   const { lang } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const {
     origin, destinations, startDate, endDate, servicePreferences, guestCount,
     routeStops, stopServicesByDay,
@@ -59,16 +113,47 @@ export default function TripBuilderPage() {
     setIsMounted(true);
   }, []);
 
-  // Sync state from context on mount
   useEffect(() => {
-    if (origin) setLocalOrigin(origin);
-    if (destinations.length) setLocalDestinations(destinations);
+    trackTravellerRequestStart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Sync state from URL query parameters & context on mount
+  useEffect(() => {
+    const urlOrigin = searchParams?.get("origin");
+    const urlDestinations = searchParams?.get("destinations");
+
+    let activeOrigin = origin;
+    let activeDestinations = destinations;
+
+    if (urlOrigin) {
+      activeOrigin = urlOrigin;
+      setLocalOrigin(urlOrigin);
+    } else if (origin) {
+      setLocalOrigin(origin);
+    }
+
+    if (urlDestinations) {
+      const rawDests = urlDestinations.split(",").map((d) => d.trim()).filter(Boolean);
+      const parsedDests = normalizeDestinationParams(rawDests);
+      if (parsedDests.length) {
+        activeDestinations = parsedDests;
+        setLocalDestinations(parsedDests);
+      }
+    } else if (destinations.length) {
+      setLocalDestinations(destinations);
+    }
+
+    if (urlOrigin || urlDestinations) {
+      setBasicInfo(activeOrigin, activeDestinations, startDate || "", endDate || "");
+    }
+
     if (startDate) setLocalStartDate(startDate);
     if (endDate) setLocalEndDate(endDate);
     if (servicePreferences.length) setLocalServicePreferences(servicePreferences);
     if (guestCount) setLocalGuestCount(guestCount);
     if (stopServicesByDay && Object.keys(stopServicesByDay).length) setLocalStopServices(stopServicesByDay);
-  }, [origin, destinations, startDate, endDate, servicePreferences, guestCount, routeStops, stopServicesByDay]);
+  }, [searchParams, origin, destinations, startDate, endDate, servicePreferences, guestCount, routeStops, stopServicesByDay, setBasicInfo]);
 
   const toggleLanguage = () => {
     const newLang = lang === "en" ? "he" : "en";
@@ -88,6 +173,12 @@ export default function TripBuilderPage() {
   const handleNext = () => {
     if (currentStep < 5) {
       prepTracker.funnelStep(currentStep as 1 | 2 | 3 | 4, STEP_METADATA[currentStep]);
+      // One dataLayer event per completed step, fired in the same place as
+      // the existing prepTracker call so the two pipelines never drift apart.
+      if (currentStep === 1) trackTravellerDestinationSelect(localOrigin, localDestinations);
+      else if (currentStep === 2) trackTravellerDateSelect(localStartDate, localEndDate);
+      else if (currentStep === 3) trackTravellerPeopleSelect(localGuestCount);
+      else if (currentStep === 4) trackTravellerNeedSelect(localServicePreferences);
       setCurrentStep(prev => prev + 1);
     } else if (currentStep === 5) {
       setBasicInfo(localOrigin, localDestinations, localStartDate || "", localEndDate || "");
@@ -104,6 +195,7 @@ export default function TripBuilderPage() {
         servicePreferences: localServicePreferences,
       });
       prepTracker.funnelStep('plan_submitted', STEP_METADATA[5]);
+      trackTravellerPlanPreview(localDestinations, localGuestCount);
       setStep5Footer(null);
       setCurrentStep(6);
     }
@@ -222,7 +314,13 @@ export default function TripBuilderPage() {
                origin={localOrigin}
                destinations={localDestinations}
                stops={localTripStops}
-               onStopsChange={setLocalTripStops}
+               onStopsChange={(stops) => {
+                 if (stops.length > localTripStops.length) {
+                   const added = stops[stops.length - 1];
+                   trackTravellerStopAdd(added?.name ?? "", stops.length);
+                 }
+                 setLocalTripStops(stops);
+               }}
                startDate={localStartDate}
                endDate={localEndDate}
                guestCount={localGuestCount}
@@ -255,7 +353,7 @@ export default function TripBuilderPage() {
   };
 
   return (
-      <main className="max-w-6xl mx-auto px-4 pt-6 sm:pt-10 pb-24 sm:pb-32">
+      <main className="max-w-6xl mx-auto px-4 pt-6 sm:pt-10 pb-36 sm:pb-44 md:pb-48">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
             {/* Sidebar - Premium Promise */}
@@ -297,13 +395,19 @@ export default function TripBuilderPage() {
  
             {/* Main Content - Stepper */}
             <div className="lg:col-span-8">
-                {/* Progress Bar */}
-                <div className="flex gap-1.5 sm:gap-2 mb-6 sm:mb-8">
-                  {[1, 2, 3, 4, 5, 6].map(stepNum => (
-                    <div key={stepNum} className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
-                      stepNum <= currentStep ? "bg-slate-900" : "bg-slate-200"
-                    }`} />
-                  ))}
+                {/* Progress Bar — "Step N of 6" above a single continuous fill bar. */}
+                <div className="mb-6 sm:mb-8">
+                  <p className="text-xs sm:text-sm font-semibold text-slate-900 mb-2">
+                    {(builder.step_of ?? "Step {current} of {total}")
+                      .replace("{current}", String(currentStep))
+                      .replace("{total}", "6")}
+                  </p>
+                  <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-600 rounded-full transition-all duration-500"
+                      style={{ width: `${(currentStep / 6) * 100}%` }}
+                    />
+                  </div>
                 </div>
   
                 {renderStepContent()}
@@ -350,7 +454,7 @@ export default function TripBuilderPage() {
                           <span className="text-xs md:text-sm tracking-widest">{builder.buttons.building}</span>
                         </div>
                       ) : (
-                        builder.buttons.createPackage ?? "Create My Package"
+                        builder.buttons.createPackage ?? "Create my Yatra plan"
                       )}
                     </Button>
                   )

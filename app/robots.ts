@@ -30,7 +30,11 @@ export default function robots(): MetadataRoute.Robots {
                 '/*/admin',
                 '/*/bookings',
                 '/*/checkout',
-                '/*/vendor/onboarding',
+                // NOTE: /*/vendor/onboarding is intentionally NOT disallowed
+                // — it's the public "Become a Partner" signup page (linked
+                // from the footer), the main organic-search entry point for
+                // vendor acquisition. Only the authenticated dashboard
+                // surfaces below stay blocked.
                 '/*/vendor/dashboard',
                 '/*/vendor/payouts',
                 '/*/vendor/calendar',
@@ -38,7 +42,10 @@ export default function robots(): MetadataRoute.Robots {
                 '/*/vendor/partnerships',
                 '/*/vendor/services',
                 '/*/vendor/bookings',
-                '/*/journey/view',
+                // Internal engineering docs (architecture, state management,
+                // component conventions) served on the public frontend for
+                // the team, not traveler-facing content.
+                '/*/docs',
             ],
         },
         sitemap: `https://app.pahariyatri.com/sitemap.xml`,

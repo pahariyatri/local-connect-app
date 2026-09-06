@@ -7,6 +7,7 @@ import Button from "../../components/atoms/Button";
 import { sanitizePhone, isValidPhone, PHONE_LENGTH } from "@/utils/validation";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthShell from "../components/AuthShell";
+import { getTravelerDictionary } from "@/lib/travelerDictionary";
 
 /** Only ever follow a same-site relative path — never an absolute/external URL. */
 const safeRedirect = (raw: string | null, lang: string): string => {
@@ -21,15 +22,32 @@ export default function LoginPage() {
     const { lang } = useParams();
     const searchParams = useSearchParams();
     const redirectTo = searchParams.get("redirectTo");
-    const { user } = useAuth();
+    const { user, authStatus } = useAuth();
     const [phone, setPhone] = useState("");
     const [touched, setTouched] = useState(false);
+    const t = getTravelerDictionary(String(lang)).auth.phoneEntry;
 
     // Already signed in (e.g. straight after signup, where the session is
     // established by /auth/pin/signup): don't ask for the PIN a second time.
     useEffect(() => {
         if (user) router.replace(safeRedirect(redirectTo, String(lang)));
     }, [user, redirectTo, lang, router]);
+
+    // While we're still determining auth state (loading user_meta + backend
+    // verification), show a neutral spinner rather than the login form — this
+    // prevents the flash of the login screen for users who are already signed in
+    // and were redirected here (e.g. after a cookie renewal or middleware gate).
+    if (authStatus === 'hydrating') {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
+            </div>
+        );
+    }
+
+    // If user is already set, let the useEffect above handle the redirect.
+    // Render nothing here so there's no login-form flash.
+    if (user) return null;
 
     const phoneValid = isValidPhone(phone);
     // Only nudge the user once they've started typing and moved on, never while empty.
@@ -52,9 +70,9 @@ export default function LoginPage() {
     return (
         <AuthShell
             lang={String(lang)}
-            eyebrow="Direct Local Booking"
-            title={<>Sign In or <span className="text-emerald-500">Sign Up</span></>}
-            subtitle="Enter your 10-digit mobile number to get started."
+            eyebrow={t.eyebrow}
+            title={<>{t.titlePrefix} <span className="text-emerald-500">{t.titleHighlight}</span></>}
+            subtitle={t.subtitle}
         >
             <div className="space-y-5">
                 <div>
@@ -72,7 +90,7 @@ export default function LoginPage() {
                             name="phone"
                             autoFocus
                             className="flex-1 h-full px-4 text-base sm:text-lg font-bold tracking-wider placeholder:text-slate-300 placeholder:font-normal bg-transparent text-slate-900 border-0 outline-none focus:outline-none focus:ring-0"
-                            placeholder="98765 43210"
+                            placeholder={t.phonePlaceholder}
                             type="tel"
                             inputMode="numeric"
                             autoComplete="tel-national"
@@ -87,7 +105,7 @@ export default function LoginPage() {
                     </div>
                     {showInvalid && (
                         <p id="phone-error" role="alert" className="text-xs text-red-500 font-semibold mt-2">
-                            Please enter a valid 10-digit mobile number.
+                            {t.invalidPhone}
                         </p>
                     )}
                 </div>
@@ -97,15 +115,15 @@ export default function LoginPage() {
                     disabled={!phoneValid}
                     className="w-full h-13 sm:h-14 rounded-2xl text-xs sm:text-sm font-black uppercase tracking-[0.15em] bg-slate-900 hover:bg-black text-white shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[0.98]"
                 >
-                    Continue
+                    {t.continueButton}
                 </Button>
             </div>
 
             <p className="mt-8 text-[11px] sm:text-xs text-slate-400 leading-relaxed text-center font-medium">
-                By continuing, you agree to our{" "}
-                <Link href={`/${lang}/terms-conditions`} className="text-slate-700 font-bold underline underline-offset-2 hover:text-slate-900">Terms</Link>
-                {" "}and{" "}
-                <Link href={`/${lang}/privacy-policy`} className="text-slate-700 font-bold underline underline-offset-2 hover:text-slate-900">Privacy Policy</Link>.
+                {t.termsPrefix}{" "}
+                <Link href={`/${lang}/terms-conditions`} className="text-slate-700 font-bold underline underline-offset-2 hover:text-slate-900">{t.termsLink}</Link>
+                {" "}{t.and}{" "}
+                <Link href={`/${lang}/privacy-policy`} className="text-slate-700 font-bold underline underline-offset-2 hover:text-slate-900">{t.privacyLink}</Link>.
             </p>
         </AuthShell>
     );

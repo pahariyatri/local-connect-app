@@ -137,7 +137,7 @@ export default function StopCard({
                 id={`time-${stop.id}`}
                 value={stop.timePreference}
                 onChange={(e) => onChange({ timePreference: e.target.value as TripStop["timePreference"] })}
-                className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-base font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
               >
                 {STOP_TIME_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
@@ -148,7 +148,7 @@ export default function StopCard({
                 id={`dir-${stop.id}`}
                 value={stop.direction}
                 onChange={(e) => onChange({ direction: e.target.value as TripStop["direction"] })}
-                className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-base font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
               >
                 {STOP_DIRECTION_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
@@ -163,7 +163,7 @@ export default function StopCard({
               onChange={(e) => onChange({ notes: e.target.value })}
               rows={2}
               placeholder="Anything the local should know — timing, group needs, preferences…"
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 resize-none"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-base text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 resize-none"
             />
           </div>
         </div>

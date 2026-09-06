@@ -3,12 +3,11 @@
     "home": {
       "badge": "Réseau Pahari Yatri",
       "hero": {
-        "title": "Rencontrez les <span class=\"text-emerald-600\">vrais locaux</span><br />de l'Himalaya",
-        "subtitle": "Connectez-vous directement à des guides, hôtes et opérateurs vérifiés. Pas de forfaits. Pas d'agences. Juste un service local authentique.",
-        "cta_plan": "Planifier mon voyage",
-        "cta_explore": "Découvrir les locaux",
-        "vendor_link": "Vous êtes un local ? Proposez votre service",
-        "social_proof": "locaux prêts à se connecter"
+        "title": "Voyagez comme si vous <span class=\"text-emerald-400\">connaissiez quelqu'un</span> sur place.",
+        "subtitle": "Trouvez de vrais hébergements, trajets et guides auprès d'habitants vérifiés de l'Himachal — en direct, sans commission d'agence.",
+        "search_placeholder": "Où allez-vous ? (Kasol, Manali, Tosh...)",
+        "search_cta": "Rechercher",
+        "plan_cta": "Ou planifiez tout un voyage"
       },
       "stats": {
         "providers": "Prestataires locaux",
@@ -100,6 +99,16 @@
         "escrow": "Paiements sécurisés",
         "messaging": "Messagerie directe",
         "reviews": "Avis notés"
+      },
+      "routes": {
+        "eyebrow": "Itinéraires sélectionnés",
+        "title": "Des voyages prêts à l'emploi.",
+        "subtitle": "Itinéraires de plusieurs jours à travers l'Himachal — ouvrez-en un dans le générateur et personnalisez-le.",
+        "cta": "Planifier cet itinéraire",
+        "days_unit": "jours"
+      },
+      "destinations": {
+        "title": "Destinations Populaires"
       }
     },
     "discover": {
@@ -302,7 +311,7 @@
     },
     "results": {
       "title": "Votre chemin de légende",
-      "access_badge": "ACCÈS GROUPE SECRET",
+      "access_badge": "VOTRE PLAN DE YATRA",
       "subtitle": "Conçu pour votre voyage de l'âme de {duration} jours. Avec des légendes locales triées sur le volet.",
       "guest_count": "Nombre de personnes",
       "guest_count_placeholder": "Combien de voyageurs ?",
@@ -315,13 +324,13 @@
       "itinerary": {
         "day": "Jour {day}",
         "add_stop": "+ Ajout rapide d'arrêt",
-        "explore_more": "Exploration des vendeurs &quot;sur la route&quot;...",
+        "explore_more": "Exploration des vendeurs \"sur la route\"...",
         "near_origin": "Chargement de plus de dhabas et de lieux d'aventure près de {origin}"
       },
       "footer": {
         "total": "Total estimé",
         "escrow": "SÉQUESTRE PROTÉGÉ",
-        "book_now": "RÉSERVER MAINTENANT"
+        "book_now": "DEMANDER UNE RÉSERVATION"
       }
     },
     "about": {
@@ -378,8 +387,8 @@
         "subtitle": "Vérification de la disponibilité en temps réel pour vous."
       },
       "step5": {
-        "title": "Construisez votre <span class=\"text-emerald-600\">forfait</span>",
-        "subtitle": "Choisissez les prestataires pour chaque jour. Partagez ou réservez quand vous avez fini."
+        "title": "Construisez votre <span class=\"text-emerald-600\">plan de Yatra</span>",
+        "subtitle": "Choisissez des partenaires locaux pour chaque jour. Partagez ou envoyez votre demande une fois terminé."
       },
       "interests": {
         "title": "De quoi avez-vous <span class=\"text-rose-500\">envie</span> ?",
@@ -427,7 +436,7 @@
         "back": "Retour",
         "continue": "CONTINUER",
         "seePlan": "VOIR MON PLAN",
-        "createPackage": "Créer mon forfait",
+        "createPackage": "Créer mon plan de Yatra",
         "building": "CONSTRUCTION DU VOYAGE..."
       },
       "loading": {
@@ -443,7 +452,37 @@
         "verified": "Vendeurs 100 % vérifiés",
         "support": "Assistance 24/7 pendant le voyage",
         "price": "Garantie du meilleur prix"
-      }
+      },
+      "next_stop": {
+        "title": "Où souhaitez-vous vous <span class=\"text-emerald-500\">arrêter</span> ?",
+        "subtitle": "Choisissez les étapes de votre itinéraire basées sur les services réels.",
+        "route_label": "Votre itinéraire",
+        "order_title": "Organisez vos étapes",
+        "order_subtitle": "Faites glisser pour définir l'ordre ou utilisez les flèches.",
+        "start_label": "Départ",
+        "end_label": "Arrivée",
+        "stop_word": "étape",
+        "move_up": "Monter",
+        "move_down": "Descendre",
+        "remove": "Supprimer l'étape",
+        "stops_title": "Lieux sur votre route",
+        "stops_subtitle": "Appuyez sur les villes que vous souhaitez explorer.",
+        "selected": "sélectionné",
+        "clear": "Effacer",
+        "service": "service",
+        "services": "services",
+        "available_here": "disponible ici",
+        "empty_title": "Aucune étape trouvée sur cette route.",
+        "empty_sub": "Vous pouvez continuer et nous créerons votre plan à partir de vos destinations.",
+        "skip_hint": "Optionnel. Passer à tout moment pour créer votre plan.",
+        "preview_title": "Votre programme jour par jour",
+        "preview_subtitle": "Un aperçu de vos journées. Ajustez les étapes ci-dessus pour modifier.",
+        "day_word": "jour",
+        "days_word": "jours",
+        "day_abbr": "Jour",
+        "depart_from": "Départ de"
+      },
+      "step_of": "Étape {current} sur {total}"
     },
     "common": {
       "support": {
@@ -470,7 +509,11 @@
         "admin_hub": "Panneau Admin",
         "queue": "File d'attente",
         "disputes": "Litiges",
-        "stats": "Stats"
+        "stats": "Stats",
+        "community": "Communauté",
+        "log_out": "Déconnexion",
+        "language": "Langue / Language",
+        "popular": "Populaire :"
       },
       "date_picker": {
         "quick_select": "Sélection rapide",
@@ -491,7 +534,7 @@
         "added": "{category} ajouté au Jour {day}",
         "removed": "{category} supprimé. Recherche de meilleures alternatives...",
         "exploring": "Exploration de plus d'options de {category}...",
-        "booking_request": "Demande de tarifs exclusifs Secret Group pour {name}...",
+        "booking_request": "Demande de disponibilité du partenaire local pour {name}...",
         "booking_success": "Réservation confirmée ! Consultez votre onglet 'Voyage' pour plus de détails."
       },
       "errors": {
@@ -606,7 +649,8 @@
         "overview": "Aperçu",
         "services": "Mes services",
         "bookings": "Réservations",
-        "analytics": "Analyses"
+        "analytics": "Analyses",
+        "community": "Communauté"
       },
       "stats": {
         "services": "Services",
@@ -751,6 +795,42 @@
           "Déc"
         ]
       }
+    },
+    "community": {
+      "badge": "Voyageurs + Hôtes locaux",
+      "title": "La Communauté",
+      "subtitle": "Voyageurs et hôtes locaux vérifiés partagent la route.",
+      "all": "Tous",
+      "travelers": "Voyageurs",
+      "vendors": "Hôtes",
+      "placeholder": "Partagez une pensée, un conseil ou un moment des montagnes...",
+      "post": "Publier",
+      "posting": "Publication...",
+      "like": "J'aime",
+      "no_comments": "Aucune réponse pour l'instant. Soyez le premier.",
+      "comment_placeholder": "Écrire une réponse...",
+      "send": "Envoyer",
+      "sign_in_to_comment": "Connectez-vous pour rejoindre la discussion.",
+      "empty": "Rien pour l'instant. Lancez la discussion.",
+      "join_title": "Rejoindre la communauté",
+      "join_sub": "Connectez-vous pour partager votre voyage et répondre aux autres.",
+      "join_cta": "Se connecter",
+      "role_traveler": "Voyageur",
+      "role_vendor": "Hôte",
+      "role_verified": "Hôte Vérifié",
+      "traveler_badge": "Communauté des Voyageurs",
+      "traveler_title": "Sur la route",
+      "traveler_subtitle": "Voyages, conseils et moments partagés par les voyageurs.",
+      "host_notice": "C'est la communauté des voyageurs. Votre espace hôte se trouve sur votre tableau de bord.",
+      "host_cta": "Espace Hôte",
+      "host_badge": "Communauté des Hôtes · Privé",
+      "host_title": "Le Cercle des Hôtes",
+      "host_subtitle": "Un espace privé pour les hôtes vérifiés afin d'échanger et progresser.",
+      "host_placeholder": "Partagez une mise à jour, un conseil opérationnel ou posez une question...",
+      "host_empty": "Aucune publication pour l'instant. Partagez le premier message.",
+      "host_only_title": "Réservé aux Hôtes",
+      "host_only_sub": "Cette communauté est réservée aux hôtes vérifiés.",
+      "host_only_cta": "Aller à la communauté des voyageurs"
     }
   }
 }

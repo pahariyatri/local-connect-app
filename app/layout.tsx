@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Poppins } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { i18n, Locale } from "@/i18n-config";
@@ -11,10 +13,17 @@ import { TripPlannerProvider } from "@/contexts/TripPlannerContext";
 import { NotificationContainer } from "./[lang]/components/atoms/Toast";
 
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
+// Re-theme (2026-08-30): switched the app's primary typeface from Geist
+// Sans to Poppins to match the approved design reference — a rounder,
+// friendlier geometric sans that reads calmer at the app's existing bold
+// weights than Geist did. The CSS variable is renamed --font-sans (was
+// --font-geist-sans) so the name doesn't lie about which font it is;
+// tailwind.config.ts and globals.css are updated to match.
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-sans",
+  display: "swap",
 });
 const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
@@ -33,30 +42,64 @@ function resolveLang(paramsLang: string | undefined): Locale {
 }
 
 import { BRAND_CONFIG } from "@/config/brandConfig";
+import { headers } from "next/headers";
 
 const SITE_URL = BRAND_CONFIG.appUrl;
+
+// This layout sits above the [lang] segment, so Next.js never gives it
+// params.lang directly — it's always undefined here regardless of the
+// actual URL. middleware.ts forwards the real request path via x-pathname;
+// fall back to params (should middleware ever not run for some request) and
+// finally the default locale/root. Used by both generateMetadata (canonical/
+// hreflang/OG) and RootLayout itself (which resolves `dict`/`lang` for
+// LocalizationProvider's initial, server-rendered state).
+async function resolvePathAndLang(paramsLang: string | undefined) {
+  const forwardedPath = (await headers()).get("x-pathname") ?? undefined;
+  const pathSegments = forwardedPath?.split("/").filter(Boolean) ?? [];
+  const lang = resolveLang(pathSegments[0] ?? paramsLang);
+  const pagePath = forwardedPath ?? `/${lang}`;
+  return { lang, pagePath, pathSegments };
+}
 
 export async function generateMetadata(props: {
   params?: Promise<{ lang?: Locale }>;
 }): Promise<Metadata> {
   const params = props.params ? await props.params : undefined;
-  const lang = resolveLang(params?.lang);
+  const { pagePath, pathSegments } = await resolvePathAndLang(params?.lang);
+
+  // The old copy here ("Himachal Journey Planner") framed the whole product
+  // as a trip-planning tool, which undersells the direct-search path (a
+  // traveler who just needs "taxi in Kasol" shouldn't read this as a
+  // planner-only product) — this is the same tagline already live in the
+  // footer and now the hero, kept as one consistent line rather than a
+  // third, different pitch.
+  const title = `${BRAND_CONFIG.tagline} | ${BRAND_CONFIG.fullProductName}`;
+  const description =
+    'Search real homestays, 4x4 drivers, and local guides across Himachal Pradesh — verified locals, direct and with no agency markup. Or build a full multi-stop route with stays and transit in one place.';
+
+  // Same page, other locale prefixes — not "this page translated", since no
+  // locale but the default currently renders translated content. Still the
+  // structurally correct hreflang target per page (previously every page,
+  // not just the homepage, advertised only the locale *roots*).
+  const restOfPath = pathSegments.slice(1).join("/");
+  const languages = Object.fromEntries(
+    i18n.locales.map((l) => [l, `${SITE_URL}/${l}${restOfPath ? `/${restOfPath}` : ""}`]),
+  );
 
   return {
     // Absolute base for OG/Twitter/canonical URL resolution (production frontend).
     metadataBase: new URL(SITE_URL),
-    title: `${BRAND_CONFIG.productDisplayName} by ${BRAND_CONFIG.parentBrandName} | Himachal Journey Planner`,
-    description:
-      'Plan stays, transport, food, activities and trusted local services across your complete Himachal route.',
+    title,
+    description,
     alternates: {
-      canonical: `${SITE_URL}/${lang}`,
-      languages: Object.fromEntries(i18n.locales.map((l) => [l, `${SITE_URL}/${l}`])),
+      canonical: `${SITE_URL}${pagePath}`,
+      languages,
     },
     openGraph: {
-      title: `${BRAND_CONFIG.productDisplayName} by ${BRAND_CONFIG.parentBrandName}`,
-      description: 'Build your whole Himachal journey — stays, transport, food, activities and trusted local services.',
+      title,
+      description,
       type: 'website',
-      url: `${SITE_URL}/${lang}`,
+      url: `${SITE_URL}${pagePath}`,
       siteName: BRAND_CONFIG.fullProductName,
     },
     twitter: {
@@ -64,8 +107,8 @@ export async function generateMetadata(props: {
       // 'summary' degrades cleanly without one; switch to
       // 'summary_large_image' once a real 1200x630 image is added.
       card: 'summary',
-      title: `${BRAND_CONFIG.productDisplayName} by ${BRAND_CONFIG.parentBrandName} | Himachal Journey Planner`,
-      description: 'Plan stays, transport, food, activities and trusted local services across your complete Himachal route.',
+      title,
+      description,
     },
   };
 }
@@ -79,15 +122,44 @@ export default async function RootLayout(props: {
   params?: Promise<{ lang?: Locale }>;
 }) {
   const params = props.params ? await props.params : undefined;
-  const lang = resolveLang(params?.lang);
+  const { lang } = await resolvePathAndLang(params?.lang);
   const dict = await getDictionary(lang);
 
   const { children } = props;
+  const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
+
   return (
-    <html lang={lang} dir={lang === "he" ? "rtl" : "ltr"}>
+    // suppressHydrationWarning on html/body only: browser extensions (e.g.
+    // Storylane, LocatorJS) inject attributes like class="js-storylane-extension"
+    // or __processed_<uuid>__="true" onto these two elements before React
+    // hydrates, which React then reports as a mismatch even though nothing
+    // in our render output actually differs. Scoped to just these two tags
+    // so a real mismatch anywhere else in the tree still warns normally.
+    <html lang={lang} dir={lang === "he" ? "rtl" : "ltr"} suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${poppins.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
+        {/* GTM — loads only when NEXT_PUBLIC_GTM_ID is set. GTM owns GA4 pageviews
+            once a Configuration tag exists in the container; app code only ever
+            pushes named events to window.dataLayer via lib/analytics.ts, never a
+            raw page_view — see lib/analytics.ts for why. */}
+        {gtmId && (
+          <>
+            <Script id="gtm-loader" strategy="afterInteractive">
+              {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`}
+            </Script>
+            <noscript>
+              <iframe
+                src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}
+                height="0"
+                width="0"
+                style={{ display: "none", visibility: "hidden" }}
+                title="gtm-fallback"
+              />
+            </noscript>
+          </>
+        )}
         <AuthProvider>
           <NotificationProvider>
             <TripPlannerProvider>

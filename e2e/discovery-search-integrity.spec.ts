@@ -16,8 +16,8 @@ import { test, expect } from '@playwright/test';
  * seed data) or mocks the network response to pin the scenario precisely.
  */
 
-const PROD_URL = process.env.DISCOVERY_TEST_APP_URL || 'https://app.pahariyatri.com';
-const API_URL = process.env.DISCOVERY_TEST_API_URL || 'https://api.pahariyatri.com';
+const PROD_URL = process.env.DISCOVERY_TEST_APP_URL || '';
+const API_URL = process.env.DISCOVERY_TEST_API_URL || 'http://localhost:4000';
 
 // Names/rating literals that only ever existed in the deleted fixture data.
 // Their presence anywhere on a real page is itself proof of a regression.
@@ -103,9 +103,7 @@ test.describe('No fabricated fallback data', () => {
 
     await page.goto(`${PROD_URL}/en/explore`);
     await page.locator('#explore-search').fill('anything');
-    await page.waitForTimeout(600);
-
-    await expect(page.getByTestId('explore-error-state')).toBeVisible();
+    await expect(page.getByTestId('explore-error-state')).toBeVisible({ timeout: 10_000 });
     const bodyText = await page.locator('body').innerText();
     for (const fixture of FABRICATED_FIXTURES) {
       expect(bodyText).not.toContain(fixture);
@@ -126,7 +124,7 @@ test.describe('No fabricated fallback data', () => {
     await page.waitForTimeout(500);
 
     const bodyText = await page.locator('body').innerText();
-    expect(bodyText.toLowerCase()).toContain("isn't available");
+    expect(bodyText.toLowerCase()).toContain("unavailable");
     for (const fixture of FABRICATED_FIXTURES) {
       expect(bodyText).not.toContain(fixture);
     }

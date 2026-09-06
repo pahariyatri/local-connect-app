@@ -8,10 +8,12 @@ import Button from "../../../../components/atoms/Button";
 import Textarea from "../../../../components/atoms/Textarea";
 import Input from "../../../../components/atoms/Input";
 import { getServiceById, updateService, getCategories, getSubcategories } from "@/services/catalogService";
+import { getMediaKeyFromUrl } from "@/services/mediaService";
+import MediaManager, { type MediaItem } from "../../../../components/molecules/MediaManager";
 import { toApiUiError } from "@/utils/apiErrors";
-import Loading from "@/app/loading";
+import Loading from "@/app/[lang]/components/atoms/Loading";
 
-type Tab = "details" | "location" | "pricing" | "description";
+type Tab = "details" | "location" | "pricing" | "photos" | "description";
 type Category = { id: number; name: string };
 
 export default function EditServicePage() {
@@ -37,6 +39,7 @@ export default function EditServicePage() {
   const [postalCode, setPostalCode] = useState("");
   const [subcategoryId, setSubcategoryId] = useState<number | null>(null);
   const [subcategoryName, setSubcategoryName] = useState<string | null>(null);
+  const [images, setImages] = useState<MediaItem[]>([]);
 
   // Category/subcategory picker — only fetched if the vendor opens it to change category.
   const [changingCategory, setChangingCategory] = useState(false);
@@ -60,6 +63,9 @@ export default function EditServicePage() {
       setIsAvailable(data.isAvailable ?? true);
       setSubcategoryId(data.subcategory?.id ?? null);
       setSubcategoryName(data.subcategory?.name ?? null);
+      // images[0] is always the cover — the create flow stores it that way,
+      // and the backend has no separate "cover" concept beyond array order.
+      setImages(((data.images || []) as string[]).map((url: string) => ({ url, key: getMediaKeyFromUrl(url) || "" })));
       const primaryAddress = data.addresses?.find((a: any) => a.isPrimary) || data.addresses?.[0];
       setStreet(primaryAddress?.street || "");
       setCity(primaryAddress?.city || "");
@@ -88,6 +94,8 @@ export default function EditServicePage() {
     getSubcategories(categoryId).then((subs) => setSubcategories(Array.isArray(subs) ? subs : [])).catch(() => setSubcategories([]));
   }, [categoryId]);
 
+  const isFormValid = name.trim().length >= 3 && Number(weekdayPrice) > 0 && description.trim().length >= 10;
+
   const handleSave = async () => {
     if (!service) return;
     setSaving(true);
@@ -98,6 +106,8 @@ export default function EditServicePage() {
         description: description.trim(),
         capacity: Number(capacity),
         isAvailable,
+        thumbnail: images[0]?.url ?? null,
+        images: images.map((i) => i.url),
         ...(subcategoryId ? { subcategoryId } : {}),
         // Only send addresses if location was actually filled in — CreateAddressDto
         // requires city/state/street/postalCode, so a half-empty address would fail.
@@ -131,8 +141,8 @@ export default function EditServicePage() {
   if (!service) return null;
 
   return (
-    <div className="min-h-screen bg-white pb-32">
-      <main className="max-w-2xl mx-auto px-6">
+    <div className="min-h-screen bg-white pb-24">
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 pt-4 sm:pt-6">
         <button onClick={() => router.back()} className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors mb-6">
           ← Back
         </button>
@@ -140,7 +150,7 @@ export default function EditServicePage() {
         {/* Sticky (not fixed) so it never fights the global site header's stacking. */}
         <div className="sticky top-0 z-10 -mx-6 px-6 py-3 mb-6 bg-white/90 backdrop-blur-xl border-b border-slate-50">
           <div className="flex gap-2 overflow-x-auto no-scrollbar">
-            {(["details", "location", "pricing", "description"] as Tab[]).map((t) => (
+            {(["details", "location", "pricing", "photos", "description"] as Tab[]).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -260,6 +270,12 @@ export default function EditServicePage() {
             </div>
           )}
 
+          {tab === "photos" && (
+            <div className="animate-fade-in">
+              <MediaManager value={images} onChange={setImages} folder="service-images" label="" minWidth={480} minHeight={320} />
+            </div>
+          )}
+
           {tab === "description" && (
             <Textarea
               label="Description"
@@ -271,10 +287,18 @@ export default function EditServicePage() {
             />
           )}
 
-          <div className="pt-10 border-t border-slate-100 flex gap-4">
+          {saveError && <p role="alert" className="text-xs text-red-500 font-semibold mb-4">{saveError}</p>}
+
+          {!isFormValid && (
+            <p role="alert" className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200/80 px-3.5 py-2 rounded-xl mb-4">
+              ⚠️ Service name (min 3 chars), description (min 10 chars), and base weekday price are required.
+            </p>
+          )}
+
+          <div className="pt-6 border-t border-slate-100 flex gap-4">
             <Button
               onClick={handleSave}
-              disabled={saving}
+              disabled={saving || !isFormValid}
               className="flex-[2] h-16 rounded-2xl bg-slate-900 text-white font-bold text-sm hover:bg-black active:scale-[0.98] transition-all disabled:opacity-50"
             >
               {saving ? "Saving…" : "Save changes"}

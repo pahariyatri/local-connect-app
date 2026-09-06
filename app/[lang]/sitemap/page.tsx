@@ -60,7 +60,6 @@ const pageCategories = [
             { name: "Global Search", path: "/search" },
             { name: "Peak AI Assistant", path: "/bot" },
             { name: "User Profile", path: "/profile" },
-            { name: "Legacy Builder", path: "/journey" },
             { name: "Generic Details", path: "/details" },
             { name: "Admin Portal", path: "/admin" },
         ]
