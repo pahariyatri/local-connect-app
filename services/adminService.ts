@@ -31,6 +31,18 @@ export const verifyVendor = async (vendorId: string) => {
   return (raw as any)?.data ?? raw;
 };
 
+/** Rejects a pending (never-verified) vendor application — e.g. test/QA seed data, invalid application. */
+export const rejectVendor = async (vendorId: string) => {
+  const raw = await api.patch(`/admin/vendor/${vendorId}/reject`);
+  return (raw as any)?.data ?? raw;
+};
+
+/** Revokes a previously-verified vendor's verification — hides them from public discovery without deleting the record. */
+export const suspendVendor = async (vendorId: string) => {
+  const raw = await api.patch(`/admin/vendor/${vendorId}/suspend`);
+  return (raw as any)?.data ?? raw;
+};
+
 // ═══════════════════ SERVICE APPROVALS ═══════════════════
 
 export const getPendingServices = async () => {

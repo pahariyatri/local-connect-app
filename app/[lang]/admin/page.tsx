@@ -8,6 +8,8 @@ import MetricsCard from "../components/organisms/MetricsCard";
 import {
     getAdminVendors,
     verifyVendor,
+    rejectVendor,
+    suspendVendor,
     getPendingServices,
     approveService,
     rejectService,
@@ -169,6 +171,47 @@ export default function AdminDashboard() {
             }
         } catch (err) {
             setErrorMessage(toApiUiError(err, "We could not approve this vendor.").message);
+        } finally {
+            setApprovingId(null);
+        }
+    };
+
+    const handleReject = async (vendorId: string, businessName: string) => {
+        if (!window.confirm(`Reject "${businessName}"? This vendor will stay unverified and won't appear anywhere public-facing.`)) return;
+        setApprovingId(vendorId);
+        try {
+            await rejectVendor(vendorId);
+            setVendors((prev) => prev.map((v) => (v.id === vendorId ? { ...v, isVerified: false } : v)));
+            if (dashboard) {
+                setDashboard({
+                    ...dashboard,
+                    vendors: {
+                        ...dashboard.vendors,
+                        pendingVerification: Math.max(0, dashboard.vendors.pendingVerification - 1),
+                    },
+                });
+            }
+        } catch (err) {
+            setErrorMessage(toApiUiError(err, "We could not reject this vendor.").message);
+        } finally {
+            setApprovingId(null);
+        }
+    };
+
+    const handleSuspend = async (vendorId: string, businessName: string) => {
+        if (!window.confirm(`Revoke verification for "${businessName}"? They will immediately stop appearing anywhere public-facing (e.g. the homepage), without deleting their record.`)) return;
+        setApprovingId(vendorId);
+        try {
+            await suspendVendor(vendorId);
+            setVendors((prev) => prev.map((v) => (v.id === vendorId ? { ...v, isVerified: false } : v)));
+            if (dashboard) {
+                setDashboard({
+                    ...dashboard,
+                    vendors: { ...dashboard.vendors, verified: Math.max(0, dashboard.vendors.verified - 1) },
+                });
+            }
+        } catch (err) {
+            setErrorMessage(toApiUiError(err, "We could not revoke this vendor's verification.").message);
         } finally {
             setApprovingId(null);
         }
@@ -497,13 +540,22 @@ export default function AdminDashboard() {
                                                         Applied {new Date(vendor.createdAt).toLocaleDateString()}
                                                     </p>
                                                 </div>
-                                                <Button
-                                                    onClick={() => handleApprove(vendor.id)}
-                                                    disabled={approvingId === vendor.id}
-                                                    className="h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold disabled:opacity-50"
-                                                >
-                                                    {approvingId === vendor.id ? "…" : "Verify"}
-                                                </Button>
+                                                <div className="flex gap-1.5 shrink-0">
+                                                    <Button
+                                                        onClick={() => handleApprove(vendor.id)}
+                                                        disabled={approvingId === vendor.id}
+                                                        className="h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold disabled:opacity-50"
+                                                    >
+                                                        {approvingId === vendor.id ? "…" : "Verify"}
+                                                    </Button>
+                                                    <Button
+                                                        onClick={() => handleReject(vendor.id, vendor.businessName)}
+                                                        disabled={approvingId === vendor.id}
+                                                        className="h-8 px-3 rounded-lg bg-slate-800 hover:bg-rose-950 text-rose-400 text-xs font-bold disabled:opacity-50 border border-slate-700"
+                                                    >
+                                                        Reject
+                                                    </Button>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -613,15 +665,34 @@ export default function AdminDashboard() {
                                                         )}
                                                     </td>
                                                     <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                                                        {!vendor.isVerified && (
-                                                            <Button
-                                                                onClick={() => handleApprove(vendor.id)}
-                                                                disabled={approvingId === vendor.id}
-                                                                className="h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold disabled:opacity-50"
-                                                            >
-                                                                {approvingId === vendor.id ? "…" : "Verify Vendor"}
-                                                            </Button>
-                                                        )}
+                                                        <div className="flex gap-1.5 justify-end">
+                                                            {!vendor.isVerified ? (
+                                                                <>
+                                                                    <Button
+                                                                        onClick={() => handleApprove(vendor.id)}
+                                                                        disabled={approvingId === vendor.id}
+                                                                        className="h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold disabled:opacity-50"
+                                                                    >
+                                                                        {approvingId === vendor.id ? "…" : "Verify Vendor"}
+                                                                    </Button>
+                                                                    <Button
+                                                                        onClick={() => handleReject(vendor.id, vendor.businessName)}
+                                                                        disabled={approvingId === vendor.id}
+                                                                        className="h-8 px-3 rounded-lg bg-slate-800 hover:bg-rose-950 text-rose-400 text-xs font-bold disabled:opacity-50 border border-slate-700"
+                                                                    >
+                                                                        Reject
+                                                                    </Button>
+                                                                </>
+                                                            ) : (
+                                                                <Button
+                                                                    onClick={() => handleSuspend(vendor.id, vendor.businessName)}
+                                                                    disabled={approvingId === vendor.id}
+                                                                    className="h-8 px-3 rounded-lg bg-slate-800 hover:bg-rose-950 text-rose-400 text-xs font-bold disabled:opacity-50 border border-slate-700"
+                                                                >
+                                                                    {approvingId === vendor.id ? "…" : "Revoke Verification"}
+                                                                </Button>
+                                                            )}
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))}

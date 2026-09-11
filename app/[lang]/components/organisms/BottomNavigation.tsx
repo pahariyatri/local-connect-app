@@ -38,6 +38,14 @@ export default function BottomNavigation({
     return null;
   }
 
+  // Admin has its own in-page tab navigation (Command Overview / Vendor Queue
+  // / etc.) — the traveler tabs here (Explore/My Trips/Plan/Partner/Profile)
+  // are irrelevant to a Super Admin and, being `fixed bottom-0`, previously
+  // overlapped real dashboard content on mobile (confirmed live, AUDIT-056).
+  if (pathname.startsWith(`/${lang}/admin`)) {
+    return null;
+  }
+
   // Logged-out visitors get no bottom nav — the guest-facing Explore/Plan/
   // Sign-in tabs this bar used to show for `!user` are gone; those actions
   // live in the top Header for anonymous visitors instead.

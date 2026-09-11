@@ -38,15 +38,19 @@ const CATEGORY_IMAGES: Record<string, string> = {
 // Curated destination photography — the Location entity has no image field
 // (name/slug/type/lat/lng only, confirmed), so real destination *names*
 // come from the API while the photo is decorative, same pattern as
-// CATEGORY_IMAGES above. Deliberately excludes a "kasol" entry: that photo
-// ID was confirmed broken (404s) in an earlier live check this session —
-// unlisted slugs fall through to the verified-working default instead of
-// risking a second broken image.
+// CATEGORY_IMAGES above. Every URL here is verified to return 200, not
+// assumed — a prior "kasol" entry 404'd in a live check and was dropped
+// rather than fixed, which meant kasol AND barshaini (also unlisted) both
+// silently fell back to the same default photo, undermining the section's
+// own "Real places worth the drive" copy (AUDIT-056). Both added back here
+// with distinct, verified-live photo ids.
 const DESTINATION_IMAGES: Record<string, string> = {
   manali: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?q=70&w=900",
   shimla: "https://images.unsplash.com/photo-1626621340754-3f836c0a55c3?q=70&w=900",
   spiti: "https://images.unsplash.com/photo-1518623001395-125242310d0c?q=70&w=900",
   dharamshala: "https://images.unsplash.com/photo-1653853572809-ea537274c7f5?q=70&w=900",
+  kasol: "https://images.unsplash.com/photo-1516466723877-e4ec1d736c8a?q=70&w=900",
+  barshaini: "https://images.unsplash.com/photo-1470770903676-69b98201ea1c?q=70&w=900",
 };
 const DEFAULT_DESTINATION_IMAGE = "https://images.unsplash.com/photo-1571401835393-8c5f35328320?q=70&w=900";
 
@@ -120,7 +124,14 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
         // A large-card showcase reads best curated to a few — 3, not the
         // whole directory. Explore is where someone browses all of them.
         if (!cancelled && Array.isArray(response) && response.length > 0) {
-          setProvidersList(response.slice(0, 3).map(mapBackendVendor));
+          // GET /vendors returns every vendor regardless of verification
+          // status (admin needs that full list) — this section is a public
+          // trust showcase, so it must filter to isVerified itself rather
+          // than blindly taking whichever 3 come first (AUDIT-056: this
+          // previously showed unverified/test vendors whenever they
+          // happened to sort earliest).
+          const verifiedOnly = response.filter((v: any) => v.isVerified);
+          setProvidersList(verifiedOnly.slice(0, 3).map(mapBackendVendor));
           // Real count from the same response, not a separate/guessed number —
           // GET /vendors returns the full unpaginated list, so this is the
           // actual number of verified vendor accounts right now, not a

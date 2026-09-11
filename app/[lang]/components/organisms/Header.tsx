@@ -26,6 +26,8 @@ export default function Header() {
 
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   const navDict = dict?.nav || {};
   const commonDict = dict?.page?.common?.actions || {};
@@ -46,10 +48,18 @@ export default function Header() {
       if (langRef.current && !langRef.current.contains(event.target as Node)) {
         setLangDropdownOpen(false);
       }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setMobileMenuOpen(false);
+      }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Close the mobile menu on route change, so it never sits open over a new page.
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   const isVendor = !!user && /vendor|host|broker/i.test(user.role || '');
 
@@ -227,9 +237,13 @@ export default function Header() {
             )}
           </div>
 
-          {/* Mobile Profile Icon (If logged in) */}
-          <div className="md:hidden flex items-center">
-            {user ? (
+          {/* Mobile: Profile Icon (if logged in) + hamburger menu.
+              Logged-in users also get the full BottomNavigation bar, so the
+              avatar here stays a quick shortcut. Guests previously had
+              NOTHING here — no way to reach Explore/Become a Partner/Plan a
+              Trip/Sign In from the header at all on mobile (AUDIT-056). */}
+          <div className="md:hidden flex items-center gap-2">
+            {user && (
               <Link
                 href={`/${lang}/profile`}
                 data-testid="header-account-mobile"
@@ -238,7 +252,75 @@ export default function Header() {
               >
                 {userAvatarInitial(user.name, user.phone)}
               </Link>
-            ) : null}
+            )}
+
+            <div className="relative" ref={mobileMenuRef}>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen((open) => !open)}
+                aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+                aria-expanded={mobileMenuOpen}
+                data-testid="header-mobile-menu-button"
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100/90 hover:bg-slate-200/80 text-slate-700 border border-slate-200/60 active:scale-95 transition-all"
+              >
+                <Icon name={mobileMenuOpen ? 'close' : 'menu'} className="w-4 h-4" />
+              </button>
+
+              {mobileMenuOpen && (
+                <div
+                  data-testid="header-mobile-menu"
+                  className="absolute right-0 mt-2 w-56 rounded-2xl bg-white border border-slate-200/80 shadow-2xl shadow-slate-300/50 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150"
+                >
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={`block px-4 py-2.5 text-sm font-semibold transition-colors ${
+                        isActive(link.href) ? 'bg-slate-50 text-slate-900' : 'text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+
+                  <Link
+                    href={planTripHref}
+                    className="block mx-3 my-1.5 px-3 py-2 rounded-xl text-center text-sm font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/80"
+                  >
+                    {isVendor ? 'Add Service' : (navDict.plan || 'Plan a Trip')}
+                  </Link>
+
+                  <div className="border-t border-slate-100 mt-1.5 pt-1.5">
+                    {user ? (
+                      <>
+                        <Link
+                          href={`/${lang}/profile`}
+                          className="block px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                        >
+                          {accountLabel}
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={handleLogout}
+                          className="w-full text-left px-4 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-50"
+                        >
+                          {commonDict.log_out || 'Log out'}
+                        </button>
+                      </>
+                    ) : (
+                      <Link
+                        href={`/${lang}/auth/login`}
+                        data-testid="header-mobile-sign-in"
+                        className="flex items-center gap-1.5 mx-3 my-1 px-3 py-2 rounded-xl bg-slate-900 text-white text-sm font-bold justify-center"
+                      >
+                        <Icon name="user" className="w-3.5 h-3.5" />
+                        <span>{navDict.sign_in || 'Sign In'}</span>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
         </div>
