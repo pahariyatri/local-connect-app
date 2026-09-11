@@ -118,6 +118,42 @@ export const searchLocations = async (q: string, limit = 8) => {
   return (raw as any)?.data ?? raw ?? [];
 };
 
+export interface OriginSuggestion {
+  placeId: string;
+  description: string;
+}
+
+export interface OriginResolved {
+  placeId: string;
+  name: string;
+  latitude: number | null;
+  longitude: number | null;
+}
+
+/**
+ * India-wide origin-city typeahead (Google Places, via the backend so the
+ * API key never reaches the client) — the `locations` table only covers
+ * Himachal destinations, so it can't resolve a traveler's real home city.
+ * `provider: 'none'` means no key is configured server-side; callers should
+ * fall back to a plain free-text field rather than showing a dead-end
+ * spinner.
+ */
+export const searchOriginCities = async (q: string, sessionToken?: string): Promise<{ provider: 'google_places' | 'none'; results: OriginSuggestion[] }> => {
+  if (!q.trim()) return { provider: 'none', results: [] };
+  const params = new URLSearchParams({ q });
+  if (sessionToken) params.set('sessionToken', sessionToken);
+  const raw = await api.get(`/locations/origin-search?${params.toString()}`, { skipAuth: true, skipCache: true });
+  return (raw as any)?.data ?? raw ?? { provider: 'none', results: [] };
+};
+
+/** Resolves a place id from searchOriginCities() into coordinates — call once, on selection, not per keystroke. */
+export const resolveOriginCity = async (placeId: string, sessionToken?: string): Promise<OriginResolved | null> => {
+  const params = new URLSearchParams({ placeId });
+  if (sessionToken) params.set('sessionToken', sessionToken);
+  const raw = await api.get(`/locations/origin-resolve?${params.toString()}`, { skipAuth: true, skipCache: true });
+  return (raw as any)?.data ?? raw ?? null;
+};
+
 export interface ServiceQuote {
   serviceId: number;
   unitPrice: number;

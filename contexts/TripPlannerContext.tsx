@@ -17,13 +17,21 @@ export interface ItineraryStop {
 export type ServiceType = "stay" | "activity" | "travel" | "food";
 export type CarType = "sedan" | "suv" | "hatchback" | "auto" | "bike" | "none";
 
-/** Structured shape returned by GET /locations/search — see catalogService.ts:searchLocations */
+/**
+ * Structured shape for a resolved location. `source: 'local'` comes from
+ * GET /locations/search (catalogService.ts:searchLocations) with a numeric
+ * DB id/slug. `source: 'external'` comes from the origin-only Google Places
+ * flow (catalogService.ts:searchOriginCities/resolveOriginCity) for
+ * traveler starting cities outside the Himachal-only `locations` table —
+ * `id` is a Google place id (string) and there is no local `slug`.
+ */
 export interface SelectedLocation {
-    id: number;
+    id: number | string;
     name: string;
-    slug: string;
+    slug: string | null;
     latitude: number | null;
     longitude: number | null;
+    source?: 'local' | 'external';
 }
 
 interface TripPlannerContextType {

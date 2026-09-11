@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React from "react";
 import LocalImage from "@/app/[lang]/components/atoms/Image";
 import { useTripPlanner, type SelectedLocation } from "@/contexts/TripPlannerContext";
-import { searchLocations } from "@/services/catalogService";
+import OriginAutocomplete from "@/app/[lang]/components/molecules/OriginAutocomplete";
 
 interface Destination {
   id: string;
@@ -60,10 +60,6 @@ const DESTINATIONS: Destination[] = [
   },
 ];
 
-// Debounce delay for the origin typeahead — matches the general "don't fire
-// a request per keystroke" convention used elsewhere in the app's search inputs.
-const SEARCH_DEBOUNCE_MS = 250;
-
 export default function DestinationSelector({
   selectedDestinations,
   onSelectionChange,
@@ -73,67 +69,13 @@ export default function DestinationSelector({
   dict
 }: DestinationSelectorProps) {
   const b = dict?.page?.builder?.step1 || {};
-  const [showOriginSuggestions, setShowOriginSuggestions] = useState(false);
-  const [originResults, setOriginResults] = useState<SelectedLocation[]>([]);
-  const [searching, setSearching] = useState(false);
   const { setSelectedCities, selectedDestinationCities, selectedOriginCity } = useTripPlanner();
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const requestSeqRef = useRef(0);
 
-  // Real backend typeahead (GET /locations/search) instead of a hardcoded
-  // city list — see WEBMCP-style remediation note: the SelectedLocation
-  // plumbing in TripPlannerContext already existed for this, this component
-  // just never called it.
-  const handleOriginChange = (value: string) => {
-    onRouteInfoChange(value);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    const query = value.trim();
-    if (!query) {
-      setOriginResults([]);
-      setShowOriginSuggestions(false);
-      setSearching(false);
-      return;
-    }
-
-    setShowOriginSuggestions(true);
-    setSearching(true);
-    const seq = ++requestSeqRef.current;
-    debounceRef.current = setTimeout(async () => {
-      try {
-        const results = await searchLocations(query, 8);
-        // Ignore a stale response that resolved out of order (a fast typer
-        // firing several debounced requests) — only the latest query's
-        // results should ever land in state.
-        if (seq === requestSeqRef.current) {
-          setOriginResults(Array.isArray(results) ? results : []);
-        }
-      } catch {
-        if (seq === requestSeqRef.current) setOriginResults([]);
-      } finally {
-        if (seq === requestSeqRef.current) setSearching(false);
-      }
-    }, SEARCH_DEBOUNCE_MS);
-  };
-
-  useEffect(() => {
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, []);
-
+  // Origin is a real India-wide city (outside Himachal, generally) — backed
+  // by the external Google Places proxy (OriginAutocomplete), not the
+  // Himachal-only `locations` table used for destinations below.
   const selectOrigin = (location: SelectedLocation) => {
-    // Immediately update the input value, and store the full structured
-    // record (name/slug/lat/lng) — not just the display string — so
-    // downstream discovery/pricing calls can use real coordinates/slug
-    // instead of re-guessing a match from free text.
-    onRouteInfoChange(location.name);
     setSelectedCities(location.name, selectedDestinationCities, location);
-
-    setShowOriginSuggestions(false);
-    if (inputRef.current) {
-      inputRef.current.blur();
-    }
   };
 
   const handleToggle = (destinationId: string) => {
@@ -151,54 +93,19 @@ export default function DestinationSelector({
     setSelectedCities(selectedOriginCity || originPoint, newDestinations);
   };
 
-  // Prevent dropdown from closing when clicking inside it
-  const handleDropdownMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-  };
-
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
       <div className="space-y-4">
         <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] pl-2 mb-2 block italic">
             {b.route_title || "Starting Point"}
         </label>
-        <div className="relative group" ref={dropdownRef}>
-            <input
-              ref={inputRef}
-              type="text"
-              placeholder={b.origin_placeholder || "Starting city (e.g. Delhi)"}
-              value={originPoint}
-              onChange={(e) => handleOriginChange(e.target.value)}
-              onFocus={() => setShowOriginSuggestions(true)}
-              className="w-full h-16 pl-14 pr-6 bg-slate-50 border-2 border-transparent rounded-[1.5rem] focus:bg-white focus:border-slate-900 transition-all font-black text-base sm:text-lg uppercase tracking-tight italic"
-            />
-            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-slate-900 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-            </div>
-
-            {/* Origin Suggestions Dropdown — real backend results, not a static list */}
-            {showOriginSuggestions && (searching || originResults.length > 0) && (
-              <div
-                className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 max-h-60 overflow-y-auto"
-                onMouseDown={handleDropdownMouseDown}
-              >
-                {searching && originResults.length === 0 ? (
-                  <div className="px-6 py-3 text-sm text-slate-400 font-medium">Searching…</div>
-                ) : (
-                  originResults.map((location) => (
-                    <button
-                      key={location.id}
-                      type="button"
-                      onClick={() => selectOrigin(location)}
-                      className="w-full px-6 py-3 text-left hover:bg-slate-50 transition-colors first:rounded-t-2xl last:rounded-b-2xl font-medium text-slate-700 border-b border-slate-100 last:border-0"
-                    >
-                      📍 {location.name}
-                    </button>
-                  ))
-                )}
-              </div>
-            )}
-        </div>
+        <OriginAutocomplete
+          name="builder-origin"
+          placeholder={b.origin_placeholder || "Starting city (e.g. Delhi)"}
+          value={originPoint}
+          onChange={onRouteInfoChange}
+          onSelect={selectOrigin}
+        />
       </div>
 
       <div className="space-y-4 pt-2">
