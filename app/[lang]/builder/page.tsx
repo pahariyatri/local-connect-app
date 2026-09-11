@@ -17,7 +17,7 @@ import ServiceInterestSelector from "./components/ServiceInterestSelector";
 import TravelingPartySelector from "./components/TravelingPartySelector";
 import NextStopSelector from "./components/NextStopSelector";
 import PackageBuilderStep from "./components/PackageBuilderStep";
-import JourneyProgress from "./components/JourneyProgress";
+import StepProgress from "./components/StepProgress";
 import { TripStop, createTripStop } from "@/types/tripBuilder";
 import SupportContact from "../components/molecules/SupportContact";
 import { hasLiveSupportChannel } from "@/lib/supportConfig";
@@ -42,6 +42,12 @@ const DESTINATION_ID_MAP: Record<string, string> = {
   kasol: "kasol",
   malana: "kasol",
   parvati: "kasol",
+  tosh: "kasol",
+  kalga: "kasol",
+  pulga: "kasol",
+  barshaini: "kasol",
+  manikaran: "kasol",
+  kheerganga: "kasol",
   dharamshala: "dharamshala",
   mcleodganj: "dharamshala",
   "mcleod ganj": "dharamshala",
@@ -116,6 +122,7 @@ export default function TripBuilderPage() {
 
   useEffect(() => {
     trackTravellerRequestStart();
+    prepTracker.builderStarted();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -396,20 +403,15 @@ export default function TripBuilderPage() {
  
             {/* Main Content - Stepper */}
             <div className="lg:col-span-8">
-                {/* Journey progress — "Step N of 6" above an animated route/skyline
-                    that carries the traveler from city to mountains as they
-                    advance through the builder. Purely visual: currentStep is
-                    the same state driving handleNext/handleBack below. */}
+                {/* Step progress — lightweight CSS/SVG dots-and-track, same
+                    pattern already live in vendor onboarding/service creation.
+                    Purely visual: currentStep is the same state driving
+                    handleNext/handleBack below; no builder logic here. */}
                 <div className="mb-6 sm:mb-8">
-                  <p className="text-xs sm:text-sm font-semibold text-slate-900 mb-2">
-                    {(builder.step_of ?? "Step {current} of {total}")
-                      .replace("{current}", String(currentStep))
-                      .replace("{total}", "6")}
-                  </p>
-                  <JourneyProgress
+                  <StepProgress
                     currentStep={currentStep}
                     totalSteps={6}
-                    stepLabel={(builder.step_of ?? "Step {current} of {total}")
+                    label={(builder.step_of ?? "Step {current} of {total}")
                       .replace("{current}", String(currentStep))
                       .replace("{total}", "6")}
                   />

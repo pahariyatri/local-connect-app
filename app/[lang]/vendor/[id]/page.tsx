@@ -18,6 +18,8 @@ import StarRating from "../../components/atoms/StarRating";
 
 import FeedbackReviewModal, { ReviewItem } from "../../components/molecules/FeedbackReviewModal";
 import { trackPartnerProfileView } from "@/lib/analytics";
+import { sessionTracker } from "@/services/sessionService";
+import { addRecentView } from "@/lib/recentlyViewed";
 
 const CATEGORY_IMAGES: Record<string, string> = {
     "Homestays": "https://images.unsplash.com/photo-1587061949409-02df41d5e562?q=80&w=1200",
@@ -207,6 +209,17 @@ export default function VendorProfilePage() {
                     hometown: servicesList[0]?.city || response.city || "Himachal Pradesh",
                 });
                 trackPartnerProfileView(response.id, cleanName);
+                // vendor_viewed was declared in SessionEventType but never
+                // fired anywhere (dead event, confirmed via repo-wide grep)
+                // — trackPartnerProfileView above is a separate, GTM-only pipeline.
+                sessionTracker.track('vendor_viewed', { entityType: 'vendor', entityId: String(response.id) });
+                addRecentView({
+                    type: 'vendor',
+                    id: String(response.id),
+                    title: cleanName,
+                    image: servicesList[0]?.image || null,
+                    href: `/${params.lang}/vendor/${response.id}`,
+                });
             } else {
                 setLoadError("not_found");
             }

@@ -16,6 +16,8 @@ import PublicFooter from "./components/organisms/PublicFooter";
 import HeroSection from "./components/organisms/HeroSection";
 import InteractiveRouteSection from "./components/organisms/InteractiveRouteSection";
 import { trackAppLandingView, trackPortalCtaClick } from "@/lib/analytics";
+import { sessionTracker } from "@/services/sessionService";
+import { addRecentView, getRecentViews, RecentView } from "@/lib/recentlyViewed";
 
 type HomeProps = {
   params: Promise<{ lang: Locale }>;
@@ -101,9 +103,12 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
   const [verifiedCount, setVerifiedCount] = useState<number | null>(null);
   const [destinations, setDestinations] = useState<DestinationItem[]>([]);
   const [isDestinationsLoading, setIsDestinationsLoading] = useState(true);
+  const [recentViews, setRecentViews] = useState<RecentView[]>([]);
 
   useEffect(() => {
     trackAppLandingView();
+    // Client-only (localStorage) — read after mount, never during SSR.
+    setRecentViews(getRecentViews());
   }, []);
 
   useEffect(() => {
@@ -172,6 +177,39 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
         onPlan={() => { trackPortalCtaClick("hero_plan", builderHref); router.push(builderHref); }}
       />
 
+      {/* ── 1.5 · RECENTLY EXPLORED — guest-only, localStorage-backed, never
+             rendered for a first-time visitor (empty state = section absent,
+             not a placeholder). Compact rail, deliberately smaller/lighter
+             than Discover below so it doesn't compete with real curated
+             content. ──────────────────────────────────────────────────── */}
+      {recentViews.length > 0 && (
+        <section className="pt-8 sm:pt-12 bg-white">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <Typography variant="eyebrow">Continue exploring</Typography>
+            <div className="mt-3 flex gap-3 overflow-x-auto pb-2 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+              {recentViews.slice(0, 8).map((v) => (
+                <button
+                  key={`${v.type}-${v.id}`}
+                  type="button"
+                  onClick={() => router.push(v.href)}
+                  className="shrink-0 w-56 flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-2.5 text-left hover:border-emerald-300 hover:shadow-md transition-all"
+                >
+                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 shrink-0">
+                    {v.image ? <LocalImage src={v.image} alt="" className="w-full h-full object-cover" /> : null}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-emerald-600">
+                      {v.type === 'package' ? 'Your trip' : v.type}
+                    </p>
+                    <p className="text-sm font-semibold text-slate-900 truncate">{v.title}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ── 2 · DISCOVER — a few real places, large portrait photo cards,
              minimal text (name only). Real Location data (GET /locations,
              filtered to type=DESTINATION) — replaces the removed "How It
@@ -197,7 +235,14 @@ export default function Home({ params }: HomeProps) { // eslint-disable-line @ty
                     <Reveal key={d.slug} delayMs={i * 80} className="w-[280px] sm:w-auto shrink-0 snap-center">
                       <button
                         type="button"
-                        onClick={() => router.push(`${exploreHref}?location=${encodeURIComponent(d.name)}`)}
+                        onClick={() => {
+                          // destination_view was previously only fired from the
+                          // Results page's package-loaded flow, never from the
+                          // moment a destination is actually chosen here.
+                          sessionTracker.track('destination_view', { entityType: 'destination', entityId: d.slug, metadata: { destinations: [d.name] } });
+                          addRecentView({ type: 'destination', id: d.slug, title: d.name, image: d.image, href: `${exploreHref}?location=${encodeURIComponent(d.name)}` });
+                          router.push(`${exploreHref}?location=${encodeURIComponent(d.name)}`);
+                        }}
                         aria-label={d.name}
                         className="group relative w-full aspect-[4/5] rounded-3xl overflow-hidden hover:-translate-y-1 hover:shadow-[0_20px_50px_-15px_rgba(16,185,129,0.3)] transition-all duration-300"
                       >

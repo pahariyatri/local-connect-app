@@ -6,6 +6,7 @@ import { loginWithPin, setupPin, signupWithPin, resetPin, forgotPinRequest, chec
 import { ApiClientError } from '@/lib/apiClient';
 import { toAuthUiError } from '@/utils/authErrors';
 import { fetchCurrentUser } from '@/services/userService';
+import { sessionTracker } from '@/services/sessionService';
 import { useAuth } from '@/contexts/AuthContext';
 import { PIN_LENGTH, isWeakPin } from '@/utils/validation';
 import Button from '../../components/atoms/Button';
@@ -149,6 +150,11 @@ export default function PinPage() {
     if (!profile?.id) {
       throw new Error(t.genericError.profileLoadFailed);
     }
+    // Merges this browser's anonymous session (and its guest exploration
+    // history) into the account — previously only loginAsGuest() did this;
+    // the real login/signup/pin-setup paths never did, so guest activity
+    // was silently orphaned for the vast majority of real users.
+    sessionTracker.linkUser(profile.id);
     login({
       id: profile.id,
       name: profile.name || `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'User',

@@ -351,7 +351,9 @@ export default function ResultsPage() {
     }
 
     setIsBooking(true);
-    prepTracker.bookingStarted(totalPrice, destinations);
+    // booking_started is fired once, inside createBooking() below — see
+    // bookingService.ts. Do not track it here too (was a confirmed
+    // duplicate-fire bug, double-counting every real booking in GA4).
 
     try {
       // Step 1: Create booking 
@@ -372,7 +374,7 @@ export default function ResultsPage() {
       };
 
       const { createBooking } = await import("@/services/bookingService");
-      const result = await createBooking(bookingData, { destination: destinations?.[0] });
+      const result = await createBooking(bookingData, { destination: destinations?.[0], amount: totalPrice });
 
       // PAYMENT-FIRST MODEL (2026-09, see DECISION_LOG.md): creating a
       // booking sends the request to each local partner AND is immediately

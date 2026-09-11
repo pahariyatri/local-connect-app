@@ -16,27 +16,34 @@ interface RoutePreset {
   builderUrlParams: string;
 }
 
+// Beachhead-only (CLAUDE.md §2: Kasol, Tosh, Kalga/Pulga, Barshaini; Malana
+// & Manikaran secondary — Manali/Dharamshala/Spiti are later-phase expansion
+// and must not be promoted here). Origin varies for real, since Origin now
+// supports any India-wide city (Google Places) — Destination stays fixed to
+// Kasol, the one destination the Builder's tile picker actually supports
+// today; the other beachhead villages named below all resolve to that same
+// tile (see DESTINATION_ID_MAP in builder/page.tsx).
 const ROUTE_PRESETS: RoutePreset[] = [
   {
-    id: "parvati-manali",
-    title: "Parvati & Manali Valley",
-    region: "Kullu & Parvati",
+    id: "parvati-from-delhi",
+    title: "Kasol & Parvati Valley",
+    region: "From Delhi",
     image: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?q=65&w=900",
-    builderUrlParams: "origin=Chandigarh&destinations=Kasol,Kullu,Manali",
+    builderUrlParams: "origin=Delhi&destinations=Kasol",
   },
   {
-    id: "kangra-bir",
-    title: "Dharamshala & Bir",
-    region: "Kangra Valley",
+    id: "parvati-from-chandigarh",
+    title: "Kasol, Malana & Tosh",
+    region: "From Chandigarh",
     image: "https://images.unsplash.com/photo-1653853572809-ea537274c7f5?q=65&w=900",
-    builderUrlParams: "origin=Pathankot&destinations=Dharamshala,Bir,Billing",
+    builderUrlParams: "origin=Chandigarh&destinations=Kasol,Malana,Tosh",
   },
   {
-    id: "spiti-circuit",
-    title: "Spiti Valley Explorer",
-    region: "Lahaul & Spiti",
+    id: "parvati-from-shimla",
+    title: "Kalga, Pulga & Barshaini",
+    region: "From Shimla",
     image: "https://images.unsplash.com/photo-1518623001395-125242310d0c?q=65&w=900",
-    builderUrlParams: "origin=Shimla&destinations=Sangla,Tabo,Kaza,Chandratal",
+    builderUrlParams: "origin=Shimla&destinations=Kasol,Kalga,Pulga,Barshaini",
   },
 ];
 

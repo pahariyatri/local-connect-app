@@ -14,16 +14,21 @@ export const createBooking = async (
   },
   /** Tracking-only context, never sent to the API — `destination` feeds the
    * admin demand report's by-city aggregation on the resulting booking_completed event. */
-  trackingMeta?: { destination?: string },
+  trackingMeta?: { destination?: string; amount?: number },
 ) => {
 
-  // Track booking started
+  // Track booking started — the single owner of this event (the results
+  // page used to also fire it directly on the "Book Now" click, double
+  // counting every real booking attempt in GA4; removed there, folded its
+  // amount/destination context into this call instead).
   sessionTracker.track('booking_started', {
     entityType: 'trip',
     entityId: String(bookingData.packageId),
     metadata: {
       travelDate: bookingData.travelDate,
       guestCount: bookingData.guestCount,
+      amount: trackingMeta?.amount,
+      destination: trackingMeta?.destination,
     },
   });
 

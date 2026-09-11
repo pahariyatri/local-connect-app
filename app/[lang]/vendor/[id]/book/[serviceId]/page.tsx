@@ -12,6 +12,8 @@ import { createDirectBooking } from "@/services/bookingService";
 import { getServiceQuote, ServiceQuote } from "@/services/catalogService";
 import { ApiClientError } from "@/lib/apiClient";
 import { toLocalDateString } from "@/lib/travelDate";
+import { sessionTracker } from "@/services/sessionService";
+import { addRecentView } from "@/lib/recentlyViewed";
 
 interface BookingService {
   id: string;
@@ -105,6 +107,18 @@ export default function BookServicePage() {
           category: match.category,
           image: match.thumbnail,
         });
+        // The real traveler-facing "viewed a service" moment — getServiceById()
+        // in catalogService.ts fires this same event too, but only from the
+        // vendor's own service-management page, never from here where a
+        // traveler actually looks at one.
+        sessionTracker.track('service_viewed', { entityType: 'service', entityId: String(match.id) });
+        addRecentView({
+          type: 'service',
+          id: String(match.id),
+          title: match.name,
+          image: match.thumbnail,
+          href: `/${lang}/vendor/${vendorId}/book/${match.id}`,
+        });
       } catch (err) {
         if (cancelled) return;
         setLoadError(err instanceof ApiClientError && err.statusCode === 404 ? "not_found" : "error");
@@ -113,7 +127,7 @@ export default function BookServicePage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [vendorId, serviceId]);
+  }, [vendorId, serviceId, lang]);
 
   // Live price quote from the real pricing engine — same as the modal had.
   useEffect(() => {

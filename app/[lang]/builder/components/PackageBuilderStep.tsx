@@ -12,6 +12,7 @@ import { createPackage } from "@/services/packageService";
 import { toTitleCase } from "@/utils/text";
 import { sessionTracker } from "@/services/sessionService";
 import { trackTravellerRequestSubmit } from "@/lib/analytics";
+import { addRecentView } from "@/lib/recentlyViewed";
 
 interface PackageBuilderStepProps {
   origin: string;
@@ -262,7 +263,15 @@ export default function PackageBuilderStep({
         trackTravellerRequestSubmit(id, totalPrice, destinations);
         const params = new URLSearchParams();
         params.set("packageId", String(id));
-        router.push(`/${lang}/results?${params.toString()}`);
+        const resultsHref = `/${lang}/results?${params.toString()}`;
+        addRecentView({
+          type: 'package',
+          id: String(id),
+          title: destinations?.length ? `Trip to ${destinations.join(", ")}` : "Your trip",
+          image: null,
+          href: resultsHref,
+        });
+        router.push(resultsHref);
         return;
       }
       throw new Error("No package ID returned");

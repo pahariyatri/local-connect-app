@@ -12,6 +12,18 @@ import { sessionTracker } from '@/services/sessionService';
 
 class PrepTracker {
   /**
+   * Trip Builder mounted — `trip_builder_started` was declared in
+   * SessionEventType but never fired anywhere (dead event, confirmed via
+   * repo-wide grep). The builder's separate GTM-only pipeline already fires
+   * `traveller_request_start` (lib/analytics.ts) on the same mount; this
+   * additionally puts the moment into the sessionTracker/GA4 pipeline the
+   * founder's requested event list is measured against.
+   */
+  builderStarted(): void {
+    sessionTracker.track('trip_builder_started');
+  }
+
+  /**
    * Builder funnel steps 1–4
    */
   funnelStep(
@@ -58,11 +70,15 @@ class PrepTracker {
   }
 
   /**
-   * User clicked "Book Now" on results page
+   * Razorpay checkout is about to open — `payment_started` was declared in
+   * SessionEventType but never fired anywhere (dead event, confirmed via
+   * repo-wide grep).
    */
-  bookingStarted(amount: number, destinations: string[]): void {
-    sessionTracker.track('booking_started', {
-      metadata: { amount, destinations },
+  paymentStarted(bookingId: number, amount: number): void {
+    sessionTracker.track('payment_started', {
+      entityType: 'booking',
+      entityId: String(bookingId),
+      metadata: { amount },
     });
   }
 

@@ -95,6 +95,7 @@ export default function CheckoutPage() {
     }
 
     try {
+      prepTracker.paymentStarted(parseInt(bookingId, 10), amount);
       const paymentResult = await initRazorpayCheckout({
         orderId,
         amount,
