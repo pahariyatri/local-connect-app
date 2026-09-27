@@ -193,18 +193,30 @@ export default function HeroSection({
         <div className={styles.visualGlow} aria-hidden="true" />
         <div className={styles.visualHeading}><span className={styles.visualDot} />{copy.hero_visual_label}</div>
         <h2>{copy.hero_visual_title}</h2>
-        <div className={styles.routeScene}>
-          <svg className={styles.contours} viewBox="0 0 440 320" fill="none" aria-hidden="true">
-            <path d="M-80 290C-10 110 100 280 160 110S310 10 520-60M-70 315C0 135 125 305 185 135S335 35 545-35M-60 340C10 160 150 330 210 160S360 60 570-10M-50 365C20 185 175 355 235 185S385 85 595 15M-40 390C30 210 200 380 260 210S410 110 620 40" />
-          </svg>
-          <svg className={styles.routeLine} viewBox="0 0 440 320" fill="none" aria-hidden="true">
-            <path className={styles.routeTrack} d="M88 75C330 35 75 240 300 175S385 265 225 285" />
-            <path className={styles.routeTrace} pathLength="1" d="M88 75C330 35 75 240 300 175S385 265 225 285" />
-            <circle cx="225" cy="285" r="5" fill="#94d1c2" />
-          </svg>
-          {[{label:copy.hero_visual_stay,icon:'home',category:'stay'}, {label:copy.hero_visual_ride,icon:'car',category:'transport'}, {label:copy.hero_visual_guide,icon:'compass',category:'trek'}].map((item,i) => <Link key={item.category} href={`/${lang}/explore?category=${item.category}`} className={`${styles.sceneCard} ${styles[`sceneCard${i}`]}`}><span className={styles.sceneIcon}><Icon name={item.icon as IconName} className="w-5 h-5" /></span><strong>{item.label}</strong><span className={styles.sceneArrow} aria-hidden="true">↗</span></Link>)}
+        <div className={styles.routeScene} role="group" aria-label="Explore local services">
+          {[
+            { label: copy.hero_visual_stay, icon: "home", category: "stay" },
+            { label: copy.hero_visual_ride, icon: "car", category: "transport" },
+            { label: copy.hero_visual_guide, icon: "compass", category: "trek" },
+          ].map((item, index) => (
+            <Link
+              key={item.category}
+              href={`/${lang}/explore?category=${item.category}`}
+              className={`${styles.sceneCard} ${styles[`sceneCard${index}`]}`}
+            >
+              <span className={styles.sceneStep} aria-hidden="true">
+                0{index + 1}
+              </span>
+              <span className={styles.sceneIcon}>
+                <Icon name={item.icon as IconName} className="w-5 h-5" />
+              </span>
+              <strong>{item.label}</strong>
+              <span className={styles.sceneArrow} aria-hidden="true">
+                ↗
+              </span>
+            </Link>
+          ))}
         </div>
-        <div className={styles.visualFooter}><span>01 — 02 — 03</span><span aria-hidden="true">↗</span></div>
       </div>
       </div>
     </section>

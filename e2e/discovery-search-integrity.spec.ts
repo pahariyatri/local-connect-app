@@ -179,8 +179,12 @@ test.describe('Zero-result recovery', () => {
 
     const zeroState = page.getByTestId('explore-zero-result');
     await expect(zeroState).toBeVisible();
-    await expect(zeroState).toContainText('Kalga');
-    await expect(zeroState.getByText(/Plan a trip instead/i)).toBeVisible();
+    await expect(zeroState.getByRole('button', { name: /clear filters/i })).toBeVisible();
+    await expect(page.locator('#explore-plan-cta')).toHaveAttribute('href', '/en/builder');
+
+    await zeroState.getByRole('button', { name: /clear filters/i }).click();
+    await expect(page).toHaveURL('/en/explore');
+    await expect(page.locator('#explore-search')).toHaveValue('');
   });
 });
 

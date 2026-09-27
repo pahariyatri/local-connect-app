@@ -30,15 +30,14 @@ test.describe('Pahari Yatri Core Flows', () => {
     // Headline copy is deliberately not asserted verbatim here — it's real
     // product copy that gets revised (see landing-page redesign work); the
     // actual regression this test guards is a duplicate <h1>, not the text.
-    await expect(page.locator('h1')).toContainText(/himachal/i);
   });
 
   test('Landing hero has a real destination search input', async ({ page }) => {
-    const searchInput = page.getByPlaceholder('Where are you going?');
     await page.goto('/en');
+    const searchInput = page.locator('#landing-destination');
     await expect(searchInput).toBeVisible();
     await searchInput.fill('Kasol');
-    await page.getByRole('button', { name: 'Search', exact: true }).click();
+    await page.getByRole('button', { name: 'Explore destinations' }).click();
     await expect(page).toHaveURL(/\/en\/explore\?q=Kasol/);
   });
 
@@ -46,15 +45,18 @@ test.describe('Pahari Yatri Core Flows', () => {
     test.skip(!isMobile, 'Mobile only test');
     
     await page.goto('/en');
-    
-    // Check mobile bottom navigation
-    const bottomNav = page.locator('#mobile-bottom-navigation');
-    await expect(bottomNav).toBeVisible({ timeout: 10_000 });
-    
-    // Navigate via bottom nav link
-    const builderLink = bottomNav.locator('a[href*="/builder"]');
-    await expect(builderLink).toBeVisible();
-    await builderLink.click({ force: true });
+
+    // Guests use the header menu; the fixed bottom navigation is for signed-in users.
+    await expect(page.locator('#mobile-bottom-navigation')).toHaveCount(0);
+    const menuToggle = page.getByRole('button', { name: 'Open menu' });
+    await expect(menuToggle).toBeVisible();
+    await menuToggle.click();
+
+    const mobileMenu = page.getByTestId('header-mobile-menu');
+    await expect(mobileMenu).toBeVisible();
+    await expect(mobileMenu.getByRole('link', { name: 'Explore' })).toBeVisible();
+    await expect(mobileMenu.getByTestId('header-mobile-sign-in')).toBeVisible();
+    await mobileMenu.getByRole('link', { name: 'Plan a Trip' }).click();
     await expect(page).toHaveURL(/\/en\/builder/);
   });
 

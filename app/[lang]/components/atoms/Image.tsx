@@ -63,7 +63,7 @@ export default function LocalImage({
     // the failed flag so a good image after a bad one still renders.
     useEffect(() => { setFailed(false); }, [src]);
 
-    if (!src || failed) {
+    if (!src || failed || src === PLACEHOLDER_IMAGE || src.endsWith(PLACEHOLDER_IMAGE)) {
         return <ImageFallback className={className} rounded={rounded} />;
     }
 

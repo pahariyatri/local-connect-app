@@ -185,9 +185,17 @@
 }
 .cardImage {
   position: relative;
+  display: grid;
+  place-items: center;
   height: 220px;
   overflow: hidden;
   background: linear-gradient(135deg, rgba(21, 77, 67, 0.1), rgba(58, 176, 147, 0.08));
+}
+.cardImage > svg {
+  width: 48px;
+  height: 48px;
+  color: hsl(var(--brand));
+  opacity: 0.72;
 }
 .photo {
   width: 100%;
@@ -258,6 +266,78 @@
 .cardBottom strong {
   font-size: 15px;
   color: hsl(var(--foreground));
+}
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 56px;
+  margin-top: 24px;
+  white-space: nowrap;
+}
+.pagination button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid rgba(17, 36, 31, 0.1);
+  border-radius: 14px;
+  background: #ffffff;
+  color: hsl(var(--foreground));
+  font-size: 12px;
+  font-weight: 700;
+}
+.pagination button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.pagination span {
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.skeleton {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding-bottom: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(17, 36, 31, 0.08);
+  border-radius: 20px;
+  background: #ffffff;
+}
+.skeleton > div {
+  height: 220px;
+  background: linear-gradient(100deg, #edf3f0 20%, #f8faf9 40%, #edf3f0 60%);
+  background-size: 200% 100%;
+  animation: exploreShimmer 1.6s linear infinite;
+}
+.skeleton > span {
+  display: block;
+  height: 10px;
+  margin: 0 16px;
+  border-radius: 999px;
+  background: #edf3f0;
+}
+.skeleton > span:last-child {
+  width: 58%;
+}
+.stateIcon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 14px;
+  border-radius: 15px;
+  background: rgba(111, 190, 167, 0.14);
+  color: hsl(var(--brand));
+}
+@keyframes exploreShimmer {
+  to { background-position-x: -200%; }
 }
 .plannerBanner {
   display: flex;
@@ -359,8 +439,10 @@
     font-size: 16px;
   }
   .searchField button {
-    width: 34px;
-    height: 34px;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: 14px;
   }
   .searchButton {
     min-width: 52px;
@@ -381,6 +463,9 @@
     grid-template-columns: 1fr;
   }
   .cardImage {
+    height: 210px;
+  }
+  .skeleton > div {
     height: 210px;
   }
   .plannerBanner {
