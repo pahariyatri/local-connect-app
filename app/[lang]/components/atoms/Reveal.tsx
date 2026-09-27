@@ -1,34 +1,58 @@
 "use client";
+import { useEffect, useRef } from "react";
 
-import React, { useEffect, useRef, useState } from "react";
-
-/** Fades + slides a section into view the first time it crosses the viewport. */
-export default function Reveal({ children, className = "", delayMs = 0 }: { children: React.ReactNode; className?: string; delayMs?: number }) {
+/** Progressive enhancement: content remains visible without JS or motion support. */
+export default function Reveal({
+  children,
+  className = "",
+  delayMs = 0,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  delayMs?: number;
+}) {
   const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || !("IntersectionObserver" in window)) return;
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const animations: Animation[] = [];
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          io.disconnect();
+        if (!entry.isIntersecting) return;
+        if (!preference.matches && typeof el.animate === "function") {
+          animations.push(
+            el.animate(
+              [
+                { opacity: 0.3, transform: "translateY(22px)" },
+                { opacity: 1, transform: "translateY(0)" },
+              ],
+              {
+                duration: 650,
+                delay: delayMs,
+                easing: "cubic-bezier(.2,.7,.2,1)",
+                fill: "backwards",
+              },
+            ),
+          );
         }
+        io.disconnect();
       },
-      { threshold: 0.1 }
+      { threshold: 0.08 },
     );
+    const cancelMotion = () => {
+      if (preference.matches) animations.forEach((a) => a.cancel());
+    };
+    preference.addEventListener("change", cancelMotion);
     io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
+    return () => {
+      io.disconnect();
+      animations.forEach((a) => a.cancel());
+      preference.removeEventListener("change", cancelMotion);
+    };
+  }, [delayMs]);
   return (
-    <div
-      ref={ref}
-      className={`transition-all duration-700 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"} ${className}`}
-      style={{ transitionDelay: visible ? `${delayMs}ms` : "0ms" }}
-    >
+    <div ref={ref} className={className}>
       {children}
     </div>
   );

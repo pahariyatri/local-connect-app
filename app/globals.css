@@ -41,6 +41,10 @@
   --warning: 34.6 75% 37.6%;             /* #a86b18 — caution states */
   --success: 151.4 52.5% 31.4%;          /* #267a52 — confirmations */
 
+  /* Shared heading rhythm: landing, builder and portal screens. */
+  --tracking-display: -0.045em;
+  --tracking-heading: -0.035em;
+
   /* Typography scale (rem) */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;

@@ -81,7 +81,7 @@ export default function Header() {
   const currentLangObj = SUPPORTED_LANGUAGES.find((l) => l.code === lang) || SUPPORTED_LANGUAGES[0];
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-100 shadow-[0_2px_15px_-4px_rgba(0,0,0,0.03)] transition-all">
+    <header onKeyDown={(event) => { if (event.key === "Escape") { setMobileMenuOpen(false); setLangDropdownOpen(false); } }} className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-100 shadow-[0_2px_15px_-4px_rgba(0,0,0,0.03)] transition-all">
       <div className="max-w-6xl mx-auto flex items-center justify-between px-4 sm:px-6 py-2.5 sm:py-3">
         {/* Brand Logo */}
         <Link
@@ -103,7 +103,7 @@ export default function Header() {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex gap-1.5 items-center" aria-label="Main navigation">
+        <nav className="hidden lg:flex gap-1.5 items-center" aria-label="Main navigation">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -200,7 +200,7 @@ export default function Header() {
           </div>
 
           {/* Desktop User Section */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-2">
             {user ? (
               <div className="flex items-center gap-1.5 bg-slate-50 p-1 pl-1.5 pr-2 rounded-full border border-slate-200/70">
                 <Link
@@ -242,7 +242,7 @@ export default function Header() {
               avatar here stays a quick shortcut. Guests previously had
               NOTHING here — no way to reach Explore/Become a Partner/Plan a
               Trip/Sign In from the header at all on mobile (AUDIT-056). */}
-          <div className="md:hidden flex items-center gap-2">
+          <div className="lg:hidden flex items-center gap-2">
             {user && (
               <Link
                 href={`/${lang}/profile`}

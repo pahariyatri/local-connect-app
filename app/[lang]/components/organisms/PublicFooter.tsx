@@ -1,15 +1,21 @@
 import React from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import SupportContact from '../molecules/SupportContact';
-import { BRAND_CONFIG } from '@/config/brandConfig';
 
 export default function PublicFooter() {
   const params = useParams<{ lang?: string }>();
   const lang = params?.lang || 'en';
   const p = (path: string) => `/${lang}${path}`;
 
+  const supportLinks = [
+    { label: 'pahariyatri@gmail.com', href: 'mailto:pahariyatri@gmail.com?subject=Pahari%20Yatri%20support' },
+  ];
+
   const columns = [
+    {
+      title: 'Support',
+      links: supportLinks,
+    },
     {
       title: 'Explore',
       links: [
@@ -28,7 +34,7 @@ export default function PublicFooter() {
       title: 'Company',
       links: [
         { label: 'About Platform', href: p('/about') },
-        { label: 'Parent Website ↗', href: BRAND_CONFIG.parentBrandUrl, external: true },
+        { label: 'Parent Website ↗', href: 'https://www.pahariyatri.com/', external: true },
       ],
     },
     {
@@ -41,81 +47,69 @@ export default function PublicFooter() {
   ];
 
   return (
-    <footer className="bg-slate-950 text-white px-6 pt-16 pb-12 border-t border-slate-900">
-      <div className="max-w-6xl mx-auto">
-        {/* Brand & Parent Company Identification */}
-        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-10 pb-12 border-b border-white/10">
-          <div className="max-w-sm space-y-4">
+    <footer className="bg-slate-950 text-white border-t border-slate-900 px-6 pt-14 pb-10">
+      <div className="mx-auto max-w-6xl">
+        <div className="flex flex-col gap-10 border-b border-white/10 pb-10 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-md space-y-5">
             <div className="flex items-center gap-3">
-              <span className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-black text-xs shadow-md shadow-emerald-500/20">
-                {BRAND_CONFIG.brandInitials}
-              </span>
-              <div className="flex flex-col">
-                <span className="font-black text-sm uppercase tracking-[0.18em] text-white">
-                  {BRAND_CONFIG.productDisplayName}
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">
-                  {BRAND_CONFIG.productDescriptor}
-                </span>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 font-black text-xs text-white shadow-lg shadow-emerald-500/20">
+                PY
+              </div>
+              <div>
+                <div className="text-xs font-black uppercase tracking-[0.18em] text-white">
+                  Travel Platform
+                </div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-400">
+                  by Pahari Yatri
+                </div>
               </div>
             </div>
 
-            <p className="text-slate-400 text-xs leading-relaxed">
-              {BRAND_CONFIG.tagline}
-            </p>
-            <p className="text-slate-500 text-[11px] leading-relaxed">
-              {BRAND_CONFIG.trustLine}
-            </p>
+            <div className="space-y-2">
+              <p className="text-base font-medium text-slate-100">
+                Travel like you know someone there.
+              </p>
+              <p className="text-sm leading-6 text-slate-400">
+                Built by Pahari Yatri for travellers who want local context, not package noise.
+              </p>
+            </div>
 
-            <div className="pt-2 text-xs space-y-1.5 border-t border-white/5">
-              <p className="text-slate-500 text-[11px]">
-                Support:{" "}
-                <a
-                  href={`mailto:${BRAND_CONFIG.supportEmail}`}
-                  className="text-slate-300 hover:text-emerald-400 transition-colors font-medium"
-                >
-                  {BRAND_CONFIG.supportEmail}
+            <div className="space-y-2 border-t border-white/10 pt-3 text-sm text-slate-300">
+              <p>
+                Support:{' '}
+                <a href="mailto:pahariyatri@gmail.com" className="text-white transition-colors hover:text-emerald-400">
+                  pahariyatri@gmail.com
                 </a>
               </p>
-              <p className="text-slate-500 text-[11px]">
-                Parent Company:{" "}
-                <a
-                  href={BRAND_CONFIG.parentBrandUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-slate-300 hover:text-emerald-400 transition-colors font-medium inline-flex items-center gap-1"
-                >
-                  {BRAND_CONFIG.parentBrandName} ({BRAND_CONFIG.parentBrandUrl.replace("https://", "")}) ↗
+              <p>
+                Parent Company:{' '}
+                <a href="https://www.pahariyatri.com/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-white transition-colors hover:text-emerald-400">
+                  Pahari Yatri (www.pahariyatri.com) ↗
                 </a>
               </p>
             </div>
           </div>
 
-          {/* Nav columns */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-x-8 gap-y-8">
-            <SupportContact variant="footer" />
+          <div className="grid grid-cols-2 gap-x-8 gap-y-8 sm:grid-cols-3 lg:grid-cols-5">
             {columns.map((col) => (
               <div key={col.title}>
-                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 mb-3">
+                <p className="mb-3 text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">
                   {col.title}
                 </p>
                 <ul className="space-y-2.5">
                   {col.links.map((link) => (
                     <li key={link.label}>
-                      {link.external ? (
+                      {link.href.startsWith('http') || link.href.startsWith('mailto:') ? (
                         <a
                           href={link.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-slate-400 hover:text-emerald-400 transition-colors inline-flex items-center gap-1"
+                          target={link.href.startsWith('http') ? '_blank' : undefined}
+                          rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                          className="text-sm text-slate-400 transition-colors hover:text-emerald-400"
                         >
                           {link.label}
                         </a>
                       ) : (
-                        <Link
-                          href={link.href}
-                          className="text-xs text-slate-400 hover:text-white transition-colors"
-                        >
+                        <Link href={link.href} className="text-sm text-slate-400 transition-colors hover:text-emerald-400">
                           {link.label}
                         </Link>
                       )}
@@ -127,18 +121,15 @@ export default function PublicFooter() {
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-500 text-[11px]">
-          <p>
-            {BRAND_CONFIG.parentBrandCopyright} • {BRAND_CONFIG.fullProductName}
-          </p>
-          <div className="flex items-center gap-4">
-            <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-wider text-slate-400">
-              {BRAND_CONFIG.productStage}
+        <div className="flex flex-col items-start justify-between gap-3 pt-6 text-[11px] text-slate-500 sm:flex-row sm:items-center">
+          <p>© 2026 Pahari Yatri. All rights reserved. • Travel Platform by Pahari Yatri</p>
+          <div className="flex items-center gap-3">
+            <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.16em] text-slate-400">
+              Early Access
             </span>
-            <p className="uppercase tracking-wider font-bold text-slate-400">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
               Made for the mountains
-            </p>
+            </span>
           </div>
         </div>
       </div>

@@ -19,11 +19,11 @@ type TypographyProps = {
     ...props
   }: TypographyProps) {
     const variants = {
-      h1: "text-4xl sm:text-5xl font-black tracking-tight",
-      h2: "text-2xl sm:text-3xl font-bold tracking-tight",
-      h3: "text-xl font-bold",
+      h1: "text-4xl sm:text-5xl font-extrabold tracking-[var(--tracking-display)] leading-[1.1] text-balance",
+      h2: "text-2xl sm:text-3xl font-bold tracking-[var(--tracking-heading)] leading-[1.2] text-balance",
+      h3: "text-xl font-bold tracking-tight leading-snug",
       p: "text-base leading-relaxed",
-      eyebrow: "text-xs font-black uppercase tracking-widest block",
+      eyebrow: "text-[11px] font-semibold uppercase tracking-[0.12em] block",
     };
 
     const defaultColors = {
@@ -34,7 +34,7 @@ type TypographyProps = {
       eyebrow: "text-emerald-600",
     };
 
-    const hasTextColor = /\btext-(?:[a-z0-9]+|\[.+\])/.test(className);
+    const hasTextColor = /\btext-(?:slate|emerald|white|black|red|rose|amber|green|blue|gray|foreground|muted|brand|primary|danger|success|inherit|current|transparent)(?:-\d{2,3})?\b|\btext-\[(?:#|rgb|hsl|color:)/.test(className);
     const colorClass = hasTextColor ? "" : defaultColors[variant];
 
     const Component = TAGS[variant] as any;
