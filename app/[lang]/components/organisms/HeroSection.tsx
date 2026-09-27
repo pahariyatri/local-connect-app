@@ -185,8 +185,15 @@ export default function HeroSection({
           )}
         </div>
         <div className={styles.belowSearch}>
-          {onPlan && <button type="button" onClick={onPlan}>{copy.hero_plan}<Icon name="arrow-right" className="w-4 h-4" /></button>}
-          <a href="#find-your-stay">{copy.hero_scroll}<span aria-hidden="true">↓</span></a>
+          {onPlan && (
+            <Link href={`/${lang}/builder`} onClick={onPlan}>
+              <span className={styles.planIcon} aria-hidden="true">
+                <Icon name="compass" className="w-4 h-4" />
+              </span>
+              <span>{copy.hero_plan}</span>
+              <Icon name="arrow-right" className="w-4 h-4" />
+            </Link>
+          )}
         </div>
       </div>
       <div className={styles.visual}>

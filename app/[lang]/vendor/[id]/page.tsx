@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import LocalImage from "../../components/atoms/Image";
 import { useNotification } from "@/contexts/NotificationContext";
@@ -86,12 +86,6 @@ export default function VendorProfilePage() {
     const router = useRouter();
     const { showNotification } = useNotification();
     const { user } = useAuth();
-    const [isMounted, setIsMounted] = useState(false);
-    const [activeDetailModal, setActiveDetailModal] = useState<DetailedService | null>(null);
-
-    useEffect(() => {
-        setIsMounted(true);
-    }, []);
     const [profile, setProfile] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState<"not_found" | "error" | null>(null);
@@ -111,7 +105,10 @@ export default function VendorProfilePage() {
 
     useEffect(() => {
         async function checkReviewEligibility() {
-            if (!id || !profile?.id) return;
+            if (!id || !profile?.id || !user) {
+                setCanReview(false);
+                return;
+            }
             try {
                 const userBookings = await getUserBookings({ limit: 50 });
                 if (userBookings?.bookings?.length > 0) {
@@ -136,7 +133,7 @@ export default function VendorProfilePage() {
             }
         }
         checkReviewEligibility();
-    }, [id, profile]);
+    }, [id, profile, user]);
 
     const fetchProfile = async () => {
         setIsLoading(true);
@@ -180,31 +177,15 @@ export default function VendorProfilePage() {
                 // Local Host" name. Falls back to the vendor's own real
                 // business name (never an invented person) when no contact
                 // is on file.
-                const contactPerson = response.pointOfContacts?.[0]?.name || cleanName;
-                const minPrice = servicesList.length > 0 ? Math.min(...servicesList.map((s) => s.price)) : null;
-
-                const offeredCategories = Array.from(new Set(servicesList.map((s) => s.category).filter(Boolean)));
-
-                const features = [
-                    response.isVerified && "Verified Local Partner",
-                    response.isInstantBooking && "Instant Direct Booking",
-                    typeof response.acceptanceRate === "number" && `${response.acceptanceRate}% Acceptance Rate`,
-                    "Secure Reservation Payment",
-                ].filter(Boolean) as string[];
-
                 setProfile({
                     id: response.id,
                     name: cleanName,
-                    contactPerson,
                     image: servicesList[0]?.image || CATEGORY_IMAGES[category] || CATEGORY_IMAGES["Homestays"],
                     rating: response.trustScore ?? null,
                     isVerified: !!response.isVerified,
-                    startingPrice: minPrice,
                     currency: "INR",
                     category,
-                    offeredCategories,
-                    description: response.description || "Authentic verified Himachal local partner offering direct homestays, mountain transit, and guided local experiences.",
-                    features,
+                    description: response.description || "",
                     services: servicesList,
                     hometown: servicesList[0]?.city || response.city || "Himachal Pradesh",
                 });
@@ -308,7 +289,7 @@ export default function VendorProfilePage() {
 
     return (
         <div className="min-h-screen bg-slate-50 pb-28">
-            <TopNavigation title={profile.name} transparent={true} />
+            <TopNavigation title="Partner profile" transparent={true} />
 
             {/* ── HERO BANNER ────────────────────────────────────────── */}
             <div className="w-full relative overflow-hidden bg-slate-950 pt-20 sm:pt-24 pb-8 sm:pb-12 px-4 sm:px-8">
@@ -347,101 +328,37 @@ export default function VendorProfilePage() {
                         <h1 className="text-2xl sm:text-4xl font-bold tracking-tight leading-tight text-white">
                             {profile.name}
                         </h1>
+                        {typeof profile.rating === "number" && (
+                            <StarRating rating={profile.rating} size="small" className="pt-1" />
+                        )}
                     </div>
                 </div>
             </div>
 
             {/* ── MAIN CONTENT ───────────────────────────────────────── */}
             <main className="max-w-3xl mx-auto px-4 sm:px-6 -mt-6 relative z-10 space-y-6">
-                {/* Vendor Overview Card */}
-                <div className="bg-white rounded-3xl p-5 sm:p-8 shadow-xl border border-slate-200/80 space-y-5">
-                    {/* Header: Business & Host Identity */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-5">
-                        <div>
-                            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md mb-2 inline-block">
-                                {profile.isVerified ? `Verified Local Partner • ${profile.category}` : profile.category}
-                            </span>
-                            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-                                {profile.name}
-                            </h2>
-                            {typeof profile.rating === "number" && (
-                                <StarRating rating={profile.rating} size="small" className="mt-1.5" />
-                            )}
-                            <p className="text-xs text-slate-500 font-medium mt-1.5 flex items-center gap-2">
-                                <span>Hosted by <strong className="text-slate-800 font-semibold">{profile.contactPerson}</strong></span>
-                                <span>•</span>
-                                <span className="flex items-center gap-1"><Icon name="map-pin" className="w-3 h-3 text-slate-400" /> {profile.hometown}</span>
-                            </p>
-                        </div>
-
-                        {profile.startingPrice != null && (
-                            <div className="sm:text-right shrink-0 bg-slate-50 sm:bg-transparent p-3 sm:p-0 rounded-2xl">
-                                <span className="text-[10px] font-semibold text-slate-400 block">Starting from</span>
-                                <span className="text-lg sm:text-xl font-bold text-slate-900">
-                                    ₹{Math.round(profile.startingPrice).toLocaleString("en-IN")}
-                                </span>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* About this Host */}
-                    <div>
-                        <h3 className="text-xs font-semibold text-slate-400 mb-1.5">About this Partner</h3>
-                        <p className="text-slate-600 text-xs sm:text-sm font-medium leading-relaxed">
-                            {profile.description}
-                        </p>
-                    </div>
-
-                    {/* Services Summary Pill */}
-                    {profile.offeredCategories && profile.offeredCategories.length > 0 && (
-                        <div className="bg-slate-50/80 rounded-2xl p-3.5 border border-slate-100 flex flex-wrap items-center justify-between gap-2">
-                            <span className="text-xs font-bold text-slate-700">Services Offered by Host:</span>
-                            <div className="flex flex-wrap gap-1.5">
-                                {profile.offeredCategories.map((cat: string, idx: number) => (
-                                    <span key={idx} className="px-2.5 py-0.5 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-slate-800 shadow-2xs capitalize">
-                                        {cat}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Features Chips */}
-                    <div className="flex flex-wrap gap-2 pt-1">
-                        {profile.features.map((feature: string, idx: number) => (
-                            <span
-                                key={idx}
-                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-50 border border-slate-200/70 text-[10px] font-bold text-slate-700"
-                            >
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                {feature}
-                            </span>
-                        ))}
-                    </div>
-                </div>
+                {profile.description && (
+                    <p className="px-1 text-sm leading-relaxed text-slate-600">
+                        {profile.description}
+                    </p>
+                )}
 
                 {/* ── SERVICES CATALOG ───────────────────────────────────── */}
                 <div className="space-y-4">
                     <div className="flex items-center justify-between px-1">
                         <div>
                             <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
-                                Available Services & Stays
+                                Services
                             </h2>
-                            <p className="text-xs text-slate-400 font-medium">
-                                Book direct with verified local rates and dedicated support.
-                            </p>
                         </div>
-                        <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
-                            {profile.services.length} Listings
+                        <span className="text-xs font-semibold text-slate-500">
+                            {profile.services.length} {profile.services.length === 1 ? "service" : "services"}
                         </span>
                     </div>
 
                     {profile.services.length === 0 ? (
                         <div className="p-8 rounded-3xl bg-white border border-slate-200 text-center space-y-3">
-                            <p className="text-slate-700 text-sm font-semibold">This host is currently updating their catalog.</p>
-                            <p className="text-slate-400 text-xs font-medium max-w-sm mx-auto">
-                                You can build a custom trip to request instant matching with this partner.
-                            </p>
+                            <p className="text-slate-700 text-sm font-semibold">No services are listed right now.</p>
                             <button
                                 onClick={() => router.push(`/${lang}/builder`)}
                                 className="px-6 py-2.5 rounded-full bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-all"
@@ -491,7 +408,7 @@ export default function VendorProfilePage() {
                                             <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100 gap-2 shrink-0">
                                                 <div className="text-left sm:text-right">
                                                     <p className="text-lg font-bold text-slate-900 leading-none">
-                                                        ₹{Math.round(service.price).toLocaleString("en-IN")}
+                                                        ₹{service.price.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
                                                     </p>
                                                     <p className="text-[10px] font-medium text-slate-400 mt-0.5">
                                                         {service.unit}
@@ -499,31 +416,22 @@ export default function VendorProfilePage() {
                                                 </div>
 
                                                 <div className="flex items-center gap-2">
-                                                    <button
-                                                        onClick={() => setActiveDetailModal(service)}
-                                                        className="px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+                                                    <Link
+                                                        href={`/${lang}/vendor/${id}/service/${service.id}`}
+                                                        className="min-h-11 px-4 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
                                                     >
                                                         Details
-                                                    </button>
+                                                    </Link>
                                                     <button
                                                         onClick={() => goToBooking(service)}
-                                                        className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-all shadow-sm active:scale-95"
+                                                        className="min-h-11 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold transition-all shadow-sm active:scale-95"
                                                     >
-                                                        Request to Book
+                                                        Choose dates
                                                     </button>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* Inclusions Quick Bar */}
-                                        <div className="bg-slate-50/70 px-4 sm:px-5 py-2.5 border-t border-slate-100 flex flex-wrap items-center gap-3 text-[11px] font-medium text-slate-500">
-                                            <span className="text-slate-400 font-semibold text-[10px]">Included:</span>
-                                            {service.inclusions.slice(0, 3).map((inc, i) => (
-                                                <span key={i} className="flex items-center gap-1">
-                                                    <Icon name="check" className="w-3 h-3 text-emerald-500" /> {inc}
-                                                </span>
-                                            ))}
-                                        </div>
                                     </div>
                                 );
                             })}
@@ -532,194 +440,50 @@ export default function VendorProfilePage() {
                 </div>
 
                 {/* ── VERIFIED REVIEWS & FEEDBACK SECTION ── */}
-                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80 space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-                        <div>
-                            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600">
-                                Verified Feedback & Ratings
-                            </span>
-                            <h3 className="text-lg font-black text-slate-900 tracking-tight">
-                                Traveler Reviews ({reviews.length})
-                            </h3>
+                {(reviews.length > 0 || canReview) ? (
+                    <section className="space-y-3">
+                        <div className="flex items-center justify-between gap-3">
+                            <h2 className="text-base font-semibold text-slate-900">Traveler reviews ({reviews.length})</h2>
+                            {canReview && (
+                                <button
+                                    onClick={() => setIsFeedbackModalOpen(true)}
+                                    className="min-h-11 px-4 rounded-xl bg-slate-900 text-white text-xs font-semibold"
+                                >
+                                    Write a review
+                                </button>
+                            )}
                         </div>
-                        {canReview ? (
-                            <button
-                                onClick={() => setIsFeedbackModalOpen(true)}
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-emerald-600 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-sm active:scale-95 self-start sm:self-auto"
-                            >
-                                <span>★ Write Review / Feedback</span>
-                            </button>
-                        ) : (
-                            <span className="text-[11px] text-slate-400 font-medium self-start sm:self-auto">
-                                🔒 Reviewing enabled after taking service with host
-                            </span>
-                        )}
-                    </div>
-
-                    {reviews.length === 0 ? (
-                        <div className="py-6 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 p-4">
-                            <p className="text-xs font-bold text-slate-700">No public reviews yet for this host.</p>
-                            <p className="text-[11px] text-slate-400 mt-0.5">Be the first traveler to rate your stay or ride!</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {reviews.map((rev) => (
-                                <div key={rev.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-amber-400 font-black text-xs">
+                        {reviews.length > 0 ? (
+                            <div className="space-y-3">
+                                {reviews.map((rev) => (
+                                    <article key={rev.id} className="p-4 rounded-xl bg-white border border-slate-200">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <span className="text-amber-500 text-xs font-semibold">
                                                 {"★".repeat(rev.rating)}{"☆".repeat(5 - rev.rating)}
                                             </span>
-                                            <span className="text-xs font-black text-slate-800">{rev.authorName}</span>
+                                            <span className="text-xs text-slate-500">{rev.authorName}</span>
+                                            <span className="text-[10px] text-slate-400">{rev.createdAt}</span>
                                         </div>
-                                        <span className="text-[10px] font-medium text-slate-400">{rev.createdAt}</span>
-                                    </div>
-                                    <p className="text-xs text-slate-600 font-medium leading-relaxed">
-                                        {rev.publicComment}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                                        <p className="mt-2 text-sm text-slate-700">{rev.publicComment}</p>
+                                    </article>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-xs text-slate-500">No traveler reviews yet.</p>
+                        )}
+                    </section>
+                ) : (
+                    <p className="px-1 text-xs text-slate-500">No traveler reviews yet.</p>
+                )}
 
-                {/* Direct Host Contact & Inquiries */}
-                <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200/80">
-                    <SupportContact
-                        variant="bar"
-                        reference={`Host ${profile.name}`}
-                        heading="Questions or Special Requests for this Host?"
-                        partnerContext={{ id: profile.id, name: profile.name }}
-                    />
-                </div>
+                <SupportContact
+                    variant="bar"
+                    reference={`Host ${profile.name}`}
+                    heading="Questions about this partner?"
+                    partnerContext={{ id: profile.id, name: profile.name }}
+                />
             </main>
 
-            {/* ── SERVICE DETAILS MODAL ─────────────────────── */}
-            {isMounted && activeDetailModal && createPortal(
-                <div className="fixed inset-0 z-[99999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-                    <div
-                        className="relative bg-white w-full max-w-lg max-h-[80vh] sm:max-h-[85vh] rounded-3xl overflow-hidden shadow-2xl flex flex-col my-auto border border-slate-100 animate-in fade-in zoom-in-95 duration-200"
-                        role="dialog"
-                        aria-modal="true"
-                    >
-                        {/* Sticky Modal Header Bar */}
-                        <div className="sticky top-0 z-20 bg-slate-950/90 backdrop-blur-md px-5 py-3.5 flex items-center justify-between text-white border-b border-slate-800 shrink-0">
-                            <div className="flex items-center gap-2 min-w-0">
-                                <span className="px-2 py-0.5 bg-emerald-500 text-white text-[9px] font-black uppercase rounded-md tracking-wider shrink-0">
-                                    {activeDetailModal.category}
-                                </span>
-                                <h3 className="text-sm sm:text-base font-black truncate text-white">
-                                    {activeDetailModal.name}
-                                </h3>
-                            </div>
-                            <button
-                                onClick={() => setActiveDetailModal(null)}
-                                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 text-white flex items-center justify-center text-xs font-bold transition-all shrink-0 ml-2"
-                                aria-label="Close details"
-                            >
-                                ✕
-                            </button>
-                        </div>
-
-                        {/* Scrollable Body */}
-                        <div className="overflow-y-auto p-5 sm:p-6 space-y-5 grow">
-                            {/* Service Hero Photo */}
-                            <div className="relative h-44 sm:h-52 w-full rounded-2xl overflow-hidden bg-slate-900 shrink-0 shadow-inner">
-                                <LocalImage
-                                    src={activeDetailModal.image}
-                                    alt={activeDetailModal.name}
-                                    className="w-full h-full object-cover"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
-                                <div className="absolute bottom-3 left-4 right-4 text-white">
-                                    <p className="text-xs font-bold text-slate-200">
-                                        Host: {profile.name} {activeDetailModal.city && `• 📍 ${activeDetailModal.city}`}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Price & Capacity Banner */}
-                            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                <div>
-                                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Direct Verified Rate</span>
-                                    <p className="text-xl font-black text-slate-900">
-                                        ₹{Math.round(activeDetailModal.price).toLocaleString("en-IN")}{" "}
-                                        <span className="text-xs font-bold text-slate-400">{activeDetailModal.unit}</span>
-                                    </p>
-                                </div>
-                                <div className="text-right">
-                                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Capacity</span>
-                                    <p className="text-sm font-black text-slate-800">
-                                        👥 {activeDetailModal.capacity} Person(s)
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Service Description */}
-                            <div>
-                                <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-1.5">Overview</h4>
-                                <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
-                                    {activeDetailModal.description}
-                                </p>
-                            </div>
-
-                            {/* Inclusions */}
-                            {activeDetailModal.inclusions && activeDetailModal.inclusions.length > 0 && (
-                                <div>
-                                    <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-2">What&apos;s Included</h4>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        {activeDetailModal.inclusions.map((item, idx) => (
-                                            <div key={idx} className="flex items-center gap-2 p-2.5 bg-slate-50 rounded-xl text-xs font-bold text-slate-700">
-                                                <span className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px] shrink-0">✓</span>
-                                                <span className="truncate">{item}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Booking & Cancellation Terms — real per-service value only (see
-                                AUDIT-007 above). Never assume "Flexible" — that's a claim, not a
-                                fact, until the vendor sets one. */}
-                            {activeDetailModal.cancellationPolicy && (
-                                <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/60 space-y-1">
-                                    <span className="text-[10px] font-black uppercase text-amber-800 tracking-wider">Cancellation Policy</span>
-                                    <p className="text-xs text-amber-900 font-medium">
-                                        {activeDetailModal.cancellationPolicy}
-                                    </p>
-                                </div>
-                            )}
-                            {activeDetailModal.termsAndConditions && (
-                                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/70 space-y-1">
-                                    <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Service Terms</span>
-                                    <p className="text-xs text-slate-700 font-medium">
-                                        {activeDetailModal.termsAndConditions}
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Modal Footer CTA */}
-                        <div className="p-4 sm:p-5 bg-slate-50 border-t border-slate-100 flex items-center gap-3 shrink-0">
-                            <button
-                                onClick={() => setActiveDetailModal(null)}
-                                className="w-1/3 h-12 rounded-2xl border border-slate-200 bg-white hover:bg-slate-100 active:scale-95 text-slate-700 font-black text-xs uppercase tracking-wider transition-all"
-                            >
-                                Back
-                            </button>
-                            <button
-                                onClick={() => goToBooking(activeDetailModal)}
-                                className="w-2/3 h-12 rounded-2xl bg-slate-900 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all"
-                            >
-                                Request to Book →
-                            </button>
-                        </div>
-                    </div>
-                </div>,
-                document.body
-            )}
-
-            {/* ── FEEDBACK & REVIEW MODAL ── */}
             <FeedbackReviewModal
                 vendorId={id}
                 vendorName={profile.name}

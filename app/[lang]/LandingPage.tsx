@@ -14,11 +14,7 @@ import PublicFooter from "./components/organisms/PublicFooter";
 import HeroSection from "./components/organisms/HeroSection";
 import { trackAppLandingView, trackPortalCtaClick } from "@/lib/analytics";
 import { sessionTracker } from "@/services/sessionService";
-import {
-  addRecentView,
-  getRecentViews,
-  RecentView,
-} from "@/lib/recentlyViewed";
+import { addRecentView } from "@/lib/recentlyViewed";
 
 // ─── Vendor mapping ──────────────────────────────────────────────────────────
 
@@ -98,12 +94,9 @@ export default function LandingPage() {
   const [isProvidersLoading, setIsProvidersLoading] = useState(true);
   const [destinations, setDestinations] = useState<DestinationItem[]>([]);
   const [isDestinationsLoading, setIsDestinationsLoading] = useState(true);
-  const [recentViews, setRecentViews] = useState<RecentView[]>([]);
 
   useEffect(() => {
     trackAppLandingView();
-    // Client-only (localStorage) — read after mount, never during SSR.
-    setRecentViews(getRecentViews());
   }, []);
 
   useEffect(() => {
@@ -196,25 +189,8 @@ export default function LandingPage() {
           }
           onPlan={() => {
             trackPortalCtaClick("hero_plan", builderHref);
-            router.push(builderHref);
           }}
         />
-        {recentViews.length > 0 && (
-          <section
-            className={`${styles.container} ${styles.recent}`}
-            aria-label="Recently explored"
-          >
-            <p className={styles.eyebrow}>{copy.pick_up_where_you_left_off}</p>
-            <div className={styles.recentRail}>
-              {recentViews.slice(0, 6).map((v) => (
-                <Link key={`${v.type}-${v.id}`} href={v.href}>
-                  {v.title} <span aria-hidden="true">↗</span>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
         <section
           id="find-your-stay"
           className={`${styles.container} ${styles.section}`}

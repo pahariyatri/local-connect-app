@@ -12,8 +12,6 @@ import { createDirectBooking } from "@/services/bookingService";
 import { getServiceQuote, ServiceQuote } from "@/services/catalogService";
 import { ApiClientError } from "@/lib/apiClient";
 import { toLocalDateString } from "@/lib/travelDate";
-import { sessionTracker } from "@/services/sessionService";
-import { addRecentView } from "@/lib/recentlyViewed";
 
 interface BookingService {
   id: string;
@@ -107,18 +105,6 @@ export default function BookServicePage() {
           category: match.category,
           image: match.thumbnail,
         });
-        // The real traveler-facing "viewed a service" moment — getServiceById()
-        // in catalogService.ts fires this same event too, but only from the
-        // vendor's own service-management page, never from here where a
-        // traveler actually looks at one.
-        sessionTracker.track('service_viewed', { entityType: 'service', entityId: String(match.id) });
-        addRecentView({
-          type: 'service',
-          id: String(match.id),
-          title: match.name,
-          image: match.thumbnail,
-          href: `/${lang}/vendor/${vendorId}/book/${match.id}`,
-        });
       } catch (err) {
         if (cancelled) return;
         setLoadError(err instanceof ApiClientError && err.statusCode === 404 ? "not_found" : "error");
@@ -163,8 +149,15 @@ export default function BookServicePage() {
     const end = new Date(endDate);
     return Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
   })();
+  const isNightlyService = service?.unit.toLowerCase().includes("night") ?? false;
 
   const handleDateClick = (dateStr: string) => {
+    if (!isNightlyService) {
+      setTravelDate(dateStr);
+      setEndDate("");
+      setIsCalendarOpen(false);
+      return;
+    }
     if (!travelDate || (travelDate && endDate)) {
       setTravelDate(dateStr);
       setEndDate("");
@@ -201,7 +194,7 @@ export default function BookServicePage() {
           type="button"
           disabled={isPast}
           onClick={() => handleDateClick(dateStr)}
-          className={`h-9 w-full sm:h-10 relative flex items-center justify-center rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all ${
+          className={`h-11 w-full relative flex items-center justify-center rounded-lg sm:rounded-xl text-xs font-bold transition-all ${
             isPast ? "text-slate-200 cursor-not-allowed" :
             isSelected ? "bg-slate-900 text-white shadow-lg scale-105 z-10" :
             isBetween ? "bg-emerald-50 text-emerald-600 rounded-none" :
@@ -311,45 +304,41 @@ export default function BookServicePage() {
             <LocalImage src={service.image} alt={service.name} className="w-full h-full object-cover" />
           </div>
           <div className="min-w-0">
-            <span className="text-[9px] font-black uppercase text-emerald-400 tracking-wider block">Direct Request</span>
+            <span className="text-[9px] font-semibold uppercase text-emerald-400 tracking-wider block">
+              {service.category} · {host.hometown}
+            </span>
             <h1 className="text-base font-black truncate text-white">{service.name}</h1>
             <p className="text-[11px] text-slate-300 truncate">Host: {host.name}</p>
           </div>
         </div>
-
-        {/* Sign-in Callout if unauthenticated */}
-        {!user && (
-          <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200/80 flex items-center justify-between gap-2 shadow-2xs">
-            <div className="text-xs font-bold text-amber-950">
-              <span>🔒 Sign in required to complete request.</span>
-            </div>
-            <button
-              type="button"
-              onClick={handleSignIn}
-              className="px-3 py-1.5 rounded-xl bg-amber-900 hover:bg-amber-950 text-white text-[10px] font-black uppercase tracking-wider shrink-0 transition-all active:scale-95"
-            >
-              Sign In
-            </button>
-          </div>
-        )}
 
         {/* Date Selection */}
         <div className="space-y-2">
           <button
             type="button"
             onClick={() => setIsCalendarOpen((o) => !o)}
+              aria-label={isNightlyService ? "Choose check-in and check-out dates" : "Choose travel date"}
+              aria-expanded={isCalendarOpen}
             className={`w-full flex items-center justify-between h-11 px-3.5 rounded-2xl border text-left transition-all bg-white ${
               isCalendarOpen ? "border-slate-900" : "border-slate-200 hover:border-slate-300"
             }`}
           >
             <div className="flex items-center gap-1.5 min-w-0 text-xs font-bold text-slate-800">
-              <span className={travelDate ? "" : "text-slate-400"}>
-                {travelDate ? new Date(travelDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "Check-in"}
-              </span>
-              <span className="text-slate-300">→</span>
-              <span className={endDate ? "" : "text-slate-400"}>
-                {endDate ? new Date(endDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "Check-out"}
-              </span>
+              {isNightlyService ? (
+                <>
+                  <span className={travelDate ? "" : "text-slate-400"}>
+                    {travelDate ? new Date(travelDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "Check-in"}
+                  </span>
+                  <span className="text-slate-300">→</span>
+                  <span className={endDate ? "" : "text-slate-400"}>
+                    {endDate ? new Date(endDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "Check-out"}
+                  </span>
+                </>
+              ) : (
+                <span className={travelDate ? "" : "text-slate-400"}>
+                  {travelDate ? new Date(travelDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "Choose a date"}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {nights > 0 && (
@@ -371,13 +360,13 @@ export default function BookServicePage() {
                   <button
                     type="button"
                     onClick={() => setCalendarMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
-                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white flex items-center justify-center text-[10px] border border-slate-200 hover:bg-slate-100 transition-all active:scale-95"
+                    className="w-11 h-11 rounded-xl bg-white flex items-center justify-center text-sm border border-slate-200 hover:bg-slate-100 transition-all active:scale-95"
                     aria-label="Previous month"
                   >←</button>
                   <button
                     type="button"
                     onClick={() => setCalendarMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
-                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white flex items-center justify-center text-[10px] border border-slate-200 hover:bg-slate-100 transition-all active:scale-95"
+                    className="w-11 h-11 rounded-xl bg-white flex items-center justify-center text-sm border border-slate-200 hover:bg-slate-100 transition-all active:scale-95"
                     aria-label="Next month"
                   >→</button>
                 </div>
@@ -404,7 +393,7 @@ export default function BookServicePage() {
               type="button"
               onClick={() => setGuestCount((g) => Math.max(1, g - 1))}
               disabled={guestCount <= 1}
-              className="w-9 h-9 rounded-xl bg-white border border-slate-200 disabled:opacity-30 text-slate-800 font-black text-sm flex items-center justify-center shadow-2xs hover:bg-slate-100 transition-all active:scale-95"
+              className="w-11 h-11 rounded-xl bg-white border border-slate-200 disabled:opacity-30 text-slate-800 font-black text-sm flex items-center justify-center shadow-2xs hover:bg-slate-100 transition-all active:scale-95"
             >
               −
             </button>
@@ -418,48 +407,24 @@ export default function BookServicePage() {
               type="button"
               onClick={() => setGuestCount((g) => Math.min(service.capacity, g + 1))}
               disabled={guestCount >= service.capacity}
-              className="w-9 h-9 rounded-xl bg-white border border-slate-200 disabled:opacity-30 text-slate-800 font-black text-sm flex items-center justify-center shadow-2xs hover:bg-slate-100 transition-all active:scale-95"
+              className="w-11 h-11 rounded-xl bg-white border border-slate-200 disabled:opacity-30 text-slate-800 font-black text-sm flex items-center justify-center shadow-2xs hover:bg-slate-100 transition-all active:scale-95"
             >
               +
             </button>
           </div>
         </div>
 
-        {/* Quick Special Requests */}
         <div className="space-y-1.5">
-          <label className="text-[10px] font-black uppercase tracking-wider text-slate-500 block">
-            Quick Requests (Optional)
+          <label htmlFor="booking-notes" className="text-[10px] font-black uppercase tracking-wider text-slate-500 block">
+            Note for the host <span className="font-medium normal-case">(optional)</span>
           </label>
-          <div className="flex flex-wrap gap-1.5">
-            {["Early Check-in", "Airport/Bus Taxi", "Veg Meals", "Pet Friendly"].map((tag) => {
-              const isChecked = notes.includes(tag);
-              return (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => {
-                    if (isChecked) {
-                      setNotes((prev) => prev.replace(tag, "").replace(/,\s*,/g, ",").trim());
-                    } else {
-                      setNotes((prev) => (prev ? `${prev}, ${tag}` : tag));
-                    }
-                  }}
-                  className={`px-2.5 py-1 rounded-xl text-[10px] font-bold border transition-all ${
-                    isChecked
-                      ? "bg-slate-900 text-white border-slate-900"
-                      : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
-                  }`}
-                >
-                  {isChecked ? `✓ ${tag}` : `+ ${tag}`}
-                </button>
-              );
-            })}
-          </div>
           <textarea
+            id="booking-notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
-            placeholder="Add any specific requests or note for host..."
+            maxLength={500}
+            placeholder="Anything the host should know?"
             className="w-full px-3 py-2 rounded-xl border border-slate-200 text-base font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 resize-none bg-white mt-1"
           />
         </div>
@@ -467,23 +432,28 @@ export default function BookServicePage() {
         {/* Price Summary — real quote from the pricing engine, not a guess */}
         <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-900 text-white shadow-sm">
           <div>
-            <span className="text-[9px] font-black uppercase text-emerald-400 tracking-wider block">Estimated Total</span>
+            <span className="text-[9px] font-semibold uppercase text-emerald-400 tracking-wider block">
+              {travelDate ? "Estimated service total" : "Base rate"}
+            </span>
             <p className="text-base font-black">
               {!travelDate ? (
-                <>₹{Math.round(service.price).toLocaleString("en-IN")}</>
+                <>₹{service.price.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</>
               ) : isQuoting && !quote ? (
                 <span className="text-slate-400 text-sm font-semibold">Calculating…</span>
               ) : quote ? (
-                <>₹{Math.round(quote.totalAmount).toLocaleString("en-IN")}</>
+                <>₹{quote.totalAmount.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</>
               ) : (
                 <span className="text-slate-400 text-sm font-semibold">Unavailable — try again</span>
               )}
             </p>
+            {!travelDate && (
+              <span className="text-[10px] text-slate-300">{service.unit}</span>
+            )}
           </div>
           {quote && (
             <span className="text-[10px] font-bold text-slate-300 bg-white/10 px-2.5 py-1 rounded-lg">
               {quote.nights > 0 && service.unit.includes("night")
-                ? `₹${Math.round(quote.unitPrice).toLocaleString("en-IN")} × ${quote.nights} night${quote.nights > 1 ? "s" : ""}`
+                ? `₹${quote.unitPrice.toLocaleString("en-IN", { maximumFractionDigits: 2 })} × ${quote.nights} night${quote.nights > 1 ? "s" : ""}`
                 : `${quote.guestCount} guest${quote.guestCount > 1 ? "s" : ""}`}
             </span>
           )}
@@ -498,7 +468,7 @@ export default function BookServicePage() {
         <div className="max-w-lg mx-auto">
           <button
             onClick={handleSubmit}
-            disabled={isSubmitting || !travelDate}
+            disabled={isSubmitting || (!!user && !travelDate)}
             className="w-full h-12 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-600/25 active:scale-95 transition-all flex items-center justify-center gap-2"
           >
             {user ? (
@@ -509,13 +479,13 @@ export default function BookServicePage() {
                 </>
               ) : (
                 <>
-                  <span>Confirm Booking Request</span>
+                  <span>{travelDate ? "Continue to payment" : "Choose a date"}</span>
                   <span>→</span>
                 </>
               )
             ) : (
               <>
-                <span>Sign In to Request Booking</span>
+                <span>Sign in to continue</span>
                 <span>→</span>
               </>
             )}
