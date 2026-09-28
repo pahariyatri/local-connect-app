@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
@@ -18,6 +18,7 @@ import TravelingPartySelector from "./components/TravelingPartySelector";
 import NextStopSelector from "./components/NextStopSelector";
 import PackageBuilderStep from "./components/PackageBuilderStep";
 import StepProgress from "./components/StepProgress";
+import layoutStyles from "./builder.module.css";
 import { TripStop, createTripStop } from "@/types/tripBuilder";
 import SupportContact from "../components/molecules/SupportContact";
 import { hasLiveSupportChannel } from "@/lib/supportConfig";
@@ -93,6 +94,14 @@ export default function TripBuilderPage() {
   } = useTripPlanner();
 
   const [currentStep, setCurrentStep] = useState(1);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const previousStep = useRef(currentStep);
+  useEffect(() => {
+    if (previousStep.current === currentStep) return;
+    previousStep.current = currentStep;
+    window.scrollTo({ top: 0, behavior: "instant" });
+    contentRef.current?.focus({ preventScroll: true });
+  }, [currentStep]);
   const [localOrigin, setLocalOrigin] = useState(origin);
   const [localDestinations, setLocalDestinations] = useState<string[]>(destinations);
   const [localStartDate, setLocalStartDate] = useState<string | null>(startDate || null);
@@ -403,11 +412,7 @@ export default function TripBuilderPage() {
  
             {/* Main Content - Stepper */}
             <div className="lg:col-span-8">
-                {/* Step progress — lightweight CSS/SVG dots-and-track, same
-                    pattern already live in vendor onboarding/service creation.
-                    Purely visual: currentStep is the same state driving
-                    handleNext/handleBack below; no builder logic here. */}
-                <div className="mb-6 sm:mb-8">
+                {/* Named milestones follow the validated Next/Back flow. */}
                   <StepProgress
                     currentStep={currentStep}
                     totalSteps={6}
@@ -415,9 +420,10 @@ export default function TripBuilderPage() {
                       .replace("{current}", String(currentStep))
                       .replace("{total}", "6")}
                   />
-                </div>
   
-                {renderStepContent()}
+                <div ref={contentRef} tabIndex={-1} className={layoutStyles.content}>
+                  {renderStepContent()}
+                </div>
             </div>
         </div>
   
@@ -427,16 +433,14 @@ export default function TripBuilderPage() {
             Portaled to <body>: the page wrapper animates `transform` on mount, which
             would otherwise turn `position: fixed` into "fixed to the page". */}
         {isMounted && createPortal(
-          <div className="builder-footer-safe-area fixed bottom-0 left-0 right-0 px-3 sm:px-6 pt-3 sm:pt-6 bg-white/90 backdrop-blur-xl border-t border-slate-100 z-50">
-            <div className="max-w-6xl mx-auto px-2 sm:px-4">
-              <div className="flex items-center justify-between gap-3 sm:gap-4">
-                {currentStep > 1 && (
-                    <Button variant="ghost" onClick={handleBack} className="w-fit px-6 sm:px-8 h-12 sm:h-16 rounded-xl sm:rounded-2xl font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 hover:bg-slate-100 text-[9px] sm:text-xs">
+          <div className={layoutStyles.footer}>
+            <div className={layoutStyles.footerInner}>
+              <div className={layoutStyles.actions}>
+                    <Button variant="ghost" onClick={handleBack} disabled={currentStep === 1 || isGenerating} className={layoutStyles.back}>
                         {builder.buttons.back}
                     </Button>
-                )}
                 {currentStep === 6 ? (
-                  step5Footer && (
+                  step5Footer ? (
                     <Button
                       onClick={() => step5Footer.onCreatePackage()}
                       disabled={isGenerating || step5Footer.totalPrice <= 0}
@@ -451,19 +455,21 @@ export default function TripBuilderPage() {
                       // Tighter type/tracking on mobile + nowrap so the primary
                       // CTA stays on one line at 360–390px instead of breaking
                       // to "CREATE MY / PACKAGE" (PY-033). Desktop unchanged.
-                      className="flex-1 h-12 sm:h-16 px-3 rounded-xl sm:rounded-2xl text-[11px] sm:text-lg font-black tracking-[0.08em] sm:tracking-[0.2em] whitespace-nowrap transition-all uppercase bg-emerald-500 hover:bg-emerald-600 text-white shadow-2xl active:scale-[0.98] disabled:opacity-50"
+                      className={layoutStyles.primary}
                     >
                       <span className="tabular-nums flex items-center justify-center gap-3">
                         {isGenerating && <span className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin shrink-0" />}
                         {formatINRWithSymbol(step5Footer.totalPrice)}
                       </span>
                     </Button>
+                  ) : (
+                    <Button disabled className={layoutStyles.primary}>Loading plan…</Button>
                   )
                 ) : (
                 <Button
                   onClick={handleNext}
                   disabled={isGenerating || !isStepValid()}
-                  className="flex-1 h-12 sm:h-16 rounded-xl sm:rounded-2xl text-sm sm:text-lg font-black tracking-[0.15em] sm:tracking-[0.2em] transition-all uppercase bg-slate-900 hover:bg-black text-white shadow-2xl active:scale-[0.98]"
+                  className={layoutStyles.primary}
                 >
                   {isGenerating ? (
                     <div className="flex items-center justify-center gap-3">

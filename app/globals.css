@@ -82,14 +82,14 @@ html {
    * would otherwise widen the whole page and let it pan sideways on mobile —
    * every intentional horizontal scroller in this app already opts in with
    * its own `overflow-x-auto` container, so clipping at the root is safe. */
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
   @apply text-slate-900 antialiased selection:bg-emerald-500/30 selection:text-emerald-900;
   background-color: hsl(var(--background));
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip;
   font-family:
     var(--font-sans),
     system-ui,

@@ -12,7 +12,7 @@ export default async function LangLayout({
   return (
     <div
       dir={lang === "he" ? "rtl" : "ltr"}
-      className="bg-white min-h-screen overflow-x-hidden flex flex-col justify-between"
+      className="bg-white min-h-screen overflow-x-clip flex flex-col justify-between"
     >
       <RouteChrome>{children}</RouteChrome>
     </div>

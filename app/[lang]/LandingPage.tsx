@@ -169,7 +169,6 @@ export default function LandingPage() {
   }, [dict]);
 
   const builderHref = `/${lang}/builder`;
-  const vendorHref = `/${lang}/vendor/onboarding`;
   const categories = copy.categories;
   const exploreHref = `/${lang}/explore`;
 
@@ -199,6 +198,7 @@ export default function LandingPage() {
             <div className={styles.sectionHead}>
               <div>
                 <h2>{copy.section_services}</h2>
+                <p className={styles.sectionDescription}>Choose a service, check the details and send a booking request.</p>
               </div>
               <Link className={styles.textLink} href={exploreHref}>
                 {copy.all_services}
@@ -324,13 +324,25 @@ export default function LandingPage() {
           )}
         </section>
 
+        <section className={`${styles.container} ${styles.section}`} aria-labelledby="booking-help-title">
+          <div className={styles.sectionHead}><h2 id="booking-help-title">Before you book</h2></div>
+          <div className={styles.faqs}>
+            {copy.faqs.slice(0, 2).map((faq) => (
+              <details key={faq.q}>
+                <summary>{faq.q}</summary>
+                <p>{faq.a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+
         <section className={`${styles.container} ${styles.localSection}`}>
           <Reveal>
             <div className={styles.localGrid}>
               <div className={styles.localIntro}>
                 <h2>{copy.section_locals}</h2>
                 <p>{copy.local_short}</p>
-                <Link href={vendorHref} className={styles.textLink}>{copy.partner_short}<span aria-hidden="true">↗</span></Link>
+
               </div>
               <div className={styles.localCopy}>
                 <div className={styles.providers}>

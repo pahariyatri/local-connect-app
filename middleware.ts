@@ -2,20 +2,6 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { i18n } from "./i18n-config";
-import { match as matchLocale } from "@formatjs/intl-localematcher";
-import Negotiator from "negotiator";
-
-function getLocale(request: NextRequest): string | undefined {
-    const negotiatorHeaders: Record<string, string> = {};
-    request.headers.forEach((value, key) => (negotiatorHeaders[key] = value));
-
-    const locales = i18n.locales as unknown as string[];
-    let languages = new Negotiator({ headers: negotiatorHeaders }).languages(locales);
-    const locale = matchLocale(languages, locales, i18n.defaultLocale);
-
-    return locale;
-}
-
 export function middleware(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
 
@@ -115,14 +101,11 @@ export function middleware(request: NextRequest) {
     );
 
     if (pathnameIsMissingLocale) {
-        const locale = getLocale(request);
+        const locale = i18n.defaultLocale;
 
-        const redirectResponse = NextResponse.redirect(
-            new URL(
-                `/${locale}${pathname.startsWith("/") ? "" : "/"}${pathname}`,
-                request.url,
-            ),
-        );
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = `/${locale}${pathname.startsWith("/") ? "" : "/"}${pathname}`;
+        const redirectResponse = NextResponse.redirect(redirectUrl);
         
         // Ensure cookies are passed to the redirect
         if (ref) redirectResponse.cookies.set('partner_ref', ref, { path: '/', maxAge: 60 * 60 * 24 * 7 });

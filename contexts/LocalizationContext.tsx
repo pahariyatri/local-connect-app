@@ -47,13 +47,9 @@ export const LocalizationProvider: React.FC<LocalizationProviderProps> = ({ chil
         (initialDict && initialLang ? { [initialLang]: initialDict } : {}) as Record<Locale, any>,
     );
 
-    // Initialize language from localStorage on mount
+    // The URL is authoritative; old saved preferences must not override English.
     useEffect(() => {
         setMounted(true);
-        const savedLang = localStorage.getItem("preferred-language");
-        if (savedLang && SUPPORTED_LOCALES.includes(savedLang as Locale)) {
-            setLang(savedLang as Locale);
-        }
     }, []);
 
     // Fetch dictionary when language changes

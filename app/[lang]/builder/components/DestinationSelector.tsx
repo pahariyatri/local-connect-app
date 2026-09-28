@@ -29,22 +29,10 @@ const DESTINATIONS: Destination[] = [
     tags: "Manali, Kasol & Sissu",
   },
   {
-    id: "shimla",
-    name: "Shimla & Heritage",
-    image: "https://images.unsplash.com/photo-1651319485646-f0f30e46b761?q=80&w=600",
-    tags: "Shimla, Kufri, Chail & Kasuli",
-  },
-  {
     id: "kasol",
     name: "Kasol",
     image: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?q=80&w=600",
     tags: "Kasol, Malana & Parvati Valley",
-  },
-  {
-    id: "dharamshala",
-    name: "Dharamshala & McLeod Ganj",
-    image: "https://images.unsplash.com/photo-1605649487212-47bdab064df7?q=80&w=600",
-    tags: "Dharamshala, McLeod Ganj & Kangra Valley  ",
   },
   {
     id: "tirthan",

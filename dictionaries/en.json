@@ -179,17 +179,17 @@
         "the_mountains_are_calling": "THE MOUNTAINS ARE CALLING.",
         "categories": [
           {
-            "label": "Stay a little longer.",
+            "label": "Book a stay",
             "detail": "Homestays & cabins",
             "category": "stay"
           },
           {
-            "label": "Take the scenic route.",
+            "label": "Find a ride",
             "detail": "Taxis & mountain rides",
             "category": "transport"
           },
           {
-            "label": "Follow a local.",
+            "label": "Find a trek or guide",
             "detail": "Treks & guides",
             "category": "trek"
           }
@@ -208,31 +208,31 @@
             "a": "Start with Kasol and the surrounding Parvati Valley. Search your destination to see current listings, or open the trip builder to begin planning."
           }
         ],
-        "hero_eyebrow": "Himachal, your way",
-        "hero_title": "Your mountains.",
-        "hero_accent": "Your way.",
-        "hero_subtitle": "Local stays. Mountain rides. Real adventures.",
-        "hero_search_label": "Find your place",
+        "hero_eyebrow": "Kasol & Parvati Valley",
+        "hero_title": "Your mountain break,",
+        "hero_accent": "made simple.",
+        "hero_subtitle": "Book a local stay, ride or guide. Planning more? Bring your route and dates together in one trip.",
+        "hero_search_label": "Have a destination in mind?",
         "hero_plan": "Plan a trip",
-        "hero_visual_title": "A little closer to local.",
-        "hero_visual_label": "Your trip, connected",
+        "hero_visual_title": "Find what you need.",
+        "hero_visual_label": "Local stays, rides & guides",
         "hero_visual_stay": "Stays",
         "hero_visual_ride": "Rides",
         "hero_visual_guide": "Guides",
-        "section_services": "Make it your kind of trip.",
-        "section_places": "Pick your place.",
+        "section_services": "What would you like to book?",
+        "section_places": "Where would you like to go?",
         "section_locals": "Meet your locals.",
-        "section_planner": "One trip. All yours.",
-        "planner_subtitle": "Your stops. Your dates. Your people.",
-        "planner_action": "Open trip builder",
+        "section_planner": "Planning the whole trip?",
+        "planner_subtitle": "Choose where to go, when to travel and who’s coming. Then find local services for your journey.",
+        "planner_action": "Plan a trip",
         "planner_steps": [
-          "Pick a place",
-          "Make a plan",
-          "Find your locals"
+          "Choose your route",
+          "Add dates & travellers",
+          "Find stays, rides & guides"
         ],
         "all_places": "Explore places",
         "all_services": "View all",
-        "local_short": "The people behind your next trip.",
+        "local_short": "Browse verified local businesses and see the services they offer.",
         "partner_short": "Host, drive or guide? Join us.",
         "places_unavailable": "Places are unavailable right now.",
         "locals_unavailable": "Local profiles are unavailable right now."

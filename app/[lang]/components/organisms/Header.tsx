@@ -5,27 +5,15 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Icon } from '../atoms/Icon';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocalizationContext } from '@/contexts/LocalizationContext';
-import { Locale } from '@/i18n-config';
 import { BRAND_CONFIG } from '@/config/brandConfig';
 import { userAvatarInitial } from '@/utils/text';
-
-const SUPPORTED_LANGUAGES: { code: Locale; label: string; flag: string; nativeName: string }[] = [
-  { code: 'en', label: 'English', flag: '🇬🇧', nativeName: 'English' },
-  { code: 'hi', label: 'Hindi', flag: '🇮🇳', nativeName: 'हिन्दी' },
-  { code: 'he', label: 'Hebrew', flag: '🇮🇱', nativeName: 'עברית' },
-  { code: 'de', label: 'German', flag: '🇩🇪', nativeName: 'Deutsch' },
-  { code: 'fr', label: 'French', flag: '🇫🇷', nativeName: 'Français' },
-  { code: 'es', label: 'Spanish', flag: '🇪🇸', nativeName: 'Español' },
-];
 
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
-  const { switchLanguage, lang, dict } = useLocalizationContext();
+  const { lang, dict } = useLocalizationContext();
 
-  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
-  const langRef = useRef<HTMLDivElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
@@ -42,12 +30,9 @@ export default function Header() {
     router.push(`/${lang}`);
   };
 
-  // Close language dropdown when clicking outside
+  // Close the mobile menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (langRef.current && !langRef.current.contains(event.target as Node)) {
-        setLangDropdownOpen(false);
-      }
       if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
         setMobileMenuOpen(false);
       }
@@ -70,7 +55,7 @@ export default function Header() {
         { href: `/${lang}/vendor/bookings`, label: 'Bookings' },
       ]
     : [
-        { href: `/${lang}/explore`, label: navDict.explore || commonDict.explore || 'Explore' },
+        { href: `/${lang}/explore`, label: 'Book directly' },
         { href: `/${lang}/vendor/onboarding`, label: navDict.partner || 'Become a Partner' },
       ];
 
@@ -78,10 +63,8 @@ export default function Header() {
   const isPlanActive = pathname?.startsWith(planTripHref);
   const isActive = (href: string) => pathname === href || (href !== `/${lang}` && pathname?.startsWith(href));
 
-  const currentLangObj = SUPPORTED_LANGUAGES.find((l) => l.code === lang) || SUPPORTED_LANGUAGES[0];
-
   return (
-    <header onKeyDown={(event) => { if (event.key === "Escape") { setMobileMenuOpen(false); setLangDropdownOpen(false); } }} className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-100 shadow-[0_2px_15px_-4px_rgba(0,0,0,0.03)] transition-all">
+    <header data-site-header onKeyDown={(event) => { if (event.key === "Escape") { setMobileMenuOpen(false); } }} className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-100 shadow-[0_2px_15px_-4px_rgba(0,0,0,0.03)] transition-all">
       <div className="max-w-6xl mx-auto flex items-center justify-between px-4 sm:px-6 py-2.5 sm:py-3">
         {/* Brand Logo */}
         <Link
@@ -131,74 +114,9 @@ export default function Header() {
           </Link>
         </nav>
 
-        {/* Right Section: Multi-Language Selector & Auth Controls */}
+        {/* Account and mobile navigation */}
         <div className="flex items-center gap-2 sm:gap-3">
           
-          {/* Universal Language Selector Dropdown */}
-          <div className="relative" ref={langRef}>
-            <button
-              type="button"
-              onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-slate-100/90 hover:bg-slate-200/80 text-slate-700 text-xs font-bold transition-all border border-slate-200/60 shadow-2xs active:scale-95"
-              aria-label="Select language"
-              aria-expanded={langDropdownOpen}
-            >
-              <span className="text-sm leading-none">{currentLangObj.flag}</span>
-              <span className="uppercase text-[11px] font-black tracking-wider">{currentLangObj.code}</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${
-                  langDropdownOpen ? 'rotate-180' : ''
-                }`}
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </button>
-
-            {/* Dropdown Menu */}
-            {langDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-44 rounded-2xl bg-white border border-slate-200/80 shadow-2xl shadow-slate-300/50 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
-                <div className="px-3 py-1.5 border-b border-slate-100">
-                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                    {commonDict.language || 'Language / भाषा'}
-                  </p>
-                </div>
-                {SUPPORTED_LANGUAGES.map((item) => {
-                  const isCurrent = item.code === lang;
-                  return (
-                    <button
-                      key={item.code}
-                      type="button"
-                      onClick={() => {
-                        switchLanguage(item.code);
-                        setLangDropdownOpen(false);
-                      }}
-                      className={`w-full text-left px-3 py-2 flex items-center justify-between text-xs transition-colors ${
-                        isCurrent
-                          ? 'bg-emerald-50 text-emerald-800 font-bold'
-                          : 'text-slate-700 hover:bg-slate-100'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">{item.flag}</span>
-                        <span>{item.nativeName}</span>
-                      </div>
-                      {isCurrent && (
-                        <span className="text-emerald-600 font-black text-xs">✓</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
           {/* Desktop User Section */}
           <div className="hidden lg:flex items-center gap-2">
             {user ? (
@@ -261,7 +179,7 @@ export default function Header() {
                 aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
                 aria-expanded={mobileMenuOpen}
                 data-testid="header-mobile-menu-button"
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100/90 hover:bg-slate-200/80 text-slate-700 border border-slate-200/60 active:scale-95 transition-all"
+                className="w-11 h-11 flex items-center justify-center rounded-full bg-slate-100/90 hover:bg-slate-200/80 text-slate-700 border border-slate-200/60 active:scale-95 transition-all"
               >
                 <Icon name={mobileMenuOpen ? 'close' : 'menu'} className="w-4 h-4" />
               </button>

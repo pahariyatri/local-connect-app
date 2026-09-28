@@ -85,6 +85,14 @@ export default function HeroSection({
         <p className={styles.eyebrow}><span />{copy.hero_eyebrow}</p>
         <h1 id="hero-title">{copy.hero_title}<br /><span>{copy.hero_accent}</span></h1>
         <p className={styles.subtitle}>{copy.hero_subtitle}</p>
+        <div className={styles.actions}>
+          <Link className={styles.bookAction} href={`/${lang}/explore`}>
+            Book directly <Icon name="arrow-right" className="w-4 h-4" />
+          </Link>
+          <Link className={styles.planAction} href={`/${lang}/builder`} onClick={onPlan}>
+            Plan a trip <Icon name="compass" className="w-4 h-4" />
+          </Link>
+        </div>
         <div className={styles.searchWrap}>
           <form
             role="search"
@@ -184,17 +192,7 @@ export default function HeroSection({
             </div>
           )}
         </div>
-        <div className={styles.belowSearch}>
-          {onPlan && (
-            <Link href={`/${lang}/builder`} onClick={onPlan}>
-              <span className={styles.planIcon} aria-hidden="true">
-                <Icon name="compass" className="w-4 h-4" />
-              </span>
-              <span>{copy.hero_plan}</span>
-              <Icon name="arrow-right" className="w-4 h-4" />
-            </Link>
-          )}
-        </div>
+        <a className={styles.scrollLink} href="#find-your-stay">Browse stays, rides & guides <span aria-hidden="true">↓</span></a>
       </div>
       <div className={styles.visual}>
         <div className={styles.visualGlow} aria-hidden="true" />
