@@ -1,0 +1,20 @@
+.footer { padding: 24px; background: #f7f9f7; border-top: 1px solid #e0e7e2; color: #526258; }
+.inner { max-width: 1152px; margin-inline: auto; }
+.main { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.brand { display: flex; flex-direction: column; align-items: flex-start; font-size: 12px; }
+.brand a { display: inline-flex; align-items: center; min-height: 32px; gap: 5px; }
+.brand .brandName { min-height: 24px; font-size: 15px; font-weight: 700; color: #213c2f; }
+.navigation, .utilities { display: flex; flex-wrap: wrap; align-items: center; column-gap: 24px; }
+.navigation a, .utilities a { display: inline-flex; align-items: center; min-height: 44px; font-size: 13px; }
+.footer a:hover { color: #173f35; text-decoration: underline; text-underline-offset: 4px; }
+.footer a:focus-visible { outline: 2px solid #28765d; outline-offset: 3px; border-radius: 3px; }
+.bottom { display: flex; align-items: center; justify-content: space-between; gap: 16px; border-top: 1px solid #e0e7e2; padding-top: 8px; margin-top: 16px; }
+.bottom p { margin: 0; font-size: 12px; }
+@media (max-width: 640px) {
+  .footer { padding: 20px; }
+  .main { align-items: stretch; flex-direction: column; gap: 12px; }
+  .navigation { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; }
+  .bottom { flex-direction: column-reverse; align-items: flex-start; gap: 4px; margin-top: 12px; }
+  .utilities { column-gap: 18px; }
+  .utilities a { font-size: 12px; }
+}

@@ -76,19 +76,18 @@ export default function LoginPage() {
         >
             <div className="space-y-5">
                 <div>
+                    <label htmlFor="phone">Mobile number</label>
                     <div className={`w-full h-14 sm:h-15 rounded-2xl border-2 flex items-center transition-all bg-slate-50/70 ${
                         showInvalid
                             ? "border-red-400 bg-red-50/10"
                             : "border-slate-200 focus-within:border-slate-900 focus-within:bg-white focus-within:shadow-sm"
                     }`}>
                         <div className="pl-4 pr-3 text-base font-bold text-slate-800 select-none border-r border-slate-200 h-8 flex items-center gap-1.5">
-                            <span>🇮🇳</span>
                             <span className="font-black">+91</span>
                         </div>
                         <input
                             id="phone"
                             name="phone"
-                            autoFocus
                             className="flex-1 h-full px-4 text-base sm:text-lg font-bold tracking-wider placeholder:text-slate-300 placeholder:font-normal bg-transparent text-slate-900 border-0 outline-none focus:outline-none focus:ring-0"
                             placeholder={t.phonePlaceholder}
                             type="tel"

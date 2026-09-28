@@ -206,7 +206,7 @@ export default function VerifyOtpPage() {
               onChange={(e) => handleChange(e, index)}
               onKeyDown={(e) => handleKeyDown(e, index)}
               maxLength={1}
-              className={`w-full h-14 sm:h-16 text-center text-xl font-black rounded-2xl transition-all outline-none border-2 ${
+              className={`min-w-0 flex-1 w-full h-14 sm:h-16 text-center text-xl font-black rounded-2xl transition-all outline-none border-2 ${
                 digit
                   ? 'border-emerald-500 bg-emerald-50/30 text-slate-900 shadow-sm'
                   : 'border-slate-200 bg-slate-50/70 text-slate-400 focus:bg-white focus:border-slate-900 focus:shadow-sm'

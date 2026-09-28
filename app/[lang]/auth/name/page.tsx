@@ -106,7 +106,10 @@ export default function NameCollectionPage() {
           </p>
         )}
 
+        <label htmlFor="full-name">Full name</label>
         <input
+          id="full-name"
+          autoComplete="name"
           autoFocus
           type="text"
           inputMode="text"
