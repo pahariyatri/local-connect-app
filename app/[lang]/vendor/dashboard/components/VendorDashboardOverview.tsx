@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 import Typography from "../../../components/atoms/Typography";
 import { getVendorBookings } from "@/services/bookingService";
 import { getVendorById, getMyVendor } from "@/services/vendorService";
-import { getServices } from "@/services/catalogService";
+import { getServicesByVendor } from "@/services/catalogService";
 import Badge from "../../../components/molecules/Badge";
 
 interface VendorDashboardOverviewProps {
@@ -81,7 +81,9 @@ export default function VendorDashboardOverview({ dict }: VendorDashboardOvervie
 
       const [bookingsResult, services] = await Promise.all([
         getVendorBookings(id, { limit: 50 }),
-        getServices().catch(() => []),
+        // The vendor's own services incl. pending/draft — public GET /service
+        // now lists only approved, publicly visible inventory.
+        getServicesByVendor(id).catch(() => []),
       ]);
       setBookings(bookingsResult.bookings);
       setTotalBookings(bookingsResult.total);

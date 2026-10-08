@@ -47,12 +47,18 @@ export const getServicesByVendor = async (vendorId: string) => {
   return (raw as any)?.data ?? raw;
 };
 
+/**
+ * Owner/admin view of one of the vendor's own services, whatever its review
+ * status — used by the vendor service view/edit pages. Public GET /service/:id
+ * now 404s for drafts/pending/rejected listings, so these pages use the
+ * authorized GET /service/:id/manage route instead.
+ */
 export const getServiceById = async (id: number | string) => {
   sessionTracker.track('service_viewed', {
     entityType: 'service',
     entityId: String(id),
   });
-  const raw = await api.get(`/service/${id}`, { skipAuth: true });
+  const raw = await api.get(`/service/${id}/manage`);
   return (raw as any)?.data ?? raw;
 };
 

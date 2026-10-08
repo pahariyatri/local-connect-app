@@ -111,12 +111,16 @@ export default function ServiceDetailsPage() {
     );
   }
 
-  const formattedPrice = new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: service.pricing.currency || "INR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(service.pricing.unitPrice);
+  // The API reports null (not a default number) when the partner hasn't set a
+  // price — show that honestly rather than formatting null as ₹0.
+  const formattedPrice = typeof service.pricing.unitPrice === "number"
+    ? new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: service.pricing.currency || "INR",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      }).format(service.pricing.unitPrice)
+    : "Price on request";
   const priceUnit = service.pricing.priceUnit === "night" ? "per night" : "per service";
 
   return (
