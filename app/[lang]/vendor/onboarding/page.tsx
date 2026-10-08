@@ -4,9 +4,10 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { sanitizePhone, isValidPhone, PHONE_LENGTH, toNationalDigits } from "@/utils/validation";
+import { toNationalDigits } from "@/utils/validation";
 import { toApiUiError } from "@/utils/apiErrors";
-import { createVendor, createPointOfContact, getMyVendor } from "@/services/vendorService";
+import { createVendorApplication, getMyVendor } from "@/services/vendorService";
+import { requestOtp } from "@/services/authService";
 import { uploadMedia, deleteMedia, validateImage, type UploadedMedia } from "@/services/mediaService";
 import { useTouchedFields } from "@/hooks/useTouchedFields";
 import { trackVendorApplyStart, trackVendorApplySubmit } from "@/lib/analytics";
@@ -74,14 +75,14 @@ const STEP_LABELS = ["Basic info", "Category", "About", "Documents & Payout", "R
 type PayoutMethod = "upi" | "bank";
 
 type FieldName =
-  | "contactFirstName" | "businessName" | "phone" | "email" | "types" | "description"
+  | "contactFirstName" | "businessName" | "email" | "types" | "description"
   | "payoutMethod" | "upiId" | "accountHolderName" | "accountNumber" | "ifsc";
 
 // Which fields belong to each step — drives markAllTouched on "Continue" so
 // every error on the step surfaces at once, including button-group fields
 // (like `types`) that have no blur event to touch them individually.
 const STEP_FIELDS: Record<number, FieldName[]> = {
-  1: ["contactFirstName", "businessName", "phone", "email"],
+  1: ["contactFirstName", "businessName", "email"],
   2: ["types"],
   3: ["description"],
   4: ["payoutMethod", "upiId", "accountHolderName", "accountNumber", "ifsc"],
@@ -91,7 +92,14 @@ const STEP_FIELDS: Record<number, FieldName[]> = {
 export default function VendorOnboardingPage() {
   const { lang } = useParams();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, authStatus, logout } = useAuth();
+
+  useEffect(() => {
+    if (authStatus === "unauthenticated") {
+      const redirectTo = `/${lang}/vendor/onboarding`;
+      router.replace(`/${lang}/auth/login?redirectTo=${encodeURIComponent(redirectTo)}`);
+    }
+  }, [authStatus, lang, router]);
 
   const [step, setStep] = useState(1);
   const [isMounted, setIsMounted] = useState(false);
@@ -101,6 +109,7 @@ export default function VendorOnboardingPage() {
   // again — send them straight to their dashboard instead.
   const [onboardCheck, setOnboardCheck] = useState<"checking" | "needed" | "redirecting">("checking");
   useEffect(() => {
+    if (authStatus !== "authenticated" || user?.phoneVerified !== true) return;
     let cancelled = false;
     (async () => {
       try {
@@ -117,7 +126,7 @@ export default function VendorOnboardingPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [lang, router]);
+  }, [authStatus, lang, router, user?.phoneVerified]);
 
   // Fires once the form is actually shown — not for a user who turns out to
   // already have a vendor record and gets redirected straight to their dashboard.
@@ -129,7 +138,6 @@ export default function VendorOnboardingPage() {
   const [contactFirstName, setContactFirstName] = useState("");
   const [contactLastName, setContactLastName] = useState("");
   const [businessName, setBusinessName] = useState("");
-  const [phone, setPhone] = useState(user?.phone ? toNationalDigits(user.phone) : "");
   const [email, setEmail] = useState(user?.email || "");
 
   // Step 2 — category
@@ -154,18 +162,41 @@ export default function VendorOnboardingPage() {
   const { touched, markTouched, markAllTouched } = useTouchedFields<FieldName>();
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [createdVendorId, setCreatedVendorId] = useState<string | null>(null);
   const isSubmittingRef = useRef(false);
 
   useEffect(() => {
-    if (user?.phone && !phone) setPhone(toNationalDigits(user.phone));
     if (user?.email && !email) setEmail(user.email);
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const [requestingVerification, setRequestingVerification] = useState(false);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+
+  const handleVerifyPhone = async () => {
+    if (!user || requestingVerification) return;
+    if (!user.phone) {
+      logout();
+      const redirectTo = `/${lang}/vendor/onboarding`;
+      router.replace(`/${lang}/auth/login?redirectTo=${encodeURIComponent(redirectTo)}`);
+      return;
+    }
+    setRequestingVerification(true);
+    setVerificationError(null);
+    try {
+      const challenge = await requestOtp(user.phone);
+      const redirectTo = `/${lang}/vendor/onboarding`;
+      router.push(
+        `/${lang}/auth/verify-otp?phone=${encodeURIComponent(user.phone)}&challengeId=${encodeURIComponent(challenge.challengeId)}&resendAfter=${challenge.resendAfterSeconds}&redirectTo=${encodeURIComponent(redirectTo)}`,
+      );
+    } catch (err) {
+      setVerificationError(toApiUiError(err, "We could not send a verification code. Please try again.").message);
+    } finally {
+      setRequestingVerification(false);
+    }
+  };
 
   const errors = {
     contactFirstName: contactFirstName.trim().length < 1 ? "First name is required." : undefined,
     businessName: businessName.trim().length < 1 ? "Business name is required." : undefined,
-    phone: !isValidPhone(phone) ? `Enter a valid ${PHONE_LENGTH}-digit mobile number.` : undefined,
     email: email.trim().length > 0 && !EMAIL_RE.test(email) ? "Enter a valid email address." : undefined,
     types: types.length === 0 ? "Select at least one category." : undefined,
     description: description.trim().length < 10 ? "Add a few more words (at least 10 characters)." : undefined,
@@ -178,7 +209,7 @@ export default function VendorOnboardingPage() {
 
   const isStepValid = (s: number) => {
     switch (s) {
-      case 1: return !errors.contactFirstName && !errors.businessName && !errors.phone && !errors.email;
+      case 1: return !errors.contactFirstName && !errors.businessName && !errors.email;
       case 2: return !errors.types;
       case 3: return !errors.description;
       case 4:
@@ -247,39 +278,28 @@ export default function VendorOnboardingPage() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      // If the vendor was already created on a previous failed attempt, don't
-      // create a second one — only retry the point-of-contact step.
-      let vendorId = createdVendorId;
-      if (!vendorId) {
-        const documentsMap = documents.reduce<Record<string, string>>((acc, d) => {
-          if (d.url) acc[d.label || d.key] = d.url;
-          return acc;
-        }, {});
-        const payoutDetails: Record<string, string> =
-          payoutMethod === "upi"
-            ? { method: "upi", upiId: upiId.trim() }
-            : payoutMethod === "bank"
-            ? { method: "bank", accountHolderName: accountHolderName.trim(), accountNumber: accountNumber.trim(), ifsc: ifsc.trim().toUpperCase() }
-            : {};
-        const vendor = await createVendor({
-          businessName: businessName.trim(),
-          description: description.trim(),
-          types,
-          ...(Object.keys(documentsMap).length > 0 ? { documents: documentsMap } : {}),
-          ...(Object.keys(payoutDetails).length > 0 ? { payoutDetails } : {}),
-        });
-        vendorId = vendor?.id;
-        if (!vendorId) throw new Error("Vendor was created but no id was returned.");
-        setCreatedVendorId(vendorId);
-      }
-
-      await createPointOfContact({
-        vendorId,
-        firstName: contactFirstName.trim(),
-        ...(contactLastName.trim() ? { lastName: contactLastName.trim() } : {}),
-        phone,
-        ...(email.trim() ? { email: email.trim() } : {}),
+      const documentsMap = documents.reduce<Record<string, string>>((acc, d) => {
+        if (d.url) acc[d.label || d.key] = d.url;
+        return acc;
+      }, {});
+      const payoutDetails: Record<string, string> =
+        payoutMethod === "upi"
+          ? { method: "upi", upiId: upiId.trim() }
+          : payoutMethod === "bank"
+          ? { method: "bank", accountHolderName: accountHolderName.trim(), accountNumber: accountNumber.trim(), ifsc: ifsc.trim().toUpperCase() }
+          : {};
+      const vendor = await createVendorApplication({
+        businessName: businessName.trim(),
+        description: description.trim(),
+        types,
+        contactFirstName: contactFirstName.trim(),
+        ...(contactLastName.trim() ? { contactLastName: contactLastName.trim() } : {}),
+        ...(email.trim() ? { contactEmail: email.trim() } : {}),
+        ...(Object.keys(documentsMap).length > 0 ? { documents: documentsMap } : {}),
+        ...(Object.keys(payoutDetails).length > 0 ? { payoutDetails } : {}),
       });
+      const vendorId = vendor?.id;
+      if (!vendorId) throw new Error("The application was saved but no vendor id was returned.");
 
       // The refresh-token rotation to pick up the new Role.Vendor JWT claim
       // happens exactly once, on the confirmation page (see its handleContinue)
@@ -299,7 +319,7 @@ export default function VendorOnboardingPage() {
       isSubmittingRef.current = false;
       setSubmitting(false);
     }
-  }, [createdVendorId, documents, businessName, description, types, contactFirstName, contactLastName, phone, email, payoutMethod, upiId, accountHolderName, accountNumber, ifsc, lang, router]);
+  }, [documents, businessName, description, types, contactFirstName, contactLastName, email, payoutMethod, upiId, accountHolderName, accountNumber, ifsc, lang, router]);
 
   // ─── Step content ──────────────────────────────────────────────────────
   // The step number + title live in the progress indicator (below), so each
@@ -340,22 +360,18 @@ export default function VendorOnboardingPage() {
               error={touched.businessName ? errors.businessName : undefined}
             />
             <div>
-              <label htmlFor="phone" className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2 mb-2">Mobile number</label>
-              <div className={`w-full border-2 rounded-2xl flex items-center bg-slate-50/50 transition-all ${touched.phone && errors.phone ? "border-red-300" : "border-slate-100/50 focus-within:border-slate-900 focus-within:bg-white"}`}>
-                <span className="pl-5 pr-3 font-black text-slate-400 text-sm select-none border-r border-slate-200 h-6 flex items-center">+91</span>
-                <input
-                  id="phone"
-                  type="tel"
-                  inputMode="numeric"
-                  maxLength={PHONE_LENGTH}
-                  value={phone}
-                  onChange={(e) => setPhone(sanitizePhone(e.target.value))}
-                  onBlur={() => markTouched("phone")}
-                  placeholder="00000 00000"
-                  className="flex-1 h-full px-4 py-4 bg-transparent border-0 outline-none font-medium text-slate-900"
-                />
+              <label htmlFor="phone" className="block text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2 mb-2">Verified mobile number</label>
+              <div className="w-full border-2 rounded-2xl flex items-center bg-slate-50/50 border-slate-100/50">
+              <span className="pl-5 pr-3 font-black text-slate-400 text-sm select-none border-r border-slate-200 h-6 flex items-center">+91</span>
+              <input
+                id="phone"
+                type="tel"
+                value={user?.phone ? toNationalDigits(user.phone) : ""}
+                readOnly
+                aria-readonly="true"
+                className="flex-1 h-full px-4 py-4 bg-transparent border-0 outline-none font-medium text-slate-500 cursor-not-allowed"
+              />
               </div>
-              <FieldError message={touched.phone ? errors.phone : undefined} />
             </div>
             <Input
               label="Email (optional)"
@@ -559,7 +575,7 @@ export default function VendorOnboardingPage() {
             <div className="rounded-[2rem] border border-slate-100 bg-white shadow-sm divide-y divide-slate-100 overflow-hidden">
               <ReviewRow icon="user" label="Contact" value={contactLastName.trim() ? `${contactFirstName} ${contactLastName}` : contactFirstName} />
               <ReviewRow icon="home" label="Business" value={businessName} />
-              <ReviewRow icon="phone" label="Phone" value={`+91 ${toNationalDigits(phone)}`} />
+              <ReviewRow icon="phone" label="Phone" value={user?.phone ? `+91 ${toNationalDigits(user.phone)}` : "—"} />
               {email && <ReviewRow icon="mail" label="Email" value={email} />}
               <ReviewRow
                 icon="check"
@@ -585,6 +601,34 @@ export default function VendorOnboardingPage() {
       default: return null;
     }
   };
+
+  if (authStatus !== "authenticated" || !user) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (user.phoneVerified !== true) {
+    return (
+      <div className="mx-auto max-w-xl rounded-3xl border border-slate-100 bg-white p-6 shadow-sm sm:p-8">
+        <Typography variant="h1" className="text-xl font-black text-slate-900">Verify your phone</Typography>
+        <p className="mt-3 text-sm leading-relaxed text-slate-600">
+          Vendor applications require a phone number verified through our one-time-code flow.
+          {user.phone ? ` We will send a code to ${user.phone}.` : " Sign in with an account that has a phone number to continue."}
+        </p>
+        {verificationError && <p role="alert" className="mt-4 text-sm text-red-600">{verificationError}</p>}
+        <Button
+          onClick={handleVerifyPhone}
+          disabled={requestingVerification}
+          className="mt-6 h-12 w-full rounded-xl bg-slate-900 text-sm font-semibold text-white disabled:opacity-50"
+        >
+          {requestingVerification ? "Sending code…" : user.phone ? "Verify phone number" : "Sign in with a phone number"}
+        </Button>
+      </div>
+    );
+  }
 
   if (onboardCheck !== "needed") {
     return (

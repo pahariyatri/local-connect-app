@@ -192,6 +192,21 @@ export const createVendor = async (vendorData: any) => {
   return (raw as any)?.data ?? raw;
 };
 
+export const createVendorApplication = async (application: {
+  businessName: string;
+  description: string;
+  types: string[];
+  contactFirstName: string;
+  contactLastName?: string;
+  contactEmail?: string;
+  documents?: Record<string, string>;
+  payoutDetails?: Record<string, string>;
+}) => {
+  const raw = await api.post('/vendors/onboard', application);
+  api.invalidateCache('/vendors');
+  return (raw as any)?.data ?? raw;
+};
+
 export const updateVendor = async (id: string, vendorData: any) => {
   const raw = await api.put(`/vendors/${id}`, vendorData);
   api.invalidateCache('/vendors');
@@ -206,11 +221,8 @@ export const deleteVendor = async (id: string) => {
 };
 
 /**
- * Vendor's contact person — name/email/phone live on PointOfContact, not
- * Vendor itself (see backend/src/feature/point-of-contact). Call this right
- * after createVendor() with the new vendor's id to persist onboarding's
- * contact fields, which the Vendor endpoint silently drops (whitelist-only
- * validation strips any field CreateVendorDto doesn't declare).
+ * Admin/legacy operation. New vendor applicants use createVendorApplication
+ * so vendor and verified point-of-contact records are committed atomically.
  */
 export const createPointOfContact = async (data: { vendorId: string; firstName: string; lastName?: string; email?: string; phone: string }) => {
   const raw = await api.post('/point-of-contact', data);

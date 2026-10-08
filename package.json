@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint app/ lib/ services/ utils/ contexts/ middleware.ts",
     "lint:fix": "eslint app/ lib/ services/ utils/ contexts/ middleware.ts --fix",
-    "check:contract": "node scripts/check-api-contract.mjs ../backend/openapi.json --scope=/auth",
+    "check:contract": "node scripts/check-api-contract.mjs ../local-connect-portal/openapi.json --scope=/auth",
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test"
   },
