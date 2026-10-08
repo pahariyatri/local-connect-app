@@ -7,7 +7,7 @@
  * --scope limits enforcement to a path prefix (e.g. the auth contract), so new
  * strict checks can land while pre-existing drift elsewhere is burned down.
  * Default spec path assumes the sibling backend checkout:
- *   ../backend/openapi.json   (generate with: npm run openapi:generate)
+ *   ../local-connect-portal/openapi.json   (generate with: npm run openapi:generate)
  *
  * Static extraction: scans services/ and contexts/ for api.<method>('/path')
  * string literals. Template-literal endpoints (dynamic IDs) are normalized to
@@ -19,7 +19,7 @@ import { join, resolve } from 'path';
 const args = process.argv.slice(2);
 const scopeArg = args.find((a) => a.startsWith('--scope='));
 const scope = scopeArg ? scopeArg.slice('--scope='.length) : '';
-const specPath = resolve(args.find((a) => !a.startsWith('--')) ?? '../backend/openapi.json');
+const specPath = resolve(args.find((a) => !a.startsWith('--')) ?? '../local-connect-portal/openapi.json');
 
 let spec;
 try {

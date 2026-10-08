@@ -9,6 +9,7 @@ interface User {
   email: string;
   phone: string;
   role: string;
+  phoneVerified?: boolean;
 }
 
 type AuthStatus = 'hydrating' | 'authenticated' | 'unauthenticated';
@@ -41,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: userProfile.email || '',
           phone: userProfile.phone || '',
           role: userProfile.role || 'Guest',
+          phoneVerified: userProfile.phoneVerified === true,
         };
         setUser(mappedUser);
         localStorage.setItem('user_meta', JSON.stringify(mappedUser));
@@ -81,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: userProfile.email || '',
           phone: userProfile.phone || '',
           role: userProfile.role || 'Guest',
+          phoneVerified: userProfile.phoneVerified === true,
         };
         setUser(mappedUser);
         localStorage.setItem('user_meta', JSON.stringify(mappedUser));
