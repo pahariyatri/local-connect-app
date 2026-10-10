@@ -4,13 +4,11 @@ import { Poppins } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { i18n, Locale } from "@/i18n-config";
-import { LocalizationProvider } from "@/contexts/LocalizationContext";
-import { getDictionary } from "@/get-dictionary";
 import { CartProvider } from "@/contexts/CartContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { TripPlannerProvider } from "@/contexts/TripPlannerContext";
-import { NotificationContainer } from "./[lang]/components/atoms/Toast";
+import { NotificationContainer } from "./components/atoms/Toast";
+import RouteChrome from "./RouteChrome";
 
 
 // Re-theme (2026-08-30): switched the app's primary typeface from Geist
@@ -31,41 +29,11 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
-// params.lang can be missing for internal/non-page requests that still
-// render through the root layout — fall back to the configured default
-// rather than letting the dictionary import (or metadata) blow up on
-// `undefined`. Shared by generateMetadata and RootLayout below.
-function resolveLang(paramsLang: string | undefined): Locale {
-  return (i18n.locales as readonly string[]).includes(paramsLang as string)
-    ? (paramsLang as Locale)
-    : (i18n.defaultLocale as Locale);
-}
-
 import { BRAND_CONFIG } from "@/config/brandConfig";
-import { headers } from "next/headers";
 
 const SITE_URL = BRAND_CONFIG.appUrl;
 
-// This layout sits above the [lang] segment, so Next.js never gives it
-// params.lang directly — it's always undefined here regardless of the
-// actual URL. middleware.ts forwards the real request path via x-pathname;
-// fall back to params (should middleware ever not run for some request) and
-// finally the default locale/root. Used by both generateMetadata (canonical/
-// hreflang/OG) and RootLayout itself (which resolves `dict`/`lang` for
-// LocalizationProvider's initial, server-rendered state).
-async function resolvePathAndLang(paramsLang: string | undefined) {
-  const forwardedPath = (await headers()).get("x-pathname") ?? undefined;
-  const pathSegments = forwardedPath?.split("/").filter(Boolean) ?? [];
-  const lang = resolveLang(pathSegments[0] ?? paramsLang);
-  const pagePath = forwardedPath ?? `/${lang}`;
-  return { lang, pagePath, pathSegments };
-}
-
-export async function generateMetadata(props: {
-  params?: Promise<{ lang?: Locale }>;
-}): Promise<Metadata> {
-  const params = props.params ? await props.params : undefined;
-  const { pagePath, pathSegments } = await resolvePathAndLang(params?.lang);
+export function generateMetadata(): Metadata {
 
   // The old copy here ("Himachal Journey Planner") framed the whole product
   // as a trip-planning tool, which undersells the direct-search path (a
@@ -77,29 +45,16 @@ export async function generateMetadata(props: {
   const description =
     'Search real homestays, 4x4 drivers, and local guides across Himachal Pradesh — verified locals, direct and with no agency markup. Or build a full multi-stop route with stays and transit in one place.';
 
-  // Same page, other locale prefixes — not "this page translated", since no
-  // locale but the default currently renders translated content. Still the
-  // structurally correct hreflang target per page (previously every page,
-  // not just the homepage, advertised only the locale *roots*).
-  const restOfPath = pathSegments.slice(1).join("/");
-  const languages = Object.fromEntries(
-    i18n.locales.map((l) => [l, `${SITE_URL}/${l}${restOfPath ? `/${restOfPath}` : ""}`]),
-  );
-
   return {
     // Absolute base for OG/Twitter/canonical URL resolution (production frontend).
     metadataBase: new URL(SITE_URL),
     title,
     description,
-    alternates: {
-      canonical: `${SITE_URL}${pagePath}`,
-      languages,
-    },
     openGraph: {
       title,
       description,
       type: 'website',
-      url: `${SITE_URL}${pagePath}`,
+      url: SITE_URL,
       siteName: BRAND_CONFIG.fullProductName,
     },
     twitter: {
@@ -113,19 +68,7 @@ export async function generateMetadata(props: {
   };
 }
 
-export async function generateStaticParams() {
-  return i18n.locales.map((locale) => ({ lang: locale }));
-}
-
-export default async function RootLayout(props: {
-  children: React.ReactNode;
-  params?: Promise<{ lang?: Locale }>;
-}) {
-  const params = props.params ? await props.params : undefined;
-  const { lang } = await resolvePathAndLang(params?.lang);
-  const dict = await getDictionary(lang);
-
-  const { children } = props;
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
 
   return (
@@ -135,7 +78,7 @@ export default async function RootLayout(props: {
     // hydrates, which React then reports as a mismatch even though nothing
     // in our render output actually differs. Scoped to just these two tags
     // so a real mismatch anywhere else in the tree still warns normally.
-    <html lang={lang} dir={lang === "he" ? "rtl" : "ltr"} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${poppins.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
@@ -164,10 +107,10 @@ export default async function RootLayout(props: {
           <NotificationProvider>
             <TripPlannerProvider>
               <CartProvider>
-                <LocalizationProvider initialDict={dict} initialLang={lang}>
-                  {children}
-                  <NotificationContainer />
-                </LocalizationProvider>
+                <div className="bg-white min-h-screen overflow-x-clip flex flex-col justify-between">
+                  <RouteChrome>{children}</RouteChrome>
+                </div>
+                <NotificationContainer />
               </CartProvider>
             </TripPlannerProvider>
           </NotificationProvider>

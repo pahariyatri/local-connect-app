@@ -13,12 +13,9 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@formatjs/intl": "^3.0.4",
-    "@formatjs/intl-localematcher": "^0.5.4",
     "canvas-confetti": "^1.9.4",
     "marked": "^18.0.7",
     "next": "^16.2.10",
-    "next-intl": "^4.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "zustand": "^5.0.0"

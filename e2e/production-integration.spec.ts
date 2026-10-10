@@ -20,7 +20,7 @@ test.describe('Production Integration & Market Readiness', () => {
     // 2. Real Destination Search — /explore is now the single "location +
     // services discovery" surface (folded in what used to be /discover).
     // Typing searches real inventory directly, in place — no navigation.
-    await page.goto(`${PROD_URL}/en/explore`);
+    await page.goto(`${PROD_URL}/explore`);
 
     const searchInput = page.locator('input[id="explore-search"]');
     await expect(searchInput).toBeVisible();
@@ -35,38 +35,38 @@ test.describe('Production Integration & Market Readiness', () => {
   });
 
   test('Trip Planner Flow - Server Side Verification', async ({ page }) => {
-    await page.goto(`${PROD_URL}/en/builder`);
+    await page.goto(`${PROD_URL}/builder`);
     
     // Just verify the form loads
     await expect(page.getByRole('heading', { name: /Where is your story going\?/i })).toBeVisible();
     
     // We would simulate building a trip here, but for now we just verify the route works in prod
     // We already know it relies on APIs.
-    await page.goto(`${PROD_URL}/en/results`);
+    await page.goto(`${PROD_URL}/results`);
     await page.waitForLoadState('networkidle');
     
-    await page.goto(`${PROD_URL}/en/journey`);
+    await page.goto(`${PROD_URL}/journey`);
     await page.waitForLoadState('networkidle');
   });
 
   test('Production Auth & Redirects', async ({ page }) => {
-    await page.goto(`${PROD_URL}/en/auth/login`);
+    await page.goto(`${PROD_URL}/auth/login`);
     
     // Check brand
     await expect(page.getByRole('heading', { name: /Sign in/i })).toBeVisible();
     await expect(page.getByRole('link', { name: /PY/ })).toBeVisible();
 
     // Vendor Dashboard should bounce to login
-    await page.goto(`${PROD_URL}/en/vendor/dashboard`);
-    await expect(page).toHaveURL(/.*\/en\/auth\/login.*/);
+    await page.goto(`${PROD_URL}/vendor/dashboard`);
+    await expect(page).toHaveURL(/.*\/auth\/login.*/);
     
     // Admin Dashboard should bounce to login
-    await page.goto(`${PROD_URL}/en/admin`);
-    await expect(page).toHaveURL(/.*\/en\/auth\/login.*/);
+    await page.goto(`${PROD_URL}/admin`);
+    await expect(page).toHaveURL(/.*\/auth\/login.*/);
   });
 
   test('Zero Result Analytics & Empty State', async ({ page }) => {
-    await page.goto(`${PROD_URL}/en/explore`);
+    await page.goto(`${PROD_URL}/explore`);
 
     // Search for a real place with no inventory yet — real zero-result
     // recovery state (with a "plan a trip instead" path), not a dead end.

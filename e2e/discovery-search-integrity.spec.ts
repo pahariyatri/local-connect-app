@@ -44,7 +44,7 @@ test.describe('Discovery search — real API wiring', () => {
       });
     });
 
-    await page.goto(`${PROD_URL}/en/explore`);
+    await page.goto(`${PROD_URL}/explore`);
     await page.locator('#explore-search').fill('Kasol');
     // Poll the variable the route handler sets, rather than layering a second
     // waitForRequest listener on the same request (the two can race on which
@@ -85,7 +85,7 @@ test.describe('Discovery search — real API wiring', () => {
       });
     });
 
-    await page.goto(`${PROD_URL}/en/explore`);
+    await page.goto(`${PROD_URL}/explore`);
     await page.locator('#explore-search').fill('Manali');
     await page.waitForTimeout(600);
 
@@ -101,7 +101,7 @@ test.describe('No fabricated fallback data', () => {
   test('a discovery API failure shows a real error state, never fake vendors', async ({ page }) => {
     await page.route('**/api/v1/discovery/services**', (route) => route.abort('failed'));
 
-    await page.goto(`${PROD_URL}/en/explore`);
+    await page.goto(`${PROD_URL}/explore`);
     await page.locator('#explore-search').fill('anything');
     await expect(page.getByTestId('explore-error-state')).toBeVisible({ timeout: 10_000 });
     const bodyText = await page.locator('body').innerText();
@@ -120,7 +120,7 @@ test.describe('No fabricated fallback data', () => {
       });
     });
 
-    await page.goto(`${PROD_URL}/en/vendor/00000000-0000-0000-0000-000000000000`);
+    await page.goto(`${PROD_URL}/vendor/00000000-0000-0000-0000-000000000000`);
     await page.waitForTimeout(500);
 
     const bodyText = await page.locator('body').innerText();
@@ -152,7 +152,7 @@ test.describe('No fabricated fallback data', () => {
       });
     });
 
-    await page.goto(`${PROD_URL}/en/explore`);
+    await page.goto(`${PROD_URL}/explore`);
     await page.locator('#explore-search').fill('Tosh');
     await page.waitForTimeout(600);
 
@@ -173,17 +173,17 @@ test.describe('Zero-result recovery', () => {
       });
     });
 
-    await page.goto(`${PROD_URL}/en/explore`);
+    await page.goto(`${PROD_URL}/explore`);
     await page.locator('#explore-search').fill('Kalga');
     await page.waitForTimeout(600);
 
     const zeroState = page.getByTestId('explore-zero-result');
     await expect(zeroState).toBeVisible();
     await expect(zeroState.getByRole('button', { name: /clear filters/i })).toBeVisible();
-    await expect(page.locator('#explore-plan-cta')).toHaveAttribute('href', '/en/builder');
+    await expect(page.locator('#explore-plan-cta')).toHaveAttribute('href', '/builder');
 
     await zeroState.getByRole('button', { name: /clear filters/i }).click();
-    await expect(page).toHaveURL('/en/explore');
+    await expect(page).toHaveURL('/explore');
     await expect(page.locator('#explore-search')).toHaveValue('');
   });
 });

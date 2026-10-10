@@ -44,7 +44,7 @@ test.describe('Payment-first booking flow', () => {
   });
 
   test('Request-to-Book: service -> booking -> payment -> success -> awaiting confirmation status', async ({ page }) => {
-    await page.goto(`/en/vendor/${VENDOR_ID}/book/${SERVICE_ID}?date=2026-12-20`);
+    await page.goto(`/vendor/${VENDOR_ID}/book/${SERVICE_ID}?date=2026-12-20`);
 
     await expect(page.getByRole('button', { name: /Confirm Booking Request/i })).toBeVisible({ timeout: 15000 });
     await page.getByRole('button', { name: /Confirm Booking Request/i }).click();
@@ -103,7 +103,7 @@ test.describe('Payment-first booking flow', () => {
     const packageId = pkgBody?.data?.id ?? pkgBody?.id;
     test.skip(!packageId, 'No package id returned — skipping Custom Package UI assertions.');
 
-    await page.goto(`/en/results?packageId=${packageId}`);
+    await page.goto(`/results?packageId=${packageId}`);
     // dictionaries/en.json: page.results.footer.book_now = "REQUEST BOOKING"
     const bookButton = page.getByRole('button', { name: /REQUEST BOOKING/i });
     await expect(bookButton).toBeVisible({ timeout: 15000 });
