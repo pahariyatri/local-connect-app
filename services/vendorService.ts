@@ -3,7 +3,7 @@
  */
 import { api } from '@/lib/apiClient';
 import { sessionTracker } from './sessionService';
-import type { Vendor } from '@/app/[lang]/results/components/VendorSelectionCard';
+import type { Vendor } from '@/app/results/components/VendorSelectionCard';
 
 export const EMPTY_VENDORS: Record<string, Vendor[]> = {
   Stay: [],

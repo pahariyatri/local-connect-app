@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
 
 const ROUTES = [
-  { name: 'landing', path: '/en' },
-  { name: 'explore', path: '/en/explore' },
-  { name: 'builder', path: '/en/builder' },
-  { name: 'auth', path: '/en/auth/login' },
+  { name: 'landing', path: '/' },
+  { name: 'explore', path: '/explore' },
+  { name: 'builder', path: '/builder' },
+  { name: 'auth', path: '/auth/login' },
 ];
 
 test.describe('Visual QA and Page Health', () => {

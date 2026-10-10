@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('End-to-End Planner Flow', () => {
   test('Complete flow: Builder -> Results -> Journey', async ({ page, isMobile }) => {
     // Navigate to builder
-    await page.goto('/en/builder');
+    await page.goto('/builder');
     
     const viewportStr = isMobile ? 'mobile' : 'desktop';
     await page.waitForLoadState('networkidle');
@@ -11,11 +11,11 @@ test.describe('End-to-End Planner Flow', () => {
     
     // We just want to capture the visual state of the pages.
     // Instead of filling out the complex form, we navigate to the next routes.
-    await page.goto('/en/results');
+    await page.goto('/results');
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: `artifacts/visual-qa/results-${viewportStr}.png`, fullPage: true });
 
-    await page.goto('/en/journey');
+    await page.goto('/journey');
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: `artifacts/visual-qa/journey-${viewportStr}.png`, fullPage: true });
   });
@@ -25,11 +25,11 @@ test.describe('End-to-End Planner Flow', () => {
     // If we want to capture the actual dashboard, we'd need to mock auth or login.
     const viewportStr = isMobile ? 'mobile' : 'desktop';
     
-    await page.goto('/en/vendor/dashboard');
+    await page.goto('/vendor/dashboard');
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: `artifacts/visual-qa/vendor-dashboard-${viewportStr}.png`, fullPage: true });
 
-    await page.goto('/en/admin');
+    await page.goto('/admin');
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: `artifacts/visual-qa/admin-${viewportStr}.png`, fullPage: true });
   });

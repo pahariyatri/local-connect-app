@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Pahari Yatri Core Flows', () => {
   test('Landing page renders correctly and locale is preserved', async ({ page, isMobile }) => {
-    await page.goto('/en');
+    await page.goto('/');
     
     // Check Header
     await expect(page.getByRole('link', { name: /Pahari Yatri/i }).first()).toBeVisible();
@@ -19,13 +19,13 @@ test.describe('Pahari Yatri Core Flows', () => {
       await expect(planTripLink).toBeVisible();
       await planTripLink.click();
     } else {
-      await page.goto('/en/builder');
+      await page.goto('/builder');
     }
-    await expect(page).toHaveURL(/\/en\/builder/);
+    await expect(page).toHaveURL(/\/builder/);
   });
 
   test('Landing page has exactly one hero — regression for the 2026-08-11 duplicate-hero bug', async ({ page }) => {
-    await page.goto('/en');
+    await page.goto('/');
     await expect(page.locator('h1')).toHaveCount(1);
     // Headline copy is deliberately not asserted verbatim here — it's real
     // product copy that gets revised (see landing-page redesign work); the
@@ -33,18 +33,18 @@ test.describe('Pahari Yatri Core Flows', () => {
   });
 
   test('Landing hero has a real destination search input', async ({ page }) => {
-    await page.goto('/en');
+    await page.goto('/');
     const searchInput = page.locator('#landing-destination');
     await expect(searchInput).toBeVisible();
     await searchInput.fill('Kasol');
     await page.getByRole('button', { name: 'Explore destinations' }).click();
-    await expect(page).toHaveURL(/\/en\/explore\?q=Kasol/);
+    await expect(page).toHaveURL(/\/explore\?q=Kasol/);
   });
 
   test('Mobile navigation works correctly', async ({ page, isMobile }) => {
     test.skip(!isMobile, 'Mobile only test');
     
-    await page.goto('/en');
+    await page.goto('/');
 
     // Guests use the header menu; the fixed bottom navigation is for signed-in users.
     await expect(page.locator('#mobile-bottom-navigation')).toHaveCount(0);
@@ -57,11 +57,11 @@ test.describe('Pahari Yatri Core Flows', () => {
     await expect(mobileMenu.getByRole('link', { name: 'Explore' })).toBeVisible();
     await expect(mobileMenu.getByTestId('header-mobile-sign-in')).toBeVisible();
     await mobileMenu.getByRole('link', { name: 'Plan a Trip' }).click();
-    await expect(page).toHaveURL(/\/en\/builder/);
+    await expect(page).toHaveURL(/\/builder/);
   });
 
   test('Explore page search and location filter', async ({ page }) => {
-    await page.goto('/en/explore');
+    await page.goto('/explore');
 
     // Check search input
     const searchInput = page.locator('input[id="explore-search"]');
@@ -87,10 +87,10 @@ test.describe('Pahari Yatri Core Flows', () => {
 
   test('Auth redirects', async ({ page }) => {
     // Try to access vendor dashboard without auth
-    await page.goto('/en/vendor/dashboard');
+    await page.goto('/vendor/dashboard');
     
     // Should redirect to auth
-    await expect(page).toHaveURL(/\/en\/auth\/login/);
+    await expect(page).toHaveURL(/\/auth\/login/);
     
     // Verify auth shell UI
     await expect(page.getByRole('heading', { name: /Sign in/i })).toBeVisible();
@@ -98,7 +98,7 @@ test.describe('Pahari Yatri Core Flows', () => {
     await expect(page.getByRole('link', { name: /PY/ })).toBeVisible();
     
     // Try to access profile without auth
-    await page.goto('/en/profile');
-    await expect(page).toHaveURL(/\/en\/auth\/login/);
+    await page.goto('/profile');
+    await expect(page).toHaveURL(/\/auth\/login/);
   });
 });

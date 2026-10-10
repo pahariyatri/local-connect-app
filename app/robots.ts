@@ -23,29 +23,29 @@ export default function robots(): MetadataRoute.Robots {
             userAgent: '*',
             allow: ['/', '/api/og/*'],
             // Private/authenticated surfaces must never be indexed.
-            // Locale-prefixed routes (/{lang}/...) are matched by the wildcard.
+            // Paths are unprefixed (English-only app).
             disallow: [
-                '/*/auth/',
-                '/*/profile',
-                '/*/admin',
-                '/*/bookings',
-                '/*/checkout',
-                // NOTE: /*/vendor/onboarding is intentionally NOT disallowed
+                '/auth/',
+                '/profile',
+                '/admin',
+                '/bookings',
+                '/checkout',
+                // NOTE: /vendor/onboarding is intentionally NOT disallowed
                 // — it's the public "Become a Partner" signup page (linked
                 // from the footer), the main organic-search entry point for
                 // vendor acquisition. Only the authenticated dashboard
                 // surfaces below stay blocked.
-                '/*/vendor/dashboard',
-                '/*/vendor/payouts',
-                '/*/vendor/calendar',
-                '/*/vendor/contracts',
-                '/*/vendor/partnerships',
-                '/*/vendor/services',
-                '/*/vendor/bookings',
+                '/vendor/dashboard',
+                '/vendor/payouts',
+                '/vendor/calendar',
+                '/vendor/contracts',
+                '/vendor/partnerships',
+                '/vendor/services',
+                '/vendor/bookings',
                 // Internal engineering docs (architecture, state management,
                 // component conventions) served on the public frontend for
                 // the team, not traveler-facing content.
-                '/*/docs',
+                '/docs',
             ],
         },
         sitemap: `https://app.pahariyatri.com/sitemap.xml`,

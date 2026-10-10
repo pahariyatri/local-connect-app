@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-import { i18n } from "./i18n-config";
 export function middleware(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
 
@@ -24,14 +23,16 @@ export function middleware(request: NextRequest) {
         return;
     }
 
-    // SECURITY: route protection must key off the locale actually present in
-    // the URL path, never off Accept-Language / getLocale() (header
-    // negotiation). Using the negotiated locale here meant a request for
-    // /en/admin with `Accept-Language: hi` compared against `/hi/admin` —
-    // never matched — and sailed through with no auth check at all.
-    const pathLocale = (i18n.locales as unknown as string[]).find(
-        (l) => pathname === `/${l}` || pathname.startsWith(`/${l}/`),
-    );
+    // English-only (2026-10-10): the app no longer has locale-prefixed
+    // routes. Old links (/en/..., /hi/..., etc.) still circulate in Instagram
+    // bios, the content site and shared booking links — permanently redirect
+    // them to the unprefixed path, keeping the query string.
+    const legacyLocale = pathname.match(/^\/(en|hi|he|de|fr|es)(?=\/|$)/);
+    if (legacyLocale) {
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = pathname.slice(legacyLocale[0].length) || "/";
+        return NextResponse.redirect(redirectUrl, 308);
+    }
 
     // Define protected routes that require authentication.
     // 'onboarding' is deliberately NOT here — sitemap.ts and robots.ts both
@@ -42,20 +43,20 @@ export function middleware(request: NextRequest) {
         'bookings', 'calendar', 'contracts', 'dashboard', 'partnerships', 'payouts', 'services'
     ];
 
-    const isProtectedVendorRoute = !!pathLocale && pathname.startsWith(`/${pathLocale}/vendor`) && (
-        pathname === `/${pathLocale}/vendor` ||
-        reservedVendorSubroutes.some(sub => pathname.startsWith(`/${pathLocale}/vendor/${sub}`))
+    const isProtectedVendorRoute = pathname.startsWith(`/vendor`) && (
+        pathname === `/vendor` ||
+        reservedVendorSubroutes.some(sub => pathname.startsWith(`/vendor/${sub}`))
     );
 
-    const isProtected = !!pathLocale && (
-                        pathname.startsWith(`/${pathLocale}/profile`) ||
-                        pathname.startsWith(`/${pathLocale}/dashboard`) ||
-                        pathname.startsWith(`/${pathLocale}/admin`) ||
+    const isProtected = (
+                        pathname.startsWith(`/profile`) ||
+                        pathname.startsWith(`/dashboard`) ||
+                        pathname.startsWith(`/admin`) ||
                         // Payment surfaces — previously robots-disallowed only
                         // (an indexing directive, not access control) with no
                         // server-side check at all.
-                        pathname.startsWith(`/${pathLocale}/bookings`) ||
-                        pathname.startsWith(`/${pathLocale}/checkout`) ||
+                        pathname.startsWith(`/bookings`) ||
+                        pathname.startsWith(`/checkout`) ||
                         isProtectedVendorRoute
                         );
 
@@ -66,23 +67,13 @@ export function middleware(request: NextRequest) {
 
         if (!token) {
             // Redirect to the login page if no token is found
-            const loginUrl = new URL(`/${pathLocale}/auth/login`, request.url);
+            const loginUrl = new URL(`/auth/login`, request.url);
             loginUrl.searchParams.set("redirectTo", pathname);
             return NextResponse.redirect(loginUrl);
         }
     }
 
-    // The root layout (app/layout.tsx) sits ABOVE the [lang] dynamic segment,
-    // so Next.js never passes it a `lang` param — its generateMetadata always
-    // saw undefined and fell back to the default locale, which is why every
-    // page's canonical/hreflang/OG resolved to /en regardless of the actual
-    // URL. [lang]/layout.tsx can't fix this itself (it's a client component,
-    // "use client" for usePathname(), so it can't export generateMetadata).
-    // Forwarding the real path via a request header lets the root layout's
-    // generateMetadata read it with next/headers instead.
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set("x-pathname", pathname);
-    const response = NextResponse.next({ request: { headers: requestHeaders } });
+    const response = NextResponse.next();
 
     // Partner Tracking Persistence
     const ref = request.nextUrl.searchParams.get('ref');
@@ -93,25 +84,6 @@ export function middleware(request: NextRequest) {
     }
     if (utmSource) {
         response.cookies.set('utm_source', utmSource, { path: '/', maxAge: 60 * 60 * 24 * 7 });
-    }
-
-    const pathnameIsMissingLocale = i18n.locales.every(
-        (locale) =>
-            !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`,
-    );
-
-    if (pathnameIsMissingLocale) {
-        const locale = i18n.defaultLocale;
-
-        const redirectUrl = request.nextUrl.clone();
-        redirectUrl.pathname = `/${locale}${pathname.startsWith("/") ? "" : "/"}${pathname}`;
-        const redirectResponse = NextResponse.redirect(redirectUrl);
-        
-        // Ensure cookies are passed to the redirect
-        if (ref) redirectResponse.cookies.set('partner_ref', ref, { path: '/', maxAge: 60 * 60 * 24 * 7 });
-        if (utmSource) redirectResponse.cookies.set('utm_source', utmSource, { path: '/', maxAge: 60 * 60 * 24 * 7 });
-        
-        return redirectResponse;
     }
 
     return response;
