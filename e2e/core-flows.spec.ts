@@ -54,7 +54,7 @@ test.describe('Pahari Yatri Core Flows', () => {
 
     const mobileMenu = page.getByTestId('header-mobile-menu');
     await expect(mobileMenu).toBeVisible();
-    await expect(mobileMenu.getByRole('link', { name: 'Explore' })).toBeVisible();
+    await expect(mobileMenu.getByRole('link', { name: 'Book directly' })).toBeVisible();
     await expect(mobileMenu.getByTestId('header-mobile-sign-in')).toBeVisible();
     await mobileMenu.getByRole('link', { name: 'Plan a Trip' }).click();
     await expect(page).toHaveURL(/\/builder/);

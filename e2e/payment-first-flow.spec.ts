@@ -20,13 +20,18 @@ import { test, expect } from '@playwright/test';
  * `order_mock_*` ids to resolve immediately without opening the widget.
  */
 
-const TRAVELER_TOKEN =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzNzc4NjRiYi02MTAwLTRmM2EtYTEzMC1kMmEwYWIyNjFhNGQiLCJyb2xlIjoiVXNlciIsInR5cCI6ImFjY2VzcyIsImF2IjowLCJpYXQiOjE3ODg3MTk1NDgsImV4cCI6MTc4ODcyMzE0OH0.eZpse6oK5-LiibpPlCGwtcA3ogKqxnqm67u3QpO-EAw';
+// A previously hard-coded token expired on 2026-09-07 and silently turned
+// this whole suite into login redirects. Mint a fresh 1-hour token for the
+// seeded traveler instead (run from local-connect-api/):
+//   E2E_TRAVELER_TOKEN=$(node -e "require('dotenv').config();process.stdout.write(require('jsonwebtoken').sign({sub:'377864bb-6100-4f3a-a130-d2a0ab261a4d',role:'User',typ:'access',av:0},process.env.JWT_SECRET,{expiresIn:'1h'}))")
+const TRAVELER_TOKEN = process.env.E2E_TRAVELER_TOKEN ?? '';
 
 const VENDOR_ID = 'e4aba673-55fe-49bf-9d9d-ead7c822e8ee';
 const SERVICE_ID = 1;
 
 test.describe('Payment-first booking flow', () => {
+  test.skip(!TRAVELER_TOKEN, 'Set E2E_TRAVELER_TOKEN (see comment above) to run the authenticated booking flow.');
+
   test.beforeEach(async ({ context }) => {
     await context.addCookies([
       { name: 'accessToken', value: TRAVELER_TOKEN, domain: 'localhost', path: '/', httpOnly: false, secure: false, sameSite: 'Lax' },
@@ -46,8 +51,8 @@ test.describe('Payment-first booking flow', () => {
   test('Request-to-Book: service -> booking -> payment -> success -> awaiting confirmation status', async ({ page }) => {
     await page.goto(`/vendor/${VENDOR_ID}/book/${SERVICE_ID}?date=2026-12-20`);
 
-    await expect(page.getByRole('button', { name: /Confirm Booking Request/i })).toBeVisible({ timeout: 15000 });
-    await page.getByRole('button', { name: /Confirm Booking Request/i }).click();
+    await expect(page.getByRole('button', { name: /Continue to payment/i })).toBeVisible({ timeout: 15000 });
+    await page.getByRole('button', { name: /Continue to payment/i }).click();
 
     // Payment-first: lands directly on /checkout, never on the old
     // vendor-confirmation-wait status page first.
