@@ -10,6 +10,7 @@ import {
   removeBookingItem,
   getBookingVendorContacts,
 } from "@/services/bookingService";
+import { getPaymentStatus, type PaymentStatusView } from "@/services/paymentService";
 import { discoverServices, buildDiscoveryParams, mapServicesToVendors, EMPTY_VENDORS } from "@/services/vendorService";
 import DiscoveryDrawer from "../../components/molecules/DiscoveryDrawer";
 import SupportContact from "../../components/molecules/SupportContact";
@@ -106,6 +107,13 @@ export default function BookingDetailPage() {
   const [busyItemId, setBusyItemId] = useState<number | null>(null);
   const [replaceDrawer, setReplaceDrawer] = useState<{ item: BookingItemData | null; vendors: Vendor[]; loading: boolean }>({ item: null, vendors: [], loading: false });
 
+  // Server-side payment view (GET /payments/status) — the only source for what
+  // a PAYMENT_PENDING / PAYMENT_FAILED booking should show. `null` while
+  // unknown; `payCheckFailed` when the status call itself failed.
+  const [pay, setPay] = useState<PaymentStatusView | null>(null);
+  const [payChecking, setPayChecking] = useState(false);
+  const [payCheckFailed, setPayCheckFailed] = useState(false);
+
   const fetchBooking = useCallback(async () => {
     try {
       const resp = await api.get(`/booking/${id}`, { skipCache: true });
@@ -124,6 +132,29 @@ export default function BookingDetailPage() {
   useEffect(() => { fetchBooking(); }, [fetchBooking]);
 
   const bookingStatus = booking?.status;
+
+  // refresh=true asks the backend to check with Razorpay first, so a payment
+  // whose browser response was lost becomes PAID here on re-entry.
+  const checkPayment = useCallback(async (refresh: boolean) => {
+    setPayChecking(true);
+    try {
+      const view = await getPaymentStatus(id, refresh);
+      setPay(view);
+      setPayCheckFailed(false);
+      if (view.bookingStatus !== bookingStatus) await fetchBooking();
+    } catch {
+      setPayCheckFailed(true);
+    } finally {
+      setPayChecking(false);
+    }
+  }, [id, bookingStatus, fetchBooking]);
+
+  const paymentOpen = bookingStatus === 'PAYMENT_PENDING' || bookingStatus === 'PAYMENT_FAILED';
+  useEffect(() => {
+    if (paymentOpen) checkPayment(true);
+    // Only on entering a payment-open status, not on every checkPayment identity change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentOpen, id]);
 
   // Poll while in-flight — vendor responses or payment capture happen asynchronously.
   // pollAttempts is a ref (not state) so the cap survives across IN_FLIGHT status
@@ -146,11 +177,12 @@ export default function BookingDetailPage() {
         clearInterval(interval);
         return;
       }
-      await fetchBooking();
+      const s = await fetchBooking();
+      if (s === 'PAYMENT_PENDING') await checkPayment(false);
     }, 6000);
 
     return () => clearInterval(interval);
-  }, [bookingStatus, fetchBooking, id]);
+  }, [bookingStatus, fetchBooking, checkPayment, id]);
 
   // Load vendor contacts once unlocked.
   useEffect(() => {
@@ -223,7 +255,21 @@ export default function BookingDetailPage() {
   const status = (booking?.status || 'UNKNOWN') as BookingStatus;
   // VENDOR_ACCEPTED is the legacy manual-approval path's own payable state;
   // CREATED/PAYMENT_FAILED are the normal payment-first payable states.
-  const isPayable = ['CREATED', 'PAYMENT_FAILED', 'VENDOR_ACCEPTED'].includes(status);
+  // PAYMENT_PENDING is payable again when the server says the last attempt was
+  // cancelled / failed / never completed (never while one is VERIFYING).
+  const payDisplay = status === 'PAYMENT_PENDING'
+    ? (pay?.displayState ?? (payCheckFailed ? 'VERIFYING' : null))
+    : null;
+  const isPayable = ['CREATED', 'PAYMENT_FAILED', 'VENDOR_ACCEPTED'].includes(status)
+    || (status === 'PAYMENT_PENDING' && !!pay?.retryable);
+  const isVerifying = payDisplay === 'VERIFYING';
+  const pendingLabel =
+    payDisplay === 'CANCELLED' ? 'Payment cancelled'
+    : payDisplay === 'FAILED' ? 'Payment failed'
+    : payDisplay === 'VERIFYING' ? 'Payment verification in progress'
+    : payDisplay === 'AWAITING_PAYMENT' || payDisplay === 'NOT_STARTED' || payDisplay === 'EXPIRED' ? 'Complete your payment'
+    : 'Checking payment status...';
+  const headline = status === 'PAYMENT_PENDING' ? pendingLabel : STATUS_LABELS[status];
   const isReserved = CONTACTS_UNLOCKED.includes(status);
   const isDeadEnd = ['CANCELLED', 'EXPIRED', 'VENDOR_REJECTED', 'ABANDONED'].includes(status);
   const activeItems = (booking?.items || []).filter((i) => i.status !== 'REPLACED' && i.status !== 'REMOVED');
@@ -246,20 +292,26 @@ export default function BookingDetailPage() {
         {/* Header */}
         <div className="mb-6">
           <p className="text-xs font-medium text-slate-400">Booking YATRI-{id}</p>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mt-1">{STATUS_LABELS[status]}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mt-1">{headline}</h1>
         </div>
 
         {/* Status banner */}
         <div className={`mb-6 p-4 rounded-2xl border flex items-center gap-3 ${STATUS_COLORS[status]}`}>
-          {IN_FLIGHT.includes(status) && <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin flex-shrink-0" />}
+          {IN_FLIGHT.includes(status) && (status !== 'PAYMENT_PENDING' || isVerifying || payDisplay === null) && (
+            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin flex-shrink-0" />
+          )}
           <div>
-            <p className="font-semibold text-sm">{STATUS_LABELS[status]}</p>
+            <p className="font-semibold text-sm">{headline}</p>
             <p className="text-xs opacity-70 font-medium mt-0.5">
               {status === 'CREATED' && "Pay the reservation fee to lock in your booking — local partners are being notified in the background."}
               {status === 'PAYMENT_FAILED' && "Your payment didn't go through. No charge was made — try again below."}
               {status === 'REPLACEMENT_REQUIRED' && 'One or more partners couldn\'t confirm — pick a replacement below to continue.'}
               {status === 'VENDOR_ACCEPTED' && 'Every local partner confirmed. Pay the reservation fee to lock it in.'}
-              {status === 'PAYMENT_PENDING' && "We're confirming your payment with the bank."}
+              {status === 'PAYMENT_PENDING' && payDisplay === 'CANCELLED' && 'Payment cancelled. Your booking has not been charged.'}
+              {status === 'PAYMENT_PENDING' && payDisplay === 'FAILED' && "Your payment didn't go through. No charge was made — try again below."}
+              {status === 'PAYMENT_PENDING' && (payDisplay === 'AWAITING_PAYMENT' || payDisplay === 'NOT_STARTED' || payDisplay === 'EXPIRED') && "Your payment hasn't been completed yet — no charge was made."}
+              {status === 'PAYMENT_PENDING' && isVerifying && "We're confirming your payment with Razorpay. Please don't pay again — if money left your account, this booking will update automatically."}
+              {status === 'PAYMENT_PENDING' && payDisplay === null && 'Checking with Razorpay...'}
               {status === 'CONFIRMED' && "Payment completed — we're handling the confirmations for you. Local partner contacts appear below as they confirm."}
               {status === 'VENDOR_REJECTED' && 'This booking could not be confirmed by local partners.'}
               {status === 'EXPIRED' && 'Local partners did not respond in time.'}
@@ -368,6 +420,24 @@ export default function BookingDetailPage() {
           </section>
         )}
 
+        {/* Payment verification in progress — never an endless spinner: a
+            status check the traveler can repeat, plus support. */}
+        {status === 'PAYMENT_PENDING' && isVerifying && (
+          <div className="mb-6 space-y-2">
+            <button
+              onClick={() => checkPayment(true)}
+              disabled={payChecking}
+              className="w-full h-14 font-semibold text-base rounded-2xl border border-blue-200 bg-blue-50 text-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              {payChecking && <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />}
+              <span>{payChecking ? 'Checking...' : 'Check payment status'}</span>
+            </button>
+            {payCheckFailed && (
+              <p className="text-center text-xs text-red-600 font-medium">Couldn't reach the server. Check your connection and try again.</p>
+            )}
+          </div>
+        )}
+
         {/* Pay CTA — payment-first: available immediately (CREATED),
             retryable after a failed attempt (PAYMENT_FAILED), or the legacy
             manual-approval path's own payable state (VENDOR_ACCEPTED). */}
@@ -379,9 +449,11 @@ export default function BookingDetailPage() {
               className="w-full h-14 font-semibold text-base rounded-2xl shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/25 disabled:opacity-50"
             >
               <span>
-                {status === 'PAYMENT_FAILED'
+                {status === 'PAYMENT_FAILED' || payDisplay === 'FAILED'
                   ? 'Try payment again'
-                  : feeAmount != null
+                  : payDisplay === 'CANCELLED'
+                    ? 'Pay again'
+                    : feeAmount != null
                     ? `Pay ₹${feeAmount.toLocaleString('en-IN')} reservation fee`
                     : 'Pay reservation fee'}
               </span>

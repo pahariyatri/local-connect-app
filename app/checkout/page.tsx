@@ -1,9 +1,16 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, Suspense } from "react";
+import React, { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { prepTracker } from "@/lib/prepTracker";
-import { initRazorpayCheckout, verifyPayment } from "@/services/paymentService";
+import {
+  initRazorpayCheckout,
+  verifyPayment,
+  cancelPayment,
+  getPaymentStatus,
+  PaymentCheckoutError,
+  type PaymentStatusView,
+} from "@/services/paymentService";
 import { reserveBooking } from "@/services/bookingService";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
@@ -22,7 +29,23 @@ const RAZORPAY_KEY_ID = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '';
 // confirmation before paying. The 'not-ready' state below is a legacy
 // fallback (kept for the manual-approval path reserve() still supports) and
 // should rarely if ever trigger under the current flow.
-type CheckoutState = 'preparing' | 'idle' | 'paying' | 'verifying' | 'success' | 'error' | 'not-ready';
+//
+// Payment states (docs/payments/payment-flow-contract.md §9):
+//   cancelled — checkout closed, nothing charged, "Pay again" reuses the order
+//   failed    — Razorpay reported a failed attempt, nothing charged, retryable
+//   pending   — "Payment verification in progress": a success callback (or a
+//               lost response) whose outcome the server hasn't confirmed yet.
+//               Bounded auto-check + a "Check payment status" button. Paying
+//               again is NOT offered here — that's how double charges happen.
+type CheckoutState =
+  | 'preparing' | 'idle' | 'paying' | 'verifying' | 'success' | 'error' | 'not-ready'
+  | 'cancelled' | 'failed' | 'pending';
+
+const CANCELLED_MSG = 'Payment cancelled. Your booking has not been charged.';
+const failedMessage = (reason?: string | null) =>
+  reason ? `Payment failed: ${reason.trim().replace(/\.+$/, '')}. No charge was made.` : 'Payment failed. No charge was made.';
+const PENDING_POLL_MS = 5000;
+const PENDING_POLL_MAX = 12; // ~1 minute of automatic checks, then manual only
 
 function CheckoutPageContent() {
   const searchParams = useSearchParams();
@@ -45,12 +68,60 @@ function CheckoutPageContent() {
     }
   }, [bookingId, router]);
 
-  // Create the reservation-fee order on mount.
+  const [pendingPolls, setPendingPolls] = useState(0);
+  const [checking, setChecking] = useState(false);
+  const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (redirectTimer.current) clearTimeout(redirectTimer.current); }, []);
+
+  const goPaid = useCallback(() => {
+    setState('success');
+    if (redirectTimer.current) clearTimeout(redirectTimer.current);
+    redirectTimer.current = setTimeout(() => router.push(`/bookings/${bookingId}`), 1500);
+  }, [bookingId, router]);
+
+  /** Map a server payment view onto this page. Returns true if it was terminal for this page. */
+  const applyView = useCallback((view: PaymentStatusView): boolean => {
+    switch (view.displayState) {
+      case 'PAID':
+        prepTracker.paymentCompleted(parseInt(bookingId || '0', 10), amount);
+        goPaid();
+        return true;
+      case 'VERIFYING':
+        setState('pending');
+        return true;
+      case 'CANCELLED':
+        setErrorMsg(CANCELLED_MSG);
+        setState('cancelled');
+        return true;
+      case 'FAILED':
+        setErrorMsg(failedMessage(view.failureReason));
+        setState('failed');
+        return true;
+      case 'REFUND_PENDING':
+      case 'REFUNDED':
+        router.replace(`/bookings/${bookingId}`);
+        return true;
+      default:
+        return false;
+    }
+  }, [amount, bookingId, goPaid, router]);
+
+  // On mount (and on refresh/re-entry): ask the server — which asks Razorpay —
+  // what already happened before creating or reusing an order. A traveler who
+  // paid but lost the response lands on "paid", not on a second Pay button.
   useEffect(() => {
     if (!bookingId) return;
     let cancelled = false;
     (async () => {
       try {
+        const view = await getPaymentStatus(bookingId, true).catch(() => null);
+        if (cancelled) return;
+        if (view && (view.displayState === 'PAID' || view.displayState === 'VERIFYING' || view.displayState.startsWith('REFUND'))) {
+          setAmount(Number(view.amount));
+          setCurrency(view.currency || 'INR');
+          applyView(view);
+          return;
+        }
         const result = await reserveBooking(parseInt(bookingId, 10));
         if (cancelled) return;
         setOrderId(result.orderId);
@@ -60,7 +131,12 @@ function CheckoutPageContent() {
       } catch (err: any) {
         if (cancelled) return;
         const msg = err?.message || '';
-        if (msg.toLowerCase().includes('not ready')) {
+        if (err?.statusCode === 409) {
+          // A payment on this booking is being verified — don't open a second checkout.
+          setState('pending');
+        } else if (msg.toLowerCase().includes('already paid')) {
+          goPaid();
+        } else if (msg.toLowerCase().includes('not ready')) {
           setState('not-ready');
         } else {
           setErrorMsg(msg || 'Could not prepare your reservation. Please try again.');
@@ -69,10 +145,40 @@ function CheckoutPageContent() {
       }
     })();
     return () => { cancelled = true; };
+    // Mount-only per booking: applyView/goPaid identities must not re-run this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingId]);
 
+  const checkStatus = useCallback(async (): Promise<void> => {
+    if (!bookingId) return;
+    setChecking(true);
+    try {
+      const view = await getPaymentStatus(bookingId, true);
+      if (!applyView(view) && view.retryable) {
+        // Server says nothing was charged and the order is open again.
+        setErrorMsg('');
+        setState('idle');
+      }
+    } catch {
+      // Unknown stays unknown — keep the verification state, never assume failure.
+    } finally {
+      setChecking(false);
+    }
+  }, [applyView, bookingId]);
+
+  // Bounded automatic checks while verification is in progress.
+  useEffect(() => {
+    if (state !== 'pending') { setPendingPolls(0); return; }
+    if (pendingPolls >= PENDING_POLL_MAX) return;
+    const t = setTimeout(async () => {
+      await checkStatus();
+      setPendingPolls((n) => n + 1);
+    }, PENDING_POLL_MS);
+    return () => clearTimeout(t);
+  }, [state, pendingPolls, checkStatus]);
+
   const handlePay = useCallback(async () => {
-    if (!bookingId || !orderId) return;
+    if (!bookingId) return;
     setState('paying');
     setErrorMsg('');
     let keyId = RAZORPAY_KEY_ID;
@@ -93,10 +199,29 @@ function CheckoutPageContent() {
       return;
     }
 
+    // Re-confirm the order with the server before every attempt: it reuses the
+    // same Razorpay order after a cancel/failure (reset to PENDING), issues a
+    // fresh one if the old one expired, and refuses (409) while a payment is
+    // being verified. Never open a stale order id.
+    let currentOrderId = orderId;
+    try {
+      const fresh = await reserveBooking(parseInt(bookingId, 10));
+      currentOrderId = fresh.orderId;
+      setOrderId(fresh.orderId);
+      setAmount(Number(fresh.amount));
+    } catch (err: any) {
+      if (err?.statusCode === 409) { setState('pending'); return; }
+      if ((err?.message || '').toLowerCase().includes('already paid')) { goPaid(); return; }
+      setErrorMsg(err?.message || 'Could not prepare your payment. Please try again.');
+      setState('error');
+      return;
+    }
+
+    let paymentResult;
     try {
       prepTracker.paymentStarted(parseInt(bookingId, 10), amount);
-      const paymentResult = await initRazorpayCheckout({
-        orderId,
+      paymentResult = await initRazorpayCheckout({
+        orderId: currentOrderId,
         amount,
         keyId,
         bookingId: parseInt(bookingId, 10),
@@ -105,35 +230,53 @@ function CheckoutPageContent() {
         prefillContact: user?.phone || '',
         prefillEmail: user?.email || '',
       });
-
-      setState('verifying');
-      const verified = await verifyPayment(paymentResult);
-
-      if (verified) {
-        prepTracker.paymentCompleted(parseInt(bookingId, 10), amount);
-        setState('success');
-        setTimeout(() => {
-          router.push(`/bookings/${bookingId}`);
-        }, 1500);
-      } else {
-        throw new Error('Payment verification failed. Please contact support.');
-      }
-
     } catch (err: any) {
+      const kind = err instanceof PaymentCheckoutError ? err.kind : 'unavailable';
       const msg = err?.message || 'Payment failed. Please try again.';
-      setErrorMsg(msg);
-      prepTracker.paymentFailed(parseInt(bookingId || '0', 10), msg);
-      if (msg.includes('cancelled')) {
-        setState('idle');
-      } else {
+      prepTracker.paymentFailed(parseInt(bookingId, 10), msg);
+      if (kind === 'unavailable') {
+        setErrorMsg(msg);
         setState('error');
+        return;
       }
+      // Closed without a success callback. Tell the server; it reconciles with
+      // Razorpay first, so a payment that actually went through still wins.
+      try {
+        const view = await cancelPayment(bookingId, kind === 'failed' ? 'failed' : 'dismissed', kind === 'failed' ? msg : undefined);
+        if (applyView(view)) return;
+      } catch {
+        /* server unreachable — the checkout itself reported no success, so show the local outcome */
+      }
+      if (kind === 'failed') {
+        setErrorMsg(failedMessage(msg));
+        setState('failed');
+      } else {
+        setErrorMsg(CANCELLED_MSG);
+        setState('cancelled');
+      }
+      return;
     }
-  }, [bookingId, orderId, amount, currency, router, user]);
+
+    // Razorpay says success — the server still has to confirm it.
+    setState('verifying');
+    try {
+      const view = await verifyPayment(paymentResult);
+      if (!applyView(view)) setState('pending');
+    } catch {
+      // Lost response / timeout / server error: the payment may well have
+      // succeeded. Never show "failed" here — the webhook or reconciliation
+      // decides, and the status check below surfaces it.
+      setState('pending');
+    }
+  }, [bookingId, orderId, amount, currency, user, applyView, goPaid]);
 
   if (!bookingId) return null;
 
   const isPaying = state === 'paying' || state === 'verifying';
+  const isPending = state === 'pending';
+  // handlePay always re-confirms the order with the server, so a known order id
+  // isn't required once we're in a payable state (e.g. recovered from 'pending').
+  const canPay = ['idle', 'paying', 'verifying', 'cancelled', 'failed'].includes(state) || (state === 'error' && !!orderId);
 
   if (state === 'preparing') {
     return (
@@ -223,8 +366,46 @@ function CheckoutPageContent() {
 
         {/* Error */}
         {state === 'error' && errorMsg && (
-          <div className="mb-4 p-3 bg-red-50 rounded-xl border border-red-100">
+          <div className="mb-4 p-3 bg-red-50 rounded-xl border border-red-100" role="alert">
             <p className="text-red-700 text-xs font-bold">{errorMsg}</p>
+          </div>
+        )}
+
+        {state === 'cancelled' && (
+          <div className="mb-4 p-4 bg-amber-50 rounded-2xl border border-amber-100" role="status">
+            <p className="text-amber-800 text-sm font-bold">{CANCELLED_MSG}</p>
+            <p className="text-amber-700 text-xs font-medium mt-1">You can pay whenever you're ready.</p>
+          </div>
+        )}
+
+        {state === 'failed' && errorMsg && (
+          <div className="mb-4 p-4 bg-red-50 rounded-2xl border border-red-100" role="alert">
+            <p className="text-red-700 text-sm font-bold">{errorMsg}</p>
+            <p className="text-red-600 text-xs font-medium mt-1">Try again, or use a different payment method.</p>
+          </div>
+        )}
+
+        {isPending && (
+          <div className="mb-4 p-4 bg-blue-50 rounded-2xl border border-blue-100" role="status">
+            <div className="flex items-center gap-3">
+              {(checking || pendingPolls < PENDING_POLL_MAX) && (
+                <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+              )}
+              <p className="text-blue-800 font-bold text-sm">Payment verification in progress</p>
+            </div>
+            <p className="text-blue-700 text-xs font-medium mt-2 leading-relaxed">
+              {pendingPolls < PENDING_POLL_MAX
+                ? "We're confirming your payment with Razorpay. Please don't pay again."
+                : "This is taking longer than usual. You can safely leave this page — if money left your account, your booking updates automatically. Please don't pay again."}
+            </p>
+            <button
+              id="checkout-check-status-btn"
+              onClick={checkStatus}
+              disabled={checking}
+              className="mt-3 w-full h-12 rounded-xl bg-white border border-blue-200 text-blue-700 text-sm font-bold disabled:opacity-60"
+            >
+              {checking ? 'Checking...' : 'Check payment status'}
+            </button>
           </div>
         )}
 
@@ -246,7 +427,7 @@ function CheckoutPageContent() {
         {/* Payment-safety disclosure — under the payment-first model this
             traveler hasn't heard from a local partner yet, so this doubles
             as the "what happens next" explainer, not just a pre-charge notice. */}
-        {state !== 'success' && orderId && (
+        {canPay && (
           <div className="mb-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
             <p className="text-xs text-slate-600 font-medium leading-relaxed">
               Before paying, please review the cancellation and refund terms for
@@ -264,7 +445,7 @@ function CheckoutPageContent() {
         )}
 
         {/* Pay Button */}
-        {state !== 'success' && orderId && (
+        {canPay && (
           <button
             id="checkout-pay-btn"
             onClick={handlePay}
@@ -281,7 +462,7 @@ function CheckoutPageContent() {
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" />
                 </svg>
-                Pay Reservation Fee ₹{amount.toLocaleString('en-IN')}
+                {state === 'cancelled' || state === 'failed' ? 'Pay again' : 'Pay Reservation Fee'} ₹{amount.toLocaleString('en-IN')}
               </>
             )}
           </button>
