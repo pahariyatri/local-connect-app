@@ -43,7 +43,7 @@ export function generateMetadata(): Metadata {
   // third, different pitch.
   const title = `${BRAND_CONFIG.tagline} | ${BRAND_CONFIG.fullProductName}`;
   const description =
-    'Search real homestays, 4x4 drivers, and local guides across Himachal Pradesh — verified locals, direct and with no agency markup. Or build a full multi-stop route with stays and transit in one place.';
+    'Search real homestays, 4x4 drivers, and local guides in the Parvati Valley, listed by verified locals. Or build a full multi-stop route with stays and transit in one place.';
 
   return {
     // Absolute base for OG/Twitter/canonical URL resolution (production frontend).

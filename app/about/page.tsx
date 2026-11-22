@@ -24,8 +24,8 @@ export default function AboutPage() {
   // "Our Promise" card applies here: don't claim a live 24/7 channel unless
   // one is actually configured.
   const stats = [
-    { value: "100%", label: "Direct Local Match", sub: "No agency markups" },
-    { value: "6+", label: "Mountain Circuits", sub: "Manali, Spiti, Kasol & more" },
+    { value: "Reviewed", label: "Local Listings", sub: "Each host and listing is checked before it goes live" },
+    { value: "Parvati", label: "Valley First", sub: "Kasol, Tosh, Kalga, Pulga & Barshaini" },
     { value: "Direct", label: "Reservation Fee", sub: "Trip cost paid to the partner, not held by us" },
     hasLiveSupportChannel
       ? { value: "Live", label: "Support Channel", sub: "Reach a human before or during your trip" }

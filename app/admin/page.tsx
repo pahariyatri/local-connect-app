@@ -1,5 +1,6 @@
 "use client";
 
+import { api } from "@/lib/apiClient";
 import React, { useCallback, useEffect, useState } from "react";
 import Typography from "../components/atoms/Typography";
 import Button from "../components/atoms/Button";
@@ -144,10 +145,18 @@ export default function AdminDashboard() {
         }
     }, []);
 
+    // The spinner waits only for the overview (vendors, services, bookings).
+    // It used to also wait for eight analytics aggregates; any slow one kept
+    // the whole admin on "Loading Command Center..." (intermittent hang seen
+    // at 360px after a reload). Analytics now fills in when it arrives.
     const initData = useCallback(async () => {
         setIsLoading(true);
-        await Promise.all([loadOverview(), loadAnalytics()]);
-        setIsLoading(false);
+        try {
+            await loadOverview();
+        } finally {
+            setIsLoading(false);
+        }
+        void loadAnalytics();
     }, [loadOverview, loadAnalytics]);
 
     useEffect(() => {
@@ -285,6 +294,19 @@ export default function AdminDashboard() {
             setRoiReport(roiRes?.data || roiRes || []);
         } catch (err) {
             setErrorMessage(toApiUiError(err, "Failed to create campaign").message);
+        }
+    };
+
+    const [notifPanel, setNotifPanel] = useState<{ bookingId: number; items: any[] | null } | null>(null);
+    const openBookingNotifications = async (bookingId: number) => {
+        setNotifPanel({ bookingId, items: null });
+        try {
+            const raw: any = await api.get(`/notifications/admin/all?bookingId=${bookingId}`, { skipCache: true });
+            const list = raw?.data ?? raw;
+            setNotifPanel({ bookingId, items: Array.isArray(list) ? list : [] });
+        } catch (err) {
+            setNotifPanel({ bookingId, items: [] });
+            setErrorMessage(toApiUiError(err, "Could not load notifications.").message);
         }
     };
 
@@ -729,26 +751,34 @@ export default function AdminDashboard() {
                                                 <th className="px-4 pb-3">Booking ID</th>
                                                 <th className="px-4 pb-3">Date</th>
                                                 <th className="px-4 pb-3">Traveler</th>
-                                                <th className="px-4 pb-3 text-right">Total Fee</th>
-                                                <th className="px-4 pb-3 text-right">Platform Fee (15%)</th>
-                                                <th className="px-4 pb-3 text-right">Vendor Net Payout</th>
+                                                <th className="px-4 pb-3 text-right">Booking total</th>
+                                                <th className="px-4 pb-3 text-right">Reservation fee</th>
+                                                <th className="px-4 pb-3">Payment</th>
                                                 <th className="px-4 pb-3">Booking Status</th>
-                                                <th className="px-4 pb-3">Disbursement</th>
+                                                <th className="px-4 pb-3">Notifications</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {adminBookings.map((b) => {
-                                                const totalAmount = Number(b.totalAmount || b.price || 600);
-                                                const platformFee = Math.round(totalAmount * 0.15);
-                                                const vendorNet = totalAmount - platformFee;
+                                                // Real values only: no assumed commission %, no
+                                                // placeholder amount, no invented "settled" state.
+                                                const totalAmount = b.totalAmount != null ? Number(b.totalAmount) : null;
+                                                const fee = b.reservationFeeAmount != null ? Number(b.reservationFeeAmount) : null;
+                                                const payments: any[] = Array.isArray(b.payments) ? [...b.payments] : [];
+                                                payments.sort((x, y) => new Date(y.updatedAt || y.createdAt).getTime() - new Date(x.updatedAt || x.createdAt).getTime());
+                                                const payStatus = payments[0]?.status || "NONE";
+                                                const phone: string = b.user?.phone || "";
+                                                const traveler = [b.user?.firstName, b.user?.lastName].filter(Boolean).join(" ") || (phone ? `+91******${phone.replace(/\D/g, "").slice(-4)}` : "Traveler");
                                                 return (
                                                     <tr key={b.id} className="border-b border-slate-800/50 text-slate-300 align-middle">
                                                         <td className="px-4 py-3.5 font-bold text-slate-100">#{b.id}</td>
                                                         <td className="px-4 py-3.5 text-slate-400">{new Date(b.createdAt).toLocaleDateString()}</td>
-                                                        <td className="px-4 py-3.5 text-slate-300">{b.user?.phone || b.user?.name || "Traveler"}</td>
-                                                        <td className="px-4 py-3.5 text-right font-bold text-slate-100">₹{totalAmount}</td>
-                                                        <td className="px-4 py-3.5 text-right text-indigo-400 font-bold">₹{platformFee}</td>
-                                                        <td className="px-4 py-3.5 text-right text-emerald-400 font-black">₹{vendorNet}</td>
+                                                        <td className="px-4 py-3.5 text-slate-300">{traveler}</td>
+                                                        <td className="px-4 py-3.5 text-right font-bold text-slate-100">{totalAmount != null ? `₹${totalAmount.toLocaleString("en-IN")}` : "—"}</td>
+                                                        <td className="px-4 py-3.5 text-right text-indigo-400 font-bold">{fee != null ? `₹${fee.toLocaleString("en-IN")}` : "—"}</td>
+                                                        <td className="px-4 py-3.5">
+                                                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-slate-800 text-slate-300" data-testid="admin-payment-status">{payStatus}</span>
+                                                        </td>
                                                         <td className="px-4 py-3.5">
                                                             <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
                                                                 b.status === "CONFIRMED" ? "bg-emerald-950 text-emerald-400 border border-emerald-900" : "bg-slate-800 text-slate-400"
@@ -757,9 +787,13 @@ export default function AdminDashboard() {
                                                             </span>
                                                         </td>
                                                         <td className="px-4 py-3.5">
-                                                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-blue-950 text-blue-400 border border-blue-900">
-                                                                SETTLED
-                                                            </span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openBookingNotifications(b.id)}
+                                                                className="min-h-[36px] px-3 rounded-lg border border-slate-700 text-[10px] font-bold uppercase text-slate-300 hover:bg-slate-800"
+                                                            >
+                                                                View
+                                                            </button>
                                                         </td>
                                                     </tr>
                                                 );
@@ -768,6 +802,29 @@ export default function AdminDashboard() {
                                     </table>
                                 </div>
                             )}
+                            {notifPanel && (
+                                <div className="mt-6 p-4 rounded-2xl border border-slate-800 bg-slate-950" data-testid="admin-notifications-panel">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <p className="text-sm font-bold text-slate-100">Notifications · Booking #{notifPanel.bookingId}</p>
+                                        <button type="button" onClick={() => setNotifPanel(null)} className="text-xs text-slate-400 min-h-[36px] px-2">Close</button>
+                                    </div>
+                                    {notifPanel.items === null ? (
+                                        <p className="text-xs text-slate-500">Loading…</p>
+                                    ) : notifPanel.items.length === 0 ? (
+                                        <p className="text-xs text-slate-500">No notifications recorded for this booking.</p>
+                                    ) : (
+                                        <ul className="space-y-2">
+                                            {notifPanel.items.map((n: any) => (
+                                                <li key={n.id} className="text-xs text-slate-300">
+                                                    <span className="font-bold text-slate-100">{n.kind}</span> → {n.recipientVendorId ? "vendor" : "traveler"} · {new Date(n.createdAt).toLocaleString("en-IN")} · {n.readAt ? "read" : "unread"} · external: {n.externalStatus}
+                                                    <div className="text-slate-500">{n.title}</div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                            )}
+
                         </div>
                     </div>
                 )}

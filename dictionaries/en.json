@@ -4,7 +4,7 @@
       "badge": "Pahari Yatri Network",
       "hero": {
         "title": "Discover Himachal <span class=\"text-emerald-400\">like a local.</span>",
-        "subtitle": "Search real stays, rides, and guides from verified Himachal locals, direct and with no agency markup.",
+        "subtitle": "Search stays, rides, and guides listed by verified Parvati Valley locals.",
         "search_placeholder": "Where are you going?",
         "search_cta": "Search",
         "plan_cta": "Or build a whole trip"
@@ -511,7 +511,7 @@
       },
       "step2": {
         "title": "When are we <span class=\"text-amber-500\">departing</span>?",
-        "subtitle": "Checking real-time availability for you."
+        "subtitle": "Showing services listed for your route."
       },
       "step5": {
         "title": "Build your <span class=\"text-emerald-600\">Yatra plan</span>",
@@ -760,7 +760,7 @@
         },
         {
           "title": "03. Booking & Payments",
-          "text": "All bookings are subject to vendor availability. Price synchronization happens in real-time."
+          "text": "All bookings are subject to vendor availability. Your host confirms each request."
         },
         {
           "title": "04. Safety & Conduct",
