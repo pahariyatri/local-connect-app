@@ -8,6 +8,9 @@ import { sanitizePhone, isValidPhone, PHONE_LENGTH } from "@/utils/validation";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthShell from "../components/AuthShell";
 import { getTravelerDictionary } from "@/lib/travelerDictionary";
+import { AUTH_MODE } from "@/utils/constants";
+import { requestOtp } from "@/services/authService";
+import { toAuthUiError } from "@/utils/authErrors";
 
 /** Only ever follow a same-site relative path — never an absolute/external URL. */
 const safeRedirect = (raw: string | null): string => {
@@ -24,6 +27,8 @@ function LoginPageContent() {
     const { user, authStatus } = useAuth();
     const [phone, setPhone] = useState("");
     const [touched, setTouched] = useState(false);
+    const [otpBusy, setOtpBusy] = useState(false);
+    const [otpError, setOtpError] = useState<string | null>(null);
     const t = getTravelerDictionary().auth.phoneEntry;
 
     // Already signed in (e.g. straight after signup, where the session is
@@ -53,11 +58,13 @@ function LoginPageContent() {
     const showInvalid = touched && phone.length > 0 && !phoneValid;
     const redirectSuffix = redirectTo ? `&redirectTo=${encodeURIComponent(redirectTo)}` : "";
 
-    // Single entry point, regardless of whether this number already has an
-    // account — the PIN screen itself figures that out (tries login first,
-    // falls back to creating an account with the same PIN if none exists).
-    // This deliberately doesn't depend on any build-time config: it works
-    // the same way no matter how the app was deployed.
+    // AUTH_MODE decides the entry point (see utils/constants.ts):
+    //  - 'otp' (default, production): returning travelers sign in with phone +
+    //    PIN (/auth/pin/login — no account-existence oracle involved); new
+    //    travelers prove phone ownership with an OTP first, then set a PIN via
+    //    the one-time setup ticket. The PIN screen never calls /auth/phone/check.
+    //  - 'pin' (testing only, needs backend AUTH_DIRECT_PIN_SIGNUP=true): the
+    //    PIN screen asks /auth/phone/check whether to log in or sign up.
     const submit = () => {
         if (!phoneValid) {
             setTouched(true);
@@ -66,11 +73,31 @@ function LoginPageContent() {
         router.push(`/auth/pin?mode=login&phone=${phone}${redirectSuffix}`);
     };
 
+    const startOtpSignup = async () => {
+        if (!phoneValid) {
+            setTouched(true);
+            return;
+        }
+        if (otpBusy) return;
+        setOtpBusy(true);
+        setOtpError(null);
+        try {
+            const challenge = await requestOtp(phone);
+            router.push(
+                `/auth/verify-otp?purpose=registration&phone=${phone}&challengeId=${encodeURIComponent(challenge.challengeId)}&resendAfter=${challenge.resendAfterSeconds}${redirectSuffix}`,
+            );
+        } catch (err) {
+            const ui = toAuthUiError(err);
+            setOtpError(ui.retryAfterSeconds ? `${ui.message} (wait ~${ui.retryAfterSeconds}s)` : ui.message);
+            setOtpBusy(false);
+        }
+    };
+
     return (
         <AuthShell
             eyebrow={t.eyebrow}
             title={<>{t.titlePrefix} <span className="text-emerald-500">{t.titleHighlight}</span></>}
-            subtitle={t.subtitle}
+            subtitle={AUTH_MODE === "otp" ? t.otpSubtitle : t.subtitle}
         >
             <div className="space-y-5">
                 <div>
@@ -112,8 +139,25 @@ function LoginPageContent() {
                     disabled={!phoneValid}
                     className="w-full h-13 sm:h-14 rounded-2xl text-xs sm:text-sm font-black uppercase tracking-[0.15em] bg-slate-900 hover:bg-black text-white shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[0.98]"
                 >
-                    {t.continueButton}
+                    {AUTH_MODE === "otp" ? t.pinSignInButton : t.continueButton}
                 </Button>
+
+                {AUTH_MODE === "otp" && (
+                    <div className="pt-1 text-center" data-testid="otp-signup">
+                        <p className="text-xs sm:text-sm text-slate-500 font-medium mb-2">{t.newUserPrompt}</p>
+                        <Button
+                            onClick={startOtpSignup}
+                            disabled={!phoneValid || otpBusy}
+                            isLoading={otpBusy}
+                            className="w-full h-13 sm:h-14 rounded-2xl text-xs sm:text-sm font-black uppercase tracking-[0.15em] bg-white border-2 border-slate-900 text-slate-900 hover:bg-slate-50 transition-all flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[0.98]"
+                        >
+                            {t.createAccountButton}
+                        </Button>
+                        {otpError && (
+                            <p role="alert" className="text-xs text-red-600 font-semibold mt-2">{otpError}</p>
+                        )}
+                    </div>
+                )}
             </div>
 
             <p className="mt-8 text-[11px] sm:text-xs text-slate-400 leading-relaxed text-center font-medium">

@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
-import { loginWithPin, setupPin, signupWithPin, resetPin, forgotPinRequest, checkPhoneExists } from '@/services/authService';
+import { loginWithPin, setupPin, signupWithPin, resetPin, forgotPinRequest, checkPhoneExists, requestOtp } from '@/services/authService';
+import { AUTH_MODE } from '@/utils/constants';
 import { ApiClientError } from '@/lib/apiClient';
 import { toAuthUiError } from '@/utils/authErrors';
 import { fetchCurrentUser } from '@/services/userService';
@@ -19,6 +20,11 @@ import { getTravelerDictionary, format } from '@/lib/travelerDictionary';
  * that decides login vs. signup. The URL's `mode` param is a hint for the
  * initial render only; it is corrected via router.replace() once resolved,
  * never trusted for the actual submit behavior.
+ *
+ * AUTH_MODE='otp' (production default): /auth/phone/check is disabled on the
+ * backend (AUTH_DIRECT_PIN_SIGNUP=false), so it is never called. A phone
+ * without a ticket can only mean PIN login; new accounts arrive here with an
+ * OTP-issued setup ticket (mode=signup&ticket=…).
  */
 type FlowState =
   | 'CHECKING_PHONE'
@@ -124,7 +130,8 @@ function PinPageContent() {
   const [flow, setFlow] = useState<FlowState>(() => {
     if (isTicketReset) return 'RESET_PIN';
     if (isTicketSignup) return 'NEW_USER_PIN';
-    return 'CHECKING_PHONE'; // phone/check decides login vs. signup — always
+    if (AUTH_MODE === 'otp') return 'EXISTING_USER_PIN';
+    return 'CHECKING_PHONE'; // pin mode: phone/check decides login vs. signup
   });
   const [newPinStep, setNewPinStep] = useState<1 | 2>(1);
   const [pin, setPinDigits] = useState<string[]>(empty());
@@ -182,6 +189,13 @@ function PinPageContent() {
   // ── Phone-check: the single source of truth for login vs. signup ────────
   useEffect(() => {
     if (isTicketReset || isTicketSignup) return;
+    if (AUTH_MODE === 'otp') {
+      // Never trust a stale mode=signup hint without a ticket: in OTP mode it is login.
+      if (rawMode !== 'login' && phoneNumber) {
+        router.replace(`/auth/pin?mode=login&phone=${phoneNumber}${redirectSuffix}`);
+      }
+      return;
+    }
     if (!phoneNumber) return;
     let cancelled = false;
     (async () => {
@@ -303,6 +317,23 @@ function PinPageContent() {
       const challenge = await forgotPinRequest(phoneNumber);
       router.push(
         `/auth/verify-otp?purpose=forgot&phone=${phoneNumber}&challengeId=${encodeURIComponent(challenge.challengeId)}&resendAfter=${challenge.resendAfterSeconds}${redirectSuffix}`,
+      );
+    } catch (err) {
+      const ui = toAuthUiError(err, t.errors);
+      setError(ui.message);
+      submitLockRef.current = false;
+    }
+  };
+
+  /** OTP mode: no account for this number yet → verify the phone, then set a PIN. */
+  const handleStartSignup = async () => {
+    if (submitLockRef.current) return;
+    submitLockRef.current = true;
+    setError(null);
+    try {
+      const challenge = await requestOtp(phoneNumber);
+      router.push(
+        `/auth/verify-otp?purpose=registration&phone=${phoneNumber}&challengeId=${encodeURIComponent(challenge.challengeId)}&resendAfter=${challenge.resendAfterSeconds}${redirectSuffix}`,
       );
     } catch (err) {
       const ui = toAuthUiError(err, t.errors);
@@ -477,6 +508,20 @@ function PinPageContent() {
                 className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors disabled:opacity-50"
               >
                 {t.pinLogin.forgotPinPrefix} <span className="text-emerald-700 underline underline-offset-2">{t.pinLogin.forgotPinLink}</span>
+              </button>
+            </div>
+          )}
+
+          {flow === 'EXISTING_USER_PIN' && AUTH_MODE === 'otp' && (
+            <div className="text-center">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={handleStartSignup}
+                data-testid="pin-create-account"
+                className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors disabled:opacity-50"
+              >
+                {t.pinLogin.noAccountPrefix} <span className="text-emerald-700 underline underline-offset-2">{t.pinLogin.noAccountLink}</span>
               </button>
             </div>
           )}

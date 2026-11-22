@@ -11,7 +11,11 @@
       "termsPrefix": "By continuing, you agree to our",
       "termsLink": "Terms",
       "and": "and",
-      "privacyLink": "Privacy Policy"
+      "privacyLink": "Privacy Policy",
+      "pinSignInButton": "Sign in with PIN",
+      "newUserPrompt": "New to Pahari Yatri?",
+      "createAccountButton": "Create account",
+      "otpSubtitle": "Returning? Sign in with your PIN. New here? Create an account — we’ll text you a one-time code to verify your number."
     },
     "pinSetup": {
       "stepOfLabel": "Step {current} of {total}",
@@ -43,7 +47,9 @@
       "signInButton": "Sign In",
       "forgotPinPrefix": "Forgot your PIN?",
       "forgotPinLink": "Reset via OTP",
-      "successWelcomeBack": "Welcome back! Redirecting..."
+      "successWelcomeBack": "Welcome back! Redirecting...",
+      "noAccountPrefix": "No account yet?",
+      "noAccountLink": "Create one with OTP"
     },
     "sessionExpired": {
       "title": "Session expired",
