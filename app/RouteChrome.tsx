@@ -13,11 +13,14 @@ export default function RouteChrome({
   const isAuthRoute = /^\/auth(\/|$)/.test(pathname);
   const isBuilderRoute = /^\/builder(\/|$)/.test(pathname);
   const hasOwnTopNav =
-    /^\/(bookings|admin|sitemap|results)(\/|$)/.test(pathname) ||
+    /^\/(bookings|admin|results)(\/|$)/.test(pathname) ||
     /^\/vendor\/(?!dashboard|bookings|calendar|contracts|onboarding|partnerships|payouts|services)[^/]+(\/|$)/.test(
       pathname,
     );
-  const showBottomNav = !isAuthRoute && !isBuilderRoute;
+  // Payment and booking-request screens own the bottom of the viewport (Pay /
+  // Continue CTA); the tab bar used to cover terms and the Pay button there.
+  const isTransactionRoute = /^\/checkout(\/|$)/.test(pathname) || /^\/vendor\/[^/]+\/book\//.test(pathname);
+  const showBottomNav = !isAuthRoute && !isBuilderRoute && !isTransactionRoute;
 
   return (
     <>

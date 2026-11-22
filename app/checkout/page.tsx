@@ -11,7 +11,8 @@ import {
   PaymentCheckoutError,
   type PaymentStatusView,
 } from "@/services/paymentService";
-import { reserveBooking } from "@/services/bookingService";
+import { reserveBooking, getBooking } from "@/services/bookingService";
+import { nightsBetween } from "@/lib/tripDates";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import SupportContact from "../components/molecules/SupportContact";
@@ -45,6 +46,51 @@ const CANCELLED_MSG = 'Payment cancelled. Your booking has not been charged.';
 const failedMessage = (reason?: string | null) =>
   reason ? `Payment failed: ${reason.trim().replace(/\.+$/, '')}. No charge was made.` : 'Payment failed. No charge was made.';
 const PENDING_POLL_MS = 5000;
+
+const inr = (n: number) => `₹${n.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+const fmtDate = (d?: string | null) => {
+  if (!d) return '';
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d);
+  if (!m) return '';
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+/** What the traveler is paying for — read from the booking itself, nothing assumed. */
+interface CheckoutRecap {
+  serviceName: string;
+  place: string;
+  dates: string;
+  guests: number;
+  servicesTotal: number;
+  cancellationPolicy: string;
+}
+
+function toRecap(b: any): CheckoutRecap | null {
+  if (!b) return null;
+  const items: any[] = (b.items || []).filter((i: any) => !['REPLACED', 'REMOVED', 'REJECTED'].includes(i.status));
+  const first = items[0];
+  const svc = first?.service;
+  const names = Array.from(new Set(items.map((i) => i.service?.name).filter(Boolean)));
+  const addr = (svc?.addresses || []).find((a: any) => a.isPrimary) || svc?.addresses?.[0];
+  const place = svc?.serviceArea || [addr?.city, addr?.state].filter(Boolean).join(', ') || '';
+  const start = typeof b.travelDate === 'string' ? b.travelDate : '';
+  const end = typeof b.metadata?.endDate === 'string' ? b.metadata.endDate : '';
+  const nights = nightsBetween(start, end);
+  const dates = start
+    ? end && nights && nights > 0
+      ? `${fmtDate(start)} – ${fmtDate(end)} · ${nights} ${nights === 1 ? 'night' : 'nights'}`
+      : fmtDate(start)
+    : '';
+  const policy = first?.termsSnapshot?.cancellationPolicy || svc?.cancellationPolicy || '';
+  return {
+    serviceName: names.length > 1 ? `${names[0]} + ${names.length - 1} more` : names[0] || 'Your booking',
+    place,
+    dates,
+    guests: Number(b.guestCount) || 1,
+    servicesTotal: Number(b.totalAmount) || 0,
+    cancellationPolicy: typeof policy === 'string' ? policy : '',
+  };
+}
 const PENDING_POLL_MAX = 12; // ~1 minute of automatic checks, then manual only
 
 function CheckoutPageContent() {
@@ -60,6 +106,19 @@ function CheckoutPageContent() {
   const [currency, setCurrency] = useState('INR');
 
   const { user } = useAuth();
+  const [recap, setRecap] = useState<CheckoutRecap | null>(null);
+
+  // Booking recap (service, place, dates, guests, totals). Independent of the
+  // payment state machine below: if it fails the page still works, it just
+  // shows the fee without the recap.
+  useEffect(() => {
+    if (!bookingId) return;
+    let cancelled = false;
+    getBooking(bookingId)
+      .then((b) => { if (!cancelled) setRecap(toRecap(b)); })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [bookingId]);
 
   // Guard: no bookingId at all → nothing to pay for.
   useEffect(() => {
@@ -323,46 +382,62 @@ function CheckoutPageContent() {
   }
 
   return (
-    <main className="min-h-screen bg-white flex flex-col items-center justify-center px-6 pt-28 sm:pt-36 pb-12">
+    <main className="min-h-screen bg-white flex flex-col items-center px-4 sm:px-6 pt-24 sm:pt-32 pb-32 sm:pb-12">
       <div className="w-full max-w-md">
 
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center mx-auto mb-4 border border-emerald-100">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600">
-              <rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Reserve Your Booking</h1>
-          <p className="text-slate-400 text-sm mt-1 font-medium">Booking #{bookingId} · Pay now, we'll handle confirmation</p>
+        <div className="mb-5">
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Confirm and pay</h1>
+          <p className="text-slate-500 text-sm mt-1">Booking #{bookingId}</p>
         </div>
 
-        {/* Amount Card — explicit this is the FEE, not the trip total */}
-        <div className="mb-3 p-6 bg-slate-900 rounded-3xl text-white">
-          <p className="text-slate-400 text-xs font-black uppercase tracking-widest mb-2">Platform Reservation Fee</p>
-          <p className="text-4xl font-black italic tracking-tighter">
-            ₹{amount.toLocaleString('en-IN')}
-          </p>
-          <p className="text-slate-500 text-xs mt-2 font-medium">Pay now · {currency}</p>
-        </div>
-        <p className="text-center text-xs text-slate-400 font-medium mb-6 px-2">
-          This confirms and manages your reservation through the platform. Local partners are notified and confirm shortly after — the rest of your trip is paid directly to each local partner.
-        </p>
+        {/* Recap — what this payment is for */}
+        {recap && (
+          <section aria-label="Booking summary" className="mb-4 p-5 rounded-3xl border border-slate-200 bg-white">
+            <p className="text-base font-black text-slate-900 leading-snug">{recap.serviceName}</p>
+            {recap.place && <p className="text-sm text-slate-500 mt-0.5">{recap.place}</p>}
+            <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              {recap.dates && (
+                <>
+                  <dt className="text-slate-500">Dates</dt>
+                  <dd className="text-right font-semibold text-slate-900">{recap.dates}</dd>
+                </>
+              )}
+              <dt className="text-slate-500">Guests</dt>
+              <dd className="text-right font-semibold text-slate-900">{recap.guests}</dd>
+            </dl>
+          </section>
+        )}
 
-        {/* Trust Signals */}
-        <div className="mb-6 grid grid-cols-3 gap-3">
-          {[
-            { icon: '🔒', label: 'Secure', sub: '256-bit SSL' },
-            { icon: '✅', label: 'Verified', sub: 'Local partners' },
-            { icon: '💬', label: 'Support', sub: 'If a partner falls through' },
-          ].map(t => (
-            <div key={t.label} className="text-center p-3 bg-slate-50 rounded-2xl border border-slate-100">
-              <div className="text-xl mb-1">{t.icon}</div>
-              <p className="text-xs font-black text-slate-800">{t.label}</p>
-              <p className="text-[10px] text-slate-400 font-medium">{t.sub}</p>
+        {/* Amounts — the fee is what is charged now; the services total is paid to the host */}
+        <section aria-label="Price breakdown" className="mb-4 p-5 rounded-3xl bg-slate-50 border border-slate-100 text-sm space-y-2">
+          {recap && (
+            <div className="flex justify-between">
+              <span className="text-slate-600">Booking total (paid to your host)</span>
+              <span className="font-semibold text-slate-900">{inr(recap.servicesTotal)}</span>
             </div>
-          ))}
-        </div>
+          )}
+          <div className="flex justify-between">
+            <span className="text-slate-600">Reservation fee (paid now)</span>
+            <span className="font-semibold text-slate-900">{inr(amount)}</span>
+          </div>
+          <div className="pt-2 mt-1 border-t border-slate-200 flex justify-between text-base">
+            <span className="font-black text-slate-900">Pay now</span>
+            <span className="font-black text-slate-900">{inr(amount)} <span className="text-xs font-semibold text-slate-400">{currency}</span></span>
+          </div>
+          {recap && (
+            <div className="flex justify-between text-slate-500">
+              <span>Pay your host directly</span>
+              <span>{inr(recap.servicesTotal)}</span>
+            </div>
+          )}
+        </section>
+
+        {recap?.cancellationPolicy && (
+          <section aria-label="Cancellation policy" className="mb-4 px-1">
+            <p className="text-xs font-bold text-slate-700">Host&apos;s cancellation policy</p>
+            <p className="text-xs text-slate-500 mt-1 leading-relaxed line-clamp-4">{recap.cancellationPolicy}</p>
+          </section>
+        )}
 
         {/* Error */}
         {state === 'error' && errorMsg && (
@@ -428,24 +503,15 @@ function CheckoutPageContent() {
             traveler hasn't heard from a local partner yet, so this doubles
             as the "what happens next" explainer, not just a pre-charge notice. */}
         {canPay && (
-          <div className="mb-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
-            <p className="text-xs text-slate-600 font-medium leading-relaxed">
-              Before paying, please review the cancellation and refund terms for
-              this local partner. Pahari Yatri helps connect you with local
-              support; final service terms may vary by partner, and this
-              reservation fee is separate from what you pay each partner directly.
-            </p>
-            <Link
-              href={`/terms-conditions`}
-              className="inline-block mt-2 text-xs font-black text-emerald-600 hover:text-emerald-700 uppercase tracking-wide"
-            >
-              Read Terms &amp; Conditions →
-            </Link>
-          </div>
+          <p className="mb-4 px-1 text-xs text-slate-500 leading-relaxed">
+            If your host declines, the reservation fee is refunded in full.{' '}
+            <Link href={`/terms-conditions`} className="font-bold text-emerald-700 underline underline-offset-2">Terms &amp; refunds</Link>
+          </p>
         )}
 
         {/* Pay Button */}
         {canPay && (
+          <div className="fixed inset-x-0 bottom-0 z-40 bg-white/95 backdrop-blur border-t border-slate-100 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:static sm:z-auto sm:bg-transparent sm:border-0 sm:p-0">
           <button
             id="checkout-pay-btn"
             onClick={handlePay}
@@ -462,10 +528,11 @@ function CheckoutPageContent() {
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" />
                 </svg>
-                {state === 'cancelled' || state === 'failed' ? 'Pay again' : 'Pay Reservation Fee'} ₹{amount.toLocaleString('en-IN')}
+                {state === 'cancelled' || state === 'failed' ? 'Pay again' : 'Pay'} {inr(amount)}
               </>
             )}
           </button>
+          </div>
         )}
 
         {/* Back link */}
