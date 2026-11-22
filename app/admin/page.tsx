@@ -104,7 +104,10 @@ export default function AdminDashboard() {
             setVendors(Array.isArray(vendorResult?.data) ? vendorResult.data : []);
             setDashboard(dashboardResult?.data || dashboardResult);
             setPendingServices(Array.isArray(pendingServicesResult) ? pendingServicesResult : []);
-            setAdminBookings(Array.isArray(bookingsResult?.data) ? bookingsResult.data : []);
+            // /admin/bookings is paged: { data: { data: [...], total, ... } } (or already unwrapped).
+            const bk: any = bookingsResult;
+            const rows = [bk?.data?.data, bk?.data, bk].find((x) => Array.isArray(x));
+            setAdminBookings(rows ?? []);
         } catch (err) {
             setErrorMessage(toApiUiError(err, "We could not load the dashboard.").message);
         }
