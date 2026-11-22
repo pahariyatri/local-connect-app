@@ -486,3 +486,32 @@
     justify-content: center;
   }
 }
+
+.chips {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.chips::-webkit-scrollbar { display: none; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(17, 36, 31, 0.12);
+  background: #fff;
+  color: #11241f;
+  font-size: 14px;
+  font-weight: 700;
+}
+.chipActive {
+  background: #11241f;
+  border-color: #11241f;
+  color: #fff;
+}

@@ -198,7 +198,6 @@ export default function LandingPage() {
             <div className={styles.sectionHead}>
               <div>
                 <h2>{copy.section_services}</h2>
-                <p className={styles.sectionDescription}>Choose a service, check the details and send a booking request.</p>
               </div>
               <Link className={styles.textLink} href={exploreHref}>
                 {copy.all_services}
@@ -253,11 +252,13 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className={`${styles.container} ${styles.plannerSection}`} id="your-journey">
-          <Reveal><div className={styles.plannerPanel}>
-            <div><p className={styles.eyebrow}>{copy.hero_visual_label}</p><h2>{copy.section_planner}</h2><p className={styles.plannerSubtitle}>{copy.planner_subtitle}</p><Link className={styles.primary} href={builderHref} onClick={() => trackPortalCtaClick("journey_plan", builderHref)}>{copy.planner_action}<span aria-hidden="true">↗</span></Link></div>
-            <ol className={styles.plannerSteps}>{copy.planner_steps.map((step,i)=><li key={step}><span>0{i+1}</span><strong>{step}</strong><span aria-hidden="true">{i===2?'✓':'→'}</span></li>)}</ol>
-          </div></Reveal>
+        <section className={`${styles.container}`} id="your-journey">
+          <p className="py-2 text-sm text-slate-600">
+            Planning several stops?{" "}
+            <Link className="font-bold text-emerald-700 underline underline-offset-4" href={builderHref} onClick={() => trackPortalCtaClick("journey_plan", builderHref)}>
+              Plan a trip
+            </Link>
+          </p>
         </section>
 
         <section className={`${styles.container} ${styles.section}`}>
@@ -336,6 +337,7 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {(isProvidersLoading || providersList.length > 0) && (
         <section className={`${styles.container} ${styles.localSection}`}>
           <Reveal>
             <div className={styles.localGrid}>
@@ -390,6 +392,7 @@ export default function LandingPage() {
             </div>
           </Reveal>
         </section>
+        )}
 
       </main>
       <PublicFooter />

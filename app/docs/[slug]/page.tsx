@@ -28,6 +28,10 @@ export async function generateStaticParams() {
 }
 
 export default async function DocDetailPage({ params }: PageProps) {
+  // Internal developer docs — not for travelers. Visible only when
+  // NEXT_PUBLIC_SHOW_DEV_DOCS=true (local dev); 404 everywhere else.
+  if (process.env.NEXT_PUBLIC_SHOW_DEV_DOCS !== "true") notFound();
+
   const { slug } = await params;
   const fileName = SLUG_MAP[slug];
 

@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import React from "react";
 import Link from "next/link";
 
@@ -34,6 +35,10 @@ const DOCS: DocInfo[] = [
 ];
 
 export default function DocsPage() {
+  // Internal developer docs — not for travelers. Visible only when
+  // NEXT_PUBLIC_SHOW_DEV_DOCS=true (local dev); 404 everywhere else.
+  if (process.env.NEXT_PUBLIC_SHOW_DEV_DOCS !== "true") notFound();
+
 
   return (
     <div className="min-h-screen bg-slate-50 pb-32">

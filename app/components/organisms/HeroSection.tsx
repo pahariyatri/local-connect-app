@@ -87,7 +87,7 @@ export default function HeroSection({
         <p className={styles.subtitle}>{copy.hero_subtitle}</p>
         <div className={styles.actions}>
           <Link className={styles.bookAction} href={`/explore`}>
-            Book directly <Icon name="arrow-right" className="w-4 h-4" />
+            Explore <Icon name="arrow-right" className="w-4 h-4" />
           </Link>
           <Link className={styles.planAction} href={`/builder`} onClick={onPlan}>
             Plan a trip <Icon name="compass" className="w-4 h-4" />
@@ -193,35 +193,6 @@ export default function HeroSection({
           )}
         </div>
         <a className={styles.scrollLink} href="#find-your-stay">Browse stays, rides & guides <span aria-hidden="true">↓</span></a>
-      </div>
-      <div className={styles.visual}>
-        <div className={styles.visualGlow} aria-hidden="true" />
-        <div className={styles.visualHeading}><span className={styles.visualDot} />{copy.hero_visual_label}</div>
-        <h2>{copy.hero_visual_title}</h2>
-        <div className={styles.routeScene} role="group" aria-label="Explore local services">
-          {[
-            { label: copy.hero_visual_stay, icon: "home", category: "stay" },
-            { label: copy.hero_visual_ride, icon: "car", category: "transport" },
-            { label: copy.hero_visual_guide, icon: "compass", category: "trek" },
-          ].map((item, index) => (
-            <Link
-              key={item.category}
-              href={`/explore?category=${item.category}`}
-              className={`${styles.sceneCard} ${styles[`sceneCard${index}`]}`}
-            >
-              <span className={styles.sceneStep} aria-hidden="true">
-                0{index + 1}
-              </span>
-              <span className={styles.sceneIcon}>
-                <Icon name={item.icon as IconName} className="w-5 h-5" />
-              </span>
-              <strong>{item.label}</strong>
-              <span className={styles.sceneArrow} aria-hidden="true">
-                ↗
-              </span>
-            </Link>
-          ))}
-        </div>
       </div>
       </div>
     </section>

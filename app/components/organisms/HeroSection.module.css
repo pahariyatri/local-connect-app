@@ -7,7 +7,9 @@
   max-width: 1240px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
+  /* Single column: the old right-hand panel repeated the category cards below. */
+  grid-template-columns: minmax(0, 820px);
+  justify-content: start;
   gap: 56px;
   align-items: center;
 }
