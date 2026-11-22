@@ -1,4 +1,5 @@
 'use client';
+import NotificationBell from "../molecules/NotificationBell";
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -116,6 +117,7 @@ export default function Header() {
 
         {/* Account and mobile navigation */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {user && <NotificationBell />}
           
           {/* Desktop User Section */}
           <div className="hidden lg:flex items-center gap-2">

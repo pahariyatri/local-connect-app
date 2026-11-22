@@ -24,6 +24,8 @@ type BookingStatus =
 type ItemStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'REPLACED' | 'REMOVED';
 
 interface BookingItemData {
+  pickupDetails?: string | null;
+  completedAt?: string | null;
   id: number;
   day: number;
   category: string;
@@ -354,6 +356,12 @@ export default function BookingDetailPage() {
                       <p className="text-xs font-medium text-slate-400">Day {item.day} · {item.category}</p>
                       <p className="text-sm font-semibold text-slate-900 mt-0.5 truncate">{item.service?.name || 'Service'}</p>
                       <p className="text-xs text-slate-400 font-medium mt-0.5">{item.vendor?.businessName}</p>
+                      {item.pickupDetails && (
+                        <p className="text-xs text-slate-700 mt-1.5" data-testid="booking-item-pickup"><span className="font-semibold">Pickup:</span> {item.pickupDetails}</p>
+                      )}
+                      {item.completedAt && (
+                        <p className="text-xs font-semibold text-emerald-700 mt-1" data-testid="booking-item-completed">✓ Completed</p>
+                      )}
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-sm font-bold text-slate-900">₹{Number(item.vendorPrice).toLocaleString('en-IN')}</p>

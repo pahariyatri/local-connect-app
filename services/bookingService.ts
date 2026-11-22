@@ -158,6 +158,15 @@ export const respondToBookingItem = async (itemId: number, decision: 'accept' | 
 };
 
 /** Traveler swaps a rejected item for a different service. See `PATCH /api/v1/booking/:id/items/:itemId/replace`. */
+/** Vendor (owner-driver): share pickup details and/or mark an accepted, paid item completed. */
+export const updateBookingItemFulfilment = async (
+  itemId: number,
+  body: { pickupDetails?: string; completed?: boolean },
+): Promise<{ id: number; pickupDetails: string | null; completedAt: string | null; bookingStatus: string }> => {
+  const raw = await api.patch(`/booking/items/${itemId}/fulfilment`, body);
+  return ((raw as any)?.data ?? raw) as any;
+};
+
 export const replaceBookingItem = async (bookingId: number, itemId: number, serviceId: number) => {
   const raw = await api.patch(`/booking/${bookingId}/items/${itemId}/replace`, { serviceId });
   api.invalidateCache('/booking');

@@ -7,7 +7,7 @@ import Typography from "../../components/atoms/Typography";
 import Button from "../../components/atoms/Button";
 import { useLocalizationContext } from "@/contexts/LocalizationContext";
 import Loading from "@/app/components/atoms/Loading";
-import { getVendorBookings, getVendorItems, respondToBookingItem } from "@/services/bookingService";
+import { getVendorBookings, getVendorItems, respondToBookingItem, updateBookingItemFulfilment } from "@/services/bookingService";
 import { getMyVendor } from "@/services/vendorService";
 import { toApiUiError } from "@/utils/apiErrors";
 
@@ -134,13 +134,23 @@ function ManageBookingsPageContent() {
   const [pendingItems, setPendingItems] = useState<any[]>([]);
   const [itemsState, setItemsState] = useState<"idle" | "loading" | "error" | "ready">("idle");
   const [respondingId, setRespondingId] = useState<number | null>(null);
+  const [respondError, setRespondError] = useState<string | null>(null);
+  // Accepted + paid items the vendor still has to deliver (owner-driver flow).
+  const [toDeliver, setToDeliver] = useState<any[]>([]);
+  const [pickupDrafts, setPickupDrafts] = useState<Record<number, string>>({});
+  const [fulfilBusy, setFulfilBusy] = useState<number | null>(null);
+  const [fulfilMsg, setFulfilMsg] = useState<Record<number, string>>({});
 
   const loadItems = useCallback(async () => {
     if (!vendorId) return;
     setItemsState("loading");
     try {
-      const items = await getVendorItems(vendorId, "PENDING");
+      const [items, accepted] = await Promise.all([
+        getVendorItems(vendorId, "PENDING"),
+        getVendorItems(vendorId, "ACCEPTED").catch(() => [] as any[]),
+      ]);
       setPendingItems(items);
+      setToDeliver(accepted.filter((i: any) => ["CONFIRMED", "TRAVEL_IN_PROGRESS"].includes(i.booking?.status) && !i.completedAt));
       setItemsState("ready");
     } catch {
       setItemsState("error");
@@ -152,12 +162,32 @@ function ManageBookingsPageContent() {
   const handleRespond = async (itemId: number, decision: "accept" | "reject") => {
     setRespondingId(itemId);
     try {
+      setRespondError(null);
       await respondToBookingItem(itemId, decision, decision === "reject" ? "Unable to accommodate this request" : undefined);
       setPendingItems((prev) => prev.filter((i) => i.id !== itemId));
-    } catch {
-      // Retryable
+      loadItems();
+    } catch (err: any) {
+      setRespondError(err?.message || "Could not save your response. Please try again.");
     } finally {
       setRespondingId(null);
+    }
+  };
+
+  const saveFulfilment = async (item: any, body: { pickupDetails?: string; completed?: boolean }) => {
+    setFulfilBusy(item.id);
+    setFulfilMsg((m) => ({ ...m, [item.id]: "" }));
+    try {
+      const out = await updateBookingItemFulfilment(item.id, body);
+      if (out.completedAt) {
+        setToDeliver((prev) => prev.filter((i) => i.id !== item.id));
+      } else {
+        setToDeliver((prev) => prev.map((i) => (i.id === item.id ? { ...i, pickupDetails: out.pickupDetails } : i)));
+        setFulfilMsg((m) => ({ ...m, [item.id]: "Saved — the traveler sees it in their booking and notifications." }));
+      }
+    } catch (err: any) {
+      setFulfilMsg((m) => ({ ...m, [item.id]: err?.message || "Could not save. Please try again." }));
+    } finally {
+      setFulfilBusy(null);
     }
   };
 
@@ -288,6 +318,9 @@ function ManageBookingsPageContent() {
                   <Button onClick={loadItems} variant="outline" className="h-11 px-6 rounded-xl text-xs font-bold">Try again</Button>
                 </div>
               )}
+              {respondError && (
+                <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-2xl p-3" role="alert">{respondError}</p>
+              )}
               {itemsState === "ready" && pendingItems.length === 0 && (
                 <div className="text-center py-16 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
                   <Typography variant="h3" className="text-lg font-bold text-slate-900 mb-1">
@@ -328,6 +361,57 @@ function ManageBookingsPageContent() {
                   </div>
                 );
               })}
+
+              {itemsState === "ready" && toDeliver.length > 0 && (
+                <section aria-label="Confirmed bookings to deliver" className="pt-6 space-y-4" data-testid="vendor-to-deliver">
+                  <h2 className="text-sm font-black text-slate-900">Confirmed — to deliver</h2>
+                  {toDeliver.map((item) => {
+                    const busy = fulfilBusy === item.id;
+                    const draft = pickupDrafts[item.id] ?? item.pickupDetails ?? "";
+                    return (
+                      <div key={item.id} className="premium-card p-5 bg-white space-y-3">
+                        <div>
+                          <p className="text-xs font-semibold text-emerald-600">Booking #{item.booking?.id} · Day {item.day} · {item.category}</p>
+                          <h3 className="text-base font-bold text-slate-900">{item.service?.name || "Service"}</h3>
+                          <p className="text-xs text-slate-400 mt-1">
+                            {item.booking?.guestCount} guest{item.booking?.guestCount === 1 ? "" : "s"} · {item.booking?.travelDate ? new Date(item.booking.travelDate).toLocaleDateString("en-IN") : "—"} · paid
+                          </p>
+                        </div>
+                        <label className="block">
+                          <span className="text-xs font-bold text-slate-700">Pickup / meeting point and time</span>
+                          <textarea
+                            value={draft}
+                            maxLength={500}
+                            rows={2}
+                            onChange={(e) => setPickupDrafts((d) => ({ ...d, [item.id]: e.target.value }))}
+                            placeholder="e.g. Kasol bus stand, 8:00 AM"
+                            className="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm"
+                          />
+                        </label>
+                        {fulfilMsg[item.id] && <p className="text-xs text-slate-600" role="status">{fulfilMsg[item.id]}</p>}
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            disabled={busy || draft.trim().length < 3 || draft.trim() === (item.pickupDetails ?? "")}
+                            onClick={() => saveFulfilment(item, { pickupDetails: draft.trim() })}
+                            className="min-h-[44px] px-4 rounded-xl border border-slate-200 text-sm font-semibold disabled:opacity-50"
+                          >
+                            Send pickup details
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => saveFulfilment(item, { completed: true })}
+                            className="min-h-[44px] px-4 rounded-xl bg-slate-900 text-white text-sm font-semibold disabled:opacity-50"
+                          >
+                            {busy ? "Saving…" : "Mark completed"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </section>
+              )}
             </div>
           )}
 
