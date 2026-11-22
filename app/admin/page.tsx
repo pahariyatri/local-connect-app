@@ -738,7 +738,7 @@ export default function AdminDashboard() {
                                     <Typography variant="h3" className="text-base font-black text-indigo-400 uppercase tracking-widest">
                                         Financial Disbursements &amp; Settlements Queue
                                     </Typography>
-                                    <p className="text-xs text-slate-400 mt-0.5">Track booking payments, platform commission, and vendor payouts</p>
+                                    <p className="text-xs text-slate-400 mt-0.5">Booking totals, reservation fees, payment and refund status</p>
                                 </div>
                             </div>
 
