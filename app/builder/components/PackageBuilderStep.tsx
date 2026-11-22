@@ -13,6 +13,7 @@ import { toTitleCase } from "@/utils/text";
 import { sessionTracker } from "@/services/sessionService";
 import { trackTravellerRequestSubmit } from "@/lib/analytics";
 import { addRecentView } from "@/lib/recentlyViewed";
+import { tripShape, dayNeedsStay } from "@/lib/tripDates";
 
 interface PackageBuilderStepProps {
   origin: string;
@@ -60,17 +61,11 @@ export default function PackageBuilderStep({
   // render can double-fire createPackage. A ref updates immediately.
   const isCreatingRef = useRef(false);
 
-  const itineraryDays = useMemo(() => {
-    if (!startDate || !endDate) return [1];
-    try {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const diffDays = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-      return Array.from({ length: Math.max(1, Math.min(diffDays + 1, 14)) }, (_, i) => i + 1);
-    } catch {
-      return [1];
-    }
-  }, [startDate, endDate]);
+  // Dec 4–6 = 3 itinerary days but only 2 nights: a stay is needed on every
+  // day except the departure day (lib/tripDates.ts). Counting a stay per day
+  // used to price one extra night versus booking the same stay directly.
+  const trip = useMemo(() => tripShape(startDate, endDate), [startDate, endDate]);
+  const itineraryDays = trip.days;
 
   // Discover across the WHOLE route: destinations plus every chosen stop, so
   // travellers see services along the corridor, not only at the final cities.
@@ -123,11 +118,12 @@ export default function PackageBuilderStep({
   const dayWants = useCallback(
     (day: number, category: string, globalWant: boolean) => {
       if (!globalWant) return false;
+      if (category === "Stay" && !dayNeedsStay(day, trip)) return false;
       const dayCats = stopServicesByDay?.[day];
       if (dayCats) return dayCats.includes(category);
       return true;
     },
-    [stopServicesByDay]
+    [stopServicesByDay, trip]
   );
 
   // Which town a given day is actually in: the stop(s) picked for that day in
@@ -316,7 +312,11 @@ export default function PackageBuilderStep({
       <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm mb-6">
         <p className="text-sm font-bold text-slate-500">
           {toTitleCase(origin)} → {destinations?.map(toTitleCase).join(" → ")}
-          {routeStops?.length ? ` · via ${routeStops.map(toTitleCase).join(", ")}` : ""} · {itineraryDays.length} {itineraryDays.length === 1 ? "day" : "days"} · {guestCount} guests
+          {routeStops?.length ? ` · via ${routeStops.map(toTitleCase).join(", ")}` : ""} · {itineraryDays.length} {itineraryDays.length === 1 ? "day" : "days"}, {trip.nights} {trip.nights === 1 ? "night" : "nights"} · {guestCount} guests
+        </p>
+        <p className="mt-1 text-xs text-slate-400">
+          Totals use each service&apos;s listed base price. The exact amount for your dates and guests is confirmed before you pay.
+          {trip.truncated ? ` Plans show the first ${itineraryDays.length} days.` : ""}
         </p>
       </div>
 

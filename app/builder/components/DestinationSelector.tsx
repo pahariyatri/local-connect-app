@@ -21,31 +21,20 @@ interface DestinationSelectorProps {
   dict: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
+// Launch area only (CLAUDE.md beachhead: Kasol, Tosh, Kalga/Pulga, Barshaini).
+// Manali / Spiti / Tirthan are later-phase and had no inventory behind them.
+// No stock photo is used where we don't have a real one for the place —
+// those tiles render as plain colour cards instead.
 const DESTINATIONS: Destination[] = [
-  {
-    id: "manali",
-    name: "Manali-Circuit",
-    image: "https://images.unsplash.com/photo-1712388430474-ace0c16051e2?q=80&w=600",
-    tags: "Manali, Kasol & Sissu",
-  },
   {
     id: "kasol",
     name: "Kasol",
     image: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?q=80&w=600",
-    tags: "Kasol, Malana & Parvati Valley",
+    tags: "Kasol, Chalal & Manikaran",
   },
-  {
-    id: "tirthan",
-    name: "Tirthan & Jibhi",
-    image: "https://images.unsplash.com/photo-1589702413183-ca141958b7c5?q=80&w=1332&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    tags: "Tirthan, jibhi, JaloriPass & Shoja ",
-  },
-  {
-    id: "spiti",
-    name: "Spiti Valley Circuit",
-    image: "https://plus.unsplash.com/premium_photo-1661878621391-a53da02f1098?q=80&w=600",
-    tags: "Spiti Valley, Kalpa, Nako, Tabo & Kaza",
-  },
+  { id: "tosh", name: "Tosh", image: "", tags: "Upper Parvati Valley" },
+  { id: "kalga", name: "Kalga & Pulga", image: "", tags: "Forest villages above Barshaini" },
+  { id: "barshaini", name: "Barshaini", image: "", tags: "Road head for Kheerganga" },
 ];
 
 export default function DestinationSelector({
@@ -85,7 +74,7 @@ export default function DestinationSelector({
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
       <div className="space-y-4">
         <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] pl-2 mb-2 block italic">
-            {b.route_title || "Starting Point"}
+            {b.route_title || "Starting Point"} (optional)
         </label>
         <OriginAutocomplete
           name="builder-origin"
@@ -124,12 +113,16 @@ export default function DestinationSelector({
                 onClick={() => handleToggle(destination.id)}
                 disabled={isDisabled}
                 className={`
-                  relative h-44 rounded-[2rem] overflow-hidden transition-all duration-300
+                  relative h-32 sm:h-44 rounded-[2rem] overflow-hidden transition-all duration-300
                   ${isSelected ? "ring-4 ring-emerald-500 ring-offset-2 scale-[0.98] shadow-xl shadow-emerald-100" : "ring-2 ring-slate-100 hover:ring-slate-200"}
                   ${isDisabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer active:scale-95 shadow-lg shadow-slate-200/50"}
                 `}
               >
-                <LocalImage src={destination.image} alt={destination.name} className="w-full h-full object-cover" loading={destination.id === "manali" ? "eager" : "lazy"} />
+                {destination.image ? (
+                  <LocalImage src={destination.image} alt={destination.name} className="w-full h-full object-cover" loading="eager" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-emerald-700 to-slate-800" aria-hidden="true" />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 <div className="absolute inset-0 flex flex-col justify-end p-5">
                   <h4 className="text-white font-black text-lg leading-tight uppercase tracking-tight">

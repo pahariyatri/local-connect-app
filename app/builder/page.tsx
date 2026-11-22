@@ -13,8 +13,6 @@ import Button from "../components/atoms/Button";
 import DestinationSelector from "./components/DestinationSelector";
 import DateRangePicker from "./components/DateRangePicker";
 // CarTypeSelector removed
-import ServiceInterestSelector from "./components/ServiceInterestSelector";
-import TravelingPartySelector from "./components/TravelingPartySelector";
 import NextStopSelector from "./components/NextStopSelector";
 import PackageBuilderStep from "./components/PackageBuilderStep";
 import StepProgress from "./components/StepProgress";
@@ -27,7 +25,6 @@ import {
   trackTravellerDestinationSelect,
   trackTravellerDateSelect,
   trackTravellerPeopleSelect,
-  trackTravellerNeedSelect,
   trackTravellerStopAdd,
   trackTravellerPlanPreview,
 } from "@/lib/analytics";
@@ -105,7 +102,8 @@ function TripBuilderPageContent() {
   const [localDestinations, setLocalDestinations] = useState<string[]>(destinations);
   const [localStartDate, setLocalStartDate] = useState<string | null>(startDate || null);
   const [localEndDate, setLocalEndDate] = useState<string | null>(endDate || null);
-  const [localServicePreferences, setLocalServicePreferences] = useState<ServiceType[]>(servicePreferences);
+  // No services step any more: an empty list means "every category" downstream.
+  const [localServicePreferences] = useState<ServiceType[]>([]);
   const [localGuestCount, setLocalGuestCount] = useState(guestCount || 2);
   const [localTripStops, setLocalTripStops] = useState<TripStop[]>(() => (routeStops || []).map((n) => createTripStop(n)));
   // Names derived from structured stops keep the existing package/discovery pipeline working.
@@ -166,7 +164,6 @@ function TripBuilderPageContent() {
 
     if (startDate) setLocalStartDate(startDate);
     if (endDate) setLocalEndDate(endDate);
-    if (servicePreferences.length) setLocalServicePreferences(servicePreferences);
     if (guestCount) setLocalGuestCount(guestCount);
     if (stopServicesByDay && Object.keys(stopServicesByDay).length) setLocalStopServices(stopServicesByDay);
   }, [searchParams, origin, destinations, startDate, endDate, servicePreferences, guestCount, routeStops, stopServicesByDay, setBasicInfo]);
@@ -180,17 +177,11 @@ function TripBuilderPageContent() {
     6: { summary: true },
   };
 
-  const handleNext = () => {
-    if (currentStep < 5) {
-      prepTracker.funnelStep(currentStep as 1 | 2 | 3 | 4, STEP_METADATA[currentStep]);
-      // One dataLayer event per completed step, fired in the same place as
-      // the existing prepTracker call so the two pipelines never drift apart.
-      if (currentStep === 1) trackTravellerDestinationSelect(localOrigin, localDestinations);
-      else if (currentStep === 2) trackTravellerDateSelect(localStartDate, localEndDate);
-      else if (currentStep === 3) trackTravellerPeopleSelect(localGuestCount);
-      else if (currentStep === 4) trackTravellerNeedSelect(localServicePreferences);
-      setCurrentStep(prev => prev + 1);
-    } else if (currentStep === 5) {
+  // Simplified flow (2026-11-22): Where → When + guests → Plan. Guests now sit
+  // under the dates; the old "services" step is gone (no selection = every
+  // category, which the plan screen already supported) and route stops are an
+  // optional detour from the plan screen, so multi-stop trips still work.
+  const goToPlan = () => {
       setBasicInfo(localOrigin, localDestinations, localStartDate || "", localEndDate || "");
       setServicePreferences(localServicePreferences);
       setGuestCount(localGuestCount);
@@ -208,23 +199,48 @@ function TripBuilderPageContent() {
       trackTravellerPlanPreview(localDestinations, localGuestCount);
       setStep5Footer(null);
       setCurrentStep(6);
+  };
+
+  const handleNext = () => {
+    if (currentStep === 1) {
+      prepTracker.funnelStep(1, STEP_METADATA[1]);
+      trackTravellerDestinationSelect(localOrigin, localDestinations);
+      setCurrentStep(2);
+    } else if (currentStep === 2) {
+      prepTracker.funnelStep(2, STEP_METADATA[2]);
+      trackTravellerDateSelect(localStartDate, localEndDate);
+      trackTravellerPeopleSelect(localGuestCount);
+      goToPlan();
+    } else if (currentStep === 5) {
+      goToPlan();
     }
     // Step 6: PackageBuilderStep has its own "Create my package" button
   };
 
+  const openStops = () => {
+    setStep5Footer(null);
+    setCurrentStep(5);
+  };
+
   const handleBack = () => {
-    if (currentStep > 1) {
-      if (currentStep === 6) setStep5Footer(null);
-      setCurrentStep(prev => prev - 1);
+    if (currentStep === 6) {
+      setStep5Footer(null);
+      setCurrentStep(2);
+    } else if (currentStep === 5) {
+      goToPlan();
+    } else if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
     } else {
       router.back();
     }
   };
 
+  const VISIBLE_STEP: Record<number, number> = { 1: 1, 2: 2, 3: 2, 4: 2, 5: 3, 6: 3 };
+
   const isStepValid = () => {
     switch (currentStep) {
-      case 1: return localOrigin.length > 2 && localDestinations.length > 0;
-      case 2: return !!localStartDate && !!localEndDate;
+      case 1: return localDestinations.length > 0; // starting point is optional
+      case 2: return !!localStartDate && !!localEndDate && localGuestCount > 0;
       case 3: return localGuestCount > 0;
       case 4: return localServicePreferences.length > 0;
       case 5: return true; // route stops are optional; this step is about discovery
@@ -280,36 +296,29 @@ function TripBuilderPageContent() {
                   dict={dict}
                 />
              </div>
-          </div>
-        );
-      case 3:
-        return (
-          <div className="animate-fade-in">
-            <header className="mb-4 sm:mb-8">
-                <Typography variant="h1" className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight"
-                   dangerouslySetInnerHTML={{ __html: builder.traveling_party?.title ?? "The <span class=\"text-emerald-500\">Traveling</span> Party." }} />
-                <p className="text-slate-400 font-medium mt-1 text-xs sm:text-sm">{builder.traveling_party?.subtitle ?? "How many souls are joining this journey?"}</p>
-             </header>
-          <TravelingPartySelector 
-            guestCount={localGuestCount}
-            onGuestCountChange={setLocalGuestCount}
-            dict={dict}
-          />
-          </div>
-        );
-      case 4:
-        return (
-          <div className="animate-fade-in">
-             <header className="mb-4 sm:mb-8">
-                <Typography variant="h1" className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight"
-                   dangerouslySetInnerHTML={{ __html: builder.interests.title }} />
-                <p className="text-slate-400 font-medium mt-1 text-xs sm:text-sm">{builder.interests.subtitle}</p>
-             </header>
-             <ServiceInterestSelector 
-               selectedInterests={localServicePreferences}
-               onInterestChange={setLocalServicePreferences}
-               dict={dict}
-             />
+             <div className="mt-4 p-4 sm:p-6 bg-white rounded-[2rem] shadow-sm border border-slate-100 flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-bold text-slate-900">Guests</p>
+                  <p className="text-xs text-slate-500">How many people are travelling?</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    aria-label="Fewer guests"
+                    onClick={() => setLocalGuestCount(Math.max(1, localGuestCount - 1))}
+                    disabled={localGuestCount <= 1}
+                    className="w-11 h-11 rounded-full border border-slate-200 text-xl font-bold disabled:opacity-40"
+                  >−</button>
+                  <span className="w-8 text-center text-lg font-black tabular-nums" aria-live="polite">{localGuestCount}</span>
+                  <button
+                    type="button"
+                    aria-label="More guests"
+                    onClick={() => setLocalGuestCount(Math.min(20, localGuestCount + 1))}
+                    disabled={localGuestCount >= 20}
+                    className="w-11 h-11 rounded-full border border-slate-200 text-xl font-bold disabled:opacity-40"
+                  >+</button>
+                </div>
+             </div>
           </div>
         );
       case 5:
@@ -340,6 +349,12 @@ function TripBuilderPageContent() {
         );
       case 6:
         return (
+          <>
+          <div className="mb-4 flex justify-end">
+            <button type="button" onClick={openStops} className="min-h-[44px] px-4 text-sm font-bold text-emerald-700 underline underline-offset-4">
+              {localTripStops.length > 0 ? `Edit stops (${localTripStops.length})` : "Add stops along the route"}
+            </button>
+          </div>
           <PackageBuilderStep
             origin={localOrigin}
             destinations={localDestinations}
@@ -356,6 +371,7 @@ function TripBuilderPageContent() {
             selections={localSelections}
             onSelectionsChange={setLocalSelections}
           />
+          </>
         );
       default: return null;
     }
@@ -406,11 +422,11 @@ function TripBuilderPageContent() {
             <div className="lg:col-span-8">
                 {/* Named milestones follow the validated Next/Back flow. */}
                   <StepProgress
-                    currentStep={currentStep}
-                    totalSteps={6}
+                    currentStep={VISIBLE_STEP[currentStep] ?? 1}
+                    totalSteps={3}
                     label={(builder.step_of ?? "Step {current} of {total}")
-                      .replace("{current}", String(currentStep))
-                      .replace("{total}", "6")}
+                      .replace("{current}", String(VISIBLE_STEP[currentStep] ?? 1))
+                      .replace("{total}", "3")}
                   />
   
                 <div ref={contentRef} tabIndex={-1} className={layoutStyles.content}>

@@ -24,7 +24,9 @@ import {
   EMPTY_VENDORS,
 } from "@/services/vendorService";
 import { getPackage } from "@/services/packageService";
+import Link from "next/link";
 import { toLocalDateStringSafe } from "@/lib/travelDate";
+import { tripShape } from "@/lib/tripDates";
 
 function parsePlanFromUrl(searchParams: URLSearchParams) {
   try {
@@ -224,16 +226,9 @@ function ResultsPageContent() {
       const days = Object.keys(packageData.selectedServices).map(Number).filter((d) => !isNaN(d)).sort((a, b) => a - b);
       return days.length > 0 ? days : [1];
     }
-    if (!startDate || !endDate) return [1];
-    try {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const diffDays = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-      return Array.from({ length: Math.max(1, Math.min(diffDays + 1, 14)) }, (_, i) => i + 1);
-    } catch {
-      return [1];
-    }
+    return tripShape(startDate, endDate).days;
   }, [packageData?.selectedServices, startDate, endDate]);
+  const planNights = useMemo(() => tripShape(startDate, endDate).nights, [startDate, endDate]);
 
   // Build liveVendors from package vendorDetails when in package mode
   useEffect(() => {
@@ -279,7 +274,8 @@ function ResultsPageContent() {
       const next: Record<number, Record<string, string | null>> = {};
       itineraryDays.forEach((day) => {
         next[day] = {
-          Stay: wantsStays ? (prev[day]?.Stay ?? firstStay) : null,
+          // No stay on the departure day (lib/tripDates.ts) — same rule as the builder.
+          Stay: wantsStays && day <= planNights ? (prev[day]?.Stay ?? firstStay) : null,
           Taxi: wantsTaxi ? (prev[day]?.Taxi ?? firstTaxi) : null,
           Adventure: wantsAdventure ? (prev[day]?.Adventure ?? firstAdventure) : null,
           Meals: wantsMeals ? (prev[day]?.Meals ?? firstMeals) : null,
@@ -287,7 +283,7 @@ function ResultsPageContent() {
       });
       return next;
     });
-  }, [packageData?.selectedServices, itineraryDays, servicePreferences, liveVendors]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [packageData?.selectedServices, itineraryDays, planNights, servicePreferences, liveVendors]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleVendorChange = (day: number, category: string, vendorId: string) => {
     // Track click
@@ -399,6 +395,24 @@ function ResultsPageContent() {
   if (!dict?.page?.results) return <div className="min-h-screen bg-slate-50" />;
   const res = dict.page.results;
 
+  // Direct load with no saved package and no plan in progress: say so,
+  // instead of rendering an invented "Delhi → Manali" circuit.
+  if (!packageIdParam && destinations.length === 0) {
+    return (
+      <div className="min-h-screen bg-slate-50/50">
+        <Header />
+        <main className="max-w-xl mx-auto px-4 pt-28 pb-20 text-center text-slate-900">
+          <h1 className="text-2xl font-black">No trip plan yet</h1>
+          <p className="mt-2 text-sm text-slate-500">Pick where and when you&apos;re going and we&apos;ll show the stays, rides and guides listed there.</p>
+          <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+            <Link href="/builder" className="h-12 px-6 inline-flex items-center justify-center rounded-xl bg-emerald-600 text-white font-bold">Plan a trip</Link>
+            <Link href="/explore" className="h-12 px-6 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white font-bold">Explore listings</Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50/50 pb-44">
       <Header />
@@ -420,9 +434,6 @@ function ResultsPageContent() {
                   <span className="px-3 py-1 bg-emerald-500 text-white text-[9px] sm:text-[10px] font-black uppercase rounded-xl tracking-widest shadow-md">
                     {packageIdParam ? "PUBLISHED TRIP CIRCUIT" : (res.access_badge || "YOUR YATRA PLAN")}
                   </span>
-                  <span className="px-2.5 py-1 bg-white/10 text-slate-300 text-[9px] font-bold uppercase rounded-xl tracking-wider backdrop-blur-md">
-                    ⚡ Verified Local Stays & Transit
-                  </span>
                 </div>
                 <button
                   onClick={handleShare}
@@ -439,7 +450,7 @@ function ResultsPageContent() {
                   Himachal Circuit Itinerary
                 </span>
                 <Typography variant="h1" className="text-3xl sm:text-5xl font-black text-white leading-tight tracking-tight uppercase italic">
-                  {originPoint || "Delhi"} <span className="text-emerald-400 font-normal">→</span> {destinations.length > 0 ? destinations.join(" → ") : "Manali"}
+                  {originPoint ? <>{originPoint} <span className="text-emerald-400 font-normal">→</span> </> : null}{destinations.length > 0 ? destinations.join(" → ") : "Your trip plan"}
                 </Typography>
               </div>
 
@@ -497,17 +508,14 @@ function ResultsPageContent() {
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div>
                 <h3 className="text-lg font-black text-slate-900">Day-by-Day Circuit Breakdown</h3>
-                <p className="text-xs text-slate-500">Selected verified local homestays, 4x4 cabs, and trek guides.</p>
+                <p className="text-xs text-slate-500">The services picked for each day. A stay is planned for each night, not the day you leave.</p>
               </div>
-              <span className="text-xs font-black text-emerald-600 uppercase tracking-wider bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
-                0% Markup Direct Payouts
-              </span>
             </div>
 
             <div className="space-y-12">
               {itineraryDays.map(day => {
                 const allCats = ["Stay", "Taxi", "Adventure", "Meals"];
-                const cats = packageData ? allCats.filter(c => selections[day]?.[c]) : allCats;
+                const cats = packageData ? allCats.filter(c => selections[day]?.[c]) : allCats.filter(c => c !== "Stay" || day <= planNights);
                 return (
                   <DayItinerary
                     key={day}
@@ -527,18 +535,6 @@ function ResultsPageContent() {
               })}
             </div>
 
-            {!packageData && (
-              <div className="mt-12 text-center py-8 border-t border-slate-100 animate-fade-in">
-                <div className="flex flex-col items-center gap-3">
-                  <Typography variant="h3" className="text-[10px] font-black text-slate-900 uppercase tracking-[0.3em]">
-                    {res.itinerary.explore_more}
-                  </Typography>
-                  <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
-                    {res.itinerary.near_origin.replace("{origin}", originPoint || "Chandigarh")}
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
@@ -556,7 +552,7 @@ function ResultsPageContent() {
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl sm:text-3xl font-black text-white italic tracking-tight">{formatINRWithSymbol(totalPrice)}</span>
               </div>
-              <p className="text-[9px] text-slate-400 mt-0.5 font-medium">{itineraryDays.length} Days · {guestCount} Guests · Paid directly to local partners</p>
+              <p className="text-[9px] text-slate-400 mt-0.5 font-medium">{itineraryDays.length} {itineraryDays.length === 1 ? "day" : "days"} · {guestCount} {guestCount === 1 ? "guest" : "guests"} · base prices, confirmed before you pay</p>
             </div>
             <button
               onClick={handleBookNow}
