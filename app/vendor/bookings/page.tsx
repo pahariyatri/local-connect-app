@@ -333,8 +333,14 @@ function ManageBookingsPageContent() {
                 const guestName = [item.booking?.user?.firstName, item.booking?.user?.lastName].filter(Boolean).join(" ") || "Guest";
                 const busy = respondingId === item.id;
                 return (
-                  <div key={item.id} className="premium-card p-5 bg-white">
-                    <p className="text-xs font-semibold text-emerald-600 mb-1">Day {item.day} · {item.category}</p>
+                  <div key={item.id} className="premium-card p-5 bg-white" data-testid="vendor-request" data-booking-id={item.booking?.id}>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <p className="text-xs font-semibold text-emerald-600">Booking #{item.booking?.id} · Day {item.day} · {item.category}</p>
+                      {/* Payment-first: CONFIRMED means the reservation fee is paid. */}
+                      <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold ${item.booking?.status === "CONFIRMED" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+                        {item.booking?.status === "CONFIRMED" ? "Fee paid" : "Awaiting payment"}
+                      </span>
+                    </div>
                     <h3 className="text-base font-bold text-slate-900">{item.service?.name || "Service"}</h3>
                     <p className="text-xs text-slate-400 font-medium mt-1">
                       {guestName} · {item.booking?.guestCount} guest{item.booking?.guestCount === 1 ? "" : "s"} · {item.booking?.travelDate ? new Date(item.booking.travelDate).toLocaleDateString() : "—"}
@@ -345,14 +351,14 @@ function ManageBookingsPageContent() {
                         <button
                           onClick={() => handleRespond(item.id, "reject")}
                           disabled={busy}
-                          className="h-10 px-4 rounded-xl bg-slate-50 text-slate-500 text-xs font-semibold disabled:opacity-50"
+                          className="min-h-[44px] px-4 rounded-xl bg-slate-50 text-slate-600 text-xs font-semibold disabled:opacity-50"
                         >
                           Decline
                         </button>
                         <button
                           onClick={() => handleRespond(item.id, "accept")}
                           disabled={busy}
-                          className="h-10 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold disabled:opacity-50"
+                          className="min-h-[44px] px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold disabled:opacity-50"
                         >
                           {busy ? "..." : "Accept"}
                         </button>
