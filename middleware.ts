@@ -63,7 +63,10 @@ export function middleware(request: NextRequest) {
     // Check if the user is trying to access a protected route
     if (isProtected) {
         // SECURITY: never log the token — it is a bearer credential.
-        const token = request.cookies.get('accessToken');
+        // Staging prefixes its auth cookies (NEXT_PUBLIC_AUTH_COOKIE_PREFIX,
+        // e.g. "stg_") so they never collide with production's cookies on
+        // .pahariyatri.com. Production leaves it unset → "accessToken".
+        const token = request.cookies.get(`${process.env.NEXT_PUBLIC_AUTH_COOKIE_PREFIX ?? ''}accessToken`);
 
         if (!token) {
             // Redirect to the login page if no token is found

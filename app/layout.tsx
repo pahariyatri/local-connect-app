@@ -83,6 +83,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${poppins.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
+        {process.env.NEXT_PUBLIC_APP_ENV === 'staging' && (
+          <div
+            role="note"
+            data-testid="staging-banner"
+            style={{ position: 'sticky', top: 0, zIndex: 9999, background: '#b45309', color: '#fff', textAlign: 'center', fontSize: 12, fontWeight: 600, padding: '4px 8px' }}
+          >
+            STAGING — test data only. No real bookings or payments.
+          </div>
+        )}
         {/* GTM — loads only when NEXT_PUBLIC_GTM_ID is set. GTM owns GA4 pageviews
             once a Configuration tag exists in the container; app code only ever
             pushes named events to window.dataLayer via lib/analytics.ts, never a
