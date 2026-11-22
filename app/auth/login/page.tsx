@@ -1,5 +1,6 @@
 "use client";
 
+import { rememberAuthPhone, recallAuthPhone } from '@/lib/authPhone';
 import React, { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -70,7 +71,7 @@ function LoginPageContent() {
             setTouched(true);
             return;
         }
-        router.push(`/auth/pin?mode=login&phone=${phone}${redirectSuffix}`);
+        { rememberAuthPhone(phone); router.push(`/auth/pin?mode=login${redirectSuffix}`); }
     };
 
     const startOtpSignup = async () => {
@@ -83,9 +84,7 @@ function LoginPageContent() {
         setOtpError(null);
         try {
             const challenge = await requestOtp(phone);
-            router.push(
-                `/auth/verify-otp?purpose=registration&phone=${phone}&challengeId=${encodeURIComponent(challenge.challengeId)}&resendAfter=${challenge.resendAfterSeconds}${redirectSuffix}`,
-            );
+            { rememberAuthPhone(phone); router.push(`/auth/verify-otp?purpose=registration&challengeId=${encodeURIComponent(challenge.challengeId)}&resendAfter=${challenge.resendAfterSeconds}${redirectSuffix}`); }
         } catch (err) {
             const ui = toAuthUiError(err);
             setOtpError(ui.retryAfterSeconds ? `${ui.message} (wait ~${ui.retryAfterSeconds}s)` : ui.message);

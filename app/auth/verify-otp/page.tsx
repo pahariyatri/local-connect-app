@@ -1,5 +1,6 @@
 'use client';
 
+import { rememberAuthPhone, recallAuthPhone } from '@/lib/authPhone';
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { verifyOtp, forgotPinVerify, requestOtp, forgotPinRequest } from '@/services/authService';
@@ -18,7 +19,7 @@ function VerifyOtpPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const phone = searchParams.get('phone') || '';
+  const [phone] = useState(() => recallAuthPhone(searchParams.get('phone')));
   const purpose = searchParams.get('purpose') === 'forgot' ? 'forgot' : 'registration';
   const initialChallengeId = searchParams.get('challengeId') || '';
   const initialResendAfter = parseInt(searchParams.get('resendAfter') || '', 10) || DEFAULT_RESEND_COOLDOWN;
@@ -75,7 +76,7 @@ function VerifyOtpPageContent() {
       } else {
         // Existing account — phone ownership proven, continue with PIN login.
         setSuccess('Verified! Sign in with your PIN...');
-        router.push(`/auth/pin?mode=login&phone=${phone}${redirectSuffix}`);
+        { rememberAuthPhone(phone); router.push(`/auth/pin?mode=login${redirectSuffix}`); }
       }
     } catch (err) {
       const ui = toAuthUiError(err);

@@ -1,5 +1,6 @@
 'use client';
 
+import { rememberAuthPhone, recallAuthPhone } from '@/lib/authPhone';
 import { useState, useRef, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { loginWithPin, setupPin, signupWithPin, resetPin, forgotPinRequest, checkPhoneExists, requestOtp } from '@/services/authService';
@@ -120,7 +121,7 @@ function PinPageContent() {
   const t = getTravelerDictionary().auth;
 
   const rawMode = searchParams.get('mode');
-  const phoneNumber = searchParams.get('phone') || '';
+  const [phoneNumber] = useState(() => recallAuthPhone(searchParams.get('phone')));
   const ticket = searchParams.get('ticket') || '';
   const redirectTo = searchParams.get('redirectTo');
   const redirectSuffix = redirectTo ? `&redirectTo=${encodeURIComponent(redirectTo)}` : '';
@@ -192,7 +193,7 @@ function PinPageContent() {
     if (AUTH_MODE === 'otp') {
       // Never trust a stale mode=signup hint without a ticket: in OTP mode it is login.
       if (rawMode !== 'login' && phoneNumber) {
-        router.replace(`/auth/pin?mode=login&phone=${phoneNumber}${redirectSuffix}`);
+        { rememberAuthPhone(phoneNumber); router.replace(`/auth/pin?mode=login${redirectSuffix}`); }
       }
       return;
     }
@@ -205,7 +206,7 @@ function PinPageContent() {
         const resolvedMode = exists ? 'login' : 'signup';
         setFlow(exists ? 'EXISTING_USER_PIN' : 'NEW_USER_PIN');
         if (rawMode !== resolvedMode) {
-          router.replace(`/auth/pin?mode=${resolvedMode}&phone=${phoneNumber}${redirectSuffix}`);
+          { rememberAuthPhone(phoneNumber); router.replace(`/auth/pin?mode=${resolvedMode}${redirectSuffix}`); }
         }
       } catch (err) {
         if (!cancelled) failWith(err, 'ERROR');
@@ -284,7 +285,7 @@ function PinPageContent() {
         setError(t.errors.AUTH_USER_EXISTS);
         submitLockRef.current = false;
         if (rawMode !== 'login') {
-          router.replace(`/auth/pin?mode=login&phone=${phoneNumber}${redirectSuffix}`);
+          { rememberAuthPhone(phoneNumber); router.replace(`/auth/pin?mode=login${redirectSuffix}`); }
         }
         return;
       }
@@ -315,9 +316,7 @@ function PinPageContent() {
     setError(null);
     try {
       const challenge = await forgotPinRequest(phoneNumber);
-      router.push(
-        `/auth/verify-otp?purpose=forgot&phone=${phoneNumber}&challengeId=${encodeURIComponent(challenge.challengeId)}&resendAfter=${challenge.resendAfterSeconds}${redirectSuffix}`,
-      );
+      { rememberAuthPhone(phoneNumber); router.push(`/auth/verify-otp?purpose=forgot&challengeId=${encodeURIComponent(challenge.challengeId)}&resendAfter=${challenge.resendAfterSeconds}${redirectSuffix}`); }
     } catch (err) {
       const ui = toAuthUiError(err, t.errors);
       setError(ui.message);
@@ -332,9 +331,7 @@ function PinPageContent() {
     setError(null);
     try {
       const challenge = await requestOtp(phoneNumber);
-      router.push(
-        `/auth/verify-otp?purpose=registration&phone=${phoneNumber}&challengeId=${encodeURIComponent(challenge.challengeId)}&resendAfter=${challenge.resendAfterSeconds}${redirectSuffix}`,
-      );
+      { rememberAuthPhone(phoneNumber); router.push(`/auth/verify-otp?purpose=registration&challengeId=${encodeURIComponent(challenge.challengeId)}&resendAfter=${challenge.resendAfterSeconds}${redirectSuffix}`); }
     } catch (err) {
       const ui = toAuthUiError(err, t.errors);
       setError(ui.message);

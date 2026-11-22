@@ -223,7 +223,12 @@ function BookServicePageContent() {
   };
 
   const handleSignIn = () => {
-    router.push(`/auth/login?redirectTo=${encodeURIComponent(currentUrlWithSelections())}`);
+    const here = currentUrlWithSelections();
+    // Write the selections into THIS history entry too, so pressing Back on
+    // the login screen returns to the chosen dates instead of a blank form.
+    // (Next.js >= 14.1 keeps its router in sync with native replaceState.)
+    window.history.replaceState(window.history.state, "", here);
+    router.push(`/auth/login?redirectTo=${encodeURIComponent(here)}`);
   };
 
   const handleSubmit = async () => {
